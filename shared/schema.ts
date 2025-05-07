@@ -146,6 +146,7 @@ export const materials = pgTable("materials", {
   orderNumber: text("order_number"),
   status: text("status").notNull().default("in_stock"), // in_stock, ordered, delivered, out_of_stock
   projectId: integer("project_id").references(() => projects.id),
+  serviceType: text("service_type"), // deck, fence, roof, siding, windows, gutters
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull()
 });
@@ -179,6 +180,30 @@ export const followUps = pgTable("follow_ups", {
   responseDate: timestamp("response_date"),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull()
+});
+
+// Property measurements
+export const propertyMeasurements = pgTable("property_measurements", {
+  id: serial("id").primaryKey(),
+  contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
+  clientId: integer("client_id").references(() => clients.id).notNull(),
+  projectId: integer("project_id").references(() => projects.id),
+  serviceType: text("service_type").notNull(), // deck, fence, roof, siding, windows, gutters
+  
+  // Common measurements
+  totalSquareFeet: decimal("total_square_feet", { precision: 10, scale: 2 }),
+  totalLinearFeet: decimal("total_linear_feet", { precision: 10, scale: 2 }),
+  notes: text("notes"),
+  
+  // Service-specific measurements (stored as JSON)
+  measurementData: jsonb("measurement_data"), // Store different measurements based on service type
+  
+  // Image or diagram links
+  diagramUrl: text("diagram_url"),
+  
+  measuredAt: timestamp("measured_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
 
 // Define relations
