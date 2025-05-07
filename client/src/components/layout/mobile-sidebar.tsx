@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/hooks/use-language";
 import { Link, useLocation } from "wouter";
 import { 
   BuildingIcon, 
@@ -23,6 +24,7 @@ export default function MobileSidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
+  const { t } = useLanguage();
 
   const handleLogout = () => {
     logoutMutation.mutate();
