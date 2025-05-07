@@ -517,80 +517,197 @@ export default function VendorEstimateFormPage() {
   const renderMeasurementInput = () => {
     if (!selectedMaterial) return null;
     
+    // Botones de herramientas de medición
+    const measurementTools = (
+      <div className="flex items-center gap-2 mt-2 mb-4">
+        <Dialog open={isDigitalMeasurementOpen} onOpenChange={setIsDigitalMeasurementOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" type="button" size="sm">
+              <Ruler className="h-4 w-4 mr-2" />
+              Medir Digitalmente
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>Herramienta de Medición Digital</DialogTitle>
+              <DialogDescription>
+                Dibuje líneas para medir longitudes o áreas. Use la calibración para establecer la escala correcta.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="my-4">
+              <DigitalMeasurement 
+                unit="ft"
+                onMeasurementsChange={handleMeasurementsChange}
+                canvasWidth={750}
+                canvasHeight={500}
+              />
+            </div>
+            
+            <DialogFooter>
+              <Button onClick={() => setIsDigitalMeasurementOpen(false)}>
+                Aceptar Medidas
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        <Dialog open={isLidarScannerOpen} onOpenChange={setIsLidarScannerOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" type="button" size="sm">
+              <Scan className="h-4 w-4 mr-2" />
+              Escanear Espacio
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>Escáner LiDAR Simulado</DialogTitle>
+              <DialogDescription>
+                Escanee espacios virtualmente o cargue imágenes para generar un mapa de profundidad y tomar medidas precisas.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="my-4">
+              <LiDARScanner 
+                onScanComplete={handleScanComplete}
+                width={750}
+                height={500}
+                unit="ft"
+              />
+            </div>
+            
+            <DialogFooter>
+              <Button onClick={() => setIsLidarScannerOpen(false)}>
+                Aceptar Escaneo
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        <Button variant="outline" type="button" size="sm">
+          <Camera className="h-4 w-4 mr-2" />
+          Usar Cámara
+        </Button>
+      </div>
+    );
+    
     if (selectedMaterial.unit === "sq.ft") {
       return (
-        <FormField
-          control={form.control}
-          name="squareFeet"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Pies Cuadrados</FormLabel>
-              <FormControl>
-                <Input 
-                  type="number" 
-                  min="1" 
-                  step="0.01" 
-                  placeholder="Ingrese los pies cuadrados" 
-                  {...field} 
-                />
-              </FormControl>
-              <FormDescription>
-                Medida en pies cuadrados del área a cubrir.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
+        <div>
+          {measurementTools}
+          <FormField
+            control={form.control}
+            name="squareFeet"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Pies Cuadrados</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    min="1" 
+                    step="0.01" 
+                    placeholder="Ingrese los pies cuadrados" 
+                    {...field} 
+                  />
+                </FormControl>
+                <FormDescription>
+                  Medida en pies cuadrados del área a cubrir. Use las herramientas de medición para mayor precisión.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          {measurements.length >= 2 && (
+            <div className="mt-2 text-sm p-2 bg-muted rounded border">
+              <p className="font-medium">Mediciones registradas:</p>
+              <ul className="list-disc pl-5 mt-1">
+                {measurements.slice(0, 2).map((m, i) => (
+                  <li key={i}>
+                    Medida {i+1}: {m.realLength.toFixed(2)} ft
+                  </li>
+                ))}
+                <li className="font-medium text-primary">
+                  Área calculada: {(measurements[0].realLength * measurements[1].realLength).toFixed(2)} ft²
+                </li>
+              </ul>
+            </div>
           )}
-        />
+        </div>
       );
     } else if (selectedMaterial.unit === "ln.ft") {
       return (
-        <FormField
-          control={form.control}
-          name="linearFeet"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Pies Lineales</FormLabel>
-              <FormControl>
-                <Input 
-                  type="number" 
-                  min="1" 
-                  step="0.01" 
-                  placeholder="Ingrese los pies lineales" 
-                  {...field} 
-                />
-              </FormControl>
-              <FormDescription>
-                Medida en pies lineales del área a cubrir.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
+        <div>
+          {measurementTools}
+          <FormField
+            control={form.control}
+            name="linearFeet"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Pies Lineales</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    min="1" 
+                    step="0.01" 
+                    placeholder="Ingrese los pies lineales" 
+                    {...field} 
+                  />
+                </FormControl>
+                <FormDescription>
+                  Medida en pies lineales del área a cubrir. Use las herramientas de medición para mayor precisión.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          {measurements.length > 0 && (
+            <div className="mt-2 text-sm p-2 bg-muted rounded border">
+              <p className="font-medium">Medición registrada:</p>
+              <ul className="list-disc pl-5 mt-1">
+                <li>
+                  Longitud: {measurements[0].realLength.toFixed(2)} ft
+                </li>
+              </ul>
+            </div>
           )}
-        />
+        </div>
       );
     } else if (selectedMaterial.unit === "unit") {
       return (
-        <FormField
-          control={form.control}
-          name="units"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Unidades</FormLabel>
-              <FormControl>
-                <Input 
-                  type="number" 
-                  min="1" 
-                  step="1" 
-                  placeholder="Ingrese el número de unidades" 
-                  {...field} 
-                />
-              </FormControl>
-              <FormDescription>
-                Cantidad de unidades necesarias.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
+        <div>
+          {measurementTools}
+          <FormField
+            control={form.control}
+            name="units"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Unidades</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    min="1" 
+                    step="1" 
+                    placeholder="Ingrese el número de unidades" 
+                    {...field} 
+                  />
+                </FormControl>
+                <FormDescription>
+                  Cantidad de unidades necesarias. Use las herramientas de medición para verificar dimensiones.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          {scanResults.length > 0 && (
+            <div className="mt-2 text-sm p-2 bg-muted rounded border">
+              <p className="font-medium">Escaneos realizados: {scanResults.length}</p>
+              <p>Los escaneos pueden ayudar a determinar la cantidad de unidades necesarias.</p>
+            </div>
           )}
-        />
+        </div>
       );
     }
     

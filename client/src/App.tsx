@@ -12,6 +12,7 @@ import ClientsPage from "@/pages/clients-page";
 import EstimatesPage from "@/pages/estimates-page";
 import PremiumEstimatePage from "@/pages/premium-estimate-page";
 import VendorEstimateFormPage from "@/pages/vendor-estimate-form-page";
+import PropertyMeasurementsPage from "@/pages/property-measurements-page";
 import InvoicesPage from "@/pages/invoices-page";
 import ProjectsPage from "@/pages/projects-page";
 import MaterialsPage from "@/pages/materials-page";
@@ -27,6 +28,7 @@ function Router() {
       <ProtectedRoute path="/estimates" component={EstimatesPage} />
       <ProtectedRoute path="/estimates/:id" component={PremiumEstimatePage} />
       <ProtectedRoute path="/vendor-estimate-form" component={VendorEstimateFormPage} />
+      <ProtectedRoute path="/property-measurements" component={PropertyMeasurementsPage} />
       <ProtectedRoute path="/invoices" component={InvoicesPage} />
       <ProtectedRoute path="/projects" component={ProjectsPage} />
       <ProtectedRoute path="/materials" component={MaterialsPage} />
