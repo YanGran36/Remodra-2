@@ -77,9 +77,16 @@ export default {
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "premium-gradient": "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(234, 85%, 45%) 100%)",
+        "premium-card": "linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%)",
+        "gold-gradient": "linear-gradient(135deg, #f6d365 0%, #fda085 100%)",
+        "silver-gradient": "linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%)",
+        "blue-gradient": "linear-gradient(135deg, #4299e1 0%, #3182ce 100%)",
       },
       boxShadow: {
         premium: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+        'premium-hover': "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+        'glass': "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), inset 0 0 0 1px rgba(255, 255, 255, 0.1)",
+        'glass-sm': "0 1px 2px 0 rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.1)",
       },
       keyframes: {
         "accordion-down": {

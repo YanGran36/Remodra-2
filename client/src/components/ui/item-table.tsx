@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils";
 import {
   Table,
   TableBody,
@@ -8,7 +7,26 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Package2 } from "lucide-react";
+
+interface Item {
+  id: number;
+  description: string;
+  quantity: number;
+  price: number;
+  amount: number;
+  unit?: string;
+}
+
+interface ItemTableProps {
+  items: Item[];
+  subtotal: number | string;
+  tax: number | string;
+  discount: number | string;
+  total: number | string;
+  emptyMessage?: string;
+}
 
 // Helper function to format currency
 const formatCurrency = (amount: number | string) => {
@@ -16,109 +34,80 @@ const formatCurrency = (amount: number | string) => {
     .format(typeof amount === 'string' ? parseFloat(amount) : amount);
 };
 
-export interface ItemTableItem {
-  id?: number;
-  description: string;
-  quantity: string | number;
-  unitPrice: string | number;
-  amount: string | number;
-  notes?: string;
-  type?: string;
-}
-
-interface ItemTableProps {
-  items: ItemTableItem[];
-  subtotal: string | number;
-  tax: string | number;
-  discount: string | number;
-  total: string | number;
-  emptyMessage?: string;
-  className?: string;
-}
-
 export function ItemTable({
   items,
   subtotal,
   tax,
   discount,
   total,
-  emptyMessage = "No hay artículos",
-  className,
+  emptyMessage = "No hay elementos para mostrar",
 }: ItemTableProps) {
+  // Convert string values to numbers for calculations if needed
+  const taxValue = typeof tax === 'string' ? parseFloat(tax) : tax;
+  const discountValue = typeof discount === 'string' ? parseFloat(discount) : discount;
+  const subtotalValue = typeof subtotal === 'string' ? parseFloat(subtotal) : subtotal;
+  const totalValue = typeof total === 'string' ? parseFloat(total) : total;
+
   return (
-    <div className={cn("border rounded-lg overflow-hidden", className)}>
+    <div className="item-table-container">
       <Table>
         <TableHeader className="bg-muted/50">
           <TableRow>
-            <TableHead className="w-[40%]">Descripción</TableHead>
+            <TableHead className="w-[400px]">Descripción</TableHead>
             <TableHead className="text-right">Cantidad</TableHead>
-            <TableHead className="text-right">Precio Unitario</TableHead>
-            <TableHead className="text-right">Total</TableHead>
+            <TableHead className="text-right">Precio</TableHead>
+            <TableHead className="text-right">Importe</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {items.length === 0 ? (
-            <TableRow>
-              <TableCell
-                colSpan={4}
-                className="text-center py-6 text-muted-foreground"
-              >
-                {emptyMessage}
-              </TableCell>
-            </TableRow>
-          ) : (
-            items.map((item, index) => (
-              <TableRow key={item.id || index} className="group hover:bg-muted/30">
-                <TableCell>
-                  <div>
-                    <p className="font-medium">{item.description}</p>
-                    {item.notes && (
-                      <p className="text-sm text-muted-foreground">{item.notes}</p>
-                    )}
-                    {item.type && (
-                      <Badge variant="outline" className="mt-1">
-                        {item.type}
-                      </Badge>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell className="text-right">{item.quantity}</TableCell>
-                <TableCell className="text-right">{formatCurrency(item.unitPrice)}</TableCell>
-                <TableCell className="text-right font-medium">{formatCurrency(item.amount)}</TableCell>
+          {items.length > 0 ? (
+            items.map((item) => (
+              <TableRow key={item.id}>
+                <TableCell className="font-medium align-top">{item.description}</TableCell>
+                <TableCell className="text-right">{item.quantity} {item.unit || ""}</TableCell>
+                <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
+                <TableCell className="text-right">{formatCurrency(item.amount)}</TableCell>
               </TableRow>
             ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={4} className="text-center py-10">
+                <div className="flex flex-col items-center justify-center text-muted-foreground">
+                  <Package2 className="h-10 w-10 mb-2 opacity-20" />
+                  <p>{emptyMessage}</p>
+                </div>
+              </TableCell>
+            </TableRow>
           )}
         </TableBody>
-        <TableFooter className="bg-muted/20">
-          <TableRow>
-            <TableCell colSpan={3} className="text-right font-medium">
-              Subtotal
-            </TableCell>
-            <TableCell className="text-right">{formatCurrency(subtotal)}</TableCell>
-          </TableRow>
-          {parseFloat(tax.toString()) > 0 && (
-            <TableRow>
-              <TableCell colSpan={3} className="text-right font-medium">
-                Impuestos
-              </TableCell>
-              <TableCell className="text-right">{formatCurrency(tax)}</TableCell>
+        {items.length > 0 && (
+          <TableFooter className="bg-white">
+            <TableRow className="border-t-0">
+              <TableCell colSpan={2} />
+              <TableCell className="text-right font-medium">Subtotal</TableCell>
+              <TableCell className="text-right font-medium">{formatCurrency(subtotalValue)}</TableCell>
             </TableRow>
-          )}
-          {parseFloat(discount.toString()) > 0 && (
+            {taxValue > 0 && (
+              <TableRow className="border-t-0">
+                <TableCell colSpan={2} />
+                <TableCell className="text-right font-medium">Impuestos</TableCell>
+                <TableCell className="text-right">{formatCurrency(taxValue)}</TableCell>
+              </TableRow>
+            )}
+            {discountValue > 0 && (
+              <TableRow className="border-t-0">
+                <TableCell colSpan={2} />
+                <TableCell className="text-right font-medium">Descuento</TableCell>
+                <TableCell className="text-right text-red-600">-{formatCurrency(discountValue)}</TableCell>
+              </TableRow>
+            )}
             <TableRow>
-              <TableCell colSpan={3} className="text-right font-medium">
-                Descuento
-              </TableCell>
-              <TableCell className="text-right">-{formatCurrency(discount)}</TableCell>
+              <TableCell colSpan={2} />
+              <TableCell className="text-right font-bold border-t">Total</TableCell>
+              <TableCell className="text-right font-bold border-t text-lg bg-gradient-to-r from-primary to-indigo-600 bg-clip-text text-transparent">{formatCurrency(totalValue)}</TableCell>
             </TableRow>
-          )}
-          <TableRow>
-            <TableCell colSpan={3} className="text-right font-medium">
-              Total
-            </TableCell>
-            <TableCell className="text-right font-bold bg-primary/5">{formatCurrency(total)}</TableCell>
-          </TableRow>
-        </TableFooter>
+          </TableFooter>
+        )}
       </Table>
     </div>
   );
