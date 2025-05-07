@@ -262,6 +262,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Convert estimate to invoice
+  app.post("/api/protected/estimates/:id/convert-to-invoice", async (req, res) => {
+    try {
+      const estimateId = Number(req.params.id);
+      
+      // First, get the estimate and verify it belongs to the contractor
+      const estimate = await storage.getEstimate(estimateId, req.user!.id);
+      
+      if (!estimate) {
+        return res.status(404).json({ message: "Estimate not found" });
+      }
+      
+      // Verify the estimate status is 'accepted'
+      if (estimate.status !== 'accepted') {
+        return res.status(400).json({ message: "Only accepted estimates can be converted to work orders" });
+      }
+      
+      // Get the estimate items
+      const estimateItems = await storage.getEstimateItems(estimateId, req.user!.id);
+      
+      // Generate an invoice number
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = (today.getMonth() + 1).toString().padStart(2, '0');
+      const random = Math.floor(Math.random() * 900) + 100; // Random 3-digit number
+      const invoiceNumber = `OT-${year}${month}-${random}`;
+      
+      // Create the invoice
+      const invoiceData = {
+        contractorId: req.user!.id,
+        clientId: estimate.clientId,
+        projectId: estimate.projectId,
+        estimateId: estimate.id,
+        invoiceNumber,
+        issueDate: new Date(),
+        dueDate: new Date(new Date().setDate(new Date().getDate() + 15)), // Due in 15 days
+        status: "pending",
+        subtotal: estimate.subtotal,
+        tax: estimate.tax,
+        discount: estimate.discount,
+        total: estimate.total,
+        amountPaid: "0",
+        terms: estimate.terms,
+        notes: estimate.notes,
+        contractorSignature: estimate.contractorSignature,
+      };
+      
+      const invoice = await storage.createInvoice(invoiceData);
+      
+      // Create invoice items from estimate items
+      if (estimateItems && estimateItems.length > 0) {
+        for (const item of estimateItems) {
+          await storage.createInvoiceItem({
+            invoiceId: invoice.id,
+            description: item.description,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            amount: item.amount,
+            notes: item.notes
+          });
+        }
+      }
+      
+      // Return the created invoice with items
+      const completeInvoice = await storage.getInvoice(invoice.id, req.user!.id);
+      res.status(201).json(completeInvoice);
+      
+    } catch (error) {
+      console.error("Error converting estimate to work order:", error);
+      res.status(500).json({ message: "Failed to convert estimate to work order" });
+    }
+  });
+
   // Estimate Items routes
   app.get("/api/protected/estimates/:estimateId/items", async (req, res) => {
     try {
@@ -419,6 +492,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting invoice:", error);
       res.status(500).json({ message: "Failed to delete invoice" });
+    }
+  });
+  
+  // Record payment for an invoice
+  app.post("/api/protected/invoices/:id/payment", async (req, res) => {
+    try {
+      const invoiceId = Number(req.params.id);
+      const { amount } = req.body;
+      
+      if (!amount || isNaN(parseFloat(amount))) {
+        return res.status(400).json({ message: "Valid payment amount is required" });
+      }
+      
+      // First get the invoice to verify ownership and current amount paid
+      const invoice = await storage.getInvoice(invoiceId, req.user!.id);
+      
+      if (!invoice) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+      
+      const currentAmountPaid = parseFloat(invoice.amountPaid || "0");
+      const paymentAmount = parseFloat(amount);
+      const totalAmount = parseFloat(invoice.total);
+      const newAmountPaid = currentAmountPaid + paymentAmount;
+      
+      // Ensure payment doesn't exceed total
+      if (newAmountPaid > totalAmount) {
+        return res.status(400).json({ 
+          message: "Payment amount exceeds the remaining balance",
+          currentAmountPaid,
+          totalAmount,
+          remainingBalance: totalAmount - currentAmountPaid
+        });
+      }
+      
+      // Update the invoice with the new amount paid
+      const updatedInvoice = await storage.updateInvoice(invoiceId, req.user!.id, {
+        amountPaid: newAmountPaid.toString()
+      });
+      
+      // Update status to 'paid' if fully paid
+      if (newAmountPaid >= totalAmount) {
+        await storage.updateInvoice(invoiceId, req.user!.id, {
+          status: "paid"
+        });
+      }
+      
+      res.json(updatedInvoice);
+    } catch (error) {
+      console.error("Error recording payment:", error);
+      res.status(500).json({ message: "Failed to record payment" });
     }
   });
 
