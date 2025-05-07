@@ -328,7 +328,14 @@ export default function EstimatesPage() {
                                   viewEstimateDetails(estimate);
                                 }}>
                                   <Eye className="mr-2 h-4 w-4" />
-                                  View
+                                  View Standard
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.location.href = `/estimates/${estimate.id}`;
+                                }} className="text-primary">
+                                  <FileText className="mr-2 h-4 w-4" />
+                                  View Premium
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={(e) => {
                                   e.stopPropagation();

@@ -1,92 +1,104 @@
+import React from "react";
 import { cn } from "@/lib/utils";
-import { cva, type VariantProps } from "class-variance-authority";
+import { Check, Clock, Mail, X, AlertTriangle } from "lucide-react";
 
-// Define status badge variants
-const statusBadgeVariants = cva(
-  "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none",
-  {
-    variants: {
-      variant: {
-        draft: "bg-gray-100 text-gray-800",
-        sent: "bg-blue-100 text-blue-800",
-        accepted: "bg-green-100 text-green-800", 
-        rejected: "bg-red-100 text-red-800",
-        expired: "bg-yellow-100 text-yellow-800",
-        pending: "bg-amber-100 text-amber-800",
-        paid: "bg-emerald-100 text-emerald-800",
-        overdue: "bg-rose-100 text-rose-800",
-        cancelled: "bg-slate-100 text-slate-800",
-        default: "bg-primary/10 text-primary",
-      },
-      size: {
-        default: "h-6",
-        sm: "h-5",
-        lg: "h-7",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
-    },
-  }
-);
-
-export interface StatusBadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof statusBadgeVariants> {
-  label?: string;
-  icon?: React.ReactNode;
+interface StatusBadgeProps {
+  status: string;
+  className?: string;
+  showIcon?: boolean;
+  size?: "sm" | "md" | "lg";
 }
 
 export function StatusBadge({
+  status,
   className,
-  variant,
-  size,
-  label,
-  icon,
-  ...props
+  showIcon = true,
+  size = "md",
 }: StatusBadgeProps) {
+  const badgeConfig: Record<string, { icon: any; bg: string; text: string; label: string }> = {
+    draft: {
+      icon: <Clock className={size === "sm" ? "h-3 w-3" : "h-4 w-4"} />,
+      bg: "bg-yellow-100",
+      text: "text-yellow-800",
+      label: "Borrador",
+    },
+    sent: {
+      icon: <Mail className={size === "sm" ? "h-3 w-3" : "h-4 w-4"} />,
+      bg: "bg-blue-100",
+      text: "text-blue-800",
+      label: "Enviado",
+    },
+    accepted: {
+      icon: <Check className={size === "sm" ? "h-3 w-3" : "h-4 w-4"} />,
+      bg: "bg-green-100", 
+      text: "text-green-800",
+      label: "Aceptado",
+    },
+    rejected: {
+      icon: <X className={size === "sm" ? "h-3 w-3" : "h-4 w-4"} />,
+      bg: "bg-red-100",
+      text: "text-red-800",
+      label: "Rechazado", 
+    },
+    expired: {
+      icon: <AlertTriangle className={size === "sm" ? "h-3 w-3" : "h-4 w-4"} />,
+      bg: "bg-orange-100",
+      text: "text-orange-800",
+      label: "Vencido",
+    },
+    paid: {
+      icon: <Check className={size === "sm" ? "h-3 w-3" : "h-4 w-4"} />,
+      bg: "bg-green-100",
+      text: "text-green-800",
+      label: "Pagado",
+    },
+    "partial-paid": {
+      icon: <Clock className={size === "sm" ? "h-3 w-3" : "h-4 w-4"} />,
+      bg: "bg-indigo-100",
+      text: "text-indigo-800",
+      label: "Pago Parcial",
+    },
+    unpaid: {
+      icon: <AlertTriangle className={size === "sm" ? "h-3 w-3" : "h-4 w-4"} />,
+      bg: "bg-red-100",
+      text: "text-red-800",
+      label: "No Pagado",
+    },
+  };
+
+  const config = badgeConfig[status] || {
+    icon: null,
+    bg: "bg-gray-100",
+    text: "text-gray-800",
+    label: status,
+  };
+
+  const sizeClasses = {
+    sm: "text-xs px-1.5 py-0.5",
+    md: "text-sm px-2.5 py-1",
+    lg: "text-base px-3 py-1.5",
+  };
+
   return (
-    <div className={cn(statusBadgeVariants({ variant, size }), className)} {...props}>
-      {icon && <span className="mr-1">{icon}</span>}
-      {label || variant}
-    </div>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full font-medium",
+        config.bg,
+        config.text,
+        sizeClasses[size],
+        className
+      )}
+    >
+      {showIcon && config.icon && <span>{config.icon}</span>}
+      <span>{config.label}</span>
+    </span>
   );
 }
 
 export function getEstimateStatusBadge(status: string) {
-  const statusMap: Record<string, { label: string, variant: string }> = {
-    draft: { label: "Borrador", variant: "draft" },
-    sent: { label: "Enviado", variant: "sent" },
-    accepted: { label: "Aceptado", variant: "accepted" },
-    rejected: { label: "Rechazado", variant: "rejected" },
-    expired: { label: "Expirado", variant: "expired" },
-  };
-
-  const statusInfo = statusMap[status] || { label: status, variant: "default" };
-  
-  return (
-    <StatusBadge 
-      variant={statusInfo.variant as any} 
-      label={statusInfo.label} 
-    />
-  );
+  return <StatusBadge status={status} />;
 }
 
 export function getInvoiceStatusBadge(status: string) {
-  const statusMap: Record<string, { label: string, variant: string }> = {
-    pending: { label: "Pendiente", variant: "pending" },
-    paid: { label: "Pagada", variant: "paid" },
-    overdue: { label: "Vencida", variant: "overdue" },
-    cancelled: { label: "Cancelada", variant: "cancelled" },
-  };
-
-  const statusInfo = statusMap[status] || { label: status, variant: "default" };
-  
-  return (
-    <StatusBadge 
-      variant={statusInfo.variant as any} 
-      label={statusInfo.label} 
-    />
-  );
+  return <StatusBadge status={status} />;
 }
