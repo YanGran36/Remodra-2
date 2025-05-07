@@ -84,14 +84,24 @@ interface Project {
 }
 
 // A component for displaying measurement details
-const MeasurementDetails = ({ measurement, onClose }: { measurement: PropertyMeasurement; onClose: () => void }) => {
+const MeasurementDetails = ({ 
+  measurement, 
+  clients,
+  projects,
+  onClose 
+}: { 
+  measurement: PropertyMeasurement; 
+  clients: any[];
+  projects: any[];
+  onClose: () => void 
+}) => {
   const serviceTypeIcons = {
-    roof: <Roofing className="h-5 w-5 mr-2" />,
-    siding: <Home className="h-5 w-5 mr-2" />,
+    roof: <Home className="h-5 w-5 mr-2" />,
+    siding: <Square className="h-5 w-5 mr-2" />,
     deck: <Square className="h-5 w-5 mr-2" />,
-    fence: <Fence className="h-5 w-5 mr-2" />,
+    fence: <Square className="h-5 w-5 mr-2" />,
     windows: <Square className="h-5 w-5 mr-2" />,
-    gutters: <Tape className="h-5 w-5 mr-2" />,
+    gutters: <Ruler className="h-5 w-5 mr-2" />,
   };
 
   const serviceTypeNames = {
@@ -116,13 +126,20 @@ const MeasurementDetails = ({ measurement, onClose }: { measurement: PropertyMea
       <div className="grid grid-cols-2 gap-4">
         <div>
           <p className="text-sm text-muted-foreground">Client</p>
-          <p className="font-medium">{measurement.client?.firstName} {measurement.client?.lastName}</p>
+          <p className="font-medium">
+            {measurement.clientId ? 
+              clients.find((c: any) => c.id === measurement.clientId)?.firstName + ' ' + 
+              clients.find((c: any) => c.id === measurement.clientId)?.lastName 
+              : 'N/A'}
+          </p>
         </div>
         
-        {measurement.project && (
+        {measurement.projectId && (
           <div>
             <p className="text-sm text-muted-foreground">Project</p>
-            <p className="font-medium">{measurement.project.title}</p>
+            <p className="font-medium">
+              {projects.find((p: any) => p.id === measurement.projectId)?.title || 'N/A'}
+            </p>
           </div>
         )}
         
@@ -177,26 +194,23 @@ const PropertyMeasurementsPage = () => {
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
 
   // Fetch measurements
-  const { data: measurements = [], isLoading: isMeasurementsLoading } = useQuery({
+  const { data: measurements = [], isLoading: isMeasurementsLoading } = useQuery<any[]>({
     queryKey: ["/api/protected/property-measurements"],
-    queryFn: getQueryFn({ on401: "throw" }),
   });
 
   // Fetch clients
-  const { data: clients = [], isLoading: isClientsLoading } = useQuery({
+  const { data: clients = [], isLoading: isClientsLoading } = useQuery<any[]>({
     queryKey: ["/api/protected/clients"],
-    queryFn: getQueryFn({ on401: "throw" }),
   });
 
   // Fetch projects
-  const { data: projects = [], isLoading: isProjectsLoading } = useQuery({
+  const { data: projects = [], isLoading: isProjectsLoading } = useQuery<any[]>({
     queryKey: ["/api/protected/projects"],
-    queryFn: getQueryFn({ on401: "throw" }),
   });
 
   // Filter projects by client
-  const filteredProjects = selectedClientId 
-    ? projects.filter((project: Project) => project.clientId.toString() === selectedClientId)
+  const filteredProjects = selectedClientId && Array.isArray(projects)
+    ? projects.filter((project: any) => project.clientId?.toString() === selectedClientId)
     : [];
 
   // Define form
@@ -287,16 +301,18 @@ const PropertyMeasurementsPage = () => {
   // Filter measurements by service type
   const filteredMeasurements = filter === "all" 
     ? measurements 
-    : measurements.filter((m: PropertyMeasurement) => m.serviceType === filter);
+    : Array.isArray(measurements) 
+      ? measurements.filter((m: any) => m.serviceType === filter)
+      : [];
 
   const getServiceTypeIcon = (type: string) => {
     switch(type) {
-      case 'roof': return <Roofing className="h-4 w-4" />;
-      case 'siding': return <Home className="h-4 w-4" />;
+      case 'roof': return <Home className="h-4 w-4" />;
+      case 'siding': return <Square className="h-4 w-4" />;
       case 'deck': return <Square className="h-4 w-4" />;
-      case 'fence': return <Fence className="h-4 w-4" />;
+      case 'fence': return <Square className="h-4 w-4" />;
       case 'windows': return <Square className="h-4 w-4" />;
-      case 'gutters': return <Tape className="h-4 w-4" />;
+      case 'gutters': return <Ruler className="h-4 w-4" />;
       default: return <Ruler className="h-4 w-4" />;
     }
   };
@@ -527,10 +543,11 @@ const PropertyMeasurementsPage = () => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {measurement.client ? `${measurement.client.firstName} ${measurement.client.lastName}` : 'N/A'}
+                      {measurement.clientId ? clients.find((c: any) => c.id === measurement.clientId)?.firstName + ' ' + 
+                        clients.find((c: any) => c.id === measurement.clientId)?.lastName : 'N/A'}
                     </TableCell>
                     <TableCell>
-                      {measurement.project ? measurement.project.title : 'N/A'}
+                      {measurement.projectId ? projects.find((p: any) => p.id === measurement.projectId)?.title : 'N/A'}
                     </TableCell>
                     <TableCell>
                       {measurement.totalSquareFeet ? `${Number(measurement.totalSquareFeet).toFixed(2)} sq ft` : 'N/A'}
@@ -578,7 +595,9 @@ const PropertyMeasurementsPage = () => {
         <DialogContent className="sm:max-w-[600px]">
           {selectedMeasurement && (
             <MeasurementDetails 
-              measurement={selectedMeasurement} 
+              measurement={selectedMeasurement}
+              clients={clients || []}
+              projects={projects || []}
               onClose={() => setSelectedMeasurement(null)} 
             />
           )}
