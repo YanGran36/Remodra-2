@@ -155,6 +155,21 @@ export default function VendorEstimateFormPage() {
   const [measurements, setMeasurements] = useState<any[]>([]);
   const [scanResults, setScanResults] = useState<any[]>([]);
   
+  // Estado para el formulario especializado
+  const [estimateItems, setEstimateItems] = useState<SelectedItem[]>([]);
+  
+  // Manejar actualización de artículos y total desde el componente especializado
+  const handleUpdateTotal = (items: SelectedItem[], total: number) => {
+    setEstimateItems(items);
+    setTotalAmount(total);
+  };
+  
+  // Limpiar formulario especializado
+  const handleClearSpecializedForm = () => {
+    setEstimateItems([]);
+    setTotalAmount(0);
+  };
+  
   // Fetch clients
   const { data: clients = [] } = useQuery<any[]>({
     queryKey: ["/api/protected/clients"],
@@ -831,9 +846,9 @@ export default function VendorEstimateFormPage() {
             <TabsContent value="materials" className="space-y-6 pt-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Selección de Materiales</CardTitle>
+                  <CardTitle>Estimador Especializado</CardTitle>
                   <CardDescription>
-                    Seleccione los materiales y opciones para {SERVICE_TYPES.find(s => s.value === watchServiceType)?.label || "el servicio"}
+                    Configure los materiales, opciones y medidas para {SERVICE_TYPES.find(s => s.value === watchServiceType)?.label || "el servicio"}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -843,79 +858,57 @@ export default function VendorEstimateFormPage() {
                     </div>
                   ) : (
                     <>
-                      <FormField
-                        control={form.control}
-                        name="materialType"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Material Principal*</FormLabel>
-                            <Select
-                              value={field.value}
-                              onValueChange={field.onChange}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Seleccionar material" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {MATERIALS_BY_SERVICE[watchServiceType as keyof typeof MATERIALS_BY_SERVICE]?.map((material) => (
-                                  <SelectItem key={material.id} value={material.id}>
-                                    {material.name} (${material.unitPrice.toFixed(2)}/{material.unit})
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormDescription>
-                              El material principal para este trabajo
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                      {/* Formulario especializado por tipo de servicio */}
+                      <ServiceEstimateForm
+                        serviceType={watchServiceType}
+                        onUpdateTotal={handleUpdateTotal}
+                        onClearForm={handleClearSpecializedForm}
                       />
                       
-                      {selectedMaterial && (
-                        <>
-                          {renderMeasurementInput()}
-                          
-                          <Separator className="my-4" />
-                          
-                          <div className="space-y-4">
-                            <h3 className="text-md font-medium">Opciones Adicionales</h3>
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead className="w-[40%]">Opción</TableHead>
-                                  <TableHead>Precio Unitario</TableHead>
-                                  <TableHead>Cantidad</TableHead>
-                                  <TableHead className="text-right">Total</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {OPTIONS_BY_SERVICE[watchServiceType as keyof typeof OPTIONS_BY_SERVICE]?.map((option) => (
-                                  <TableRow key={option.id}>
-                                    <TableCell>{option.name}</TableCell>
-                                    <TableCell>${option.unitPrice.toFixed(2)}/{option.unit}</TableCell>
-                                    <TableCell>
-                                      <Input
-                                        type="number"
-                                        min="0"
-                                        step="1"
-                                        className="w-20"
-                                        value={getOptionQuantity(option.id)}
-                                        onChange={(e) => handleOptionChange(option, e.target.value)}
-                                      />
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                      ${(selectedOptions.find(o => o.id === option.id)?.total || 0).toFixed(2)}
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </div>
-                        </>
-                      )}
+                      {/* Herramientas de medición */}
+                      <div className="flex justify-center mt-6 space-x-4">
+                        <Dialog open={isDigitalMeasurementOpen} onOpenChange={setIsDigitalMeasurementOpen}>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" type="button">
+                              <Ruler className="h-4 w-4 mr-2" />
+                              Medición Digital
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-4xl">
+                            <DialogHeader>
+                              <DialogTitle>Herramienta de Medición Digital</DialogTitle>
+                              <DialogDescription>
+                                Dibuje líneas sobre la imagen para medir distancias con precisión
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="min-h-[500px]">
+                              <DigitalMeasurement 
+                                onMeasurementsChange={handleMeasurementsChange} 
+                              />
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                        
+                        <Dialog open={isLidarScannerOpen} onOpenChange={setIsLidarScannerOpen}>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" type="button">
+                              <Scan className="h-4 w-4 mr-2" />
+                              Escaneo LiDAR
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-4xl">
+                            <DialogHeader>
+                              <DialogTitle>Escaneo LiDAR</DialogTitle>
+                              <DialogDescription>
+                                Use la cámara para escanear el área y obtener medidas precisas
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="min-h-[500px]">
+                              <LiDARScanner onScanComplete={handleScanComplete} />
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
                     </>
                   )}
                 </CardContent>
