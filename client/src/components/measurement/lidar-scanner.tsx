@@ -44,12 +44,14 @@ export default function LiDARScanner({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
   const [scanResults, setScanResults] = useState<ScanResult[]>([]);
   const [currentScanResult, setCurrentScanResult] = useState<ScanResult | null>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [hasUploadedImage, setHasUploadedImage] = useState(false);
   const [scanSettings, setScanSettings] = useState<ScanSettings>({
     resolution: 70,
     range: 50,
@@ -525,9 +527,106 @@ export default function LiDARScanner({
     // Detener la cámara después de capturar
     stopCamera();
     
+    setHasUploadedImage(true);
+    
     toast({
       title: "Imagen capturada",
       description: "La imagen se ha capturado. Ahora puedes iniciar el escaneo LiDAR.",
+    });
+  };
+  
+  // Cargar una imagen desde el dispositivo
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !canvasRef.current) return;
+    
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    // Crear un objeto URL para la imagen
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        // Limpiar el canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Dibujar la imagen manteniendo la proporción
+        const aspectRatio = img.width / img.height;
+        let drawWidth = canvas.width;
+        let drawHeight = canvas.width / aspectRatio;
+        
+        if (drawHeight > canvas.height) {
+          drawHeight = canvas.height;
+          drawWidth = canvas.height * aspectRatio;
+        }
+        
+        const x = (canvas.width - drawWidth) / 2;
+        const y = (canvas.height - drawHeight) / 2;
+        
+        ctx.drawImage(img, x, y, drawWidth, drawHeight);
+        setHasUploadedImage(true);
+        
+        toast({
+          title: "Imagen cargada",
+          description: "La imagen se ha cargado correctamente. Ahora puedes iniciar el escaneo LiDAR.",
+        });
+      };
+      img.src = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+    
+    // Limpiar el input para poder seleccionar el mismo archivo nuevamente
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+  
+  // Simular una imagen para el lidar
+  const simulateImage = () => {
+    if (!canvasRef.current) return;
+    
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    // Limpiar el canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Dibujar una habitación simple desde arriba para simular
+    const roomWidth = canvas.width * 0.8;
+    const roomHeight = canvas.height * 0.7;
+    const x = (canvas.width - roomWidth) / 2;
+    const y = (canvas.height - roomHeight) / 2;
+    
+    // Fondo (suelo)
+    ctx.fillStyle = '#f5f5f5';
+    ctx.fillRect(x, y, roomWidth, roomHeight);
+    
+    // Paredes
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 5;
+    ctx.strokeRect(x, y, roomWidth, roomHeight);
+    
+    // Muebles
+    // Mesa
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(x + roomWidth * 0.3, y + roomHeight * 0.3, roomWidth * 0.4, roomHeight * 0.2);
+    
+    // Silla
+    ctx.fillStyle = '#A0522D';
+    ctx.fillRect(x + roomWidth * 0.4, y + roomHeight * 0.55, roomWidth * 0.2, roomHeight * 0.1);
+    
+    // Sofá
+    ctx.fillStyle = '#6B8E23';
+    ctx.fillRect(x + roomWidth * 0.1, y + roomHeight * 0.7, roomWidth * 0.4, roomHeight * 0.15);
+    
+    setHasUploadedImage(true);
+    
+    toast({
+      title: "Imagen simulada creada",
+      description: "Se ha creado una simulación de habitación. Ahora puedes iniciar el escaneo LiDAR.",
     });
   };
   
@@ -568,7 +667,7 @@ export default function LiDARScanner({
           </Button>
         </CardTitle>
         <CardDescription>
-          Simula un escaneo LiDAR para medir espacios y obtener dimensiones precisas.
+          Simula un escaneo LiDAR para medir espacios y obtener dimensiones precisas. Puedes cargar imágenes o utilizar la simulación de habitación.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -681,6 +780,19 @@ export default function LiDARScanner({
                 height={height}
                 className="absolute top-0 left-0 w-full h-auto pointer-events-none"
               />
+              
+              {!hasUploadedImage && !isScanning && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/10 pointer-events-none">
+                  <div className="bg-white/90 p-4 rounded-md text-center max-w-xs">
+                    <p className="font-medium text-sm mb-2">
+                      ¿Problemas con la cámara?
+                    </p>
+                    <p className="text-xs mb-2">
+                      Utiliza los botones de abajo para cargar una imagen o simular una habitación, y luego inicia el escaneo.
+                    </p>
+                  </div>
+                </div>
+              )}
             </>
           )}
           
@@ -739,35 +851,72 @@ export default function LiDARScanner({
             </>
           ) : (
             <>
-              {isMobile ? (
+              <div className="flex flex-wrap gap-2 w-full mb-3">
+                {/* Input oculto para subir imágenes */}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  style={{ display: 'none' }}
+                />
+                
+                {/* Botón para cargar imagen */}
                 <Button
-                  onClick={startCamera}
+                  onClick={() => fileInputRef.current?.click()}
                   disabled={isScanning}
+                  variant="outline"
                   className="flex-1"
                 >
-                  <Smartphone className="h-4 w-4 mr-2" />
-                  Usar Cámara
+                  <Camera className="h-4 w-4 mr-2" />
+                  Cargar Imagen
                 </Button>
-              ) : null}
+                
+                {/* Botón para simular imagen */}
+                <Button
+                  onClick={simulateImage}
+                  disabled={isScanning}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  <Layers className="h-4 w-4 mr-2" />
+                  Simular Habitación
+                </Button>
+                
+                {/* Botón para usar cámara (solo en móviles) */}
+                {isMobile && (
+                  <Button
+                    onClick={startCamera}
+                    disabled={isScanning}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    <Smartphone className="h-4 w-4 mr-2" />
+                    Usar Cámara
+                  </Button>
+                )}
+              </div>
               
-              <Button
-                onClick={startScan}
-                disabled={isScanning}
-                className="flex-1"
-              >
-                <Scan className="h-4 w-4 mr-2" />
-                {scanResults.length > 0 ? "Nuevo Escaneo" : "Iniciar Escaneo"}
-              </Button>
-              
-              <Button
-                variant="outline"
-                onClick={handleDownload}
-                disabled={!currentScanResult || isScanning}
-                className="flex-1"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Descargar
-              </Button>
+              <div className="flex flex-wrap gap-2 w-full">
+                <Button
+                  onClick={startScan}
+                  disabled={isScanning || (!hasUploadedImage && !isCameraActive)}
+                  className="flex-1"
+                >
+                  <Scan className="h-4 w-4 mr-2" />
+                  {scanResults.length > 0 ? "Nuevo Escaneo" : "Iniciar Escaneo"}
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  onClick={handleDownload}
+                  disabled={!currentScanResult || isScanning}
+                  className="flex-1"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Descargar
+                </Button>
+              </div>
             </>
           )}
         </div>
