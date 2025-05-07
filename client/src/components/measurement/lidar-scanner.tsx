@@ -399,42 +399,103 @@ export default function LiDARScanner({
   // Activar la cámara
   const startCamera = async () => {
     try {
+      // Limpiar cualquier error previo
+      setCameraError(null);
+      
+      // Verificar soporte de API de MediaDevices
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setCameraError("Tu navegador no soporta acceso a la cámara.");
+        setCameraError("Tu navegador no soporta acceso a la cámara. Intenta usar Chrome, Firefox o Safari reciente.");
         toast({
           title: "Cámara no disponible",
-          description: "Tu navegador no soporta acceso a la cámara.",
+          description: "Tu navegador no soporta acceso a la cámara. Intenta usar Chrome, Firefox o Safari reciente.",
           variant: "destructive",
         });
         return;
       }
       
+      // Mostrar que estamos intentando acceder a la cámara
+      toast({
+        title: "Accediendo a la cámara",
+        description: "Espera mientras accedemos a tu cámara...",
+      });
+      
+      // Configurar restricciones de la cámara - probar primero con valores más bajos si hay problemas
       const constraints = {
         video: {
           facingMode: isMobile ? "environment" : "user",
           width: { ideal: width },
           height: { ideal: height }
+        },
+        audio: false
+      };
+      
+      console.log("Intentando acceder a la cámara con restricciones:", constraints);
+      
+      // Intentar obtener acceso a la cámara
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      console.log("Acceso a la cámara concedido:", stream.getVideoTracks()[0].getSettings());
+      
+      // Verificar que el elemento de video existe
+      if (!videoRef.current) {
+        throw new Error("Elemento de video no encontrado");
+      }
+      
+      // Asignar la transmisión al elemento de video
+      videoRef.current.srcObject = stream;
+      
+      // Escuchar cuando el video esté listo para reproducirse
+      videoRef.current.onloadedmetadata = () => {
+        console.log("Video metadata loaded");
+        if (videoRef.current) {
+          videoRef.current.play()
+            .then(() => {
+              console.log("Video reproducido correctamente");
+              setIsCameraActive(true);
+              setCameraError(null);
+            })
+            .catch(playError => {
+              console.error("Error al reproducir video:", playError);
+              setCameraError("Error al reproducir video: " + playError.message);
+              toast({
+                title: "Error al mostrar la cámara",
+                description: "No se pudo reproducir el video de la cámara: " + playError.message,
+                variant: "destructive",
+              });
+            });
         }
       };
       
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => {
-          if (videoRef.current) {
-            videoRef.current.play();
-            setIsCameraActive(true);
-            setCameraError(null);
-          }
-        };
-      }
+      // Manejar errores durante la carga de metadata
+      videoRef.current.onerror = (e) => {
+        console.error("Error en el elemento de video:", e);
+        setCameraError("Error en el elemento de video");
+        toast({
+          title: "Error de cámara",
+          description: "Error en el elemento de video",
+          variant: "destructive",
+        });
+      };
     } catch (err) {
       console.error("Error al acceder a la cámara:", err);
-      setCameraError("Error al acceder a la cámara: " + (err as Error).message);
+      const errorMsg = (err as Error).message || "Error desconocido";
+      setCameraError("Error al acceder a la cámara: " + errorMsg);
+      
+      // Mostrar instrucciones específicas según el error
+      let descripcion = "No se pudo acceder a la cámara. ";
+      
+      if (errorMsg.includes("Permission denied") || errorMsg.includes("permiso")) {
+        descripcion += "Has denegado el permiso de la cámara. Por favor, permite el acceso en la configuración de tu navegador.";
+      } else if (errorMsg.includes("NotFoundError") || errorMsg.includes("NotReadableError")) {
+        descripcion += "No se encuentra la cámara o está siendo utilizada por otra aplicación. Cierra otras aplicaciones que puedan estar usando la cámara.";
+      } else if (errorMsg.includes("NotAllowedError")) {
+        descripcion += "Acceso a la cámara bloqueado. Verifica los permisos en tu navegador.";
+      } else {
+        descripcion += errorMsg;
+      }
+      
       toast({
         title: "Error de cámara",
-        description: "No se pudo acceder a la cámara. " + (err as Error).message,
+        description: descripcion,
         variant: "destructive",
       });
     }
@@ -588,6 +649,20 @@ export default function LiDARScanner({
                   <Camera className="h-4 w-4" />
                 </Button>
               </div>
+              
+              {/* Overlay de instrucciones sobre el video */}
+              <div className="absolute inset-0 flex items-center justify-center bg-black/50 pointer-events-none">
+                <div className="bg-white/90 p-4 rounded-md text-center max-w-xs">
+                  <p className="font-medium text-sm mb-2">
+                    Si ves este mensaje pero no la cámara:
+                  </p>
+                  <ul className="text-xs text-left list-disc pl-4 space-y-1">
+                    <li>Verifica que tu navegador tiene permisos de cámara</li>
+                    <li>Refresca la página e intenta de nuevo</li>
+                    <li>Prueba con otro dispositivo o navegador</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           )}
           
@@ -621,8 +696,19 @@ export default function LiDARScanner({
           
           {/* Mensaje de error de cámara */}
           {cameraError && (
-            <div className="mt-2 p-2 bg-red-50 text-red-600 rounded-md text-sm">
-              {cameraError}
+            <div className="mt-2 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md">
+              <p className="font-medium mb-1">Problema con la cámara:</p>
+              <p className="text-sm">{cameraError}</p>
+              <div className="mt-2 text-xs text-gray-700">
+                <p className="font-medium">Soluciones comunes:</p>
+                <ul className="list-disc pl-4 mt-1 space-y-1">
+                  <li>Asegúrate de permitir el acceso a la cámara cuando el navegador lo solicite</li>
+                  <li>Verifica que ninguna otra aplicación esté usando la cámara</li>
+                  <li>Prueba con el navegador Chrome (es el más compatible)</li>
+                  <li>Si estás en iOS, usa Safari</li>
+                </ul>
+              </div>
+              <p className="mt-2 text-xs">Nota: Si no puedes usar la cámara, aún puedes utilizar el escáner con una imagen subida o la simulación.</p>
             </div>
           )}
         </div>
