@@ -71,13 +71,30 @@ export function useAiCostAnalysis() {
   // Mutation para análisis de costos
   const analysisMutation = useMutation({
     mutationFn: async (params: AiAnalysisParams) => {
+      // Validación de datos mínimos
+      if (!params.serviceType) {
+        throw new Error("Debe seleccionar un tipo de servicio");
+      }
+      
+      if (!params.materials || params.materials.length === 0) {
+        throw new Error("Debe agregar al menos un material");
+      }
+      
       const response = await apiRequest("POST", "/api/protected/ai/analyze-job-cost", params);
+      
+      // Verificar si la respuesta es exitosa
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Error al analizar los costos");
+      }
+      
       return response.json() as Promise<AiAnalysisResult>;
     },
     onError: (error) => {
+      console.error("Error en el análisis de costos:", error);
       toast({
         title: "Error en el análisis de costos",
-        description: error.message || "No se pudo completar el análisis",
+        description: error.message || "No se pudo completar el análisis. Por favor, verifica que has proporcionado los datos necesarios.",
         variant: "destructive",
       });
     },
@@ -88,7 +105,23 @@ export function useAiCostAnalysis() {
     mutationFn: async (params: AiAnalysisParams) => {
       setIsGeneratingDescription(true);
       try {
+        // Validación de datos mínimos
+        if (!params.serviceType) {
+          throw new Error("Debe seleccionar un tipo de servicio");
+        }
+        
+        if (!params.materials || params.materials.length === 0) {
+          throw new Error("Debe agregar al menos un material");
+        }
+        
         const response = await apiRequest("POST", "/api/protected/ai/generate-job-description", params);
+        
+        // Verificar si la respuesta es exitosa
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Error al generar la descripción");
+        }
+        
         const data = await response.json();
         return data.description as string;
       } finally {
@@ -97,9 +130,10 @@ export function useAiCostAnalysis() {
     },
     onError: (error) => {
       setIsGeneratingDescription(false);
+      console.error("Error al generar descripción:", error);
       toast({
         title: "Error al generar descripción",
-        description: error.message || "No se pudo generar la descripción",
+        description: error.message || "No se pudo generar la descripción. Por favor, verifica que has proporcionado los datos necesarios.",
         variant: "destructive",
       });
     },

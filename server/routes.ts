@@ -987,15 +987,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { analyzeJobCost } = await import("./openai-service");
       const params = req.body;
       
-      // Validación básica
-      if (!params.serviceType || !params.materials || params.materials.length === 0) {
+      // Validación detallada
+      if (!params) {
         return res.status(400).json({ 
-          error: "Datos insuficientes para el análisis", 
-          message: "Se requieren al menos el tipo de servicio y materiales" 
+          error: "Datos faltantes", 
+          message: "No se recibieron datos para el análisis" 
         });
       }
       
+      if (!params.serviceType) {
+        return res.status(400).json({ 
+          error: "Datos insuficientes", 
+          message: "Debe seleccionar un tipo de servicio" 
+        });
+      }
+      
+      if (!params.materials || !Array.isArray(params.materials) || params.materials.length === 0) {
+        return res.status(400).json({ 
+          error: "Datos insuficientes", 
+          message: "Debe agregar al menos un material al proyecto" 
+        });
+      }
+      
+      // Verificar si hay materiales con datos inválidos
+      const invalidMaterials = params.materials.some(
+        (m: {name?: string; quantity?: number; unitPrice?: number}) => !m.name || typeof m.quantity !== 'number' || typeof m.unitPrice !== 'number'
+      );
+      
+      if (invalidMaterials) {
+        return res.status(400).json({ 
+          error: "Datos inválidos", 
+          message: "Algunos materiales tienen información incompleta o inválida" 
+        });
+      }
+      
+      console.log("Iniciando análisis de costos para:", params.serviceType);
       const result = await analyzeJobCost(params);
+      console.log("Análisis completado con éxito");
       res.json(result);
     } catch (error) {
       console.error("Error en el análisis de costos:", error);
@@ -1012,15 +1040,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { generateJobDescription } = await import("./openai-service");
       const params = req.body;
       
-      // Validación básica
-      if (!params.serviceType || !params.materials || params.materials.length === 0) {
+      // Validación detallada
+      if (!params) {
         return res.status(400).json({ 
-          error: "Datos insuficientes para la descripción", 
-          message: "Se requieren al menos el tipo de servicio y materiales" 
+          error: "Datos faltantes", 
+          message: "No se recibieron datos para la descripción" 
         });
       }
       
+      if (!params.serviceType) {
+        return res.status(400).json({ 
+          error: "Datos insuficientes", 
+          message: "Debe seleccionar un tipo de servicio" 
+        });
+      }
+      
+      if (!params.materials || !Array.isArray(params.materials) || params.materials.length === 0) {
+        return res.status(400).json({ 
+          error: "Datos insuficientes", 
+          message: "Debe agregar al menos un material al proyecto" 
+        });
+      }
+      
+      // Verificar si hay materiales con datos inválidos
+      const invalidMaterials = params.materials.some(
+        (m: {name?: string; quantity?: number; unitPrice?: number}) => !m.name || typeof m.quantity !== 'number' || typeof m.unitPrice !== 'number'
+      );
+      
+      if (invalidMaterials) {
+        return res.status(400).json({ 
+          error: "Datos inválidos", 
+          message: "Algunos materiales tienen información incompleta o inválida" 
+        });
+      }
+      
+      console.log("Generando descripción para:", params.serviceType);
       const description = await generateJobDescription(params);
+      console.log("Descripción generada con éxito");
       res.json({ description });
     } catch (error) {
       console.error("Error al generar descripción:", error);

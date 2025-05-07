@@ -112,6 +112,15 @@ export default function AiAssistantPage() {
                     cálculos de margen óptimos y recomendaciones personalizadas. Completa el formulario a continuación 
                     para obtener un desglose detallado de costos.
                   </p>
+                  <div className="mt-4 bg-amber-50 border border-amber-200 p-3 rounded-md text-amber-800 text-sm">
+                    <p className="font-medium mb-1">Para utilizar esta herramienta:</p>
+                    <ol className="list-decimal pl-5 space-y-1">
+                      <li>Selecciona un <span className="font-medium">tipo de servicio</span></li>
+                      <li>Agrega los <span className="font-medium">materiales</span> que utilizarás</li>
+                      <li>Proporciona información sobre el tamaño y complejidad del proyecto (opcional)</li>
+                      <li>Haz clic en "Analizar Costos" o "Generar Descripción" según tu necesidad</li>
+                    </ol>
+                  </div>
                 </div>
               </div>
             </div>
