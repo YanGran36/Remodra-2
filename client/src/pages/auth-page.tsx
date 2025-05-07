@@ -266,7 +266,10 @@ export default function AuthPage() {
                 <div className="flex items-center">
                   <Checkbox 
                     id="terms" 
-                    {...signupForm.register("terms")} 
+                    checked={signupForm.watch("terms")}
+                    onCheckedChange={(checked) => {
+                      signupForm.setValue("terms", checked === true);
+                    }}
                   />
                   <Label htmlFor="terms" className="ml-2 text-sm">
                     I agree to the <a href="#" className="text-primary hover:text-primary/80">Terms of Service</a> and <a href="#" className="text-primary hover:text-primary/80">Privacy Policy</a>
