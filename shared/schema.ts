@@ -215,7 +215,8 @@ export const contractorsRelations = relations(contractors, ({ many }) => ({
   events: many(events),
   materials: many(materials),
   attachments: many(attachments),
-  followUps: many(followUps)
+  followUps: many(followUps),
+  propertyMeasurements: many(propertyMeasurements)
 }));
 
 export const clientsRelations = relations(clients, ({ one, many }) => ({
@@ -224,7 +225,8 @@ export const clientsRelations = relations(clients, ({ one, many }) => ({
   estimates: many(estimates),
   invoices: many(invoices),
   events: many(events),
-  followUps: many(followUps)
+  followUps: many(followUps),
+  propertyMeasurements: many(propertyMeasurements)
 }));
 
 export const projectsRelations = relations(projects, ({ one, many }) => ({
@@ -234,7 +236,8 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
   invoices: many(invoices),
   events: many(events),
   materials: many(materials),
-  attachments: many(attachments)
+  attachments: many(attachments),
+  propertyMeasurements: many(propertyMeasurements)
 }));
 
 export const estimatesRelations = relations(estimates, ({ one, many }) => ({
@@ -284,6 +287,13 @@ export const followUpsRelations = relations(followUps, ({ one }) => ({
   client: one(clients, { fields: [followUps.clientId], references: [clients.id] })
 }));
 
+// Property measurements relations
+export const propertyMeasurementsRelations = relations(propertyMeasurements, ({ one }) => ({
+  contractor: one(contractors, { fields: [propertyMeasurements.contractorId], references: [contractors.id] }),
+  client: one(clients, { fields: [propertyMeasurements.clientId], references: [clients.id] }),
+  project: one(projects, { fields: [propertyMeasurements.projectId], references: [projects.id] })
+}));
+
 // Define schemas for validation
 export const contractorInsertSchema = createInsertSchema(contractors, {
   firstName: (schema) => schema.min(2, "First name must be at least 2 characters"),
@@ -311,6 +321,7 @@ export const eventInsertSchema = createInsertSchema(events);
 export const materialInsertSchema = createInsertSchema(materials);
 export const attachmentInsertSchema = createInsertSchema(attachments);
 export const followUpInsertSchema = createInsertSchema(followUps);
+export const propertyMeasurementInsertSchema = createInsertSchema(propertyMeasurements);
 
 // Select schemas (used for types)
 export const contractorSelectSchema = createSelectSchema(contractors);
@@ -324,6 +335,7 @@ export const eventSelectSchema = createSelectSchema(events);
 export const materialSelectSchema = createSelectSchema(materials);
 export const attachmentSelectSchema = createSelectSchema(attachments);
 export const followUpSelectSchema = createSelectSchema(followUps);
+export const propertyMeasurementSelectSchema = createSelectSchema(propertyMeasurements);
 
 // Export types
 export type Contractor = z.infer<typeof contractorSelectSchema>;
@@ -348,3 +360,5 @@ export type Attachment = z.infer<typeof attachmentSelectSchema>;
 export type AttachmentInsert = z.infer<typeof attachmentInsertSchema>;
 export type FollowUp = z.infer<typeof followUpSelectSchema>;
 export type FollowUpInsert = z.infer<typeof followUpInsertSchema>;
+export type PropertyMeasurement = z.infer<typeof propertyMeasurementSelectSchema>;
+export type PropertyMeasurementInsert = z.infer<typeof propertyMeasurementInsertSchema>;
