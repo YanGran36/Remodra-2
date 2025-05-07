@@ -17,11 +17,27 @@ import {
   Trash2, 
   Calculator, 
   CalendarIcon, 
-  ClipboardCheck
+  ClipboardCheck,
+  Ruler,
+  Scan,
+  Camera
 } from "lucide-react";
+
+// Componentes de Medición Digital
+import DigitalMeasurement from "@/components/measurement/digital-measurement";
+import LiDARScanner from "@/components/measurement/lidar-scanner";
 
 // UI Components
 import PageHeader from "@/components/ui/page-header";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Form, 
@@ -210,6 +226,12 @@ export default function VendorEstimateFormPage() {
   const [selectedOptions, setSelectedOptions] = useState<SelectedItem[]>([]);
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Estados para herramientas de medición
+  const [isDigitalMeasurementOpen, setIsDigitalMeasurementOpen] = useState(false);
+  const [isLidarScannerOpen, setIsLidarScannerOpen] = useState(false);
+  const [measurements, setMeasurements] = useState<any[]>([]);
+  const [scanResults, setScanResults] = useState<any[]>([]);
   
   // Fetch clients
   const { data: clients = [] } = useQuery<any[]>({
@@ -453,6 +475,43 @@ export default function VendorEstimateFormPage() {
     const random = Math.floor(Math.random() * 900) + 100;
     return `EST-${year}-${random}`;
   }
+  
+  // Funciones para las herramientas de medición
+  const handleMeasurementsChange = (newMeasurements: any[]) => {
+    setMeasurements(newMeasurements);
+    
+    // Si hay mediciones y estamos midiendo un área, actualizar los pies cuadrados
+    if (newMeasurements.length >= 2 && selectedMaterial?.unit === "sq.ft") {
+      // Calcular área rectangular usando las primeras dos mediciones
+      const area = newMeasurements[0].realLength * newMeasurements[1].realLength;
+      form.setValue("squareFeet", area.toFixed(2));
+      
+      toast({
+        title: "Medidas actualizadas",
+        description: `Área calculada: ${area.toFixed(2)} pies cuadrados`,
+      });
+    } 
+    // Si estamos midiendo una longitud, actualizar los pies lineales
+    else if (newMeasurements.length > 0 && selectedMaterial?.unit === "ln.ft") {
+      // Usar la primera medición como longitud lineal
+      const length = newMeasurements[0].realLength;
+      form.setValue("linearFeet", length.toFixed(2));
+      
+      toast({
+        title: "Medidas actualizadas",
+        description: `Longitud calculada: ${length.toFixed(2)} pies lineales`,
+      });
+    }
+  };
+  
+  const handleScanComplete = (result: any) => {
+    setScanResults(prev => [...prev, result]);
+    
+    toast({
+      title: "Escaneo completado",
+      description: "El escaneo se ha completado. Puede usar estas imágenes para tomar medidas precisas.",
+    });
+  };
   
   // Helper to render measurement input based on service type and material
   const renderMeasurementInput = () => {
