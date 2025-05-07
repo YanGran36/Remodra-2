@@ -467,7 +467,12 @@ export default function PropertyMeasurementsPage() {
                       </div>
                     )}
                     
-                    <Button variant="outline">
+                    <Button 
+                      variant="outline"
+                      onClick={() => {
+                        setIsLidarScannerOpen(true);
+                      }}
+                    >
                       <Camera className="h-4 w-4 mr-2" />
                       Usar Cámara
                     </Button>

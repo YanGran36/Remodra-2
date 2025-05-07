@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Progress } from "@/components/ui/progress";
-import { RotateCw, Camera, Download, Save, Layers, Settings, Smartphone } from "lucide-react";
+import { RotateCw, Camera, Download, Save, Layers, Settings, Smartphone, Trash2, Scan } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMobile } from "@/hooks/use-mobile";
 
@@ -566,25 +566,63 @@ export default function LiDARScanner({
         )}
         
         <div className="relative mb-4">
-          <canvas 
-            ref={canvasRef} 
-            width={width} 
-            height={height}
-            className="w-full h-auto border rounded-md bg-white"
-          />
-          <canvas 
-            ref={overlayCanvasRef} 
-            width={width} 
-            height={height}
-            className="absolute top-0 left-0 w-full h-auto pointer-events-none"
-          />
+          {/* Video de cámara */}
+          {isCameraActive && (
+            <div className="relative mb-4">
+              <video 
+                ref={videoRef}
+                width={width}
+                height={height}
+                className="w-full h-auto border rounded-md bg-black"
+                autoPlay
+                playsInline
+                muted
+              />
+              <div className="absolute bottom-3 right-3">
+                <Button 
+                  variant="secondary" 
+                  size="sm" 
+                  onClick={captureImage} 
+                  className="bg-white/70 hover:bg-white"
+                >
+                  <Camera className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
           
+          {/* Canvas para depthmap */}
+          {!isCameraActive && (
+            <>
+              <canvas 
+                ref={canvasRef} 
+                width={width} 
+                height={height}
+                className="w-full h-auto border rounded-md bg-white"
+              />
+              <canvas 
+                ref={overlayCanvasRef} 
+                width={width} 
+                height={height}
+                className="absolute top-0 left-0 w-full h-auto pointer-events-none"
+              />
+            </>
+          )}
+          
+          {/* Indicador de escaneo */}
           {isScanning && (
             <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
               <div className="bg-black/70 text-white p-4 rounded-md text-center">
                 <RotateCw className="h-8 w-8 animate-spin mx-auto mb-2" />
                 <p>Escaneando... {scanProgress.toFixed(0)}%</p>
               </div>
+            </div>
+          )}
+          
+          {/* Mensaje de error de cámara */}
+          {cameraError && (
+            <div className="mt-2 p-2 bg-red-50 text-red-600 rounded-md text-sm">
+              {cameraError}
             </div>
           )}
         </div>
@@ -594,24 +632,58 @@ export default function LiDARScanner({
         )}
         
         <div className="flex flex-wrap gap-2">
-          <Button
-            onClick={startScan}
-            disabled={isScanning}
-            className="flex-1"
-          >
-            <Camera className="h-4 w-4 mr-2" />
-            {scanResults.length > 0 ? "Nuevo Escaneo" : "Iniciar Escaneo"}
-          </Button>
-          
-          <Button
-            variant="outline"
-            onClick={handleDownload}
-            disabled={!currentScanResult || isScanning}
-            className="flex-1"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Descargar
-          </Button>
+          {isCameraActive ? (
+            <>
+              <Button
+                onClick={captureImage}
+                variant="default"
+                className="flex-1"
+              >
+                <Camera className="h-4 w-4 mr-2" />
+                Capturar Imagen
+              </Button>
+              <Button
+                onClick={stopCamera}
+                variant="outline"
+                className="flex-1"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Cancelar
+              </Button>
+            </>
+          ) : (
+            <>
+              {isMobile ? (
+                <Button
+                  onClick={startCamera}
+                  disabled={isScanning}
+                  className="flex-1"
+                >
+                  <Smartphone className="h-4 w-4 mr-2" />
+                  Usar Cámara
+                </Button>
+              ) : null}
+              
+              <Button
+                onClick={startScan}
+                disabled={isScanning}
+                className="flex-1"
+              >
+                <Scan className="h-4 w-4 mr-2" />
+                {scanResults.length > 0 ? "Nuevo Escaneo" : "Iniciar Escaneo"}
+              </Button>
+              
+              <Button
+                variant="outline"
+                onClick={handleDownload}
+                disabled={!currentScanResult || isScanning}
+                className="flex-1"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Descargar
+              </Button>
+            </>
+          )}
         </div>
       </CardContent>
       {scanResults.length > 0 && (
