@@ -11,6 +11,7 @@ import {
   materials, 
   attachments, 
   followUps,
+  propertyMeasurements,
   ContractorInsert,
   ClientInsert,
   ProjectInsert,
@@ -21,7 +22,8 @@ import {
   EventInsert,
   MaterialInsert,
   AttachmentInsert,
-  FollowUpInsert
+  FollowUpInsert,
+  PropertyMeasurementInsert
 } from "@shared/schema";
 import { eq, and, asc, desc, like, or, isNull, sql } from "drizzle-orm";
 import session from "express-session";
@@ -100,6 +102,13 @@ export interface IStorage {
   createFollowUp: (data: Omit<FollowUpInsert, "id">) => Promise<any>;
   updateFollowUp: (id: number, contractorId: number, data: Partial<FollowUpInsert>) => Promise<any>;
   deleteFollowUp: (id: number, contractorId: number) => Promise<boolean>;
+  
+  // Property Measurements
+  getPropertyMeasurements: (contractorId: number) => Promise<any[]>;
+  getPropertyMeasurement: (id: number, contractorId: number) => Promise<any>;
+  createPropertyMeasurement: (data: Omit<PropertyMeasurementInsert, "id">) => Promise<any>;
+  updatePropertyMeasurement: (id: number, contractorId: number, data: Partial<PropertyMeasurementInsert>) => Promise<any>;
+  deletePropertyMeasurement: (id: number, contractorId: number) => Promise<boolean>;
   
   // Session store for authentication
   sessionStore: session.Store;
@@ -701,6 +710,62 @@ class DatabaseStorage implements IStorage {
         and(
           eq(followUps.id, id),
           eq(followUps.contractorId, contractorId)
+        )
+      );
+    return result.rowCount > 0;
+  }
+  
+  // Property Measurements methods
+  async getPropertyMeasurements(contractorId: number) {
+    return await db.query.propertyMeasurements.findMany({
+      where: eq(propertyMeasurements.contractorId, contractorId),
+      orderBy: desc(propertyMeasurements.createdAt),
+      with: {
+        client: true,
+        project: true
+      }
+    });
+  }
+
+  async getPropertyMeasurement(id: number, contractorId: number) {
+    return await db.query.propertyMeasurements.findFirst({
+      where: and(
+        eq(propertyMeasurements.id, id),
+        eq(propertyMeasurements.contractorId, contractorId)
+      ),
+      with: {
+        client: true,
+        project: true
+      }
+    });
+  }
+
+  async createPropertyMeasurement(data: Omit<PropertyMeasurementInsert, "id">) {
+    const [measurement] = await db.insert(propertyMeasurements).values(data).returning();
+    return measurement;
+  }
+
+  async updatePropertyMeasurement(id: number, contractorId: number, data: Partial<PropertyMeasurementInsert>) {
+    const [updated] = await db
+      .update(propertyMeasurements)
+      .set(data)
+      .where(
+        and(
+          eq(propertyMeasurements.id, id),
+          eq(propertyMeasurements.contractorId, contractorId)
+        )
+      )
+      .returning();
+    return updated;
+  }
+
+  async deletePropertyMeasurement(id: number, contractorId: number) {
+    const result = await db
+      .delete(propertyMeasurements)
+      .where(
+        and(
+          eq(propertyMeasurements.id, id),
+          eq(propertyMeasurements.contractorId, contractorId)
         )
       );
     return result.rowCount > 0;

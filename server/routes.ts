@@ -899,6 +899,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Property Measurements routes
+  app.get("/api/protected/property-measurements", async (req, res) => {
+    try {
+      const measurements = await storage.getPropertyMeasurements(req.user!.id);
+      res.json(measurements);
+    } catch (error) {
+      console.error("Error fetching property measurements:", error);
+      res.status(500).json({ message: "Failed to fetch property measurements" });
+    }
+  });
+
+  app.get("/api/protected/property-measurements/:id", async (req, res) => {
+    try {
+      const measurement = await storage.getPropertyMeasurement(Number(req.params.id), req.user!.id);
+      if (!measurement) {
+        return res.status(404).json({ message: "Property measurement not found" });
+      }
+      res.json(measurement);
+    } catch (error) {
+      console.error("Error fetching property measurement:", error);
+      res.status(500).json({ message: "Failed to fetch property measurement" });
+    }
+  });
+
+  app.post("/api/protected/property-measurements", async (req, res) => {
+    try {
+      const validatedData = propertyMeasurementInsertSchema.parse({
+        ...req.body,
+        contractorId: req.user!.id,
+        measuredAt: new Date(),
+      });
+      
+      const measurement = await storage.createPropertyMeasurement(validatedData);
+      res.status(201).json(measurement);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ errors: error.errors });
+      }
+      console.error("Error creating property measurement:", error);
+      res.status(500).json({ message: "Failed to create property measurement" });
+    }
+  });
+
+  app.patch("/api/protected/property-measurements/:id", async (req, res) => {
+    try {
+      const measurementId = Number(req.params.id);
+      
+      // First check if measurement exists and belongs to contractor
+      const existingMeasurement = await storage.getPropertyMeasurement(measurementId, req.user!.id);
+      if (!existingMeasurement) {
+        return res.status(404).json({ message: "Property measurement not found" });
+      }
+      
+      const validatedData = propertyMeasurementInsertSchema.partial().parse(req.body);
+      
+      const measurement = await storage.updatePropertyMeasurement(measurementId, req.user!.id, validatedData);
+      res.json(measurement);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ errors: error.errors });
+      }
+      console.error("Error updating property measurement:", error);
+      res.status(500).json({ message: "Failed to update property measurement" });
+    }
+  });
+
+  app.delete("/api/protected/property-measurements/:id", async (req, res) => {
+    try {
+      const measurementId = Number(req.params.id);
+      const success = await storage.deletePropertyMeasurement(measurementId, req.user!.id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Property measurement not found" });
+      }
+      
+      res.status(204).end();
+    } catch (error) {
+      console.error("Error deleting property measurement:", error);
+      res.status(500).json({ message: "Failed to delete property measurement" });
+    }
+  });
+
   // Create HTTP server
   const httpServer = createServer(app);
 
