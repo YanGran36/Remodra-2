@@ -421,7 +421,7 @@ export default function VendorEstimateFormPage() {
     // Prepare estimate data
     const estimateData = {
       clientId: Number(values.clientId),
-      projectId: values.projectId ? Number(values.projectId) : null,
+      projectId: values.projectId && values.projectId !== "none" ? Number(values.projectId) : null,
       estimateNumber: generateEstimateNumber(),
       issueDate: new Date(),
       expiryDate: addDays(new Date(), 30),
@@ -649,7 +649,7 @@ export default function VendorEstimateFormPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">Sin proyecto</SelectItem>
+                            <SelectItem value="none">Sin proyecto</SelectItem>
                             {filteredProjects.map((project: any) => (
                               <SelectItem key={project.id} value={project.id.toString()}>
                                 {project.title}
