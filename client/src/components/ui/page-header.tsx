@@ -1,17 +1,23 @@
-import React from 'react';
+import { ReactNode } from "react";
 
 export interface PageHeaderProps {
   title: string;
   description?: string;
+  actions?: ReactNode;
 }
 
-const PageHeader = ({ title, description }: PageHeaderProps) => {
+export function PageHeader({ title, description, actions }: PageHeaderProps) {
   return (
-    <div className="space-y-0.5">
-      <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
-      {description && <p className="text-muted-foreground">{description}</p>}
+    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+        {description && (
+          <p className="text-muted-foreground mt-1">{description}</p>
+        )}
+      </div>
+      {actions && <div className="flex items-center gap-2">{actions}</div>}
     </div>
   );
-};
+}
 
 export default PageHeader;
