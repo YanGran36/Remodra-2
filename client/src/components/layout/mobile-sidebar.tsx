@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 export default function MobileSidebar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -137,60 +138,68 @@ export default function MobileSidebar() {
           <nav>
             <Link href="/" className={getLinkClass("/")}>
               <LayoutDashboardIcon className="mr-3 h-5 w-5" />
-              <span>Dashboard</span>
+              <span>{t('navigation.dashboard')}</span>
             </Link>
             <Link href="/calendar" className={getLinkClass("/calendar")}>
               <CalendarIcon className="mr-3 h-5 w-5" />
-              <span>Calendar</span>
+              <span>{t('navigation.calendar')}</span>
             </Link>
             <Link href="/clients" className={getLinkClass("/clients")}>
               <UsersIcon className="mr-3 h-5 w-5" />
-              <span>Clients</span>
+              <span>{t('navigation.clients')}</span>
             </Link>
             <Link href="/estimates" className={getLinkClass("/estimates")}>
               <FileTextIcon className="mr-3 h-5 w-5" />
-              <span>Estimates</span>
+              <span>{t('navigation.estimates')}</span>
             </Link>
             <Link href="/invoices" className={getLinkClass("/invoices")}>
               <BanknoteIcon className="mr-3 h-5 w-5" />
-              <span>Invoices</span>
+              <span>{t('navigation.invoices')}</span>
             </Link>
             <Link href="/projects" className={getLinkClass("/projects")}>
               <HammerIcon className="mr-3 h-5 w-5" />
-              <span>Projects</span>
+              <span>{t('navigation.projects')}</span>
             </Link>
             <Link href="/materials" className={getLinkClass("/materials")}>
               <Drill className="mr-3 h-5 w-5" />
-              <span>Materials</span>
+              <span>{t('navigation.materials')}</span>
             </Link>
             <Link href="/ai-assistant" className={getLinkClass("/ai-assistant")}>
               <BotIcon className="mr-3 h-5 w-5" />
-              <span>AI Assistant</span>
+              <span>{t('navigation.aiAssistant')}</span>
             </Link>
             <Link href="/settings" className={getLinkClass("/settings")}>
               <SettingsIcon className="mr-3 h-5 w-5" />
-              <span>Settings</span>
+              <span>{t('navigation.settings')}</span>
             </Link>
           </nav>
         </div>
         
-        <div className="mt-auto p-4 border-t border-sidebar-border">
-          <div className="flex items-center">
-            <Avatar className="h-10 w-10 mr-3">
-              <AvatarImage src="" alt={user?.firstName} />
-              <AvatarFallback className="bg-primary">{getInitials()}</AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="font-medium text-sm">{user?.firstName} {user?.lastName}</p>
-              <p className="text-xs text-gray-400">{user?.email}</p>
+        <div className="mt-auto border-t border-sidebar-border">
+          {/* Language Switcher */}
+          <div className="p-2 border-b border-sidebar-border flex justify-center">
+            <LanguageSwitcher />
+          </div>
+          
+          {/* User Info and Logout */}
+          <div className="p-4">
+            <div className="flex items-center">
+              <Avatar className="h-10 w-10 mr-3">
+                <AvatarImage src="" alt={user?.firstName} />
+                <AvatarFallback className="bg-primary">{getInitials()}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-medium text-sm">{user?.firstName} {user?.lastName}</p>
+                <p className="text-xs text-gray-400">{user?.email}</p>
+              </div>
+              <button 
+                className="ml-auto text-gray-400 hover:text-white"
+                onClick={handleLogout}
+                aria-label={t('navigation.logout')}
+              >
+                <LogOutIcon className="h-5 w-5" />
+              </button>
             </div>
-            <button 
-              className="ml-auto text-gray-400 hover:text-white"
-              onClick={handleLogout}
-              aria-label="Logout"
-            >
-              <LogOutIcon className="h-5 w-5" />
-            </button>
           </div>
         </div>
       </aside>
