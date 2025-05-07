@@ -326,37 +326,53 @@ export default function PropertyMeasurementsPage() {
                 
                 <TabsContent value="digital" className="space-y-4 py-4">
                   <div className="flex justify-center gap-4">
-                    <Dialog open={isDigitalMeasurementOpen} onOpenChange={setIsDigitalMeasurementOpen}>
-                      <DialogTrigger asChild>
-                        <Button>
-                          <Ruler className="h-4 w-4 mr-2" />
-                          Herramienta de Medición
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-4xl">
-                        <DialogHeader>
-                          <DialogTitle>Herramienta de Medición Digital</DialogTitle>
-                          <DialogDescription>
-                            Dibuje líneas para medir longitudes o áreas. Use la calibración para establecer la escala correcta.
-                          </DialogDescription>
-                        </DialogHeader>
-                        
-                        <div className="my-4">
-                          <DigitalMeasurement 
-                            unit="ft"
-                            onMeasurementsChange={handleMeasurementsChange}
-                            canvasWidth={750}
-                            canvasHeight={500}
-                          />
+                    <Button onClick={() => setIsDigitalMeasurementOpen(true)}>
+                      <Ruler className="h-4 w-4 mr-2" />
+                      Herramienta de Medición
+                    </Button>
+                    
+                    {isDigitalMeasurementOpen && (
+                      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center overflow-y-auto py-10">
+                        <div className="bg-white dark:bg-gray-950 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                          <div className="p-6">
+                            <div className="flex justify-between items-center mb-4">
+                              <div>
+                                <h2 className="text-xl font-semibold">Herramienta de Medición Digital</h2>
+                                <p className="text-sm text-muted-foreground">
+                                  Dibuje líneas para medir longitudes o áreas. Use la calibración para establecer la escala correcta.
+                                </p>
+                              </div>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => setIsDigitalMeasurementOpen(false)}
+                              >
+                                <span className="sr-only">Cerrar</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                              </Button>
+                            </div>
+                            
+                            <div className="my-4">
+                              <DigitalMeasurement 
+                                unit="ft"
+                                onMeasurementsChange={handleMeasurementsChange}
+                                canvasWidth={750}
+                                canvasHeight={500}
+                              />
+                            </div>
+                            
+                            <div className="flex justify-end mt-4">
+                              <Button onClick={() => setIsDigitalMeasurementOpen(false)}>
+                                Aceptar Medidas
+                              </Button>
+                            </div>
+                          </div>
                         </div>
-                        
-                        <DialogFooter>
-                          <Button onClick={() => setIsDigitalMeasurementOpen(false)}>
-                            Aceptar Medidas
-                          </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
+                      </div>
+                    )}
                     
                     <Button variant="outline">
                       <Upload className="h-4 w-4 mr-2" />
@@ -403,37 +419,53 @@ export default function PropertyMeasurementsPage() {
                 
                 <TabsContent value="lidar" className="space-y-4 py-4">
                   <div className="flex justify-center gap-4">
-                    <Dialog open={isLidarScannerOpen} onOpenChange={setIsLidarScannerOpen}>
-                      <DialogTrigger asChild>
-                        <Button>
-                          <Scan className="h-4 w-4 mr-2" />
-                          Iniciar Escaneo 3D
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-4xl">
-                        <DialogHeader>
-                          <DialogTitle>Escáner LiDAR Simulado</DialogTitle>
-                          <DialogDescription>
-                            Escanee espacios virtualmente o cargue imágenes para generar un mapa de profundidad y tomar medidas precisas.
-                          </DialogDescription>
-                        </DialogHeader>
-                        
-                        <div className="my-4">
-                          <LiDARScanner 
-                            onScanComplete={handleScanComplete}
-                            width={750}
-                            height={500}
-                            unit="ft"
-                          />
+                    <Button onClick={() => setIsLidarScannerOpen(true)}>
+                      <Scan className="h-4 w-4 mr-2" />
+                      Iniciar Escaneo 3D
+                    </Button>
+                    
+                    {isLidarScannerOpen && (
+                      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center overflow-y-auto py-10">
+                        <div className="bg-white dark:bg-gray-950 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                          <div className="p-6">
+                            <div className="flex justify-between items-center mb-4">
+                              <div>
+                                <h2 className="text-xl font-semibold">Escáner LiDAR Simulado</h2>
+                                <p className="text-sm text-muted-foreground">
+                                  Escanee espacios virtualmente o cargue imágenes para generar un mapa de profundidad y tomar medidas precisas.
+                                </p>
+                              </div>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => setIsLidarScannerOpen(false)}
+                              >
+                                <span className="sr-only">Cerrar</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                              </Button>
+                            </div>
+                            
+                            <div className="my-4">
+                              <LiDARScanner 
+                                onScanComplete={handleScanComplete}
+                                width={750}
+                                height={500}
+                                unit="ft"
+                              />
+                            </div>
+                            
+                            <div className="flex justify-end mt-4">
+                              <Button onClick={() => setIsLidarScannerOpen(false)}>
+                                Aceptar Escaneo
+                              </Button>
+                            </div>
+                          </div>
                         </div>
-                        
-                        <DialogFooter>
-                          <Button onClick={() => setIsLidarScannerOpen(false)}>
-                            Aceptar Escaneo
-                          </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
+                      </div>
+                    )}
                     
                     <Button variant="outline">
                       <Camera className="h-4 w-4 mr-2" />

@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Progress } from "@/components/ui/progress";
-import { RotateCw, Camera, Download, Save, Layers, Settings } from "lucide-react";
+import { RotateCw, Camera, Download, Save, Layers, Settings, Smartphone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useMobile } from "@/hooks/use-mobile";
 
 interface ScanSettings {
   resolution: number; // 1-100
@@ -39,12 +40,16 @@ export default function LiDARScanner({
   unit = "ft"
 }: LiDARScannerProps) {
   const { toast } = useToast();
+  const isMobile = useMobile();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
   const [scanResults, setScanResults] = useState<ScanResult[]>([]);
   const [currentScanResult, setCurrentScanResult] = useState<ScanResult | null>(null);
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   const [scanSettings, setScanSettings] = useState<ScanSettings>({
     resolution: 70,
     range: 50,
@@ -390,6 +395,87 @@ export default function LiDARScanner({
       [setting]: value
     });
   };
+
+  // Activar la cámara
+  const startCamera = async () => {
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setCameraError("Tu navegador no soporta acceso a la cámara.");
+        toast({
+          title: "Cámara no disponible",
+          description: "Tu navegador no soporta acceso a la cámara.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      const constraints = {
+        video: {
+          facingMode: isMobile ? "environment" : "user",
+          width: { ideal: width },
+          height: { ideal: height }
+        }
+      };
+      
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          if (videoRef.current) {
+            videoRef.current.play();
+            setIsCameraActive(true);
+            setCameraError(null);
+          }
+        };
+      }
+    } catch (err) {
+      console.error("Error al acceder a la cámara:", err);
+      setCameraError("Error al acceder a la cámara: " + (err as Error).message);
+      toast({
+        title: "Error de cámara",
+        description: "No se pudo acceder a la cámara. " + (err as Error).message,
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Detener la cámara
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+      tracks.forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+      setIsCameraActive(false);
+    }
+  };
+  
+  // Capturar una imagen de la cámara
+  const captureImage = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+    
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    // Dibujar el frame actual de la cámara en el canvas
+    ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+    
+    // Detener la cámara después de capturar
+    stopCamera();
+    
+    toast({
+      title: "Imagen capturada",
+      description: "La imagen se ha capturado. Ahora puedes iniciar el escaneo LiDAR.",
+    });
+  };
+  
+  // Limpiar recursos al desmontar el componente
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, []);
 
   const handleDownload = () => {
     if (!currentScanResult) return;
