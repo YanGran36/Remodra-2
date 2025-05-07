@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Plus, Ruler, Tape, Square, CheckSquare, Pencil, Trash2, Home, Roofing, Columns, Fence } from "lucide-react";
+import { Plus, Ruler, Square, CheckSquare, Pencil, Trash2, Home, Columns, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { queryClient, apiRequest } from "@/lib/queryClient";
