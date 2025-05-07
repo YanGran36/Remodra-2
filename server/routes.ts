@@ -981,6 +981,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI routes for job cost analysis
+  app.post("/api/protected/ai/analyze-job-cost", async (req, res) => {
+    try {
+      const { analyzeJobCost } = await import("./openai-service");
+      const params = req.body;
+      
+      // Validación básica
+      if (!params.serviceType || !params.materials || params.materials.length === 0) {
+        return res.status(400).json({ 
+          error: "Datos insuficientes para el análisis", 
+          message: "Se requieren al menos el tipo de servicio y materiales" 
+        });
+      }
+      
+      const result = await analyzeJobCost(params);
+      res.json(result);
+    } catch (error) {
+      console.error("Error en el análisis de costos:", error);
+      res.status(500).json({ 
+        error: "Error al procesar el análisis de costos", 
+        message: (error as Error).message 
+      });
+    }
+  });
+  
+  // Ruta para generar descripción del trabajo con IA
+  app.post("/api/protected/ai/generate-job-description", async (req, res) => {
+    try {
+      const { generateJobDescription } = await import("./openai-service");
+      const params = req.body;
+      
+      // Validación básica
+      if (!params.serviceType || !params.materials || params.materials.length === 0) {
+        return res.status(400).json({ 
+          error: "Datos insuficientes para la descripción", 
+          message: "Se requieren al menos el tipo de servicio y materiales" 
+        });
+      }
+      
+      const description = await generateJobDescription(params);
+      res.json({ description });
+    } catch (error) {
+      console.error("Error al generar descripción:", error);
+      res.status(500).json({ 
+        error: "Error al generar la descripción del trabajo", 
+        message: (error as Error).message 
+      });
+    }
+  });
+
   // Create HTTP server
   const httpServer = createServer(app);
 
