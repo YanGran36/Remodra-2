@@ -1,0 +1,710 @@
+import { db } from "@db";
+import { 
+  contractors, 
+  clients, 
+  projects, 
+  estimates, 
+  estimateItems, 
+  invoices, 
+  invoiceItems, 
+  events, 
+  materials, 
+  attachments, 
+  followUps,
+  ContractorInsert,
+  ClientInsert,
+  ProjectInsert,
+  EstimateInsert,
+  EstimateItemInsert,
+  InvoiceInsert,
+  InvoiceItemInsert,
+  EventInsert,
+  MaterialInsert,
+  AttachmentInsert,
+  FollowUpInsert
+} from "@shared/schema";
+import { eq, and, asc, desc, like, or, isNull, sql } from "drizzle-orm";
+import session from "express-session";
+import connectPg from "connect-pg-simple";
+
+const PostgresSessionStore = connectPg(session);
+
+export interface IStorage {
+  // Contractors
+  getContractor: (id: number) => Promise<any>;
+  getContractorByEmail: (email: string) => Promise<any>;
+  createContractor: (data: Omit<ContractorInsert, "id">) => Promise<any>;
+  updateContractor: (id: number, data: Partial<ContractorInsert>) => Promise<any>;
+  
+  // Clients
+  getClients: (contractorId: number) => Promise<any[]>;
+  getClient: (id: number, contractorId: number) => Promise<any>;
+  createClient: (data: Omit<ClientInsert, "id">) => Promise<any>;
+  updateClient: (id: number, contractorId: number, data: Partial<ClientInsert>) => Promise<any>;
+  deleteClient: (id: number, contractorId: number) => Promise<boolean>;
+  
+  // Projects
+  getProjects: (contractorId: number) => Promise<any[]>;
+  getProject: (id: number, contractorId: number) => Promise<any>;
+  createProject: (data: Omit<ProjectInsert, "id">) => Promise<any>;
+  updateProject: (id: number, contractorId: number, data: Partial<ProjectInsert>) => Promise<any>;
+  deleteProject: (id: number, contractorId: number) => Promise<boolean>;
+  
+  // Estimates
+  getEstimates: (contractorId: number) => Promise<any[]>;
+  getEstimate: (id: number, contractorId: number) => Promise<any>;
+  createEstimate: (data: Omit<EstimateInsert, "id">) => Promise<any>;
+  updateEstimate: (id: number, contractorId: number, data: Partial<EstimateInsert>) => Promise<any>;
+  deleteEstimate: (id: number, contractorId: number) => Promise<boolean>;
+  
+  // Estimate Items
+  getEstimateItems: (estimateId: number, contractorId: number) => Promise<any[]>;
+  createEstimateItem: (data: Omit<EstimateItemInsert, "id">) => Promise<any>;
+  updateEstimateItem: (id: number, estimateId: number, contractorId: number, data: Partial<EstimateItemInsert>) => Promise<any>;
+  deleteEstimateItem: (id: number, estimateId: number, contractorId: number) => Promise<boolean>;
+  
+  // Invoices
+  getInvoices: (contractorId: number) => Promise<any[]>;
+  getInvoice: (id: number, contractorId: number) => Promise<any>;
+  createInvoice: (data: Omit<InvoiceInsert, "id">) => Promise<any>;
+  updateInvoice: (id: number, contractorId: number, data: Partial<InvoiceInsert>) => Promise<any>;
+  deleteInvoice: (id: number, contractorId: number) => Promise<boolean>;
+  
+  // Invoice Items
+  getInvoiceItems: (invoiceId: number, contractorId: number) => Promise<any[]>;
+  createInvoiceItem: (data: Omit<InvoiceItemInsert, "id">) => Promise<any>;
+  updateInvoiceItem: (id: number, invoiceId: number, contractorId: number, data: Partial<InvoiceItemInsert>) => Promise<any>;
+  deleteInvoiceItem: (id: number, invoiceId: number, contractorId: number) => Promise<boolean>;
+  
+  // Events
+  getEvents: (contractorId: number) => Promise<any[]>;
+  getEvent: (id: number, contractorId: number) => Promise<any>;
+  createEvent: (data: Omit<EventInsert, "id">) => Promise<any>;
+  updateEvent: (id: number, contractorId: number, data: Partial<EventInsert>) => Promise<any>;
+  deleteEvent: (id: number, contractorId: number) => Promise<boolean>;
+  
+  // Materials
+  getMaterials: (contractorId: number) => Promise<any[]>;
+  getMaterial: (id: number, contractorId: number) => Promise<any>;
+  createMaterial: (data: Omit<MaterialInsert, "id">) => Promise<any>;
+  updateMaterial: (id: number, contractorId: number, data: Partial<MaterialInsert>) => Promise<any>;
+  deleteMaterial: (id: number, contractorId: number) => Promise<boolean>;
+  
+  // Attachments
+  getAttachments: (contractorId: number, entityType: string, entityId: number) => Promise<any[]>;
+  createAttachment: (data: Omit<AttachmentInsert, "id">) => Promise<any>;
+  deleteAttachment: (id: number, contractorId: number) => Promise<boolean>;
+  
+  // Follow-ups
+  getFollowUps: (contractorId: number) => Promise<any[]>;
+  createFollowUp: (data: Omit<FollowUpInsert, "id">) => Promise<any>;
+  updateFollowUp: (id: number, contractorId: number, data: Partial<FollowUpInsert>) => Promise<any>;
+  deleteFollowUp: (id: number, contractorId: number) => Promise<boolean>;
+  
+  // Session store for authentication
+  sessionStore: session.Store;
+}
+
+class DatabaseStorage implements IStorage {
+  sessionStore: session.Store;
+
+  constructor() {
+    this.sessionStore = new PostgresSessionStore({
+      conObject: {
+        connectionString: process.env.DATABASE_URL,
+        ssl: process.env.NODE_ENV === "production",
+      },
+      createTableIfMissing: true,
+      tableName: "session",
+    });
+  }
+
+  // Contractor methods
+  async getContractor(id: number) {
+    const result = await db.query.contractors.findFirst({
+      where: eq(contractors.id, id)
+    });
+    
+    if (!result) {
+      return null;
+    }
+    
+    // Don't send password to client
+    const { password, ...user } = result;
+    return user;
+  }
+
+  async getContractorByEmail(email: string) {
+    return await db.query.contractors.findFirst({
+      where: eq(contractors.email, email)
+    });
+  }
+
+  async createContractor(data: Omit<ContractorInsert, "id">) {
+    const [contractor] = await db.insert(contractors).values(data).returning();
+    
+    // Don't send password to client
+    const { password, ...user } = contractor;
+    return user;
+  }
+
+  async updateContractor(id: number, data: Partial<ContractorInsert>) {
+    const [updated] = await db
+      .update(contractors)
+      .set(data)
+      .where(eq(contractors.id, id))
+      .returning();
+    
+    // Don't send password to client
+    const { password, ...user } = updated;
+    return user;
+  }
+
+  // Client methods
+  async getClients(contractorId: number) {
+    return await db.query.clients.findMany({
+      where: eq(clients.contractorId, contractorId),
+      orderBy: asc(clients.lastName)
+    });
+  }
+
+  async getClient(id: number, contractorId: number) {
+    return await db.query.clients.findFirst({
+      where: and(
+        eq(clients.id, id),
+        eq(clients.contractorId, contractorId)
+      )
+    });
+  }
+
+  async createClient(data: Omit<ClientInsert, "id">) {
+    const [client] = await db.insert(clients).values(data).returning();
+    return client;
+  }
+
+  async updateClient(id: number, contractorId: number, data: Partial<ClientInsert>) {
+    const [updated] = await db
+      .update(clients)
+      .set(data)
+      .where(
+        and(
+          eq(clients.id, id),
+          eq(clients.contractorId, contractorId)
+        )
+      )
+      .returning();
+    return updated;
+  }
+
+  async deleteClient(id: number, contractorId: number) {
+    const result = await db
+      .delete(clients)
+      .where(
+        and(
+          eq(clients.id, id),
+          eq(clients.contractorId, contractorId)
+        )
+      );
+    return result.rowCount > 0;
+  }
+
+  // Project methods
+  async getProjects(contractorId: number) {
+    return await db.query.projects.findMany({
+      where: eq(projects.contractorId, contractorId),
+      orderBy: desc(projects.createdAt),
+      with: {
+        client: true
+      }
+    });
+  }
+
+  async getProject(id: number, contractorId: number) {
+    return await db.query.projects.findFirst({
+      where: and(
+        eq(projects.id, id),
+        eq(projects.contractorId, contractorId)
+      ),
+      with: {
+        client: true
+      }
+    });
+  }
+
+  async createProject(data: Omit<ProjectInsert, "id">) {
+    const [project] = await db.insert(projects).values(data).returning();
+    return project;
+  }
+
+  async updateProject(id: number, contractorId: number, data: Partial<ProjectInsert>) {
+    const [updated] = await db
+      .update(projects)
+      .set(data)
+      .where(
+        and(
+          eq(projects.id, id),
+          eq(projects.contractorId, contractorId)
+        )
+      )
+      .returning();
+    return updated;
+  }
+
+  async deleteProject(id: number, contractorId: number) {
+    const result = await db
+      .delete(projects)
+      .where(
+        and(
+          eq(projects.id, id),
+          eq(projects.contractorId, contractorId)
+        )
+      );
+    return result.rowCount > 0;
+  }
+
+  // Estimate methods
+  async getEstimates(contractorId: number) {
+    return await db.query.estimates.findMany({
+      where: eq(estimates.contractorId, contractorId),
+      orderBy: desc(estimates.createdAt),
+      with: {
+        client: true,
+        project: true
+      }
+    });
+  }
+
+  async getEstimate(id: number, contractorId: number) {
+    return await db.query.estimates.findFirst({
+      where: and(
+        eq(estimates.id, id),
+        eq(estimates.contractorId, contractorId)
+      ),
+      with: {
+        client: true,
+        project: true,
+        items: true
+      }
+    });
+  }
+
+  async createEstimate(data: Omit<EstimateInsert, "id">) {
+    const [estimate] = await db.insert(estimates).values(data).returning();
+    return estimate;
+  }
+
+  async updateEstimate(id: number, contractorId: number, data: Partial<EstimateInsert>) {
+    const [updated] = await db
+      .update(estimates)
+      .set(data)
+      .where(
+        and(
+          eq(estimates.id, id),
+          eq(estimates.contractorId, contractorId)
+        )
+      )
+      .returning();
+    return updated;
+  }
+
+  async deleteEstimate(id: number, contractorId: number) {
+    const result = await db
+      .delete(estimates)
+      .where(
+        and(
+          eq(estimates.id, id),
+          eq(estimates.contractorId, contractorId)
+        )
+      );
+    return result.rowCount > 0;
+  }
+
+  // Estimate Item methods
+  async getEstimateItems(estimateId: number, contractorId: number) {
+    // First verify the estimate belongs to the contractor
+    const estimateCheck = await db.query.estimates.findFirst({
+      where: and(
+        eq(estimates.id, estimateId),
+        eq(estimates.contractorId, contractorId)
+      )
+    });
+    
+    if (!estimateCheck) {
+      return [];
+    }
+    
+    return await db.query.estimateItems.findMany({
+      where: eq(estimateItems.estimateId, estimateId)
+    });
+  }
+
+  async createEstimateItem(data: Omit<EstimateItemInsert, "id">) {
+    const [item] = await db.insert(estimateItems).values(data).returning();
+    return item;
+  }
+
+  async updateEstimateItem(id: number, estimateId: number, contractorId: number, data: Partial<EstimateItemInsert>) {
+    // First verify the estimate belongs to the contractor
+    const estimateCheck = await db.query.estimates.findFirst({
+      where: and(
+        eq(estimates.id, estimateId),
+        eq(estimates.contractorId, contractorId)
+      )
+    });
+    
+    if (!estimateCheck) {
+      return null;
+    }
+    
+    const [updated] = await db
+      .update(estimateItems)
+      .set(data)
+      .where(
+        and(
+          eq(estimateItems.id, id),
+          eq(estimateItems.estimateId, estimateId)
+        )
+      )
+      .returning();
+    return updated;
+  }
+
+  async deleteEstimateItem(id: number, estimateId: number, contractorId: number) {
+    // First verify the estimate belongs to the contractor
+    const estimateCheck = await db.query.estimates.findFirst({
+      where: and(
+        eq(estimates.id, estimateId),
+        eq(estimates.contractorId, contractorId)
+      )
+    });
+    
+    if (!estimateCheck) {
+      return false;
+    }
+    
+    const result = await db
+      .delete(estimateItems)
+      .where(
+        and(
+          eq(estimateItems.id, id),
+          eq(estimateItems.estimateId, estimateId)
+        )
+      );
+    return result.rowCount > 0;
+  }
+
+  // Invoice methods
+  async getInvoices(contractorId: number) {
+    return await db.query.invoices.findMany({
+      where: eq(invoices.contractorId, contractorId),
+      orderBy: desc(invoices.createdAt),
+      with: {
+        client: true,
+        project: true
+      }
+    });
+  }
+
+  async getInvoice(id: number, contractorId: number) {
+    return await db.query.invoices.findFirst({
+      where: and(
+        eq(invoices.id, id),
+        eq(invoices.contractorId, contractorId)
+      ),
+      with: {
+        client: true,
+        project: true,
+        items: true,
+        estimate: true
+      }
+    });
+  }
+
+  async createInvoice(data: Omit<InvoiceInsert, "id">) {
+    const [invoice] = await db.insert(invoices).values(data).returning();
+    return invoice;
+  }
+
+  async updateInvoice(id: number, contractorId: number, data: Partial<InvoiceInsert>) {
+    const [updated] = await db
+      .update(invoices)
+      .set(data)
+      .where(
+        and(
+          eq(invoices.id, id),
+          eq(invoices.contractorId, contractorId)
+        )
+      )
+      .returning();
+    return updated;
+  }
+
+  async deleteInvoice(id: number, contractorId: number) {
+    const result = await db
+      .delete(invoices)
+      .where(
+        and(
+          eq(invoices.id, id),
+          eq(invoices.contractorId, contractorId)
+        )
+      );
+    return result.rowCount > 0;
+  }
+
+  // Invoice Item methods
+  async getInvoiceItems(invoiceId: number, contractorId: number) {
+    // First verify the invoice belongs to the contractor
+    const invoiceCheck = await db.query.invoices.findFirst({
+      where: and(
+        eq(invoices.id, invoiceId),
+        eq(invoices.contractorId, contractorId)
+      )
+    });
+    
+    if (!invoiceCheck) {
+      return [];
+    }
+    
+    return await db.query.invoiceItems.findMany({
+      where: eq(invoiceItems.invoiceId, invoiceId)
+    });
+  }
+
+  async createInvoiceItem(data: Omit<InvoiceItemInsert, "id">) {
+    const [item] = await db.insert(invoiceItems).values(data).returning();
+    return item;
+  }
+
+  async updateInvoiceItem(id: number, invoiceId: number, contractorId: number, data: Partial<InvoiceItemInsert>) {
+    // First verify the invoice belongs to the contractor
+    const invoiceCheck = await db.query.invoices.findFirst({
+      where: and(
+        eq(invoices.id, invoiceId),
+        eq(invoices.contractorId, contractorId)
+      )
+    });
+    
+    if (!invoiceCheck) {
+      return null;
+    }
+    
+    const [updated] = await db
+      .update(invoiceItems)
+      .set(data)
+      .where(
+        and(
+          eq(invoiceItems.id, id),
+          eq(invoiceItems.invoiceId, invoiceId)
+        )
+      )
+      .returning();
+    return updated;
+  }
+
+  async deleteInvoiceItem(id: number, invoiceId: number, contractorId: number) {
+    // First verify the invoice belongs to the contractor
+    const invoiceCheck = await db.query.invoices.findFirst({
+      where: and(
+        eq(invoices.id, invoiceId),
+        eq(invoices.contractorId, contractorId)
+      )
+    });
+    
+    if (!invoiceCheck) {
+      return false;
+    }
+    
+    const result = await db
+      .delete(invoiceItems)
+      .where(
+        and(
+          eq(invoiceItems.id, id),
+          eq(invoiceItems.invoiceId, invoiceId)
+        )
+      );
+    return result.rowCount > 0;
+  }
+
+  // Events methods
+  async getEvents(contractorId: number) {
+    return await db.query.events.findMany({
+      where: eq(events.contractorId, contractorId),
+      orderBy: asc(events.startTime),
+      with: {
+        client: true,
+        project: true
+      }
+    });
+  }
+
+  async getEvent(id: number, contractorId: number) {
+    return await db.query.events.findFirst({
+      where: and(
+        eq(events.id, id),
+        eq(events.contractorId, contractorId)
+      ),
+      with: {
+        client: true,
+        project: true
+      }
+    });
+  }
+
+  async createEvent(data: Omit<EventInsert, "id">) {
+    const [event] = await db.insert(events).values(data).returning();
+    return event;
+  }
+
+  async updateEvent(id: number, contractorId: number, data: Partial<EventInsert>) {
+    const [updated] = await db
+      .update(events)
+      .set(data)
+      .where(
+        and(
+          eq(events.id, id),
+          eq(events.contractorId, contractorId)
+        )
+      )
+      .returning();
+    return updated;
+  }
+
+  async deleteEvent(id: number, contractorId: number) {
+    const result = await db
+      .delete(events)
+      .where(
+        and(
+          eq(events.id, id),
+          eq(events.contractorId, contractorId)
+        )
+      );
+    return result.rowCount > 0;
+  }
+
+  // Materials methods
+  async getMaterials(contractorId: number) {
+    return await db.query.materials.findMany({
+      where: eq(materials.contractorId, contractorId),
+      orderBy: asc(materials.name),
+      with: {
+        project: true
+      }
+    });
+  }
+
+  async getMaterial(id: number, contractorId: number) {
+    return await db.query.materials.findFirst({
+      where: and(
+        eq(materials.id, id),
+        eq(materials.contractorId, contractorId)
+      ),
+      with: {
+        project: true
+      }
+    });
+  }
+
+  async createMaterial(data: Omit<MaterialInsert, "id">) {
+    const [material] = await db.insert(materials).values(data).returning();
+    return material;
+  }
+
+  async updateMaterial(id: number, contractorId: number, data: Partial<MaterialInsert>) {
+    const [updated] = await db
+      .update(materials)
+      .set(data)
+      .where(
+        and(
+          eq(materials.id, id),
+          eq(materials.contractorId, contractorId)
+        )
+      )
+      .returning();
+    return updated;
+  }
+
+  async deleteMaterial(id: number, contractorId: number) {
+    const result = await db
+      .delete(materials)
+      .where(
+        and(
+          eq(materials.id, id),
+          eq(materials.contractorId, contractorId)
+        )
+      );
+    return result.rowCount > 0;
+  }
+
+  // Attachment methods
+  async getAttachments(contractorId: number, entityType: string, entityId: number) {
+    return await db.query.attachments.findMany({
+      where: and(
+        eq(attachments.contractorId, contractorId),
+        eq(attachments.entityType, entityType),
+        eq(attachments.entityId, entityId)
+      ),
+      orderBy: desc(attachments.uploadedAt)
+    });
+  }
+
+  async createAttachment(data: Omit<AttachmentInsert, "id">) {
+    const [attachment] = await db.insert(attachments).values(data).returning();
+    return attachment;
+  }
+
+  async deleteAttachment(id: number, contractorId: number) {
+    const result = await db
+      .delete(attachments)
+      .where(
+        and(
+          eq(attachments.id, id),
+          eq(attachments.contractorId, contractorId)
+        )
+      );
+    return result.rowCount > 0;
+  }
+
+  // Follow-up methods
+  async getFollowUps(contractorId: number) {
+    return await db.query.followUps.findMany({
+      where: eq(followUps.contractorId, contractorId),
+      orderBy: asc(followUps.scheduledDate),
+      with: {
+        client: true
+      }
+    });
+  }
+
+  async createFollowUp(data: Omit<FollowUpInsert, "id">) {
+    const [followUp] = await db.insert(followUps).values(data).returning();
+    return followUp;
+  }
+
+  async updateFollowUp(id: number, contractorId: number, data: Partial<FollowUpInsert>) {
+    const [updated] = await db
+      .update(followUps)
+      .set(data)
+      .where(
+        and(
+          eq(followUps.id, id),
+          eq(followUps.contractorId, contractorId)
+        )
+      )
+      .returning();
+    return updated;
+  }
+
+  async deleteFollowUp(id: number, contractorId: number) {
+    const result = await db
+      .delete(followUps)
+      .where(
+        and(
+          eq(followUps.id, id),
+          eq(followUps.contractorId, contractorId)
+        )
+      );
+    return result.rowCount > 0;
+  }
+}
+
+export const storage = new DatabaseStorage();

@@ -1,0 +1,325 @@
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, jsonb, uuid } from "drizzle-orm/pg-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { z } from "zod";
+import { relations } from "drizzle-orm";
+
+// Contractors (users of the platform)
+export const contractors = pgTable("contractors", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  companyName: text("company_name").notNull(),
+  phone: text("phone"),
+  address: text("address"),
+  city: text("city"),
+  state: text("state"),
+  zip: text("zip"),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+
+// Clients (belonging to contractors)
+export const clients = pgTable("clients", {
+  id: serial("id").primaryKey(),
+  contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  email: text("email"),
+  phone: text("phone"),
+  address: text("address"),
+  city: text("city"),
+  state: text("state"),
+  zip: text("zip"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+
+// Projects
+export const projects = pgTable("projects", {
+  id: serial("id").primaryKey(),
+  contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
+  clientId: integer("client_id").references(() => clients.id).notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  status: text("status").notNull().default("pending"), // pending, in_progress, on_hold, completed, cancelled
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  budget: decimal("budget", { precision: 10, scale: 2 }),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+
+// Estimates
+export const estimates = pgTable("estimates", {
+  id: serial("id").primaryKey(),
+  contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
+  clientId: integer("client_id").references(() => clients.id).notNull(),
+  projectId: integer("project_id").references(() => projects.id),
+  estimateNumber: text("estimate_number").notNull(),
+  issueDate: timestamp("issue_date").notNull().defaultNow(),
+  expiryDate: timestamp("expiry_date"),
+  status: text("status").notNull().default("draft"), // draft, sent, accepted, rejected, expired
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
+  tax: decimal("tax", { precision: 10, scale: 2 }).notNull().default("0"),
+  discount: decimal("discount", { precision: 10, scale: 2 }).notNull().default("0"),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  terms: text("terms"),
+  notes: text("notes"),
+  clientSignature: text("client_signature"),
+  contractorSignature: text("contractor_signature"),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+
+// Estimate line items
+export const estimateItems = pgTable("estimate_items", {
+  id: serial("id").primaryKey(),
+  estimateId: integer("estimate_id").references(() => estimates.id).notNull(),
+  description: text("description").notNull(),
+  quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  notes: text("notes")
+});
+
+// Invoices
+export const invoices = pgTable("invoices", {
+  id: serial("id").primaryKey(),
+  contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
+  clientId: integer("client_id").references(() => clients.id).notNull(),
+  projectId: integer("project_id").references(() => projects.id),
+  estimateId: integer("estimate_id").references(() => estimates.id),
+  invoiceNumber: text("invoice_number").notNull(),
+  issueDate: timestamp("issue_date").notNull().defaultNow(),
+  dueDate: timestamp("due_date").notNull(),
+  status: text("status").notNull().default("pending"), // pending, paid, overdue, cancelled
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
+  tax: decimal("tax", { precision: 10, scale: 2 }).notNull().default("0"),
+  discount: decimal("discount", { precision: 10, scale: 2 }).notNull().default("0"),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  amountPaid: decimal("amount_paid", { precision: 10, scale: 2 }).notNull().default("0"),
+  terms: text("terms"),
+  notes: text("notes"),
+  clientSignature: text("client_signature"),
+  contractorSignature: text("contractor_signature"),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+
+// Invoice line items
+export const invoiceItems = pgTable("invoice_items", {
+  id: serial("id").primaryKey(),
+  invoiceId: integer("invoice_id").references(() => invoices.id).notNull(),
+  description: text("description").notNull(),
+  quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  notes: text("notes")
+});
+
+// Events/Calendar
+export const events = pgTable("events", {
+  id: serial("id").primaryKey(),
+  contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time").notNull(),
+  location: text("location"),
+  type: text("type").notNull(), // meeting, site-visit, delivery, estimate, invoice, other
+  status: text("status").notNull().default("pending"), // pending, confirmed, completed, cancelled
+  clientId: integer("client_id").references(() => clients.id),
+  projectId: integer("project_id").references(() => projects.id),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+
+// Materials/Supplies
+export const materials = pgTable("materials", {
+  id: serial("id").primaryKey(),
+  contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  supplier: text("supplier"),
+  cost: decimal("cost", { precision: 10, scale: 2 }),
+  quantity: decimal("quantity", { precision: 10, scale: 2 }),
+  unit: text("unit"), // e.g., each, ft, m, sq.ft, etc.
+  orderNumber: text("order_number"),
+  status: text("status").notNull().default("in_stock"), // in_stock, ordered, delivered, out_of_stock
+  projectId: integer("project_id").references(() => projects.id),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+
+// Attachments for projects, clients, etc.
+export const attachments = pgTable("attachments", {
+  id: serial("id").primaryKey(),
+  contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
+  fileName: text("file_name").notNull(),
+  fileType: text("file_type").notNull(),
+  fileUrl: text("file_url").notNull(),
+  fileSize: integer("file_size").notNull(),
+  entityType: text("entity_type").notNull(), // client, project, estimate, invoice, material
+  entityId: integer("entity_id").notNull(),
+  uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
+  description: text("description")
+});
+
+// AI Follow-up Agent settings and messages
+export const followUps = pgTable("follow_ups", {
+  id: serial("id").primaryKey(),
+  contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
+  clientId: integer("client_id").references(() => clients.id).notNull(),
+  type: text("type").notNull(), // estimate, invoice, appointment, general
+  status: text("status").notNull().default("pending"), // pending, sent, responded, completed
+  entityId: integer("entity_id"), // ID of the estimate, invoice, etc.
+  entityType: text("entity_type"), // estimate, invoice, appointment
+  message: text("message").notNull(),
+  scheduledDate: timestamp("scheduled_date").notNull(),
+  sentDate: timestamp("sent_date"),
+  responseDate: timestamp("response_date"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+
+// Define relations
+export const contractorsRelations = relations(contractors, ({ many }) => ({
+  clients: many(clients),
+  projects: many(projects),
+  estimates: many(estimates),
+  invoices: many(invoices),
+  events: many(events),
+  materials: many(materials),
+  attachments: many(attachments),
+  followUps: many(followUps)
+}));
+
+export const clientsRelations = relations(clients, ({ one, many }) => ({
+  contractor: one(contractors, { fields: [clients.contractorId], references: [contractors.id] }),
+  projects: many(projects),
+  estimates: many(estimates),
+  invoices: many(invoices),
+  events: many(events),
+  followUps: many(followUps)
+}));
+
+export const projectsRelations = relations(projects, ({ one, many }) => ({
+  contractor: one(contractors, { fields: [projects.contractorId], references: [contractors.id] }),
+  client: one(clients, { fields: [projects.clientId], references: [clients.id] }),
+  estimates: many(estimates),
+  invoices: many(invoices),
+  events: many(events),
+  materials: many(materials),
+  attachments: many(attachments)
+}));
+
+export const estimatesRelations = relations(estimates, ({ one, many }) => ({
+  contractor: one(contractors, { fields: [estimates.contractorId], references: [contractors.id] }),
+  client: one(clients, { fields: [estimates.clientId], references: [clients.id] }),
+  project: one(projects, { fields: [estimates.projectId], references: [projects.id] }),
+  items: many(estimateItems),
+  invoices: many(invoices),
+  attachments: many(attachments)
+}));
+
+export const estimateItemsRelations = relations(estimateItems, ({ one }) => ({
+  estimate: one(estimates, { fields: [estimateItems.estimateId], references: [estimates.id] })
+}));
+
+export const invoicesRelations = relations(invoices, ({ one, many }) => ({
+  contractor: one(contractors, { fields: [invoices.contractorId], references: [contractors.id] }),
+  client: one(clients, { fields: [invoices.clientId], references: [clients.id] }),
+  project: one(projects, { fields: [invoices.projectId], references: [projects.id] }),
+  estimate: one(estimates, { fields: [invoices.estimateId], references: [estimates.id] }),
+  items: many(invoiceItems),
+  attachments: many(attachments)
+}));
+
+export const invoiceItemsRelations = relations(invoiceItems, ({ one }) => ({
+  invoice: one(invoices, { fields: [invoiceItems.invoiceId], references: [invoices.id] })
+}));
+
+export const eventsRelations = relations(events, ({ one }) => ({
+  contractor: one(contractors, { fields: [events.contractorId], references: [contractors.id] }),
+  client: one(clients, { fields: [events.clientId], references: [clients.id] }),
+  project: one(projects, { fields: [events.projectId], references: [projects.id] })
+}));
+
+export const materialsRelations = relations(materials, ({ one, many }) => ({
+  contractor: one(contractors, { fields: [materials.contractorId], references: [contractors.id] }),
+  project: one(projects, { fields: [materials.projectId], references: [projects.id] }),
+  attachments: many(attachments)
+}));
+
+export const attachmentsRelations = relations(attachments, ({ one }) => ({
+  contractor: one(contractors, { fields: [attachments.contractorId], references: [contractors.id] })
+}));
+
+export const followUpsRelations = relations(followUps, ({ one }) => ({
+  contractor: one(contractors, { fields: [followUps.contractorId], references: [contractors.id] }),
+  client: one(clients, { fields: [followUps.clientId], references: [clients.id] })
+}));
+
+// Define schemas for validation
+export const contractorInsertSchema = createInsertSchema(contractors, {
+  firstName: (schema) => schema.min(2, "First name must be at least 2 characters"),
+  lastName: (schema) => schema.min(2, "Last name must be at least 2 characters"),
+  email: (schema) => schema.email("Must provide a valid email"),
+  password: (schema) => schema.min(6, "Password must be at least 6 characters"),
+  companyName: (schema) => schema.min(2, "Company name must be at least 2 characters")
+});
+
+export const clientInsertSchema = createInsertSchema(clients, {
+  firstName: (schema) => schema.min(2, "First name must be at least 2 characters"),
+  lastName: (schema) => schema.min(2, "Last name must be at least 2 characters"),
+  email: (schema) => schema.email("Must provide a valid email").nullable().optional()
+});
+
+export const projectInsertSchema = createInsertSchema(projects, {
+  title: (schema) => schema.min(3, "Title must be at least 3 characters")
+});
+
+export const estimateInsertSchema = createInsertSchema(estimates);
+export const estimateItemInsertSchema = createInsertSchema(estimateItems);
+export const invoiceInsertSchema = createInsertSchema(invoices);
+export const invoiceItemInsertSchema = createInsertSchema(invoiceItems);
+export const eventInsertSchema = createInsertSchema(events);
+export const materialInsertSchema = createInsertSchema(materials);
+export const attachmentInsertSchema = createInsertSchema(attachments);
+export const followUpInsertSchema = createInsertSchema(followUps);
+
+// Select schemas (used for types)
+export const contractorSelectSchema = createSelectSchema(contractors);
+export const clientSelectSchema = createSelectSchema(clients);
+export const projectSelectSchema = createSelectSchema(projects);
+export const estimateSelectSchema = createSelectSchema(estimates);
+export const estimateItemSelectSchema = createSelectSchema(estimateItems);
+export const invoiceSelectSchema = createSelectSchema(invoices);
+export const invoiceItemSelectSchema = createSelectSchema(invoiceItems);
+export const eventSelectSchema = createSelectSchema(events);
+export const materialSelectSchema = createSelectSchema(materials);
+export const attachmentSelectSchema = createSelectSchema(attachments);
+export const followUpSelectSchema = createSelectSchema(followUps);
+
+// Export types
+export type Contractor = z.infer<typeof contractorSelectSchema>;
+export type ContractorInsert = z.infer<typeof contractorInsertSchema>;
+export type Client = z.infer<typeof clientSelectSchema>;
+export type ClientInsert = z.infer<typeof clientInsertSchema>;
+export type Project = z.infer<typeof projectSelectSchema>;
+export type ProjectInsert = z.infer<typeof projectInsertSchema>;
+export type Estimate = z.infer<typeof estimateSelectSchema>;
+export type EstimateInsert = z.infer<typeof estimateInsertSchema>;
+export type EstimateItem = z.infer<typeof estimateItemSelectSchema>;
+export type EstimateItemInsert = z.infer<typeof estimateItemInsertSchema>;
+export type Invoice = z.infer<typeof invoiceSelectSchema>;
+export type InvoiceInsert = z.infer<typeof invoiceInsertSchema>;
+export type InvoiceItem = z.infer<typeof invoiceItemSelectSchema>;
+export type InvoiceItemInsert = z.infer<typeof invoiceItemInsertSchema>;
+export type Event = z.infer<typeof eventSelectSchema>;
+export type EventInsert = z.infer<typeof eventInsertSchema>;
+export type Material = z.infer<typeof materialSelectSchema>;
+export type MaterialInsert = z.infer<typeof materialInsertSchema>;
+export type Attachment = z.infer<typeof attachmentSelectSchema>;
+export type AttachmentInsert = z.infer<typeof attachmentInsertSchema>;
+export type FollowUp = z.infer<typeof followUpSelectSchema>;
+export type FollowUpInsert = z.infer<typeof followUpInsertSchema>;

@@ -1,0 +1,795 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { 
+  ChevronDown, 
+  HammerIcon, 
+  Plus, 
+  Search, 
+  FileEdit, 
+  Eye, 
+  Trash2,
+  CheckCircle,
+  ClockIcon,
+  PlayIcon,
+  PauseIcon,
+  AlertTriangleIcon,
+  MoreHorizontal
+} from "lucide-react";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress"; 
+import { format } from "date-fns";
+import Sidebar from "@/components/layout/sidebar";
+import MobileSidebar from "@/components/layout/mobile-sidebar";
+import PageHeader from "@/components/shared/page-header";
+import SearchInput from "@/components/shared/search-input";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+// Helper function to format currency
+const formatCurrency = (amount: number | string | null | undefined) => {
+  if (amount === null || amount === undefined) return "—";
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
+    .format(typeof amount === 'string' ? parseFloat(amount) : amount);
+};
+
+// Helper function to get status badge style
+const getStatusBadge = (status: string) => {
+  switch (status) {
+    case 'pending':
+      return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Pending</Badge>;
+    case 'in_progress':
+      return <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100">In Progress</Badge>;
+    case 'on_hold':
+      return <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">On Hold</Badge>;
+    case 'completed':
+      return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">Completed</Badge>;
+    case 'cancelled':
+      return <Badge variant="outline" className="bg-red-100 text-red-800 hover:bg-red-100">Cancelled</Badge>;
+    default:
+      return <Badge variant="outline">{status}</Badge>;
+  }
+};
+
+export default function ProjectsPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("date_desc");
+  const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<any>(null);
+  const [activeView, setActiveView] = useState<"list" | "kanban">("list");
+
+  // Fetch projects
+  const { data: projects, isLoading, error } = useQuery({
+    queryKey: ["/api/protected/projects"],
+  });
+
+  // Filter and sort projects
+  const filteredProjects = projects
+    ? projects
+        .filter((project: any) => {
+          // Status filter
+          if (statusFilter !== "all" && project.status !== statusFilter) {
+            return false;
+          }
+          
+          // Search filter
+          if (searchQuery) {
+            const lowerCaseQuery = searchQuery.toLowerCase();
+            return (
+              project.title.toLowerCase().includes(lowerCaseQuery) ||
+              (project.description && project.description.toLowerCase().includes(lowerCaseQuery)) ||
+              (project.client?.firstName && project.client.firstName.toLowerCase().includes(lowerCaseQuery)) ||
+              (project.client?.lastName && project.client.lastName.toLowerCase().includes(lowerCaseQuery))
+            );
+          }
+          
+          return true;
+        })
+        .sort((a: any, b: any) => {
+          if (sortBy === "date_desc") {
+            const aDate = a.startDate ? new Date(a.startDate).getTime() : 0;
+            const bDate = b.startDate ? new Date(b.startDate).getTime() : 0;
+            return bDate - aDate;
+          } else if (sortBy === "date_asc") {
+            const aDate = a.startDate ? new Date(a.startDate).getTime() : 0;
+            const bDate = b.startDate ? new Date(b.startDate).getTime() : 0;
+            return aDate - bDate;
+          } else if (sortBy === "budget_desc") {
+            const aBudget = a.budget ? parseFloat(a.budget) : 0;
+            const bBudget = b.budget ? parseFloat(b.budget) : 0;
+            return bBudget - aBudget;
+          } else if (sortBy === "budget_asc") {
+            const aBudget = a.budget ? parseFloat(a.budget) : 0;
+            const bBudget = b.budget ? parseFloat(b.budget) : 0;
+            return aBudget - bBudget;
+          } else if (sortBy === "title") {
+            return a.title.localeCompare(b.title);
+          }
+          return 0;
+        })
+    : [];
+
+  const projectsByStatus = {
+    pending: filteredProjects.filter((p: any) => p.status === "pending"),
+    in_progress: filteredProjects.filter((p: any) => p.status === "in_progress"),
+    on_hold: filteredProjects.filter((p: any) => p.status === "on_hold"),
+    completed: filteredProjects.filter((p: any) => p.status === "completed"),
+    cancelled: filteredProjects.filter((p: any) => p.status === "cancelled")
+  };
+
+  const viewProjectDetails = (project: any) => {
+    setSelectedProject(project);
+    setIsDetailOpen(true);
+  };
+
+  const createNewProject = () => {
+    setEditingProject(null);
+    setIsFormOpen(true);
+  };
+
+  const editProject = (project: any) => {
+    setEditingProject(project);
+    setIsFormOpen(true);
+  };
+
+  // Function to get random progress value (in a real app this would come from the backend)
+  const getRandomProgress = (project: any) => {
+    if (project.status === "completed") return 100;
+    if (project.status === "pending") return 0;
+    
+    // Use the project id to generate a consistent random number
+    const seed = parseInt(project.id.toString(), 10);
+    return seed % 100;
+  };
+
+  // Calculate totals
+  const calculateTotals = () => {
+    if (!projects) return { total: 0, count: 0, active: 0, completed: 0 };
+    
+    const totalBudget = projects.reduce((sum: number, project: any) => {
+      return project.budget ? sum + parseFloat(project.budget) : sum;
+    }, 0);
+    
+    return {
+      total: totalBudget,
+      count: projects.length,
+      active: projects.filter((p: any) => p.status === "in_progress").length,
+      completed: projects.filter((p: any) => p.status === "completed").length
+    };
+  };
+
+  const totals = calculateTotals();
+
+  // Render a project card for the kanban view
+  const renderProjectCard = (project: any) => (
+    <Card key={project.id} className="mb-3 cursor-pointer hover:shadow-md transition-shadow" onClick={() => viewProjectDetails(project)}>
+      <CardContent className="p-4">
+        <div className="mb-2 flex justify-between items-start">
+          <h3 className="font-medium text-base">{project.title}</h3>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={(e) => {
+                e.stopPropagation();
+                viewProjectDetails(project);
+              }}>
+                <Eye className="mr-2 h-4 w-4" />
+                View Details
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={(e) => {
+                e.stopPropagation();
+                editProject(project);
+              }}>
+                <FileEdit className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-destructive">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        
+        {project.client && (
+          <div className="text-sm text-gray-600 mb-2">
+            Client: {project.client.firstName} {project.client.lastName}
+          </div>
+        )}
+        
+        <div className="flex justify-between items-center mb-2 text-sm">
+          <div>
+            {project.startDate && (
+              <span>Started: {format(new Date(project.startDate), 'MMM d, yyyy')}</span>
+            )}
+          </div>
+          <div>
+            {project.budget && <span className="font-medium">{formatCurrency(project.budget)}</span>}
+          </div>
+        </div>
+        
+        <div className="mb-2">
+          <div className="flex justify-between mb-1 text-xs">
+            <span>Progress</span>
+            <span>{getRandomProgress(project)}%</span>
+          </div>
+          <Progress value={getRandomProgress(project)} className="h-1.5" />
+        </div>
+        
+        {project.description && (
+          <p className="text-xs text-gray-500 mt-2 line-clamp-2">{project.description}</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+
+  return (
+    <div className="flex h-screen overflow-hidden">
+      <Sidebar />
+      <MobileSidebar />
+      
+      <main className="flex-1 overflow-y-auto bg-gray-50">
+        <div className="p-6">
+          <PageHeader 
+            title="Projects" 
+            description="Manage your ongoing and completed projects"
+            actions={
+              <Button className="flex items-center" onClick={createNewProject}>
+                <Plus className="h-4 w-4 mr-2" />
+                New Project
+              </Button>
+            }
+          />
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-500">Total Projects</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{totals.count}</div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-500">Active Projects</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">{totals.active}</div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-500">Completed Projects</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">{totals.completed}</div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-500">Total Budget</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(totals.total)}</div>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <Card className="mb-6">
+            <CardContent className="p-4">
+              <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <SearchInput 
+                    placeholder="Search projects..." 
+                    onSearch={setSearchQuery}
+                    className="w-full sm:w-80"
+                  />
+                  
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full sm:w-40">
+                      <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="on_hold">On Hold</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="w-full sm:w-40">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="date_desc">Newest First</SelectItem>
+                      <SelectItem value="date_asc">Oldest First</SelectItem>
+                      <SelectItem value="budget_desc">Highest Budget</SelectItem>
+                      <SelectItem value="budget_asc">Lowest Budget</SelectItem>
+                      <SelectItem value="title">Project Name</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex gap-2">
+                  <div className="flex bg-muted p-1 rounded-md">
+                    <Button 
+                      variant={activeView === "list" ? "default" : "ghost"} 
+                      size="sm"
+                      onClick={() => setActiveView("list")}
+                      className="rounded-sm"
+                    >
+                      List
+                    </Button>
+                    <Button 
+                      variant={activeView === "kanban" ? "default" : "ghost"} 
+                      size="sm"
+                      onClick={() => setActiveView("kanban")}
+                      className="rounded-sm"
+                    >
+                      Kanban
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              
+              {activeView === "list" ? (
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Project Name</TableHead>
+                        <TableHead>Client</TableHead>
+                        <TableHead>Start Date</TableHead>
+                        <TableHead>End Date</TableHead>
+                        <TableHead>Budget</TableHead>
+                        <TableHead>Progress</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {isLoading ? (
+                        Array(5).fill(0).map((_, index) => (
+                          <TableRow key={index}>
+                            <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                            <TableCell className="text-right"><Skeleton className="h-9 w-12 ml-auto" /></TableCell>
+                          </TableRow>
+                        ))
+                      ) : error ? (
+                        <TableRow>
+                          <TableCell colSpan={8} className="text-center py-4 text-gray-500">
+                            Error loading projects. Please try again.
+                          </TableCell>
+                        </TableRow>
+                      ) : filteredProjects.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={8} className="text-center py-8">
+                            <div className="flex flex-col items-center">
+                              <HammerIcon className="h-12 w-12 text-gray-300 mb-3" />
+                              <h3 className="text-lg font-medium text-gray-900 mb-1">No projects found</h3>
+                              <p className="text-sm text-gray-500 mb-4">
+                                {searchQuery || statusFilter !== "all" 
+                                  ? "Try adjusting your filters"
+                                  : "Create your first project to get started"}
+                              </p>
+                              {!searchQuery && statusFilter === "all" && (
+                                <Button onClick={createNewProject}>
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  New Project
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredProjects.map((project: any) => (
+                          <TableRow key={project.id} className="cursor-pointer hover:bg-gray-50" onClick={() => viewProjectDetails(project)}>
+                            <TableCell className="font-medium">{project.title}</TableCell>
+                            <TableCell>{project.client?.firstName} {project.client?.lastName}</TableCell>
+                            <TableCell>{project.startDate ? format(new Date(project.startDate), 'MMM d, yyyy') : '—'}</TableCell>
+                            <TableCell>{project.endDate ? format(new Date(project.endDate), 'MMM d, yyyy') : '—'}</TableCell>
+                            <TableCell>{project.budget ? formatCurrency(project.budget) : '—'}</TableCell>
+                            <TableCell>
+                              <div className="w-full flex items-center gap-2">
+                                <Progress value={getRandomProgress(project)} className="h-2 flex-grow" />
+                                <span className="text-xs font-medium w-8">{getRandomProgress(project)}%</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>{getStatusBadge(project.status)}</TableCell>
+                            <TableCell className="text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Open menu</span>
+                                    <ChevronDown className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={(e) => {
+                                    e.stopPropagation();
+                                    viewProjectDetails(project);
+                                  }}>
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    View
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={(e) => {
+                                    e.stopPropagation();
+                                    editProject(project);
+                                  }}>
+                                    <FileEdit className="mr-2 h-4 w-4" />
+                                    Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem>
+                                    <PlayIcon className="mr-2 h-4 w-4" />
+                                    Start Project
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem>
+                                    <PauseIcon className="mr-2 h-4 w-4" />
+                                    Pause Project
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem>
+                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                    Mark Completed
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem className="text-destructive">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+                  {/* Pending column */}
+                  <div>
+                    <div className="flex items-center mb-2 gap-2">
+                      <div className="bg-yellow-100 rounded-full w-3 h-3"></div>
+                      <h3 className="font-medium">Pending</h3>
+                      <Badge variant="outline" className="ml-1 text-xs rounded-full">
+                        {projectsByStatus.pending.length}
+                      </Badge>
+                    </div>
+                    <div className="bg-gray-50 p-2 rounded-md min-h-[20rem]">
+                      {isLoading ? (
+                        Array(2).fill(0).map((_, index) => (
+                          <Card key={index} className="mb-3">
+                            <CardContent className="p-4">
+                              <Skeleton className="h-5 w-full mb-2" />
+                              <Skeleton className="h-4 w-3/4 mb-2" />
+                              <Skeleton className="h-4 w-1/2 mb-2" />
+                              <Skeleton className="h-2 w-full mb-1" />
+                            </CardContent>
+                          </Card>
+                        ))
+                      ) : projectsByStatus.pending.map(renderProjectCard)}
+                    </div>
+                  </div>
+                  
+                  {/* In Progress column */}
+                  <div>
+                    <div className="flex items-center mb-2 gap-2">
+                      <div className="bg-blue-100 rounded-full w-3 h-3"></div>
+                      <h3 className="font-medium">In Progress</h3>
+                      <Badge variant="outline" className="ml-1 text-xs rounded-full">
+                        {projectsByStatus.in_progress.length}
+                      </Badge>
+                    </div>
+                    <div className="bg-gray-50 p-2 rounded-md min-h-[20rem]">
+                      {isLoading ? (
+                        Array(2).fill(0).map((_, index) => (
+                          <Card key={index} className="mb-3">
+                            <CardContent className="p-4">
+                              <Skeleton className="h-5 w-full mb-2" />
+                              <Skeleton className="h-4 w-3/4 mb-2" />
+                              <Skeleton className="h-4 w-1/2 mb-2" />
+                              <Skeleton className="h-2 w-full mb-1" />
+                            </CardContent>
+                          </Card>
+                        ))
+                      ) : projectsByStatus.in_progress.map(renderProjectCard)}
+                    </div>
+                  </div>
+                  
+                  {/* On Hold column */}
+                  <div>
+                    <div className="flex items-center mb-2 gap-2">
+                      <div className="bg-purple-100 rounded-full w-3 h-3"></div>
+                      <h3 className="font-medium">On Hold</h3>
+                      <Badge variant="outline" className="ml-1 text-xs rounded-full">
+                        {projectsByStatus.on_hold.length}
+                      </Badge>
+                    </div>
+                    <div className="bg-gray-50 p-2 rounded-md min-h-[20rem]">
+                      {isLoading ? (
+                        <Card className="mb-3">
+                          <CardContent className="p-4">
+                            <Skeleton className="h-5 w-full mb-2" />
+                            <Skeleton className="h-4 w-3/4 mb-2" />
+                            <Skeleton className="h-4 w-1/2 mb-2" />
+                            <Skeleton className="h-2 w-full mb-1" />
+                          </CardContent>
+                        </Card>
+                      ) : projectsByStatus.on_hold.map(renderProjectCard)}
+                    </div>
+                  </div>
+                  
+                  {/* Completed column */}
+                  <div>
+                    <div className="flex items-center mb-2 gap-2">
+                      <div className="bg-green-100 rounded-full w-3 h-3"></div>
+                      <h3 className="font-medium">Completed</h3>
+                      <Badge variant="outline" className="ml-1 text-xs rounded-full">
+                        {projectsByStatus.completed.length}
+                      </Badge>
+                    </div>
+                    <div className="bg-gray-50 p-2 rounded-md min-h-[20rem]">
+                      {isLoading ? (
+                        <Card className="mb-3">
+                          <CardContent className="p-4">
+                            <Skeleton className="h-5 w-full mb-2" />
+                            <Skeleton className="h-4 w-3/4 mb-2" />
+                            <Skeleton className="h-4 w-1/2 mb-2" />
+                            <Skeleton className="h-2 w-full mb-1" />
+                          </CardContent>
+                        </Card>
+                      ) : projectsByStatus.completed.map(renderProjectCard)}
+                    </div>
+                  </div>
+                  
+                  {/* Cancelled column */}
+                  <div>
+                    <div className="flex items-center mb-2 gap-2">
+                      <div className="bg-red-100 rounded-full w-3 h-3"></div>
+                      <h3 className="font-medium">Cancelled</h3>
+                      <Badge variant="outline" className="ml-1 text-xs rounded-full">
+                        {projectsByStatus.cancelled.length}
+                      </Badge>
+                    </div>
+                    <div className="bg-gray-50 p-2 rounded-md min-h-[20rem]">
+                      {isLoading ? (
+                        <Card className="mb-3">
+                          <CardContent className="p-4">
+                            <Skeleton className="h-5 w-full mb-2" />
+                            <Skeleton className="h-4 w-3/4 mb-2" />
+                            <Skeleton className="h-4 w-1/2 mb-2" />
+                            <Skeleton className="h-2 w-full mb-1" />
+                          </CardContent>
+                        </Card>
+                      ) : projectsByStatus.cancelled.map(renderProjectCard)}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+      
+      {/* Project Detail Dialog */}
+      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          {selectedProject && (
+            <div>
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold">{selectedProject.title}</h2>
+                  <div className="flex items-center mt-1">
+                    {getStatusBadge(selectedProject.status)}
+                    {selectedProject.startDate && (
+                      <span className="text-sm text-gray-500 ml-3">
+                        Started: {format(new Date(selectedProject.startDate), 'MMMM d, yyyy')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    setIsDetailOpen(false);
+                    setEditingProject(selectedProject);
+                    setIsFormOpen(true);
+                  }}
+                >
+                  <FileEdit className="h-4 w-4 mr-2" />
+                  Edit Project
+                </Button>
+              </div>
+
+              <Tabs defaultValue="overview">
+                <TabsList className="mb-4">
+                  <TabsTrigger value="overview">Overview</TabsTrigger>
+                  <TabsTrigger value="tasks">Tasks</TabsTrigger>
+                  <TabsTrigger value="materials">Materials</TabsTrigger>
+                  <TabsTrigger value="documents">Documents</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="overview">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Client Information</h3>
+                      {selectedProject.client ? (
+                        <div className="flex items-center">
+                          <Avatar className="h-12 w-12 mr-3">
+                            <AvatarFallback>
+                              {selectedProject.client.firstName?.[0]}{selectedProject.client.lastName?.[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium">{selectedProject.client.firstName} {selectedProject.client.lastName}</p>
+                            <p className="text-sm text-gray-600">{selectedProject.client.email}</p>
+                            <p className="text-sm text-gray-600">{selectedProject.client.phone || "No phone number"}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-gray-500">No client associated with this project</p>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Project Details</h3>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Budget:</span>
+                          <span className="font-medium">{selectedProject.budget ? formatCurrency(selectedProject.budget) : "Not set"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Start Date:</span>
+                          <span>{selectedProject.startDate ? format(new Date(selectedProject.startDate), 'MMMM d, yyyy') : "Not set"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">End Date:</span>
+                          <span>{selectedProject.endDate ? format(new Date(selectedProject.endDate), 'MMMM d, yyyy') : "Not set"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Status:</span>
+                          <span>{getStatusBadge(selectedProject.status)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Progress:</span>
+                          <span>{getRandomProgress(selectedProject)}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold mb-2">Description</h3>
+                    <div className="bg-gray-50 p-4 rounded-md">
+                      {selectedProject.description ? (
+                        <p className="whitespace-pre-line">{selectedProject.description}</p>
+                      ) : (
+                        <p className="text-gray-500">No description provided</p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Notes</h3>
+                    <div className="bg-gray-50 p-4 rounded-md">
+                      {selectedProject.notes ? (
+                        <p className="whitespace-pre-line">{selectedProject.notes}</p>
+                      ) : (
+                        <p className="text-gray-500">No notes available</p>
+                      )}
+                    </div>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="tasks">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold">Tasks</h3>
+                    <Button size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Task
+                    </Button>
+                  </div>
+                  
+                  <div className="bg-gray-50 p-8 rounded-md text-center text-gray-500">
+                    <HammerIcon className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                    <p className="mb-2">No tasks created yet</p>
+                    <p className="text-sm">Tasks would be displayed here once created</p>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="materials">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold">Materials</h3>
+                    <Button size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Material
+                    </Button>
+                  </div>
+                  
+                  <div className="bg-gray-50 p-8 rounded-md text-center text-gray-500">
+                    <p>Materials and supplies tracking would be displayed here</p>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="documents">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold">Documents</h3>
+                    <Button size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Upload Document
+                    </Button>
+                  </div>
+                  
+                  <div className="bg-gray-50 p-8 rounded-md text-center text-gray-500">
+                    <p>Project documents and files would be displayed here</p>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Project Form Dialog (This would be a separate component in a real app) */}
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <h2 className="text-xl font-bold mb-4">{editingProject ? "Edit Project" : "Create New Project"}</h2>
+          <p className="text-gray-500 mb-4">Project form would be here</p>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setIsFormOpen(false)}>Cancel</Button>
+            <Button>Save Project</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
