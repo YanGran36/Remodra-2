@@ -6,6 +6,11 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
+// Verificar si la clave API existe
+if (!process.env.OPENAI_API_KEY) {
+  console.warn("¡ADVERTENCIA! La clave API de OpenAI no está definida en las variables de entorno.");
+}
+
 export interface JobCostAnalysisParams {
   serviceType: string;
   materials: Array<{
@@ -67,6 +72,14 @@ export interface JobCostAnalysisResult {
 export async function analyzeJobCost(params: JobCostAnalysisParams): Promise<JobCostAnalysisResult> {
   try {
     log("Analizando costos del trabajo con OpenAI", "openai");
+    console.log("Parámetros recibidos para análisis:", {
+      serviceType: params.serviceType,
+      materialsCount: params.materials?.length || 0,
+      hasLaborHours: !!params.laborHours,
+      hasLocation: !!params.location,
+      hasDifficulty: !!params.difficulty,
+      hasAdditionalInfo: !!params.additionalInfo
+    });
 
     // Preparar los datos para enviar a la API
     const prompt = `
@@ -133,27 +146,50 @@ export async function analyzeJobCost(params: JobCostAnalysisParams): Promise<Job
     }
     `;
 
+    console.log("Enviando solicitud a OpenAI para análisis de costos...");
+
     // Llamada a la API de OpenAI
-    // la nueva versión del modelo es "gpt-4o" que fue lanzada el 13 de mayo, 2024. usar "gpt-4o" en lugar de "gpt-4"
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o", // La última versión disponible
-      messages: [{ role: "user", content: prompt }],
-      response_format: { type: "json_object" },
-      temperature: 0.7
-    });
-
-    // Procesar la respuesta
-    const content = response.choices[0].message.content;
-    if (!content) {
-      throw new Error("No se recibió respuesta de la API de OpenAI");
-    }
-
     try {
-      const result = JSON.parse(content) as JobCostAnalysisResult;
-      return result;
-    } catch (parseError) {
-      console.error("Error al parsear la respuesta JSON:", parseError);
-      throw new Error("Error al procesar la respuesta de OpenAI");
+      // la nueva versión del modelo es "gpt-4o" que fue lanzada el 13 de mayo, 2024. usar "gpt-4o" en lugar de "gpt-4"
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // La última versión disponible
+        messages: [{ role: "user", content: prompt }],
+        response_format: { type: "json_object" },
+        temperature: 0.7
+      });
+
+      console.log("Respuesta recibida de OpenAI para análisis:", {
+        status: "success",
+        model: response.model,
+        choicesCount: response.choices.length
+      });
+
+      // Procesar la respuesta
+      const content = response.choices[0].message.content;
+      if (!content) {
+        console.error("Contenido vacío en la respuesta de análisis de OpenAI");
+        throw new Error("No se recibió respuesta de la API de OpenAI");
+      }
+
+      try {
+        const result = JSON.parse(content) as JobCostAnalysisResult;
+        console.log("Análisis completado con éxito. Total recomendado:", result.recommendedTotal);
+        return result;
+      } catch (parseError) {
+        console.error("Error al parsear la respuesta JSON:", parseError);
+        console.error("Contenido recibido:", content);
+        throw new Error("Error al procesar la respuesta de OpenAI");
+      }
+    } catch (error: unknown) {
+      const openaiError = error as { message?: string };
+      console.error("Error específico de OpenAI en análisis:", openaiError);
+      
+      // Verificar si es un error de API key
+      if (openaiError.message && typeof openaiError.message === 'string' && openaiError.message.includes("api_key")) {
+        throw new Error("Error de autenticación con OpenAI. Verifica la clave API.");
+      }
+      
+      throw openaiError;
     }
   } catch (error) {
     console.error("Error al analizar costos con OpenAI:", error);
@@ -164,6 +200,13 @@ export async function analyzeJobCost(params: JobCostAnalysisParams): Promise<Job
 export async function generateJobDescription(params: JobCostAnalysisParams): Promise<string> {
   try {
     log("Generando descripción del trabajo con OpenAI", "openai");
+    console.log("Parámetros recibidos:", {
+      serviceType: params.serviceType,
+      materialsCount: params.materials?.length || 0,
+      hasLocation: !!params.location,
+      hasDifficulty: !!params.difficulty,
+      hasAdditionalInfo: !!params.additionalInfo
+    });
 
     // Preparar los datos para enviar a la API
     const prompt = `
@@ -190,20 +233,42 @@ export async function generateJobDescription(params: JobCostAnalysisParams): Pro
     Limita la respuesta a aproximadamente 200-300 palabras.
     `;
 
+    console.log("Enviando prompt a OpenAI:", prompt);
+
     // Llamada a la API de OpenAI
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o", // la nueva versión del modelo es "gpt-4o" que fue lanzada el 13 de mayo, 2024. utilizar esta versión
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.7
-    });
+    try {
+      console.log("Iniciando llamada a OpenAI API...");
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // la nueva versión del modelo es "gpt-4o" que fue lanzada el 13 de mayo, 2024. utilizar esta versión
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7
+      });
+      console.log("Respuesta recibida de OpenAI:", {
+        status: "success",
+        model: response.model,
+        choicesCount: response.choices.length
+      });
 
-    // Procesar la respuesta
-    const content = response.choices[0].message.content;
-    if (!content) {
-      throw new Error("No se recibió respuesta de la API de OpenAI");
+      // Procesar la respuesta
+      const content = response.choices[0].message.content;
+      if (!content) {
+        console.error("Contenido vacío en la respuesta de OpenAI");
+        throw new Error("No se recibió respuesta de la API de OpenAI");
+      }
+
+      console.log("Descripción generada con éxito. Longitud:", content.length);
+      return content;
+    } catch (error: unknown) {
+      const openaiError = error as { message?: string };
+      console.error("Error específico de OpenAI:", openaiError);
+      
+      // Verificar si es un error de API key
+      if (openaiError.message && typeof openaiError.message === 'string' && openaiError.message.includes("api_key")) {
+        throw new Error("Error de autenticación con OpenAI. Verifica la clave API.");
+      }
+      
+      throw error;
     }
-
-    return content;
   } catch (error) {
     console.error("Error al generar descripción del trabajo con OpenAI:", error);
     throw error;
