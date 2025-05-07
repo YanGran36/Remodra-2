@@ -422,7 +422,7 @@ export default function EstimateForm({ estimateToEdit, isOpen, onClose }: Estima
                       <FormLabel>Proyecto (Opcional)</FormLabel>
                       <Select
                         value={field.value?.toString() || ""}
-                        onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
+                        onValueChange={(value) => field.onChange(value && value !== "no_project" ? parseInt(value) : null)}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -430,7 +430,7 @@ export default function EstimateForm({ estimateToEdit, isOpen, onClose }: Estima
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">Sin proyecto</SelectItem>
+                          <SelectItem value="no_project">Sin proyecto</SelectItem>
                           {projects?.filter((project: any) => 
                             project.clientId === parseInt(form.getValues("clientId")?.toString() || "0")
                           ).map((project: any) => (

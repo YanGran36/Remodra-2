@@ -512,7 +512,7 @@ export default function PropertyMeasurementsPage() {
                       <SelectValue placeholder="Seleccionar proyecto (opcional)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Sin proyecto</SelectItem>
+                      <SelectItem value="no_project">Sin proyecto</SelectItem>
                       {filteredProjects.map((project: any) => (
                         <SelectItem key={project.id} value={project.id.toString()}>
                           {project.title}

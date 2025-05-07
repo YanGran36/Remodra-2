@@ -329,7 +329,7 @@ export default function InvoiceForm({ invoiceToEdit, isOpen, onClose, fromEstima
   }
   
   function handleEstimateChange(estimateId: string) {
-    if (!estimateId) {
+    if (!estimateId || estimateId === "no_estimate") {
       setItems([]);
       form.setValue("items", []);
       return;
@@ -518,7 +518,7 @@ export default function InvoiceForm({ invoiceToEdit, isOpen, onClose, fromEstima
                       <FormLabel>Proyecto (Opcional)</FormLabel>
                       <Select
                         value={field.value?.toString() || ""}
-                        onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
+                        onValueChange={(value) => field.onChange(value && value !== "no_project" ? parseInt(value) : null)}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -526,7 +526,7 @@ export default function InvoiceForm({ invoiceToEdit, isOpen, onClose, fromEstima
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">Sin proyecto</SelectItem>
+                          <SelectItem value="no_project">Sin proyecto</SelectItem>
                           {projects?.filter((project: any) => 
                             project.clientId === parseInt(form.getValues("clientId")?.toString() || "0")
                           ).map((project: any) => (
@@ -561,7 +561,7 @@ export default function InvoiceForm({ invoiceToEdit, isOpen, onClose, fromEstima
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">Sin estimado</SelectItem>
+                            <SelectItem value="no_estimate">Sin estimado</SelectItem>
                             {estimates?.filter((estimate: any) => 
                               estimate.clientId === parseInt(form.getValues("clientId")?.toString() || "0") &&
                               estimate.status === "accepted"
