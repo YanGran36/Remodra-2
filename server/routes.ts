@@ -252,6 +252,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("Datos con contractor ID añadido:", JSON.stringify(dataWithContractorId, null, 2));
       
+      // Aseguramos que issueDate sea un objeto Date válido
+      if (dataWithContractorId.issueDate && typeof dataWithContractorId.issueDate === 'string') {
+        dataWithContractorId.issueDate = new Date(dataWithContractorId.issueDate);
+      }
+      
+      // Aseguramos que expiryDate sea un objeto Date válido si está presente
+      if (dataWithContractorId.expiryDate && typeof dataWithContractorId.expiryDate === 'string') {
+        dataWithContractorId.expiryDate = new Date(dataWithContractorId.expiryDate);
+      }
+      
       // Validar datos
       const validatedData = estimateInsertSchema.parse(dataWithContractorId);
       console.log("Datos validados correctamente:", JSON.stringify(validatedData, null, 2));

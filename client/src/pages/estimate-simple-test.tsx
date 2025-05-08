@@ -14,7 +14,7 @@ export default function EstimateSimpleTest() {
     clientId: 1,
     projectId: 2,
     estimateNumber: `EST-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}-${Math.floor(Math.random() * 900) + 100}`,
-    issueDate: new Date(), // Enviamos un objeto Date directamente, no un string
+    issueDate: new Date(), // Mantenemos como objeto Date, NO convertiremos a ISO string
     subtotal: "1000", // Convertimos a string
     tax: "0", // Convertimos a string
     discount: "0", // Convertimos a string
@@ -24,8 +24,8 @@ export default function EstimateSimpleTest() {
       {
         description: "Servicio de prueba",
         quantity: 1,
-        unitPrice: 1000,
-        amount: 1000
+        unitPrice: "1000", // Convertimos a string
+        amount: "1000" // Convertimos a string
       }
     ]
   });
