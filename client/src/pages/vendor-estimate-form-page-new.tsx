@@ -216,7 +216,7 @@ export default function VendorEstimateFormPageNew() {
         name: material.name,
         quantity: 1,
         unit: material.unit,
-        unitPrice: material.price || 0,
+        unitPrice: material.unitPrice || 0,
       }));
       
       setSelectedMaterials(initialMaterials);
@@ -470,7 +470,7 @@ export default function VendorEstimateFormPageNew() {
       name: materialInfo.name,
       quantity: 1,
       unit: materialInfo.unit,
-      unitPrice: materialInfo.price || 0,
+      unitPrice: materialInfo.unitPrice || 0,
     };
     
     setSelectedMaterials(prev => [...prev, newMaterial]);

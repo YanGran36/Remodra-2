@@ -24,6 +24,7 @@ interface DigitalMeasurementProps {
   initialScale?: number;
   unit?: string;
   onMeasurementsChange?: (measurements: Measurement[]) => void;
+  initialMeasurements?: any[];
   canvasWidth?: number;
   canvasHeight?: number;
 }
@@ -32,12 +33,19 @@ export default function DigitalMeasurement({
   initialScale = 1,
   unit = "ft",
   onMeasurementsChange,
+  initialMeasurements = [],
   canvasWidth = 800,
   canvasHeight = 600
 }: DigitalMeasurementProps) {
   const { toast } = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [measurements, setMeasurements] = useState<Measurement[]>([]);
+  const [measurements, setMeasurements] = useState<Measurement[]>(() => {
+    // Initialize with provided measurements if available
+    if (initialMeasurements && initialMeasurements.length > 0) {
+      return initialMeasurements as Measurement[];
+    }
+    return [];
+  });
   const [activeTool, setActiveTool] = useState<string>("line");
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentMeasurement, setCurrentMeasurement] = useState<Partial<Measurement> | null>(null);
