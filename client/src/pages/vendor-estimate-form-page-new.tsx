@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { useAiCostAnalysis, MaterialInput, AiAnalysisResult } from "@/hooks/use-ai-cost-analysis";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -20,8 +21,12 @@ import {
   ClipboardCheck,
   Ruler,
   Scan,
-  Camera
+  Camera,
+  BarChart4
 } from "lucide-react";
+
+// Componente de análisis AI
+import AiAnalysisPanel from "@/components/ai/ai-analysis-panel";
 
 // Componentes de Medición Digital
 import DigitalMeasurement from "@/components/measurement/digital-measurement";
@@ -92,6 +97,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
 
 // Importar tipos y datos de servicio
 import { 
@@ -102,9 +114,6 @@ import {
   getServiceLabel
 } from "@/lib/service-options";
 
-// Importar componente de formulario especializado por servicio
-import ServiceEstimateForm from "@/components/estimates/service-estimate-form";
-
 // Define el esquema de validación del formulario
 const formSchema = z.object({
   clientId: z.string().min(1, { message: "Por favor seleccione un cliente" }),
@@ -114,7 +123,9 @@ const formSchema = z.object({
   squareFeet: z.string().optional(),
   linearFeet: z.string().optional(),
   units: z.string().optional(),
-  notes: z.string().optional()
+  difficulty: z.enum(["easy", "medium", "complex"]).default("medium"),
+  notes: z.string().optional(),
+  additionalInfo: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -129,7 +140,7 @@ interface SelectedItem {
   total: number;
 }
 
-export default function VendorEstimateFormPage() {
+export default function VendorEstimateFormPageNew() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -137,8 +148,7 @@ export default function VendorEstimateFormPage() {
   
   // Estados locales
   const [activeTab, setActiveTab] = useState("information");
-  const [selectedMaterial, setSelectedMaterial] = useState<any>(null);
-  const [selectedServiceType, setSelectedServiceType] = useState<string>("");
+  const [selectedMaterials, setSelectedMaterials] = useState<MaterialInput[]>([]);
   const [selectedOptions, setSelectedOptions] = useState<SelectedItem[]>([]);
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -148,21 +158,6 @@ export default function VendorEstimateFormPage() {
   const [isLidarScannerOpen, setIsLidarScannerOpen] = useState(false);
   const [measurements, setMeasurements] = useState<any[]>([]);
   const [scanResults, setScanResults] = useState<any[]>([]);
-  
-  // Estado para el formulario especializado
-  const [estimateItems, setEstimateItems] = useState<SelectedItem[]>([]);
-  
-  // Manejar actualización de artículos y total desde el componente especializado
-  const handleUpdateTotal = (items: SelectedItem[], total: number) => {
-    setEstimateItems(items);
-    setTotalAmount(total);
-  };
-  
-  // Limpiar formulario especializado
-  const handleClearSpecializedForm = () => {
-    setEstimateItems([]);
-    setTotalAmount(0);
-  };
   
   // Fetch clients
   const { data: clients = [] } = useQuery<any[]>({
@@ -185,7 +180,9 @@ export default function VendorEstimateFormPage() {
       squareFeet: "",
       linearFeet: "",
       units: "",
-      notes: ""
+      difficulty: "medium",
+      notes: "",
+      additionalInfo: ""
     }
   });
   
@@ -193,25 +190,43 @@ export default function VendorEstimateFormPage() {
   const watchServiceType = form.watch("serviceType");
   const watchMaterialType = form.watch("materialType");
   const watchClientId = form.watch("clientId");
+  const watchSquareFeet = form.watch("squareFeet");
+  const watchLinearFeet = form.watch("linearFeet");
+  const watchUnits = form.watch("units");
+  const watchDifficulty = form.watch("difficulty");
+  const watchNotes = form.watch("notes");
+  const watchAdditionalInfo = form.watch("additionalInfo");
   
   // Filter projects by client
   const filteredProjects = watchClientId
     ? projects.filter((project: any) => project.clientId?.toString() === watchClientId)
     : [];
   
-  // Effect for service type change
+  // Efecto para cargar materiales relevantes cuando cambia el tipo de servicio
   useEffect(() => {
-    if (watchServiceType !== selectedServiceType) {
-      setSelectedServiceType(watchServiceType);
-      form.setValue("materialType", "");
-      setSelectedMaterial(null);
+    if (watchServiceType) {
+      // Reiniciar materiales seleccionados cuando cambia el servicio
+      setSelectedMaterials([]);
       setSelectedOptions([]);
-      setEstimateItems([]);
-      setTotalAmount(0);
+      
+      // Para este ejemplo, cargaríamos algunos materiales por defecto
+      const defaultMaterials = MATERIALS_BY_SERVICE[watchServiceType] || [];
+      const initialMaterials: MaterialInput[] = defaultMaterials.slice(0, 3).map(material => ({
+        name: material.name,
+        quantity: 1,
+        unit: material.unit,
+        unitPrice: material.price || 0,
+      }));
+      
+      setSelectedMaterials(initialMaterials);
+      
+      // Calcular total inicial
+      const initialTotal = initialMaterials.reduce((sum, mat) => sum + (mat.quantity * mat.unitPrice), 0);
+      setTotalAmount(initialTotal);
     }
-  }, [watchServiceType, selectedServiceType, form]);
+  }, [watchServiceType]);
   
-  // Create estimate mutation
+  // Crear mutation para estimados
   const createEstimateMutation = useMutation({
     mutationFn: async (data: any) => {
       setIsSubmitting(true);
@@ -238,54 +253,138 @@ export default function VendorEstimateFormPage() {
     },
   });
   
-  // Handle form submission
-  const onSubmit = (values: FormValues) => {
-    if (totalAmount <= 0) {
+  // Crear mutation para facturas
+  const createInvoiceMutation = useMutation({
+    mutationFn: async (data: any) => {
+      setIsSubmitting(true);
+      const res = await apiRequest("POST", "/api/protected/invoices", data);
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      setIsSubmitting(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/protected/invoices"] });
       toast({
-        title: "Información incompleta",
-        description: "Por favor complete las medidas y seleccione al menos un material.",
+        title: "¡Factura creada exitosamente!",
+        description: "La factura ha sido generada a partir de los datos capturados.",
+      });
+      // Redirect to the newly created invoice
+      setLocation(`/invoices/${data.id}`);
+    },
+    onError: (error: Error) => {
+      setIsSubmitting(false);
+      toast({
+        title: "Error al crear factura",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Handler para crear estimado desde análisis de IA
+  const handleCreateEstimateFromAnalysis = (analysisResult: AiAnalysisResult) => {
+    if (!watchClientId) {
+      toast({
+        title: "Error",
+        description: "Debe seleccionar un cliente antes de crear un estimado",
         variant: "destructive",
       });
       return;
     }
     
-    // Build items array for the estimate
-    const items = [];
+    // Preparar los ítems del estimado a partir del análisis
+    const items = analysisResult.breakdown.materials.items.map(item => ({
+      description: item.name,
+      quantity: "1",
+      unitPrice: item.estimatedCost.toString(),
+      amount: item.estimatedCost.toString(),
+      notes: item.notes || ""
+    }));
     
-    // Add items from specialized form
-    estimateItems.forEach(item => {
-      items.push({
-        description: item.name,
-        quantity: item.quantity.toString(),
-        unitPrice: item.unitPrice.toString(),
-        amount: item.total.toString(),
-        notes: item.unit
-      });
+    // Agregar ítem de mano de obra
+    items.push({
+      description: `Mano de obra (${analysisResult.breakdown.labor.estimatedHours} horas)`,
+      quantity: "1",
+      unitPrice: analysisResult.breakdown.labor.total.toString(),
+      amount: analysisResult.breakdown.labor.total.toString(),
+      notes: analysisResult.breakdown.labor.notes || ""
     });
     
-    // Get selected client details
-    const selectedClient = clients.find((c: any) => c.id.toString() === values.clientId);
+    // Obtener cliente seleccionado
+    const selectedClient = clients.find((c: any) => c.id.toString() === watchClientId);
     
-    // Prepare estimate data
+    // Preparar datos del estimado
     const estimateData = {
-      clientId: Number(values.clientId),
-      projectId: values.projectId && values.projectId !== "none" ? Number(values.projectId) : null,
+      clientId: Number(watchClientId),
+      projectId: watchProjectId && watchProjectId !== "none" ? Number(watchProjectId) : null,
       estimateNumber: generateEstimateNumber(),
       issueDate: new Date(),
       expiryDate: addDays(new Date(), 30),
       status: "draft",
-      subtotal: totalAmount.toString(),
+      subtotal: analysisResult.recommendedTotal.toString(),
       tax: "0",
       discount: "0",
-      total: totalAmount.toString(),
+      total: analysisResult.recommendedTotal.toString(),
       terms: "1. Este estimado es válido por 30 días a partir de la fecha de emisión.\n2. Se requiere un pago del 50% para iniciar el trabajo.\n3. El balance restante se pagará al completar el trabajo.\n4. Cualquier modificación al alcance del trabajo puede resultar en costos adicionales.",
-      notes: values.notes || `Estimado para ${SERVICE_TYPES.find(s => s.value === values.serviceType)?.label} generado durante visita al cliente el ${format(new Date(), "PPP", { locale: es })}`,
+      notes: analysisResult.summary,
       contractorSignature: user?.firstName + " " + user?.lastName,
       items
     };
     
-    // Submit estimate
+    // Enviar petición para crear estimado
     createEstimateMutation.mutate(estimateData);
+  };
+  
+  // Handler para crear factura desde análisis de IA
+  const handleCreateInvoiceFromAnalysis = (analysisResult: AiAnalysisResult) => {
+    if (!watchClientId) {
+      toast({
+        title: "Error",
+        description: "Debe seleccionar un cliente antes de crear una factura",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Preparar los ítems de la factura a partir del análisis
+    const items = analysisResult.breakdown.materials.items.map(item => ({
+      description: item.name,
+      quantity: "1",
+      unitPrice: item.estimatedCost.toString(),
+      amount: item.estimatedCost.toString(),
+      notes: item.notes || ""
+    }));
+    
+    // Agregar ítem de mano de obra
+    items.push({
+      description: `Mano de obra (${analysisResult.breakdown.labor.estimatedHours} horas)`,
+      quantity: "1",
+      unitPrice: analysisResult.breakdown.labor.total.toString(),
+      amount: analysisResult.breakdown.labor.total.toString(),
+      notes: analysisResult.breakdown.labor.notes || ""
+    });
+    
+    // Obtener cliente seleccionado
+    const selectedClient = clients.find((c: any) => c.id.toString() === watchClientId);
+    
+    // Preparar datos de la factura
+    const invoiceData = {
+      clientId: Number(watchClientId),
+      projectId: watchProjectId && watchProjectId !== "none" ? Number(watchProjectId) : null,
+      invoiceNumber: generateInvoiceNumber(),
+      issueDate: new Date(),
+      dueDate: addDays(new Date(), 15),
+      status: "pending",
+      subtotal: analysisResult.recommendedTotal.toString(),
+      tax: "0",
+      discount: "0",
+      total: analysisResult.recommendedTotal.toString(),
+      notes: analysisResult.summary,
+      paymentTerms: "Pago a 15 días",
+      items
+    };
+    
+    // Enviar petición para crear factura
+    createInvoiceMutation.mutate(invoiceData);
   };
   
   function addDays(date: Date, days: number): Date {
@@ -302,9 +401,29 @@ export default function VendorEstimateFormPage() {
     return `EST-${year}-${random}`;
   }
   
+  function generateInvoiceNumber(): string {
+    const date = new Date();
+    const year = date.getFullYear();
+    // Generate a random 3-digit number
+    const random = Math.floor(Math.random() * 900) + 100;
+    return `INV-${year}-${random}`;
+  }
+  
   // Funciones para las herramientas de medición
   const handleMeasurementsChange = (newMeasurements: any[]) => {
     setMeasurements(newMeasurements);
+    
+    // Si hay medidas en pies cuadrados o lineales, actualizar el formulario
+    const squareFeetMeasurement = newMeasurements.find(m => m.type === "area");
+    const linearFeetMeasurement = newMeasurements.find(m => m.type === "linear");
+    
+    if (squareFeetMeasurement) {
+      form.setValue("squareFeet", squareFeetMeasurement.value.toString());
+    }
+    
+    if (linearFeetMeasurement) {
+      form.setValue("linearFeet", linearFeetMeasurement.value.toString());
+    }
     
     toast({
       title: "Medidas actualizadas",
@@ -321,11 +440,63 @@ export default function VendorEstimateFormPage() {
     });
   };
   
+  // Funciones para manipular materiales
+  const handleAddMaterial = () => {
+    if (!watchMaterialType) {
+      toast({
+        title: "Seleccione un material",
+        description: "Debe seleccionar un tipo de material para agregarlo.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const materialInfo = MATERIALS_BY_SERVICE[watchServiceType]?.find(m => m.id === watchMaterialType);
+    
+    if (!materialInfo) return;
+    
+    const newMaterial: MaterialInput = {
+      name: materialInfo.name,
+      quantity: 1,
+      unit: materialInfo.unit,
+      unitPrice: materialInfo.price || 0,
+    };
+    
+    setSelectedMaterials(prev => [...prev, newMaterial]);
+  };
+  
+  const handleRemoveMaterial = (index: number) => {
+    setSelectedMaterials(prev => prev.filter((_, i) => i !== index));
+  };
+  
+  const handleUpdateMaterialQuantity = (index: number, newQuantity: number) => {
+    setSelectedMaterials(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], quantity: newQuantity };
+      return updated;
+    });
+  };
+  
+  // Propiedades para el panel de análisis de IA
+  const aiAnalysisProps = {
+    serviceType: watchServiceType,
+    materials: selectedMaterials,
+    propertySize: {
+      squareFeet: watchSquareFeet ? parseFloat(watchSquareFeet) : undefined,
+      linearFeet: watchLinearFeet ? parseFloat(watchLinearFeet) : undefined,
+      units: watchUnits ? parseFloat(watchUnits) : undefined,
+    },
+    difficulty: watchDifficulty as "easy" | "medium" | "complex",
+    additionalInfo: watchAdditionalInfo,
+    onCreateEstimate: handleCreateEstimateFromAnalysis,
+    onCreateInvoice: handleCreateInvoiceFromAnalysis,
+  };
+  
   return (
     <div className="container mx-auto py-6 space-y-6">
       <PageHeader 
-        title="Formulario de Estimado para Vendedores" 
-        description="Capture rápidamente la información durante citas con clientes para generar estimados precisos"
+        title="Formulario Avanzado para Vendedores" 
+        description="Capture datos durante citas y conviértalos en estimados o facturas con ayuda de IA"
       />
       
       <div className="flex items-center justify-between">
@@ -337,33 +508,24 @@ export default function VendorEstimateFormPage() {
           <ArrowLeft className="h-4 w-4 mr-2" />
           Volver a Estimados
         </Button>
-        
-        <Button 
-          variant="default" 
-          size="sm" 
-          onClick={form.handleSubmit(onSubmit)}
-          disabled={isSubmitting}
-        >
-          <Save className="h-4 w-4 mr-2" />
-          {isSubmitting ? "Guardando..." : "Guardar Estimado"}
-        </Button>
       </div>
       
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form className="space-y-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="information">Información Básica</TabsTrigger>
-              <TabsTrigger value="materials">Materiales</TabsTrigger>
-              <TabsTrigger value="summary">Resumen y Total</TabsTrigger>
+              <TabsTrigger value="materials">Materiales y Medidas</TabsTrigger>
+              <TabsTrigger value="analysis">Análisis y Creación</TabsTrigger>
             </TabsList>
             
+            {/* TAB: Información Básica */}
             <TabsContent value="information" className="space-y-6 pt-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Información Básica</CardTitle>
+                  <CardTitle>Cliente y Servicio</CardTitle>
                   <CardDescription>
-                    Seleccione el cliente y tipo de servicio para este estimado
+                    Seleccione el cliente y tipo de servicio para este trabajo
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -391,7 +553,7 @@ export default function VendorEstimateFormPage() {
                           </SelectContent>
                         </Select>
                         <FormDescription>
-                          El cliente para quien se generará este estimado
+                          El cliente para quien se realizará este trabajo
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -424,7 +586,7 @@ export default function VendorEstimateFormPage() {
                           </SelectContent>
                         </Select>
                         <FormDescription>
-                          Asociar este estimado a un proyecto existente (opcional)
+                          Asociar este trabajo a un proyecto existente (opcional)
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -464,19 +626,48 @@ export default function VendorEstimateFormPage() {
                   
                   <FormField
                     control={form.control}
-                    name="notes"
+                    name="difficulty"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Notas</FormLabel>
+                        <FormLabel>Dificultad del Trabajo</FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Seleccionar nivel de dificultad" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="easy">Fácil (terreno plano, acceso sencillo)</SelectItem>
+                            <SelectItem value="medium">Media (algo de complejidad)</SelectItem>
+                            <SelectItem value="complex">Compleja (terreno difícil, problemas de acceso)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          La dificultad afectará el análisis de costos y estimaciones
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="additionalInfo"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Información Adicional</FormLabel>
                         <FormControl>
-                          <Textarea 
-                            placeholder="Ingrese notas adicionales sobre el estimado"
+                          <Textarea
+                            placeholder="Incluya cualquier detalle adicional que pueda afectar el trabajo..."
+                            className="min-h-[100px]"
                             {...field}
-                            rows={4}
                           />
                         </FormControl>
                         <FormDescription>
-                          Detalles adicionales sobre el trabajo a realizar
+                          Detalles como condiciones del sitio, requisitos especiales, etc.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -484,227 +675,354 @@ export default function VendorEstimateFormPage() {
                   />
                 </CardContent>
                 <CardFooter className="flex justify-end">
-                  <Button 
-                    type="button" 
+                  <Button
+                    type="button"
                     onClick={() => setActiveTab("materials")}
-                    disabled={!form.getValues("clientId") || !form.getValues("serviceType")}
                   >
-                    Siguiente
+                    Siguiente: Materiales y Medidas
                   </Button>
                 </CardFooter>
               </Card>
             </TabsContent>
             
+            {/* TAB: Materiales y Medidas */}
             <TabsContent value="materials" className="space-y-6 pt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Estimador Especializado</CardTitle>
-                  <CardDescription>
-                    Configure los materiales, opciones y medidas para {SERVICE_TYPES.find(s => s.value === watchServiceType)?.label || "el servicio"}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {!watchServiceType ? (
-                    <div className="text-center py-4">
-                      <p className="text-muted-foreground">Por favor, primero seleccione un tipo de servicio en la pestaña anterior</p>
-                    </div>
-                  ) : (
-                    <>
-                      {/* Formulario especializado por tipo de servicio */}
-                      <ServiceEstimateForm
-                        serviceType={watchServiceType}
-                        onUpdateTotal={handleUpdateTotal}
-                        onClearForm={handleClearSpecializedForm}
-                      />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Columna 1: Materiales */}
+                <Card className="md:col-span-2">
+                  <CardHeader>
+                    <CardTitle>Materiales</CardTitle>
+                    <CardDescription>
+                      Agregar los materiales necesarios para este trabajo
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {watchServiceType && (
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          <FormField
+                            control={form.control}
+                            name="materialType"
+                            render={({ field }) => (
+                              <FormItem className="w-full">
+                                <div className="flex space-x-2">
+                                  <Select
+                                    value={field.value}
+                                    onValueChange={field.onChange}
+                                  >
+                                    <FormControl>
+                                      <SelectTrigger className="w-[300px]">
+                                        <SelectValue placeholder="Seleccionar material" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      {MATERIALS_BY_SERVICE[watchServiceType]?.map((material) => (
+                                        <SelectItem key={material.id} value={material.id}>
+                                          {material.name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <Button type="button" onClick={handleAddMaterial}>
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Agregar
+                                  </Button>
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      )}
                       
-                      {/* Herramientas de medición */}
-                      <div className="flex justify-center mt-6 space-x-4">
-                        <Dialog open={isDigitalMeasurementOpen} onOpenChange={setIsDigitalMeasurementOpen}>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" type="button">
-                              <Ruler className="h-4 w-4 mr-2" />
-                              Medición Digital
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-4xl">
-                            <DialogHeader>
-                              <DialogTitle>Herramienta de Medición Digital</DialogTitle>
-                              <DialogDescription>
-                                Dibuje líneas sobre la imagen para medir distancias con precisión
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="min-h-[500px]">
-                              <DigitalMeasurement 
-                                onMeasurementsChange={handleMeasurementsChange} 
-                              />
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                        
-                        <Dialog open={isLidarScannerOpen} onOpenChange={setIsLidarScannerOpen}>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" type="button">
-                              <Scan className="h-4 w-4 mr-2" />
-                              Escaneo LiDAR
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-4xl">
-                            <DialogHeader>
-                              <DialogTitle>Escaneo LiDAR</DialogTitle>
-                              <DialogDescription>
-                                Use la cámara para escanear el área y obtener medidas precisas
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="min-h-[500px]">
-                              <LiDARScanner onScanComplete={handleScanComplete} />
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      </div>
-                    </>
-                  )}
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <Button 
-                    variant="outline" 
-                    type="button" 
-                    onClick={() => setActiveTab("information")}
-                  >
-                    Atrás
-                  </Button>
-                  <Button 
-                    type="button" 
-                    onClick={() => setActiveTab("summary")}
-                    disabled={estimateItems.length === 0}
-                  >
-                    Siguiente
-                  </Button>
-                </CardFooter>
-              </Card>
+                      {selectedMaterials.length > 0 ? (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Material</TableHead>
+                              <TableHead>Cantidad</TableHead>
+                              <TableHead>Unidad</TableHead>
+                              <TableHead>Precio unitario</TableHead>
+                              <TableHead>Total</TableHead>
+                              <TableHead></TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {selectedMaterials.map((material, index) => (
+                              <TableRow key={index}>
+                                <TableCell>{material.name}</TableCell>
+                                <TableCell>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    className="w-16"
+                                    value={material.quantity}
+                                    onChange={(e) => handleUpdateMaterialQuantity(index, parseInt(e.target.value) || 1)}
+                                  />
+                                </TableCell>
+                                <TableCell>{material.unit}</TableCell>
+                                <TableCell>${material.unitPrice.toFixed(2)}</TableCell>
+                                <TableCell>${(material.quantity * material.unitPrice).toFixed(2)}</TableCell>
+                                <TableCell>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleRemoveMaterial(index)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      ) : (
+                        <div className="text-center p-4 border border-dashed rounded-md">
+                          <p className="text-muted-foreground">
+                            No hay materiales seleccionados. Seleccione un tipo de servicio y agregue materiales.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                {/* Columna 2: Herramientas de Medición */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Medidas</CardTitle>
+                    <CardDescription>
+                      Registre las dimensiones de la propiedad
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="squareFeet"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Pies cuadrados</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="0"
+                              placeholder="0"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="linearFeet"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Pies lineales</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="0"
+                              placeholder="0"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="units"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Unidades</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="0"
+                              placeholder="0"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <Separator className="my-4" />
+                    
+                    <div className="flex flex-col space-y-2">
+                      <h3 className="text-sm font-medium">Herramientas de medición</h3>
+                      
+                      <Dialog open={isDigitalMeasurementOpen} onOpenChange={setIsDigitalMeasurementOpen}>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="w-full">
+                            <Ruler className="h-4 w-4 mr-2" />
+                            Medición Digital
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
+                          <DialogTitle>Herramienta de Medición Digital</DialogTitle>
+                          <div className="flex-1 overflow-hidden">
+                            <DigitalMeasurement 
+                              onMeasurementsChange={handleMeasurementsChange}
+                              initialMeasurements={measurements}
+                            />
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                      
+                      <Dialog open={isLidarScannerOpen} onOpenChange={setIsLidarScannerOpen}>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="w-full">
+                            <Scan className="h-4 w-4 mr-2" />
+                            Escáner LiDAR
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl h-[80vh]">
+                          <DialogTitle>Escáner LiDAR</DialogTitle>
+                          <div className="h-full">
+                            <LiDARScanner onScanComplete={handleScanComplete} />
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="md:col-span-3">
+                  <CardHeader>
+                    <CardTitle>Notas del trabajo</CardTitle>
+                    <CardDescription>
+                      Registre observaciones importantes sobre este trabajo
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <FormField
+                      control={form.control}
+                      name="notes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Notas y observaciones sobre el trabajo..."
+                              className="min-h-[150px]"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Incluya detalles importantes, preferencias del cliente, etc.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                  <CardFooter className="flex justify-end">
+                    <Button
+                      type="button"
+                      onClick={() => setActiveTab("analysis")}
+                      disabled={selectedMaterials.length === 0}
+                    >
+                      {selectedMaterials.length === 0 
+                        ? "Agregue al menos un material" 
+                        : "Siguiente: Análisis y Creación"}
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </div>
             </TabsContent>
             
-            <TabsContent value="summary" className="space-y-6 pt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Resumen del Estimado</CardTitle>
-                  <CardDescription>
-                    Revise la información antes de generar el estimado
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <h3 className="text-md font-medium mb-2">Información del Cliente</h3>
-                      <div className="rounded-md bg-muted p-4">
-                        {watchClientId ? (
-                          <>
-                            {clients.find((c: any) => c.id.toString() === watchClientId) && (
-                              <div className="space-y-1">
-                                <p className="font-medium">
-                                  {clients.find((c: any) => c.id.toString() === watchClientId)?.firstName} {clients.find((c: any) => c.id.toString() === watchClientId)?.lastName}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  {clients.find((c: any) => c.id.toString() === watchClientId)?.email}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  {clients.find((c: any) => c.id.toString() === watchClientId)?.phone}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  {clients.find((c: any) => c.id.toString() === watchClientId)?.address}
-                                </p>
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          <p className="text-muted-foreground">No se ha seleccionado un cliente</p>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-md font-medium mb-2">Detalles del Servicio</h3>
-                      <div className="rounded-md bg-muted p-4">
-                        {watchServiceType ? (
-                          <div className="space-y-2">
-                            <p>
-                              <span className="font-medium">Tipo de Servicio:</span>{" "}
-                              {SERVICE_TYPES.find(s => s.value === watchServiceType)?.label}
-                            </p>
-                          </div>
-                        ) : (
-                          <p className="text-muted-foreground">No se ha seleccionado un servicio</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-md font-medium mb-2">Desglose de Costos</h3>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-[50%]">Ítem</TableHead>
-                          <TableHead>Cantidad</TableHead>
-                          <TableHead>Precio Unitario</TableHead>
-                          <TableHead className="text-right">Total</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {estimateItems.map((item, index) => (
-                          <TableRow key={item.id || index}>
-                            <TableCell className="font-medium">{item.name}</TableCell>
-                            <TableCell>
-                              {item.quantity} {item.unit}
-                            </TableCell>
-                            <TableCell>${item.unitPrice.toFixed(2)}</TableCell>
-                            <TableCell className="text-right">
-                              ${item.total.toFixed(2)}
-                            </TableCell>
-                          </TableRow>
-                        ))}
+            {/* TAB: Análisis y Creación */}
+            <TabsContent value="analysis" className="space-y-6 pt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Resumen de Datos Capturados</CardTitle>
+                      <CardDescription>
+                        Revise los datos ingresados antes de continuar
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <h3 className="text-sm font-semibold">Cliente:</h3>
+                          <p>
+                            {watchClientId 
+                              ? clients.find((c: any) => c.id.toString() === watchClientId)?.firstName + ' ' + 
+                                clients.find((c: any) => c.id.toString() === watchClientId)?.lastName
+                              : "No seleccionado"}
+                          </p>
+                        </div>
                         
-                        {estimateItems.length === 0 && (
-                          <TableRow>
-                            <TableCell colSpan={4} className="text-center text-muted-foreground">
-                              No hay ítems en este estimado
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                      <TableFooter>
-                        <TableRow>
-                          <TableCell colSpan={3}>Total Estimado</TableCell>
-                          <TableCell className="text-right font-bold">
-                            ${totalAmount.toFixed(2)}
-                          </TableCell>
-                        </TableRow>
-                      </TableFooter>
-                    </Table>
-                  </div>
-                  
-                  <div className="rounded-md border p-4">
-                    <h3 className="text-md font-medium mb-2">Notas</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {form.getValues("notes") || "No se han agregado notas"}
-                    </p>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <Button 
-                    variant="outline" 
-                    type="button" 
-                    onClick={() => setActiveTab("materials")}
-                  >
-                    Atrás
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={isSubmitting || estimateItems.length === 0}
-                  >
-                    {isSubmitting ? "Guardando..." : "Generar Estimado"}
-                  </Button>
-                </CardFooter>
-              </Card>
+                        <div>
+                          <h3 className="text-sm font-semibold">Tipo de servicio:</h3>
+                          <p>{getServiceLabel(watchServiceType) || "No seleccionado"}</p>
+                        </div>
+                        
+                        <div>
+                          <h3 className="text-sm font-semibold">Proyecto:</h3>
+                          <p>
+                            {watchProjectId && watchProjectId !== "none"
+                              ? projects.find((p: any) => p.id.toString() === watchProjectId)?.name
+                              : "Nuevo proyecto"}
+                          </p>
+                        </div>
+                        
+                        <div>
+                          <h3 className="text-sm font-semibold">Dificultad:</h3>
+                          <p>
+                            {watchDifficulty === "easy" ? "Fácil" :
+                             watchDifficulty === "medium" ? "Media" :
+                             watchDifficulty === "complex" ? "Compleja" : "No especificada"}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h3 className="text-sm font-semibold">Medidas:</h3>
+                        <div className="grid grid-cols-3 gap-2 mt-1">
+                          {watchSquareFeet && (
+                            <Badge variant="outline">{watchSquareFeet} pies²</Badge>
+                          )}
+                          {watchLinearFeet && (
+                            <Badge variant="outline">{watchLinearFeet} pies lineales</Badge>
+                          )}
+                          {watchUnits && (
+                            <Badge variant="outline">{watchUnits} unidades</Badge>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <Accordion type="single" collapsible>
+                        <AccordionItem value="materials">
+                          <AccordionTrigger>
+                            Materiales ({selectedMaterials.length})
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <ul className="space-y-1">
+                              {selectedMaterials.map((mat, i) => (
+                                <li key={i} className="text-sm">
+                                  {mat.quantity} {mat.unit} de {mat.name} - ${(mat.quantity * mat.unitPrice).toFixed(2)}
+                                </li>
+                              ))}
+                            </ul>
+                          </AccordionContent>
+                        </AccordionItem>
+                      </Accordion>
+                    </CardContent>
+                  </Card>
+                </div>
+                
+                <div>
+                  <AiAnalysisPanel {...aiAnalysisProps} />
+                </div>
+              </div>
             </TabsContent>
           </Tabs>
         </form>
