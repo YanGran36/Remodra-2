@@ -346,7 +346,9 @@ export const clientInsertSchema = createInsertSchema(clients, {
 });
 
 export const projectInsertSchema = createInsertSchema(projects, {
-  title: (schema) => schema.min(3, "Title must be at least 3 characters")
+  title: (schema) => schema.min(3, "Title must be at least 3 characters"),
+  startDate: (schema) => schema.optional(),
+  endDate: (schema) => schema.optional()
 });
 
 export const estimateInsertSchema = createInsertSchema(estimates);

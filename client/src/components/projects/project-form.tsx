@@ -43,7 +43,10 @@ const projectFormSchema = z.object({
   notes: z.string().optional().or(z.literal(""))
 });
 
-export type ProjectInput = z.infer<typeof projectFormSchema>;
+export type ProjectInput = z.infer<typeof projectFormSchema> & {
+  startDate?: string | Date;
+  endDate?: string | Date;
+};
 
 type ProjectFormProps = {
   project?: Project;
@@ -75,10 +78,14 @@ export default function ProjectForm({
   });
 
   const handleSubmit = (data: z.infer<typeof projectFormSchema>) => {
-    onSubmit({
+    const formattedData = {
       ...data,
-      clientId
-    });
+      clientId,
+      // Convertir las fechas a strings ISO si existen
+      startDate: data.startDate ? data.startDate.toISOString() : undefined,
+      endDate: data.endDate ? data.endDate.toISOString() : undefined
+    };
+    onSubmit(formattedData);
   };
 
   return (
@@ -241,7 +248,7 @@ export default function ProjectForm({
                       onSelect={field.onChange}
                       disabled={(date) => {
                         const startDate = form.getValues().startDate;
-                        return startDate && date < startDate;
+                        return startDate ? date < startDate : false;
                       }}
                       initialFocus
                     />
