@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ProjectDetail, ProjectWithClient } from "@/hooks/use-projects";
 import { formatCurrency } from "@/lib/utils";
 import { useLocation } from "wouter";
+import { useEstimates } from "@/hooks/use-estimates";
 
 import {
   Dialog,
@@ -61,8 +62,20 @@ interface ProjectDetailProps {
 
 export default function ProjectDetailView({ project, isOpen, onClose, onEdit }: ProjectDetailProps) {
   const [isConfirmComplete, setIsConfirmComplete] = useState(false);
+  const [isCreateEstimateModalOpen, setIsCreateEstimateModalOpen] = useState(false);
+  const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  
+  // Fetch project estimates
+  const { data: projectEstimates, isLoading: isLoadingEstimates } = useQuery({
+    queryKey: ["/api/protected/projects", project?.id, "estimates"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/protected/projects/${project.id}/estimates`);
+      return await res.json();
+    },
+    enabled: !!project?.id,
+  });
   
   if (!project) return null;
   
@@ -186,6 +199,7 @@ export default function ProjectDetailView({ project, isOpen, onClose, onEdit }: 
           <TabsList className="mb-4">
             <TabsTrigger value="details">Detalles</TabsTrigger>
             <TabsTrigger value="client">Cliente</TabsTrigger>
+            <TabsTrigger value="estimates">Estimados</TabsTrigger>
             <TabsTrigger value="notes">Notas</TabsTrigger>
           </TabsList>
           
@@ -314,6 +328,106 @@ export default function ProjectDetailView({ project, isOpen, onClose, onEdit }: 
                   {/* Aquí podrían agregarse más detalles del cliente si se necesitan */}
                 </CardContent>
               </Card>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="estimates">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-sm font-medium">Estimados del proyecto</h3>
+                {project.status !== "cancelled" && project.status !== "completed" && (
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        // Ir a la página de crear un nuevo estimado estándar
+                        setLocation(`/estimates/new?projectId=${project.id}`);
+                        onClose();
+                      }}
+                    >
+                      <FilePlus className="h-4 w-4 mr-2" />
+                      Nuevo estimado estándar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        // Ir a la página de crear un estimado premium con IA
+                        setLocation(`/premium-estimate?projectId=${project.id}`);
+                        onClose();
+                      }}
+                    >
+                      <BarChart3 className="h-4 w-4 mr-2" />
+                      Estimado premium
+                    </Button>
+                  </div>
+                )}
+              </div>
+              
+              {isLoadingEstimates ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                </div>
+              ) : projectEstimates && projectEstimates.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Número</TableHead>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Total</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead className="text-right">Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {projectEstimates.map((estimate: any) => (
+                      <TableRow key={estimate.id}>
+                        <TableCell className="font-medium">{estimate.estimateNumber || `EST-${estimate.id}`}</TableCell>
+                        <TableCell>{formatDate(estimate.issueDate)}</TableCell>
+                        <TableCell>{formatCurrency(Number(estimate.total) || 0)}</TableCell>
+                        <TableCell>
+                          <Badge className={getStatusClass(estimate.status)}>
+                            {getStatusText(estimate.status)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setLocation(`/estimates/${estimate.id}`);
+                              onClose();
+                            }}
+                          >
+                            <FileText className="h-4 w-4" />
+                            <span className="sr-only">Ver estimado</span>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <Card>
+                  <CardContent className="py-6 text-center">
+                    <p className="text-sm text-gray-500 mb-4">No hay estimados asociados a este proyecto.</p>
+                    {project.status !== "cancelled" && project.status !== "completed" && (
+                      <div className="flex justify-center gap-3">
+                        <Button
+                          onClick={() => {
+                            // Ir a la página de crear un nuevo estimado estándar
+                            setLocation(`/estimates/new?projectId=${project.id}`);
+                            onClose();
+                          }}
+                        >
+                          <FilePlus className="h-4 w-4 mr-2" />
+                          Crear estimado
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </TabsContent>
           
