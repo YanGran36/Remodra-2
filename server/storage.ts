@@ -371,21 +371,25 @@ class DatabaseStorage implements IStorage {
         }
       }
       
+      // Extraer y eliminar la propiedad items si existe, ya que no es parte del modelo de la tabla
+      const { items, ...estimateData } = data as any;
+      
       console.log("createEstimate -> Validaciones pasadas, insertando en DB...");
-      const [estimate] = await db.insert(estimates).values(data).returning();
+      const [estimate] = await db.insert(estimates).values(estimateData).returning();
       console.log("createEstimate -> Estimado creado exitosamente:", JSON.stringify(estimate, null, 2));
       
       // Si hay items en el parámetro, insertarlos también
-      if (data.items && Array.isArray(data.items) && data.items.length > 0) {
-        console.log(`createEstimate -> Procesando ${data.items.length} items...`);
+      if (items && Array.isArray(items) && items.length > 0) {
+        console.log(`createEstimate -> Procesando ${items.length} items...`);
         
-        for (const item of data.items) {
+        for (const item of items) {
+          // Asegurarse de que las cantidades numéricas sean strings para la DB
           const itemData = {
             estimateId: estimate.id,
             description: item.description,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            amount: item.amount,
+            quantity: String(item.quantity),
+            unitPrice: String(item.unitPrice),
+            amount: String(item.amount),
             notes: item.notes
           };
           
