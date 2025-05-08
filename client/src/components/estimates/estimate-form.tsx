@@ -53,10 +53,10 @@ const estimateFormSchema = z.object({
   terms: z.string().optional(),
   notes: z.string().optional(),
   // Cambiamos los tipos de campos monetarios a string para compatibilidad con el backend
-  subtotal: z.coerce.number().min(0).transform(val => String(val)),
-  tax: z.coerce.number().min(0).transform(val => String(val)),
-  discount: z.coerce.number().min(0).transform(val => String(val)),
-  total: z.coerce.number().min(0).transform(val => String(val)),
+  subtotal: z.string().or(z.number().transform(val => String(val))),
+  tax: z.string().or(z.number().transform(val => String(val))),
+  discount: z.string().or(z.number().transform(val => String(val))),
+  total: z.string().or(z.number().transform(val => String(val))),
 });
 
 type EstimateFormValues = z.infer<typeof estimateFormSchema>;
