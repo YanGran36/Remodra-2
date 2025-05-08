@@ -13,7 +13,8 @@ import {
   eventInsertSchema,
   materialInsertSchema,
   followUpInsertSchema,
-  propertyMeasurementInsertSchema
+  propertyMeasurementInsertSchema,
+  priceConfigurationInsertSchema
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {

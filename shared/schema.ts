@@ -325,6 +325,11 @@ export const propertyMeasurementsRelations = relations(propertyMeasurements, ({ 
   project: one(projects, { fields: [propertyMeasurements.projectId], references: [projects.id] })
 }));
 
+// Price configurations relations
+export const priceConfigurationsRelations = relations(priceConfigurations, ({ one }) => ({
+  contractor: one(contractors, { fields: [priceConfigurations.contractorId], references: [contractors.id] })
+}));
+
 // Define schemas for validation
 export const contractorInsertSchema = createInsertSchema(contractors, {
   firstName: (schema) => schema.min(2, "First name must be at least 2 characters"),
@@ -353,6 +358,10 @@ export const materialInsertSchema = createInsertSchema(materials);
 export const attachmentInsertSchema = createInsertSchema(attachments);
 export const followUpInsertSchema = createInsertSchema(followUps);
 export const propertyMeasurementInsertSchema = createInsertSchema(propertyMeasurements);
+export const priceConfigurationInsertSchema = createInsertSchema(priceConfigurations, {
+  configName: (schema) => schema.min(2, "Nombre de configuración debe tener al menos 2 caracteres"),
+  serviceType: (schema) => schema.min(1, "Tipo de servicio es requerido")
+});
 
 // Select schemas (used for types)
 export const contractorSelectSchema = createSelectSchema(contractors);
@@ -367,6 +376,7 @@ export const materialSelectSchema = createSelectSchema(materials);
 export const attachmentSelectSchema = createSelectSchema(attachments);
 export const followUpSelectSchema = createSelectSchema(followUps);
 export const propertyMeasurementSelectSchema = createSelectSchema(propertyMeasurements);
+export const priceConfigurationSelectSchema = createSelectSchema(priceConfigurations);
 
 // Export types
 export type Contractor = z.infer<typeof contractorSelectSchema>;
@@ -393,3 +403,5 @@ export type FollowUp = z.infer<typeof followUpSelectSchema>;
 export type FollowUpInsert = z.infer<typeof followUpInsertSchema>;
 export type PropertyMeasurement = z.infer<typeof propertyMeasurementSelectSchema>;
 export type PropertyMeasurementInsert = z.infer<typeof propertyMeasurementInsertSchema>;
+export type PriceConfiguration = z.infer<typeof priceConfigurationSelectSchema>;
+export type PriceConfigurationInsert = z.infer<typeof priceConfigurationInsertSchema>;
