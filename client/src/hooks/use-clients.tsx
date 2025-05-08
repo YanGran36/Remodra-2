@@ -23,10 +23,13 @@ export interface Client {
 export interface Project {
   id: number;
   title: string;
+  description?: string | null;
   status: string;
   budget?: number | string;
   startDate?: Date;
   endDate?: Date;
+  notes?: string | null;
+  createdAt?: Date;
 }
 
 export interface ClientWithProjects extends Client {

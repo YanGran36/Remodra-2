@@ -17,8 +17,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ClientWithProjects } from "@/hooks/use-clients";
-import { Edit, FileText, Phone, Mail, MapPin, User, Trash2 } from "lucide-react";
+import { Edit, FileText, Phone, Mail, MapPin, User, Trash2, Plus } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import ProjectForm, { ProjectInput } from "@/components/projects/project-form";
+import { useProjects } from "@/hooks/use-projects";
+import { Project } from "@/hooks/use-clients";
 
 type ClientDetailProps = {
   client: ClientWithProjects;
@@ -81,6 +84,33 @@ export default function ClientDetail({
   const handleConfirmDelete = () => {
     onDelete();
     setIsDeleteDialogOpen(false);
+  };
+  
+  // Estado y manejo para el formulario de nuevo proyecto
+  const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const { createProject, updateProject, deleteProject, isCreating, isUpdating } = useProjects();
+  
+  const handleAddProject = () => {
+    setSelectedProject(null);
+    setIsProjectFormOpen(true);
+  };
+  
+  const handleEditProject = (project: Project) => {
+    setSelectedProject(project);
+    setIsProjectFormOpen(true);
+  };
+  
+  const handleProjectFormSubmit = (data: ProjectInput & { clientId: number }) => {
+    if (selectedProject) {
+      updateProject({
+        id: selectedProject.id,
+        data
+      });
+    } else {
+      createProject(data);
+    }
+    setIsProjectFormOpen(false);
   };
 
   return (
@@ -173,43 +203,87 @@ export default function ClientDetail({
         </TabsContent>
         
         <TabsContent value="projects">
-          <h5 className="font-medium text-gray-900 mb-2">Proyectos</h5>
+          <div className="flex justify-between items-center mb-4">
+            <h5 className="font-medium text-gray-900">Proyectos</h5>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="flex items-center"
+              onClick={handleAddProject}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Nuevo proyecto
+            </Button>
+          </div>
+          
           {!client.projects || client.projects.length === 0 ? (
             <div className="text-center py-6 border border-dashed rounded-md">
               <p className="text-gray-500">No hay proyectos para este cliente.</p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="mt-2"
-                onClick={onNewEstimate}
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                Crear nuevo presupuesto
-              </Button>
+              <div className="flex justify-center space-x-3 mt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center"
+                  onClick={handleAddProject}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Añadir proyecto
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center"
+                  onClick={onNewEstimate}
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Crear presupuesto
+                </Button>
+              </div>
             </div>
           ) : (
-            <div className="divide-y divide-gray-100 border border-gray-200 rounded-md">
+            <div className="space-y-2">
               {client.projects.map((project) => (
-                <div key={project.id} className="p-3 flex justify-between items-center">
-                  <div>
-                    <h6 className="font-medium">{project.title}</h6>
-                    <p className="text-sm text-gray-600">
-                      {project.status === "in_progress" && "En progreso"}
-                      {project.status === "In Progress" && "En progreso"}
-                      {project.status === "completed" && "Completado"}
-                      {project.status === "Completed" && "Completado"}
-                      {project.status === "on_hold" && "En espera"}
-                      {project.status === "On Hold" && "En espera"}
-                      {project.status === "cancelled" && "Cancelado"}
-                      {project.status === "Cancelled" && "Cancelado"}
-                      {!["in_progress", "In Progress", "completed", "Completed", "on_hold", "On Hold", "cancelled", "Cancelled"].includes(project.status) && project.status}
-                    </p>
+                <div 
+                  key={project.id} 
+                  className="p-4 border border-gray-200 rounded-lg hover:shadow-sm transition-shadow cursor-pointer"
+                  onClick={() => handleEditProject(project)}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h6 className="font-medium text-lg">{project.title}</h6>
+                      {project.description && (
+                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">{project.description}</p>
+                      )}
+                    </div>
+                    <Badge className={getProjectStatusClass(project.status)}>
+                      {typeof project.budget === 'number' 
+                        ? formatCurrency(project.budget)
+                        : (project.budget ? formatCurrency(parseFloat(project.budget.toString())) : '-')}
+                    </Badge>
                   </div>
-                  <Badge className={getProjectStatusClass(project.status)}>
-                    {typeof project.budget === 'number' 
-                      ? formatCurrency(project.budget)
-                      : project.budget}
-                  </Badge>
+                  <div className="flex justify-between items-center mt-3 text-sm text-gray-500">
+                    <div className="flex items-center">
+                      <span className="capitalize">
+                        {project.status === "in_progress" && "En progreso"}
+                        {project.status === "In Progress" && "En progreso"}
+                        {project.status === "completed" && "Completado"}
+                        {project.status === "Completed" && "Completado"}
+                        {project.status === "on_hold" && "En espera"}
+                        {project.status === "On Hold" && "En espera"}
+                        {project.status === "cancelled" && "Cancelado"}
+                        {project.status === "Cancelled" && "Cancelado"}
+                        {!["in_progress", "In Progress", "completed", "Completed", "on_hold", "On Hold", "cancelled", "Cancelled"].includes(project.status) && project.status}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      {project.startDate && (
+                        <span>Inicio: {formatDate(project.startDate)}</span>
+                      )}
+                      {project.endDate && (
+                        <span>Fin: {formatDate(project.endDate)}</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -273,6 +347,29 @@ export default function ClientDetail({
               Eliminar
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Project Form Dialog */}
+      <Dialog open={isProjectFormOpen} onOpenChange={setIsProjectFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedProject ? "Editar proyecto" : "Nuevo proyecto"}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedProject 
+                ? "Actualiza la información del proyecto"
+                : "Ingresa los detalles del nuevo proyecto"}
+            </DialogDescription>
+          </DialogHeader>
+          <ProjectForm
+            project={selectedProject || undefined}
+            clientId={client.id}
+            onSubmit={handleProjectFormSubmit}
+            isSubmitting={isCreating || isUpdating}
+            onCancel={() => setIsProjectFormOpen(false)}
+          />
         </DialogContent>
       </Dialog>
     </div>
