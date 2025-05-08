@@ -128,10 +128,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/protected/projects", async (req, res) => {
     try {
-      const validatedData = projectInsertSchema.parse({
+      // Procesar las fechas del string ISO a objetos Date si están presentes
+      const data = {
         ...req.body,
-        contractorId: req.user!.id
-      });
+        contractorId: req.user!.id,
+        startDate: req.body.startDate ? new Date(req.body.startDate) : undefined,
+        endDate: req.body.endDate ? new Date(req.body.endDate) : undefined
+      };
+      
+      const validatedData = projectInsertSchema.parse(data);
       
       const project = await storage.createProject(validatedData);
       res.status(201).json(project);
