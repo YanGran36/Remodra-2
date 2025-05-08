@@ -25,11 +25,11 @@ export const usePriceConfigurations = () => {
 
   // Obtener configuraciones de un servicio específico
   const {
-    data: serviceConfigurations,
+    data: serviceConfigurations = [],
     isLoading: isLoadingServiceConfigurations,
     error: serviceConfigurationsError,
     refetch: refetchServiceConfigurations
-  } = useQuery({
+  } = useQuery<any[]>({
     queryKey: ["/api/protected/price-configurations/service", selectedService],
     enabled: !!selectedService,
   });

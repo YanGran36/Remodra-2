@@ -201,13 +201,13 @@ export default function PriceConfigurationsPage() {
     // Convertir strings a números donde sea necesario
     const formattedData = {
       ...data,
-      baseLinearFootPrice: data.baseLinearFootPrice ? parseFloat(data.baseLinearFootPrice) : undefined,
-      baseSquareFootPrice: data.baseSquareFootPrice ? parseFloat(data.baseSquareFootPrice) : undefined,
-      baseUnitPrice: data.baseUnitPrice ? parseFloat(data.baseUnitPrice) : undefined,
-      laborHourlyRate: parseFloat(data.laborHourlyRate),
-      materialCostMultiplier: parseFloat(data.materialCostMultiplier),
-      overheadPercentage: parseFloat(data.overheadPercentage),
-      profitMarginPercentage: parseFloat(data.profitMarginPercentage),
+      baseLinearFootPrice: data.baseLinearFootPrice ? data.baseLinearFootPrice : undefined,
+      baseSquareFootPrice: data.baseSquareFootPrice ? data.baseSquareFootPrice : undefined,
+      baseUnitPrice: data.baseUnitPrice ? data.baseUnitPrice : undefined,
+      laborHourlyRate: data.laborHourlyRate,
+      materialCostMultiplier: data.materialCostMultiplier,
+      overheadPercentage: data.overheadPercentage,
+      profitMarginPercentage: data.profitMarginPercentage
     };
 
     updateConfiguration({
@@ -327,7 +327,7 @@ export default function PriceConfigurationsPage() {
               <div className="flex justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-            ) : serviceConfigurations && serviceConfigurations.length > 0 ? (
+            ) : serviceConfigurations.length > 0 ? (
               <div>
                 {serviceConfigurations.map(renderConfigurationCard)}
               </div>
