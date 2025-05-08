@@ -78,7 +78,7 @@ export default function ProjectForm({
   });
 
   const handleSubmit = (data: z.infer<typeof projectFormSchema>) => {
-    const formattedData = {
+    const formattedData: ProjectInput & { clientId: number } = {
       ...data,
       clientId,
       // Convertir las fechas a strings ISO si existen

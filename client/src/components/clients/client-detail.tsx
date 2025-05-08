@@ -22,6 +22,7 @@ import { formatCurrency } from "@/lib/utils";
 import ProjectForm, { ProjectInput } from "@/components/projects/project-form";
 import { useProjects } from "@/hooks/use-projects";
 import { Project } from "@/hooks/use-clients";
+import { ProjectInsert } from "@shared/schema";
 
 type ClientDetailProps = {
   client: ClientWithProjects;
@@ -105,10 +106,19 @@ export default function ClientDetail({
     if (selectedProject) {
       updateProject({
         id: selectedProject.id,
-        data
+        data: {
+          ...data,
+          contractorId: 1 // Estamos usando el ID 1 para el contratista logueado
+        }
       });
     } else {
-      createProject(data);
+      // Asegurarse de que el objeto tenga todos los campos requeridos
+      const projectData: ProjectInsert = {
+        ...data,
+        contractorId: 1, // ID del contratista logueado
+        status: data.status || "pending"
+      };
+      createProject(projectData);
     }
     setIsProjectFormOpen(false);
   };

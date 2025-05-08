@@ -7,6 +7,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Project } from "@/hooks/use-clients";
 import { ProjectInput } from "@/components/projects/project-form";
+import { ProjectInsert } from "@shared/schema";
 
 export interface ProjectDetail extends Project {
   description: string;
@@ -46,7 +47,7 @@ export const useProjects = () => {
 
   // Crear un proyecto
   const createProjectMutation = useMutation({
-    mutationFn: async (data: ProjectInput & { clientId: number }) => {
+    mutationFn: async (data: ProjectInsert) => {
       const response = await apiRequest("POST", "/api/protected/projects", data);
       return await response.json();
     },
@@ -74,7 +75,7 @@ export const useProjects = () => {
       data 
     }: { 
       id: number, 
-      data: Partial<ProjectInput & { clientId: number }> 
+      data: Partial<ProjectInsert> 
     }) => {
       const response = await apiRequest("PATCH", `/api/protected/projects/${id}`, data);
       return await response.json();
