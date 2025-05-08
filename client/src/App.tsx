@@ -40,6 +40,7 @@ function Router() {
       <ProtectedRoute path="/invoices" component={InvoicesPage} />
       <ProtectedRoute path="/projects" component={ProjectsPage} />
       <ProtectedRoute path="/projects-debug" component={ProjectsDebugPage} />
+      <ProtectedRoute path="/estimate-simple-test" component={EstimateSimpleTest} />
       <ProtectedRoute path="/materials" component={MaterialsPage} />
       <ProtectedRoute path="/ai-assistant" component={AIAssistantPage} />
       <ProtectedRoute path="/price-configurations" component={PriceConfigurationsPage} />

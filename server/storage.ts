@@ -341,8 +341,64 @@ class DatabaseStorage implements IStorage {
   }
 
   async createEstimate(data: Omit<EstimateInsert, "id">) {
-    const [estimate] = await db.insert(estimates).values(data).returning();
-    return estimate;
+    console.log("createEstimate -> Iniciando creación con datos:", JSON.stringify(data, null, 2));
+    try {
+      // Validar que el cliente pertenece al contratista
+      const client = await db.query.clients.findFirst({
+        where: and(
+          eq(clients.id, data.clientId),
+          eq(clients.contractorId, data.contractorId)
+        )
+      });
+      
+      if (!client) {
+        console.error(`createEstimate -> Error: Cliente ${data.clientId} no pertenece al contratista ${data.contractorId}`);
+        throw new Error(`Client ${data.clientId} not found or does not belong to contractor ${data.contractorId}`);
+      }
+      
+      // Si se proporciona projectId, validar que también pertenece al contratista
+      if (data.projectId) {
+        const project = await db.query.projects.findFirst({
+          where: and(
+            eq(projects.id, data.projectId),
+            eq(projects.contractorId, data.contractorId)
+          )
+        });
+        
+        if (!project) {
+          console.error(`createEstimate -> Error: Proyecto ${data.projectId} no pertenece al contratista ${data.contractorId}`);
+          throw new Error(`Project ${data.projectId} not found or does not belong to contractor ${data.contractorId}`);
+        }
+      }
+      
+      console.log("createEstimate -> Validaciones pasadas, insertando en DB...");
+      const [estimate] = await db.insert(estimates).values(data).returning();
+      console.log("createEstimate -> Estimado creado exitosamente:", JSON.stringify(estimate, null, 2));
+      
+      // Si hay items en el parámetro, insertarlos también
+      if (data.items && Array.isArray(data.items) && data.items.length > 0) {
+        console.log(`createEstimate -> Procesando ${data.items.length} items...`);
+        
+        for (const item of data.items) {
+          const itemData = {
+            estimateId: estimate.id,
+            description: item.description,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            amount: item.amount,
+            notes: item.notes
+          };
+          
+          console.log("createEstimate -> Insertando item:", JSON.stringify(itemData, null, 2));
+          await db.insert(estimateItems).values(itemData);
+        }
+      }
+      
+      return estimate;
+    } catch (error) {
+      console.error("createEstimate -> Error:", error);
+      throw error;
+    }
   }
 
   async updateEstimate(id: number, contractorId: number, data: Partial<EstimateInsert>) {

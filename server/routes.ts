@@ -242,20 +242,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/protected/estimates", async (req, res) => {
+    console.log("POST /api/protected/estimates - Recibiendo solicitud:", JSON.stringify(req.body, null, 2));
     try {
-      const validatedData = estimateInsertSchema.parse({
+      // Preparar datos con el ID del contratista
+      const dataWithContractorId = {
         ...req.body,
         contractorId: req.user!.id
-      });
+      };
       
+      console.log("Datos con contractor ID añadido:", JSON.stringify(dataWithContractorId, null, 2));
+      
+      // Validar datos
+      const validatedData = estimateInsertSchema.parse(dataWithContractorId);
+      console.log("Datos validados correctamente:", JSON.stringify(validatedData, null, 2));
+      
+      // Crear estimado
+      console.log("Creando estimado en la base de datos...");
       const estimate = await storage.createEstimate(validatedData);
+      console.log("Estimado creado exitosamente:", JSON.stringify(estimate, null, 2));
+      
       res.status(201).json(estimate);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
+        console.error("Error de validación:", JSON.stringify(error.errors, null, 2));
+        return res.status(400).json({ 
+          message: "Validation error", 
+          errors: error.errors,
+          details: error.format()
+        });
       }
+      
       console.error("Error creating estimate:", error);
-      res.status(500).json({ message: "Failed to create estimate" });
+      res.status(500).json({ 
+        message: "Failed to create estimate", 
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 

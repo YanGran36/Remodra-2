@@ -351,7 +351,18 @@ export const projectInsertSchema = createInsertSchema(projects, {
   endDate: (schema) => schema.optional()
 });
 
-export const estimateInsertSchema = createInsertSchema(estimates);
+// Extender el esquema de inserción de estimados para permitir ítems de línea
+export const estimateInsertSchema = createInsertSchema(estimates).extend({
+  items: z.array(
+    z.object({
+      description: z.string(),
+      quantity: z.number().or(z.string().transform(val => parseFloat(val))),
+      unitPrice: z.number().or(z.string().transform(val => parseFloat(val))),
+      amount: z.number().or(z.string().transform(val => parseFloat(val))),
+      notes: z.string().optional()
+    })
+  ).optional()
+});
 export const estimateItemInsertSchema = createInsertSchema(estimateItems);
 export const invoiceInsertSchema = createInsertSchema(invoices);
 export const invoiceItemInsertSchema = createInsertSchema(invoiceItems);
