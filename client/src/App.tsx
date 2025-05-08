@@ -19,6 +19,7 @@ import PropertyMeasurementsPage from "@/pages/property-measurements-page";
 import InvoicesPage from "@/pages/invoices-page";
 import ProjectsPage from "@/pages/projects-page";
 import ProjectsDebugPage from "@/pages/projects-debug";
+import EstimateSimpleTest from "@/pages/estimate-simple-test";
 import MaterialsPage from "@/pages/materials-page";
 import AIAssistantPage from "@/pages/ai-assistant-page";
 import SettingsPage from "@/pages/settings-page";
