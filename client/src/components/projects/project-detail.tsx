@@ -46,7 +46,7 @@ interface ProjectDetailProps {
   onEdit: (project: ProjectWithClient) => void;
 }
 
-export default function ProjectDetail({ project, isOpen, onClose, onEdit }: ProjectDetailProps) {
+export default function ProjectDetailView({ project, isOpen, onClose, onEdit }: ProjectDetailProps) {
   const [isConfirmComplete, setIsConfirmComplete] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();

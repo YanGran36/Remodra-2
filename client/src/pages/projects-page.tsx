@@ -15,7 +15,7 @@ import {
   AlertTriangleIcon,
   MoreHorizontal
 } from "lucide-react";
-import ProjectDetail from "@/components/projects/project-detail";
+import ProjectDetailView from "@/components/projects/project-detail";
 import { 
   Select, 
   SelectContent, 
@@ -620,165 +620,19 @@ export default function ProjectsPage() {
         </div>
       </main>
       
-      {/* Project Detail Dialog */}
-      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          {selectedProject && (
-            <div>
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold">{selectedProject.title}</h2>
-                  <div className="flex items-center mt-1">
-                    {getStatusBadge(selectedProject.status)}
-                    {selectedProject.startDate && (
-                      <span className="text-sm text-gray-500 ml-3">
-                        Started: {format(new Date(selectedProject.startDate), 'MMMM d, yyyy')}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => {
-                    setIsDetailOpen(false);
-                    setEditingProject(selectedProject);
-                    setIsFormOpen(true);
-                  }}
-                >
-                  <FileEdit className="h-4 w-4 mr-2" />
-                  Edit Project
-                </Button>
-              </div>
-
-              <Tabs defaultValue="overview">
-                <TabsList className="mb-4">
-                  <TabsTrigger value="overview">Overview</TabsTrigger>
-                  <TabsTrigger value="tasks">Tasks</TabsTrigger>
-                  <TabsTrigger value="materials">Materials</TabsTrigger>
-                  <TabsTrigger value="documents">Documents</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="overview">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">Client Information</h3>
-                      {selectedProject.client ? (
-                        <div className="flex items-center">
-                          <Avatar className="h-12 w-12 mr-3">
-                            <AvatarFallback>
-                              {selectedProject.client.firstName?.[0]}{selectedProject.client.lastName?.[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium">{selectedProject.client.firstName} {selectedProject.client.lastName}</p>
-                            <p className="text-sm text-gray-600">{selectedProject.client.email}</p>
-                            <p className="text-sm text-gray-600">{selectedProject.client.phone || "No phone number"}</p>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="text-gray-500">No client associated with this project</p>
-                      )}
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">Project Details</h3>
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Budget:</span>
-                          <span className="font-medium">{selectedProject.budget ? formatCurrency(selectedProject.budget) : "Not set"}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Start Date:</span>
-                          <span>{selectedProject.startDate ? format(new Date(selectedProject.startDate), 'MMMM d, yyyy') : "Not set"}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">End Date:</span>
-                          <span>{selectedProject.endDate ? format(new Date(selectedProject.endDate), 'MMMM d, yyyy') : "Not set"}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Status:</span>
-                          <span>{getStatusBadge(selectedProject.status)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Progress:</span>
-                          <span>{getRandomProgress(selectedProject)}%</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="mb-6">
-                    <h3 className="text-lg font-semibold mb-2">Description</h3>
-                    <div className="bg-gray-50 p-4 rounded-md">
-                      {selectedProject.description ? (
-                        <p className="whitespace-pre-line">{selectedProject.description}</p>
-                      ) : (
-                        <p className="text-gray-500">No description provided</p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">Notes</h3>
-                    <div className="bg-gray-50 p-4 rounded-md">
-                      {selectedProject.notes ? (
-                        <p className="whitespace-pre-line">{selectedProject.notes}</p>
-                      ) : (
-                        <p className="text-gray-500">No notes available</p>
-                      )}
-                    </div>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="tasks">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold">Tasks</h3>
-                    <Button size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Task
-                    </Button>
-                  </div>
-                  
-                  <div className="bg-gray-50 p-8 rounded-md text-center text-gray-500">
-                    <HammerIcon className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                    <p className="mb-2">No tasks created yet</p>
-                    <p className="text-sm">Tasks would be displayed here once created</p>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="materials">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold">Materials</h3>
-                    <Button size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Material
-                    </Button>
-                  </div>
-                  
-                  <div className="bg-gray-50 p-8 rounded-md text-center text-gray-500">
-                    <p>Materials and supplies tracking would be displayed here</p>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="documents">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold">Documents</h3>
-                    <Button size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Upload Document
-                    </Button>
-                  </div>
-                  
-                  <div className="bg-gray-50 p-8 rounded-md text-center text-gray-500">
-                    <p>Project documents and files would be displayed here</p>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Project Detail Dialog usando nuestro componente personalizado */}
+      {selectedProject && (
+        <ProjectDetailView
+          project={selectedProject}
+          isOpen={isDetailOpen}
+          onClose={() => setIsDetailOpen(false)}
+          onEdit={(project) => {
+            setIsDetailOpen(false);
+            setEditingProject(project);
+            setIsFormOpen(true);
+          }}
+        />
+      )}
       
       {/* Project Form Dialog (This would be a separate component in a real app) */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
