@@ -210,7 +210,7 @@ export async function generateJobDescription(params: JobCostAnalysisParams): Pro
 
     // Preparar los datos para enviar a la API
     const prompt = `
-    Eres un experto en construcción y contratación. Crea una descripción profesional y detallada del trabajo para el siguiente proyecto:
+    Eres un contratista profesional. Crea una descripción concisa, directa y fácil de entender para este proyecto:
 
     INFORMACIÓN DEL TRABAJO:
     - Tipo de servicio: ${params.serviceType}
@@ -222,15 +222,17 @@ export async function generateJobDescription(params: JobCostAnalysisParams): Pro
     ${params.difficulty ? `- Dificultad del trabajo: ${params.difficulty}` : ''}
     ${params.additionalInfo ? `- Información adicional: ${params.additionalInfo}` : ''}
 
-    La descripción debe ser detallada, profesional y orientada al cliente. Debe incluir:
-    1. Una visión general del trabajo
-    2. Los materiales que se utilizarán y sus beneficios
-    3. El proceso de instalación o construcción
-    4. Los beneficios para el cliente
-    5. Garantías o aseguramiento de calidad
+    La descripción debe ser:
+    1. Corta y directa (máximo 150 palabras)
+    2. Estructurada en formato de lista con viñetas (•)
+    3. Fácil de leer para clientes sin conocimientos técnicos
+    4. Incluir exactamente estos 4 puntos, cada uno como un párrafo separado con una viñeta (•):
+      • Qué servicio exactamente se realizará
+      • Qué materiales se usarán y por qué son buenos
+      • Cuánto tiempo aproximadamente tomará el trabajo
+      • Qué beneficio principal obtendrá el cliente
 
-    Usa un tono profesional pero accesible. No incluyas precios específicos.
-    Limita la respuesta a aproximadamente 200-300 palabras.
+    Usa un tono profesional pero sencillo, como si hablaras directamente con un cliente. No incluyas precios específicos.
     `;
 
     console.log("Enviando prompt a OpenAI:", prompt);

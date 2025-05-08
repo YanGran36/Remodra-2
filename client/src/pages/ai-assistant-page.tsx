@@ -13,7 +13,9 @@ import {
   ChevronRight, 
   Lightbulb, 
   BarChart,
-  Sparkles
+  Sparkles,
+  CheckCircle2,
+  DollarSign
 } from "lucide-react";
 
 export default function AiAssistantPage() {
@@ -141,28 +143,178 @@ export default function AiAssistantPage() {
                     Descripción Profesional del Trabajo
                   </CardTitle>
                   <CardDescription>
-                    Utiliza esta descripción profesional para tus propuestas y comunicaciones con clientes
+                    Descripción lista para compartir con tus clientes
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="bg-muted/30 rounded-lg p-6 whitespace-pre-line">
-                    {jobDescription}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div className="bg-muted/30 rounded-lg p-6 whitespace-pre-line border-l-4 border-primary">
+                        {jobDescription}
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-3 mt-4">
+                        <Button 
+                          variant="outline"
+                          onClick={() => {
+                            navigator.clipboard.writeText(jobDescription);
+                            toast({
+                              title: "Copiado al portapapeles",
+                              description: "La descripción ha sido copiada al portapapeles"
+                            });
+                          }}
+                          className="flex-1"
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          Copiar Texto
+                        </Button>
+                        
+                        <Button 
+                          variant="default"
+                          onClick={() => {
+                            if (lastAnalysisResult) {
+                              // Preparar un mensaje de correo electrónico con la descripción y el precio
+                              const subject = encodeURIComponent("Propuesta de Trabajo");
+                              const body = encodeURIComponent(
+                                `${jobDescription}\n\n` +
+                                `Presupuesto estimado: ${new Intl.NumberFormat('es-CO', {
+                                  style: 'currency',
+                                  currency: 'COP',
+                                  minimumFractionDigits: 0,
+                                  maximumFractionDigits: 0,
+                                }).format(lastAnalysisResult.recommendedTotal)}\n\n` +
+                                "Para más detalles, por favor contáctenos."
+                              );
+                              window.open(`mailto:?subject=${subject}&body=${body}`);
+                            } else {
+                              toast({
+                                title: "No hay análisis de costos",
+                                description: "Para incluir el presupuesto, primero debes generar un análisis de costos",
+                                variant: "destructive"
+                              });
+                            }
+                          }}
+                          className="flex-1"
+                        >
+                          <ArrowRight className="w-4 h-4 mr-2" />
+                          Enviar por Email
+                        </Button>
+                      </div>
+                      
+                      <div className="flex flex-col mt-6 space-y-2">
+                        <h3 className="text-base font-medium">Recomendaciones de uso:</h3>
+                        <ul className="space-y-1 text-sm text-muted-foreground">
+                          <li className="flex items-start">
+                            <div className="bg-green-100 text-green-800 rounded-full p-1 mr-2 mt-0.5">
+                              <CheckCircle2 className="h-3 w-3" />
+                            </div>
+                            <span>Utiliza esta descripción en propuestas formales</span>
+                          </li>
+                          <li className="flex items-start">
+                            <div className="bg-green-100 text-green-800 rounded-full p-1 mr-2 mt-0.5">
+                              <CheckCircle2 className="h-3 w-3" />
+                            </div>
+                            <span>Inclúyela en contratos o acuerdos de trabajo</span>
+                          </li>
+                          <li className="flex items-start">
+                            <div className="bg-green-100 text-green-800 rounded-full p-1 mr-2 mt-0.5">
+                              <CheckCircle2 className="h-3 w-3" />
+                            </div>
+                            <span>Compártela en comunicaciones con clientes para clarificar expectativas</span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                    
+                    {lastAnalysisResult && (
+                      <div className="bg-primary/5 rounded-lg p-4 border border-primary/20 space-y-4">
+                        <h3 className="text-base font-medium flex items-center">
+                          <DollarSign className="w-4 h-4 mr-2 text-primary" />
+                          Resumen del Presupuesto
+                        </h3>
+                        
+                        <div className="space-y-3 text-sm">
+                          <div className="flex justify-between items-center border-b pb-2">
+                            <span className="font-medium">Precio recomendado:</span>
+                            <span className="font-bold text-lg">{new Intl.NumberFormat('es-CO', {
+                              style: 'currency',
+                              currency: 'COP',
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0,
+                            }).format(lastAnalysisResult.recommendedTotal)}</span>
+                          </div>
+                          
+                          <div className="flex justify-between">
+                            <span>Materiales:</span>
+                            <span>{new Intl.NumberFormat('es-CO', {
+                              style: 'currency',
+                              currency: 'COP',
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0,
+                            }).format(lastAnalysisResult.breakdown.materials.total)}</span>
+                          </div>
+                          
+                          <div className="flex justify-between">
+                            <span>Mano de obra:</span>
+                            <span>{new Intl.NumberFormat('es-CO', {
+                              style: 'currency',
+                              currency: 'COP',
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0,
+                            }).format(lastAnalysisResult.breakdown.labor.total)}</span>
+                          </div>
+                          
+                          <div className="flex justify-between">
+                            <span>Gastos operativos:</span>
+                            <span>{new Intl.NumberFormat('es-CO', {
+                              style: 'currency',
+                              currency: 'COP',
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0,
+                            }).format(lastAnalysisResult.breakdown.overhead.total)}</span>
+                          </div>
+                          
+                          <div className="flex justify-between">
+                            <span>Margen de ganancia:</span>
+                            <span>{new Intl.NumberFormat('es-CO', {
+                              style: 'currency',
+                              currency: 'COP',
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0,
+                            }).format(lastAnalysisResult.breakdown.profit.total)}</span>
+                          </div>
+                          
+                          <div className="mt-3 p-3 bg-muted rounded-md">
+                            <h4 className="font-medium mb-1">Análisis competitivo:</h4>
+                            {lastAnalysisResult.breakdown.competitiveAnalysis && (
+                              <div className="space-y-1">
+                                <div className="flex justify-between text-xs">
+                                  <span>Rango bajo:</span>
+                                  <span>{new Intl.NumberFormat('es-CO', {
+                                    style: 'currency',
+                                    currency: 'COP',
+                                    minimumFractionDigits: 0,
+                                    maximumFractionDigits: 0,
+                                  }).format(lastAnalysisResult.breakdown.competitiveAnalysis.lowRange)}</span>
+                                </div>
+                                <div className="flex justify-between text-xs">
+                                  <span>Rango alto:</span>
+                                  <span>{new Intl.NumberFormat('es-CO', {
+                                    style: 'currency',
+                                    currency: 'COP',
+                                    minimumFractionDigits: 0,
+                                    maximumFractionDigits: 0,
+                                  }).format(lastAnalysisResult.breakdown.competitiveAnalysis.highRange)}</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   
-                  <div className="flex justify-end mt-6 gap-4">
-                    <Button 
-                      variant="outline"
-                      onClick={() => {
-                        navigator.clipboard.writeText(jobDescription);
-                        toast({
-                          title: "Copiado al portapapeles",
-                          description: "La descripción ha sido copiada al portapapeles"
-                        });
-                      }}
-                    >
-                      <FileText className="w-4 h-4 mr-2" />
-                      Copiar Texto
-                    </Button>
+                  <div className="flex justify-end mt-6">
                     <Button onClick={() => setActiveTab("cost-analysis")}>
                       <PieChart className="w-4 h-4 mr-2" />
                       Volver al Análisis

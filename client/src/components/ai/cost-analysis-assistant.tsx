@@ -110,11 +110,23 @@ export default function CostAnalysisAssistant({
   // Generar descripción del trabajo
   const generateDescription = async () => {
     try {
+      // Mostrar análisis automáticamente si no existe
+      if (!analysisResult) {
+        const result = await analyzeJobCost(params);
+        setAnalysisResult(result);
+        if (onAnalysisComplete) {
+          onAnalysisComplete(result);
+        }
+      }
+
       const description = await generateJobDescription(params);
       setJobDescription(description);
       if (onDescriptionGenerated) {
         onDescriptionGenerated(description);
       }
+      
+      // Ir automáticamente a la pestaña de descripción
+      setActiveTab("description");
     } catch (error) {
       console.error("Error al generar descripción:", error);
     }
