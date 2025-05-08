@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAiCostAnalysis, AiAnalysisParams, AiAnalysisResult } from "@/hooks/use-ai-cost-analysis";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +37,7 @@ export default function CostAnalysisAssistant({
   onAnalysisComplete,
   onDescriptionGenerated
 }: CostAnalysisAssistantProps) {
+  const { toast } = useToast();
   const [params, setParams] = useState<AiAnalysisParams>({
     serviceType: initialParams?.serviceType || "",
     materials: initialParams?.materials || [],
@@ -97,25 +99,81 @@ export default function CostAnalysisAssistant({
   // Realizar el análisis
   const runAnalysis = async () => {
     try {
+      // Validar que se haya agregado al menos un material
+      if (params.materials.length === 0) {
+        toast({
+          title: "Error en el análisis de costos",
+          description: "Debe agregar al menos un material",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Validar que se haya seleccionado un tipo de servicio
+      if (!params.serviceType) {
+        toast({
+          title: "Error en el análisis de costos",
+          description: "Debe seleccionar un tipo de servicio",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const result = await analyzeJobCost(params);
       setAnalysisResult(result);
       if (onAnalysisComplete) {
         onAnalysisComplete(result);
       }
+      
+      // Mostrar feedback positivo
+      toast({
+        title: "Análisis completado",
+        description: "Se ha generado el análisis de costos exitosamente"
+      });
     } catch (error) {
       console.error("Error en el análisis:", error);
+      toast({
+        title: "Error en el análisis de costos",
+        description: "Ocurrió un error al procesar la solicitud. Intente nuevamente.",
+        variant: "destructive"
+      });
     }
   };
 
   // Generar descripción del trabajo
   const generateDescription = async () => {
     try {
+      // Validar que se haya agregado al menos un material
+      if (params.materials.length === 0) {
+        toast({
+          title: "Error al generar descripción",
+          description: "Debe agregar al menos un material",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Validar que se haya seleccionado un tipo de servicio
+      if (!params.serviceType) {
+        toast({
+          title: "Error al generar descripción",
+          description: "Debe seleccionar un tipo de servicio",
+          variant: "destructive"
+        });
+        return;
+      }
+
       // Mostrar análisis automáticamente si no existe
       if (!analysisResult) {
-        const result = await analyzeJobCost(params);
-        setAnalysisResult(result);
-        if (onAnalysisComplete) {
-          onAnalysisComplete(result);
+        try {
+          const result = await analyzeJobCost(params);
+          setAnalysisResult(result);
+          if (onAnalysisComplete) {
+            onAnalysisComplete(result);
+          }
+        } catch (analyzeError) {
+          console.error("Error en el análisis previo:", analyzeError);
+          // Continuar con la generación de descripción incluso si el análisis falla
         }
       }
 
@@ -127,8 +185,19 @@ export default function CostAnalysisAssistant({
       
       // Ir automáticamente a la pestaña de descripción
       setActiveTab("description");
+      
+      // Mostrar feedback positivo
+      toast({
+        title: "Descripción generada",
+        description: "Se ha creado la descripción del trabajo exitosamente"
+      });
     } catch (error) {
       console.error("Error al generar descripción:", error);
+      toast({
+        title: "Error al generar descripción",
+        description: "Ocurrió un error al procesar la solicitud. Intente nuevamente.",
+        variant: "destructive"
+      });
     }
   };
 
