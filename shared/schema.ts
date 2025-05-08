@@ -206,6 +206,36 @@ export const propertyMeasurements = pgTable("property_measurements", {
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
 
+// Configuración de precios por contratista
+export const priceConfigurations = pgTable("price_configurations", {
+  id: serial("id").primaryKey(),
+  contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
+  
+  // Identificación del servicio
+  serviceType: text("service_type").notNull(), // deck, fence, roof, siding, windows, gutters, etc.
+  configName: text("config_name").notNull(), // Nombre amigable de la configuración
+  
+  // Precios base por unidad de medida
+  baseLinearFootPrice: decimal("base_linear_foot_price", { precision: 10, scale: 2 }),
+  baseSquareFootPrice: decimal("base_square_foot_price", { precision: 10, scale: 2 }),
+  baseUnitPrice: decimal("base_unit_price", { precision: 10, scale: 2 }),
+  
+  // Configuración de costos y márgenes
+  laborHourlyRate: decimal("labor_hourly_rate", { precision: 10, scale: 2 }).notNull(),
+  materialCostMultiplier: decimal("material_cost_multiplier", { precision: 5, scale: 2 }).default("1.00").notNull(),
+  overheadPercentage: decimal("overhead_percentage", { precision: 5, scale: 2 }).notNull(),
+  profitMarginPercentage: decimal("profit_margin_percentage", { precision: 5, scale: 2 }).notNull(),
+  
+  // Multiplicadores por dificultad (JSON que almacena valores para fácil, medio, complejo)
+  difficultyMultipliers: jsonb("difficulty_multipliers").default('{"easy": 0.8, "medium": 1.0, "complex": 1.3}'),
+  
+  // Metadatos
+  isDefault: boolean("is_default").default(false).notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
 // Define relations
 export const contractorsRelations = relations(contractors, ({ many }) => ({
   clients: many(clients),
@@ -216,7 +246,8 @@ export const contractorsRelations = relations(contractors, ({ many }) => ({
   materials: many(materials),
   attachments: many(attachments),
   followUps: many(followUps),
-  propertyMeasurements: many(propertyMeasurements)
+  propertyMeasurements: many(propertyMeasurements),
+  priceConfigurations: many(priceConfigurations)
 }));
 
 export const clientsRelations = relations(clients, ({ one, many }) => ({
