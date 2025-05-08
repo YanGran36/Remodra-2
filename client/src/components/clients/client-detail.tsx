@@ -65,12 +65,14 @@ export default function ClientDetail({
   };
 
   // Calcular total de ingresos de todos los proyectos
-  const totalRevenue = client.projects.reduce((total, project) => {
-    const budget = typeof project.budget === 'string' 
-      ? parseFloat(project.budget.replace(/[$,]/g, ''))
-      : (project.budget || 0);
-    return total + budget;
-  }, 0);
+  const totalRevenue = client.projects && client.projects.length > 0
+    ? client.projects.reduce((total, project) => {
+        const budget = typeof project.budget === 'string' 
+          ? parseFloat(project.budget.replace(/[$,]/g, ''))
+          : (project.budget || 0);
+        return total + budget;
+      }, 0)
+    : 0;
 
   const handleDeleteClick = () => {
     setIsDeleteDialogOpen(true);
@@ -143,22 +145,22 @@ export default function ClientDetail({
               <div className="space-y-2 text-sm">
                 <p className="flex items-center justify-between">
                   <span className="text-gray-600">Proyectos</span>
-                  <span className="font-medium">{client.projects.length}</span>
+                  <span className="font-medium">{client.projects ? client.projects.length : 0}</span>
                 </p>
                 <p className="flex items-center justify-between">
                   <span className="text-gray-600">Completados</span>
                   <span className="font-medium">
-                    {client.projects.filter(p => 
+                    {client.projects ? client.projects.filter(p => 
                       p.status === "completed" || p.status === "Completed"
-                    ).length}
+                    ).length : 0}
                   </span>
                 </p>
                 <p className="flex items-center justify-between">
                   <span className="text-gray-600">En progreso</span>
                   <span className="font-medium">
-                    {client.projects.filter(p => 
+                    {client.projects ? client.projects.filter(p => 
                       p.status === "in_progress" || p.status === "In Progress"
-                    ).length}
+                    ).length : 0}
                   </span>
                 </p>
                 <p className="flex items-center justify-between">
@@ -172,7 +174,7 @@ export default function ClientDetail({
         
         <TabsContent value="projects">
           <h5 className="font-medium text-gray-900 mb-2">Proyectos</h5>
-          {client.projects.length === 0 ? (
+          {!client.projects || client.projects.length === 0 ? (
             <div className="text-center py-6 border border-dashed rounded-md">
               <p className="text-gray-500">No hay proyectos para este cliente.</p>
               <Button 

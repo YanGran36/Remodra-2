@@ -63,7 +63,7 @@ export default function ClientCard({
             )}
           </div>
 
-          {client.projects.length > 0 && (
+          {client.projects && client.projects.length > 0 && (
             <div className="mt-3">
               <div className="text-sm font-medium">Proyectos</div>
               <div className="flex flex-wrap gap-2 mt-1">

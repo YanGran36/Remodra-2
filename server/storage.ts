@@ -183,10 +183,25 @@ class DatabaseStorage implements IStorage {
 
   // Client methods
   async getClients(contractorId: number) {
-    return await db.query.clients.findMany({
+    const clientsList = await db.query.clients.findMany({
       where: eq(clients.contractorId, contractorId),
-      orderBy: asc(clients.lastName)
+      orderBy: asc(clients.lastName),
+      with: {
+        projects: {
+          columns: {
+            id: true,
+            title: true,
+            status: true,
+            budget: true,
+            startDate: true,
+            endDate: true
+          },
+          orderBy: desc(projects.createdAt)
+        }
+      }
     });
+    
+    return clientsList;
   }
 
   async getClient(id: number, contractorId: number) {
@@ -194,7 +209,23 @@ class DatabaseStorage implements IStorage {
       where: and(
         eq(clients.id, id),
         eq(clients.contractorId, contractorId)
-      )
+      ),
+      with: {
+        projects: {
+          columns: {
+            id: true,
+            title: true,
+            status: true,
+            description: true,
+            budget: true,
+            startDate: true,
+            endDate: true,
+            notes: true,
+            createdAt: true
+          },
+          orderBy: desc(projects.createdAt)
+        }
+      }
     });
   }
 
