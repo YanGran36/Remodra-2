@@ -1,18 +1,17 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { useProjects } from "@/hooks/use-projects";
+import { useProjects, type ProjectWithClient } from "@/hooks/use-projects";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function ProjectsDebugPage() {
-  const { useProjects } = useProjects();
-  const { data: projects, isLoading } = useProjects();
+  const { projects, isLoadingProjects } = useProjects();
 
   const handleCreateEstimateClick = (projectId: number) => {
     // Abrir en una nueva pestaña
     window.open(`/estimates/new?projectId=${projectId}`, "_blank");
   };
 
-  if (isLoading) {
+  if (isLoadingProjects) {
     return (
       <div className="container py-8">
         <h1 className="text-3xl font-bold mb-6">Cargando proyectos...</h1>

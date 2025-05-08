@@ -53,12 +53,14 @@ export default function EstimateCreatePage() {
 
   // Manejar la creación exitosa del estimado
   const handleSuccess = (estimate: any) => {
+    console.log("Estimado creado exitosamente:", estimate);
     // Redirigir a la página de detalle del estimado
-    setLocation(`/estimates/${estimate.id}`);
+    window.location.href = `/estimates/${estimate.id}`;
   };
 
   // Cancelar y volver a la página anterior
   const handleCancel = () => {
+    console.log("Cancelando la creación del estimado");
     window.history.back();
   };
 

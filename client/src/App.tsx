@@ -18,6 +18,7 @@ import VendorEstimateFormPage from "@/pages/vendor-estimate-form-page";
 import PropertyMeasurementsPage from "@/pages/property-measurements-page";
 import InvoicesPage from "@/pages/invoices-page";
 import ProjectsPage from "@/pages/projects-page";
+import ProjectsDebugPage from "@/pages/projects-debug";
 import MaterialsPage from "@/pages/materials-page";
 import AIAssistantPage from "@/pages/ai-assistant-page";
 import SettingsPage from "@/pages/settings-page";
@@ -37,6 +38,7 @@ function Router() {
       <ProtectedRoute path="/property-measurements" component={PropertyMeasurementsPage} />
       <ProtectedRoute path="/invoices" component={InvoicesPage} />
       <ProtectedRoute path="/projects" component={ProjectsPage} />
+      <ProtectedRoute path="/projects-debug" component={ProjectsDebugPage} />
       <ProtectedRoute path="/materials" component={MaterialsPage} />
       <ProtectedRoute path="/ai-assistant" component={AIAssistantPage} />
       <ProtectedRoute path="/price-configurations" component={PriceConfigurationsPage} />
