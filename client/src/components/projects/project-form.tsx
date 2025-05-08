@@ -43,10 +43,7 @@ const projectFormSchema = z.object({
   notes: z.string().optional().or(z.literal(""))
 });
 
-export type ProjectInput = z.infer<typeof projectFormSchema> & {
-  startDate?: string | Date;
-  endDate?: string | Date;
-};
+export type ProjectInput = z.infer<typeof projectFormSchema>;
 
 type ProjectFormProps = {
   project?: Project;
@@ -81,9 +78,10 @@ export default function ProjectForm({
     const formattedData: ProjectInput & { clientId: number } = {
       ...data,
       clientId,
-      // Convertir las fechas a strings ISO si existen
-      startDate: data.startDate ? data.startDate.toISOString() : undefined,
-      endDate: data.endDate ? data.endDate.toISOString() : undefined
+      // No es necesario convertir las fechas a ISO string aquí, 
+      // ya que el servidor ahora maneja la conversión
+      startDate: data.startDate,
+      endDate: data.endDate
     };
     onSubmit(formattedData);
   };

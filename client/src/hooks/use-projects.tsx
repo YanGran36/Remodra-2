@@ -48,7 +48,14 @@ export const useProjects = () => {
   // Crear un proyecto
   const createProjectMutation = useMutation({
     mutationFn: async (data: ProjectInsert) => {
-      const response = await apiRequest("POST", "/api/protected/projects", data);
+      // Convertir las fechas a formato ISO string para enviar al servidor
+      const formattedData = {
+        ...data,
+        startDate: data.startDate ? (data.startDate instanceof Date ? data.startDate.toISOString() : data.startDate) : undefined,
+        endDate: data.endDate ? (data.endDate instanceof Date ? data.endDate.toISOString() : data.endDate) : undefined
+      };
+      
+      const response = await apiRequest("POST", "/api/protected/projects", formattedData);
       return await response.json();
     },
     onSuccess: (data) => {
@@ -77,7 +84,14 @@ export const useProjects = () => {
       id: number, 
       data: Partial<ProjectInsert> 
     }) => {
-      const response = await apiRequest("PATCH", `/api/protected/projects/${id}`, data);
+      // Convertir las fechas a formato ISO string para enviar al servidor
+      const formattedData = {
+        ...data,
+        startDate: data.startDate ? (data.startDate instanceof Date ? data.startDate.toISOString() : data.startDate) : undefined,
+        endDate: data.endDate ? (data.endDate instanceof Date ? data.endDate.toISOString() : data.endDate) : undefined
+      };
+      
+      const response = await apiRequest("PATCH", `/api/protected/projects/${id}`, formattedData);
       return await response.json();
     },
     onSuccess: (data) => {

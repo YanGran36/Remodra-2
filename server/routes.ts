@@ -159,7 +159,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Project not found" });
       }
       
-      const validatedData = projectInsertSchema.partial().parse(req.body);
+      // Procesar las fechas del string ISO a objetos Date si están presentes
+      const data = {
+        ...req.body,
+        startDate: req.body.startDate ? new Date(req.body.startDate) : undefined,
+        endDate: req.body.endDate ? new Date(req.body.endDate) : undefined
+      };
+      
+      const validatedData = projectInsertSchema.partial().parse(data);
       
       const project = await storage.updateProject(projectId, req.user!.id, validatedData);
       res.json(project);
