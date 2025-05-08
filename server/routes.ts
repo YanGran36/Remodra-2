@@ -195,6 +195,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Obtener estimados por proyecto
+  app.get("/api/protected/projects/:id/estimates", async (req, res) => {
+    try {
+      const projectId = Number(req.params.id);
+      
+      // Primero verificamos que el proyecto existe y pertenece al contratista
+      const project = await storage.getProject(projectId, req.user!.id);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      // Obtener los estimados que corresponden a este proyecto
+      const estimates = await storage.getEstimates(req.user!.id);
+      const projectEstimates = estimates.filter(estimate => estimate.projectId === projectId);
+      
+      res.json(projectEstimates);
+    } catch (error) {
+      console.error("Error fetching project estimates:", error);
+      res.status(500).json({ message: "Failed to fetch project estimates" });
+    }
+  });
+
   // Estimates routes
   app.get("/api/protected/estimates", async (req, res) => {
     try {

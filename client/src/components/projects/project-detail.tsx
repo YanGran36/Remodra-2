@@ -1,13 +1,18 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Check, Edit, FileText, Loader2, MapPin, Phone, Mail, User, Trash2, Building, Calendar } from "lucide-react";
+import { 
+  Check, Edit, FileText, Loader2, MapPin, Phone, Mail, User, 
+  Trash2, Building, Calendar, FilePlus, BanknoteIcon, 
+  BarChart3, X, Plus, Clock
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ProjectDetail, ProjectWithClient } from "@/hooks/use-projects";
 import { formatCurrency } from "@/lib/utils";
+import { useLocation } from "wouter";
 
 import {
   Dialog,
@@ -38,6 +43,14 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface ProjectDetailProps {
   project: ProjectWithClient;
