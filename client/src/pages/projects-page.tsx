@@ -15,6 +15,7 @@ import {
   AlertTriangleIcon,
   MoreHorizontal
 } from "lucide-react";
+import ProjectDetail from "@/components/projects/project-detail";
 import { 
   Select, 
   SelectContent, 
