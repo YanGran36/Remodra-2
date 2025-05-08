@@ -190,6 +190,7 @@ export default function VendorEstimateFormPageNew() {
   const watchServiceType = form.watch("serviceType");
   const watchMaterialType = form.watch("materialType");
   const watchClientId = form.watch("clientId");
+  const watchProjectId = form.watch("projectId");
   const watchSquareFeet = form.watch("squareFeet");
   const watchLinearFeet = form.watch("linearFeet");
   const watchUnits = form.watch("units");
@@ -204,14 +205,14 @@ export default function VendorEstimateFormPageNew() {
   
   // Efecto para cargar materiales relevantes cuando cambia el tipo de servicio
   useEffect(() => {
-    if (watchServiceType) {
+    if (watchServiceType && Object.prototype.hasOwnProperty.call(MATERIALS_BY_SERVICE, watchServiceType)) {
       // Reiniciar materiales seleccionados cuando cambia el servicio
       setSelectedMaterials([]);
       setSelectedOptions([]);
       
       // Para este ejemplo, cargaríamos algunos materiales por defecto
-      const defaultMaterials = MATERIALS_BY_SERVICE[watchServiceType] || [];
-      const initialMaterials: MaterialInput[] = defaultMaterials.slice(0, 3).map(material => ({
+      const defaultMaterials = MATERIALS_BY_SERVICE[watchServiceType as keyof typeof MATERIALS_BY_SERVICE] || [];
+      const initialMaterials: MaterialInput[] = defaultMaterials.slice(0, 3).map((material: any) => ({
         name: material.name,
         quantity: 1,
         unit: material.unit,
@@ -451,7 +452,17 @@ export default function VendorEstimateFormPageNew() {
       return;
     }
     
-    const materialInfo = MATERIALS_BY_SERVICE[watchServiceType]?.find(m => m.id === watchMaterialType);
+    if (!watchServiceType || !Object.prototype.hasOwnProperty.call(MATERIALS_BY_SERVICE, watchServiceType)) {
+      toast({
+        title: "Error",
+        description: "Seleccione un tipo de servicio válido.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const materials = MATERIALS_BY_SERVICE[watchServiceType as keyof typeof MATERIALS_BY_SERVICE];
+    const materialInfo = materials.find((m: any) => m.id === watchMaterialType);
     
     if (!materialInfo) return;
     
@@ -716,11 +727,14 @@ export default function VendorEstimateFormPageNew() {
                                       </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                      {MATERIALS_BY_SERVICE[watchServiceType]?.map((material) => (
+                                      {watchServiceType && Object.prototype.hasOwnProperty.call(MATERIALS_BY_SERVICE, watchServiceType) 
+                                       ? MATERIALS_BY_SERVICE[watchServiceType as keyof typeof MATERIALS_BY_SERVICE].map((material: any) => (
                                         <SelectItem key={material.id} value={material.id}>
                                           {material.name}
                                         </SelectItem>
-                                      ))}
+                                      ))
+                                      : null
+                                      }
                                     </SelectContent>
                                   </Select>
                                   <Button type="button" onClick={handleAddMaterial}>
