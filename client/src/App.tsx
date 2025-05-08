@@ -19,6 +19,7 @@ import ProjectsPage from "@/pages/projects-page";
 import MaterialsPage from "@/pages/materials-page";
 import AIAssistantPage from "@/pages/ai-assistant-page";
 import SettingsPage from "@/pages/settings-page";
+import PriceConfigurationsPage from "@/pages/price-configurations-page";
 
 function Router() {
   return (
@@ -34,6 +35,7 @@ function Router() {
       <ProtectedRoute path="/projects" component={ProjectsPage} />
       <ProtectedRoute path="/materials" component={MaterialsPage} />
       <ProtectedRoute path="/ai-assistant" component={AIAssistantPage} />
+      <ProtectedRoute path="/price-configurations" component={PriceConfigurationsPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />

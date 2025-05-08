@@ -1088,6 +1088,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Price Configuration routes
+  app.get("/api/protected/price-configurations", async (req, res) => {
+    try {
+      const configurations = await storage.getPriceConfigurations(req.user!.id);
+      res.json(configurations);
+    } catch (error) {
+      console.error("Error al obtener configuraciones de precios:", error);
+      res.status(500).json({ message: "No se pudieron obtener las configuraciones de precios" });
+    }
+  });
+
+  // Rutas específicas primero
+  app.get("/api/protected/price-configurations/service/:serviceType/default", async (req, res) => {
+    try {
+      const serviceType = req.params.serviceType;
+      const configuration = await storage.getDefaultPriceConfiguration(req.user!.id, serviceType);
+      if (!configuration) {
+        return res.status(404).json({ message: "No hay configuración predeterminada para este servicio" });
+      }
+      res.json(configuration);
+    } catch (error) {
+      console.error("Error al obtener configuración de precios predeterminada:", error);
+      res.status(500).json({ message: "No se pudo obtener la configuración de precios predeterminada" });
+    }
+  });
+
+  app.get("/api/protected/price-configurations/service/:serviceType", async (req, res) => {
+    try {
+      const serviceType = req.params.serviceType;
+      const configurations = await storage.getPriceConfigurationsByService(req.user!.id, serviceType);
+      res.json(configurations);
+    } catch (error) {
+      console.error("Error al obtener configuraciones de precios por servicio:", error);
+      res.status(500).json({ message: "No se pudieron obtener las configuraciones de precios para este servicio" });
+    }
+  });
+
+  // Y después rutas por ID
+  app.get("/api/protected/price-configurations/:id([0-9]+)", async (req, res) => {
+    try {
+      const configuration = await storage.getPriceConfiguration(Number(req.params.id), req.user!.id);
+      if (!configuration) {
+        return res.status(404).json({ message: "Configuración de precios no encontrada" });
+      }
+      res.json(configuration);
+    } catch (error) {
+      console.error("Error al obtener configuración de precios:", error);
+      res.status(500).json({ message: "No se pudo obtener la configuración de precios" });
+    }
+  });
+
+  app.post("/api/protected/price-configurations", async (req, res) => {
+    try {
+      const validatedData = priceConfigurationInsertSchema.parse({
+        ...req.body,
+        contractorId: req.user!.id
+      });
+      
+      const configuration = await storage.createPriceConfiguration(validatedData);
+      res.status(201).json(configuration);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ errors: error.errors });
+      }
+      console.error("Error al crear configuración de precios:", error);
+      res.status(500).json({ message: "No se pudo crear la configuración de precios" });
+    }
+  });
+
+  app.patch("/api/protected/price-configurations/:id", async (req, res) => {
+    try {
+      const configId = Number(req.params.id);
+      
+      // Primero verificar si la configuración existe y pertenece al contratista
+      const existingConfig = await storage.getPriceConfiguration(configId, req.user!.id);
+      if (!existingConfig) {
+        return res.status(404).json({ message: "Configuración de precios no encontrada" });
+      }
+      
+      const validatedData = priceConfigurationInsertSchema.partial().parse(req.body);
+      
+      const configuration = await storage.updatePriceConfiguration(configId, req.user!.id, validatedData);
+      res.json(configuration);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ errors: error.errors });
+      }
+      console.error("Error al actualizar configuración de precios:", error);
+      res.status(500).json({ message: "No se pudo actualizar la configuración de precios" });
+    }
+  });
+
+  app.delete("/api/protected/price-configurations/:id", async (req, res) => {
+    try {
+      const configId = Number(req.params.id);
+      const success = await storage.deletePriceConfiguration(configId, req.user!.id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Configuración de precios no encontrada" });
+      }
+      
+      res.status(204).end();
+    } catch (error) {
+      console.error("Error al eliminar configuración de precios:", error);
+      res.status(500).json({ message: "No se pudo eliminar la configuración de precios" });
+    }
+  });
+
+  app.post("/api/protected/price-configurations/:id/set-default", async (req, res) => {
+    try {
+      const configId = Number(req.params.id);
+      
+      // Obtener la configuración para verificar que existe y determinar su tipo de servicio
+      const config = await storage.getPriceConfiguration(configId, req.user!.id);
+      if (!config) {
+        return res.status(404).json({ message: "Configuración de precios no encontrada" });
+      }
+      
+      // Establecer como predeterminada
+      const updatedConfig = await storage.setDefaultPriceConfiguration(configId, req.user!.id, config.serviceType);
+      res.json(updatedConfig);
+    } catch (error) {
+      console.error("Error al establecer configuración predeterminada:", error);
+      res.status(500).json({ message: "No se pudo establecer la configuración como predeterminada" });
+    }
+  });
+
   // Create HTTP server
   const httpServer = createServer(app);
 
