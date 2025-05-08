@@ -66,8 +66,8 @@ const estimateItemSchema = z.object({
   description: z.string().min(1, "La descripción es requerida"),
   quantity: z.coerce.number().min(1, "La cantidad debe ser al menos 1"),
   // Convertimos los valores monetarios a string para compatibilidad con el backend
-  unitPrice: z.coerce.number().min(0, "El precio unitario debe ser al menos 0").transform(val => String(val)),
-  amount: z.coerce.number().transform(val => String(val)),
+  unitPrice: z.string().or(z.number().transform(val => String(val))),
+  amount: z.string().or(z.number().transform(val => String(val))),
   notes: z.string().optional(),
 });
 
@@ -85,8 +85,8 @@ export default function EstimateForm({ clientId, projectId, onSuccess, onCancel 
   const [newItem, setNewItem] = useState<EstimateItemValues>({
     description: "",
     quantity: 1,
-    unitPrice: 0,
-    amount: 0,
+    unitPrice: "0",
+    amount: "0",
     notes: "",
   });
   
@@ -113,7 +113,8 @@ export default function EstimateForm({ clientId, projectId, onSuccess, onCancel 
     
     // Recalcular el monto si cambia la cantidad o el precio unitario
     if (field === 'quantity' || field === 'unitPrice') {
-      updatedItem.amount = Number(updatedItem.quantity) * Number(updatedItem.unitPrice);
+      const amount = Number(updatedItem.quantity) * Number(updatedItem.unitPrice);
+      updatedItem.amount = amount.toString();
     }
     
     setNewItem(updatedItem);
@@ -130,8 +131,8 @@ export default function EstimateForm({ clientId, projectId, onSuccess, onCancel 
       setNewItem({
         description: "",
         quantity: 1,
-        unitPrice: 0,
-        amount: 0,
+        unitPrice: "0",
+        amount: "0",
         notes: "",
       });
       
@@ -163,15 +164,15 @@ export default function EstimateForm({ clientId, projectId, onSuccess, onCancel 
   const recalculateTotals = (currentItems: EstimateItemValues[]) => {
     const subtotal = currentItems.reduce((sum, item) => sum + Number(item.amount), 0);
     
-    const tax = form.getValues("tax") || 0;
-    const discount = form.getValues("discount") || 0;
+    const tax = Number(form.getValues("tax") || "0");
+    const discount = Number(form.getValues("discount") || "0");
     
     const taxAmount = (subtotal * tax) / 100;
     const discountAmount = (subtotal * discount) / 100;
     const total = subtotal + taxAmount - discountAmount;
     
-    form.setValue("subtotal", subtotal);
-    form.setValue("total", total);
+    form.setValue("subtotal", subtotal.toString());
+    form.setValue("total", total.toString());
   };
   
   // Actualizar totales cuando cambian los impuestos o descuentos
@@ -547,16 +548,16 @@ export default function EstimateForm({ clientId, projectId, onSuccess, onCancel 
                   <span className="font-medium">Subtotal:</span>
                   <span>{formatCurrency(form.getValues("subtotal"))}</span>
                 </div>
-                {form.getValues("tax") > 0 && (
+                {Number(form.getValues("tax")) > 0 && (
                   <div className="flex justify-between">
                     <span>Impuesto ({form.getValues("tax")}%):</span>
-                    <span>{formatCurrency((form.getValues("subtotal") * form.getValues("tax")) / 100)}</span>
+                    <span>{formatCurrency((Number(form.getValues("subtotal")) * Number(form.getValues("tax"))) / 100)}</span>
                   </div>
                 )}
-                {form.getValues("discount") > 0 && (
+                {Number(form.getValues("discount")) > 0 && (
                   <div className="flex justify-between">
                     <span>Descuento ({form.getValues("discount")}%):</span>
-                    <span>-{formatCurrency((form.getValues("subtotal") * form.getValues("discount")) / 100)}</span>
+                    <span>-{formatCurrency((Number(form.getValues("subtotal")) * Number(form.getValues("discount"))) / 100)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-lg font-bold">
