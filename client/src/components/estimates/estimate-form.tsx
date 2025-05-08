@@ -459,7 +459,7 @@ export default function EstimateForm({ clientId, projectId, onSuccess, onCancel 
                         <TableHead>Cantidad</TableHead>
                         <TableHead>Precio unitario</TableHead>
                         <TableHead>Monto</TableHead>
-                        <TableHead className="w-[50px]">Acciones</TableHead>
+                        <TableHead>Acciones</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -471,9 +471,10 @@ export default function EstimateForm({ clientId, projectId, onSuccess, onCancel 
                           <TableCell>{formatCurrency(item.amount)}</TableCell>
                           <TableCell>
                             <Button
-                              size="icon"
+                              type="button"
                               variant="ghost"
                               onClick={() => handleRemoveItem(index)}
+                              size="icon"
                             >
                               <Trash2 className="h-4 w-4" />
                               <span className="sr-only">Eliminar ítem</span>
@@ -484,20 +485,14 @@ export default function EstimateForm({ clientId, projectId, onSuccess, onCancel 
                     </TableBody>
                   </Table>
                 ) : (
-                  <div className="text-center py-4 border rounded-md bg-gray-50">
-                    <p className="text-gray-500 text-sm">No hay ítems agregados al estimado</p>
+                  <div className="text-center py-4 text-gray-500">
+                    No se han agregado ítems al estimado.
                   </div>
                 )}
+                
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Resumen financiero</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
                 <div>
                   <FormField
                     control={form.control}
@@ -510,8 +505,14 @@ export default function EstimateForm({ clientId, projectId, onSuccess, onCancel 
                             type="number"
                             min="0"
                             step="0.01"
-                            {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            value={field.value}
+                            onChange={(e) => {
+                              const value = parseFloat(e.target.value) || 0;
+                              field.onChange(value.toString());
+                              if (items.length > 0) {
+                                recalculateTotals(items);
+                              }
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
@@ -532,8 +533,14 @@ export default function EstimateForm({ clientId, projectId, onSuccess, onCancel 
                             type="number"
                             min="0"
                             step="0.01"
-                            {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            value={field.value}
+                            onChange={(e) => {
+                              const value = parseFloat(e.target.value) || 0;
+                              field.onChange(value.toString());
+                              if (items.length > 0) {
+                                recalculateTotals(items);
+                              }
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
