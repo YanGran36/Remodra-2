@@ -12,6 +12,7 @@ import {
   attachments, 
   followUps,
   propertyMeasurements,
+  priceConfigurations,
   ContractorInsert,
   ClientInsert,
   ProjectInsert,
@@ -23,7 +24,8 @@ import {
   MaterialInsert,
   AttachmentInsert,
   FollowUpInsert,
-  PropertyMeasurementInsert
+  PropertyMeasurementInsert,
+  PriceConfigurationInsert
 } from "@shared/schema";
 import { eq, and, asc, desc, like, or, isNull, sql } from "drizzle-orm";
 import session from "express-session";
@@ -58,6 +60,16 @@ export interface IStorage {
   createEstimate: (data: Omit<EstimateInsert, "id">) => Promise<any>;
   updateEstimate: (id: number, contractorId: number, data: Partial<EstimateInsert>) => Promise<any>;
   deleteEstimate: (id: number, contractorId: number) => Promise<boolean>;
+  
+  // Price Configurations
+  getPriceConfigurations: (contractorId: number) => Promise<any[]>;
+  getPriceConfiguration: (id: number, contractorId: number) => Promise<any>;
+  getPriceConfigurationsByService: (contractorId: number, serviceType: string) => Promise<any[]>;
+  getDefaultPriceConfiguration: (contractorId: number, serviceType: string) => Promise<any>;
+  createPriceConfiguration: (data: Omit<PriceConfigurationInsert, "id">) => Promise<any>;
+  updatePriceConfiguration: (id: number, contractorId: number, data: Partial<PriceConfigurationInsert>) => Promise<any>;
+  deletePriceConfiguration: (id: number, contractorId: number) => Promise<boolean>;
+  setDefaultPriceConfiguration: (id: number, contractorId: number, serviceType: string) => Promise<any>;
   
   // Estimate Items
   getEstimateItems: (estimateId: number, contractorId: number) => Promise<any[]>;
@@ -769,6 +781,138 @@ class DatabaseStorage implements IStorage {
         )
       );
     return result.rowCount > 0;
+  }
+  
+  // Price Configurations methods
+  async getPriceConfigurations(contractorId: number) {
+    return await db.query.priceConfigurations.findMany({
+      where: eq(priceConfigurations.contractorId, contractorId),
+      orderBy: [
+        asc(priceConfigurations.serviceType),
+        desc(priceConfigurations.isDefault),
+        asc(priceConfigurations.configName)
+      ]
+    });
+  }
+
+  async getPriceConfiguration(id: number, contractorId: number) {
+    return await db.query.priceConfigurations.findFirst({
+      where: and(
+        eq(priceConfigurations.id, id),
+        eq(priceConfigurations.contractorId, contractorId)
+      )
+    });
+  }
+
+  async getPriceConfigurationsByService(contractorId: number, serviceType: string) {
+    return await db.query.priceConfigurations.findMany({
+      where: and(
+        eq(priceConfigurations.contractorId, contractorId),
+        eq(priceConfigurations.serviceType, serviceType)
+      ),
+      orderBy: [
+        desc(priceConfigurations.isDefault),
+        asc(priceConfigurations.configName)
+      ]
+    });
+  }
+
+  async getDefaultPriceConfiguration(contractorId: number, serviceType: string) {
+    return await db.query.priceConfigurations.findFirst({
+      where: and(
+        eq(priceConfigurations.contractorId, contractorId),
+        eq(priceConfigurations.serviceType, serviceType),
+        eq(priceConfigurations.isDefault, true)
+      )
+    });
+  }
+
+  async createPriceConfiguration(data: Omit<PriceConfigurationInsert, "id">) {
+    // Si esta configuración se marca como predeterminada, primero asegúrese de que ninguna otra configuración para el mismo servicio sea predeterminada
+    if (data.isDefault) {
+      await db.update(priceConfigurations)
+        .set({ isDefault: false })
+        .where(
+          and(
+            eq(priceConfigurations.contractorId, data.contractorId),
+            eq(priceConfigurations.serviceType, data.serviceType),
+            eq(priceConfigurations.isDefault, true)
+          )
+        );
+    }
+    
+    const [config] = await db.insert(priceConfigurations).values(data).returning();
+    return config;
+  }
+
+  async updatePriceConfiguration(id: number, contractorId: number, data: Partial<PriceConfigurationInsert>) {
+    // Si esta configuración se marca como predeterminada, primero asegúrese de que ninguna otra configuración para el mismo servicio sea predeterminada
+    if (data.isDefault) {
+      const currentConfig = await this.getPriceConfiguration(id, contractorId);
+      if (currentConfig) {
+        await db.update(priceConfigurations)
+          .set({ isDefault: false })
+          .where(
+            and(
+              eq(priceConfigurations.contractorId, contractorId),
+              eq(priceConfigurations.serviceType, currentConfig.serviceType),
+              eq(priceConfigurations.isDefault, true),
+              sql`${priceConfigurations.id} != ${id}`
+            )
+          );
+      }
+    }
+    
+    const [updated] = await db
+      .update(priceConfigurations)
+      .set(data)
+      .where(
+        and(
+          eq(priceConfigurations.id, id),
+          eq(priceConfigurations.contractorId, contractorId)
+        )
+      )
+      .returning();
+    return updated;
+  }
+
+  async deletePriceConfiguration(id: number, contractorId: number) {
+    const result = await db
+      .delete(priceConfigurations)
+      .where(
+        and(
+          eq(priceConfigurations.id, id),
+          eq(priceConfigurations.contractorId, contractorId)
+        )
+      );
+    return result.rowCount > 0;
+  }
+
+  async setDefaultPriceConfiguration(id: number, contractorId: number, serviceType: string) {
+    // Primero, eliminar el predeterminado actual
+    await db.update(priceConfigurations)
+      .set({ isDefault: false })
+      .where(
+        and(
+          eq(priceConfigurations.contractorId, contractorId),
+          eq(priceConfigurations.serviceType, serviceType),
+          eq(priceConfigurations.isDefault, true)
+        )
+      );
+    
+    // Luego, establecer el nuevo predeterminado
+    const [updated] = await db
+      .update(priceConfigurations)
+      .set({ isDefault: true })
+      .where(
+        and(
+          eq(priceConfigurations.id, id),
+          eq(priceConfigurations.contractorId, contractorId)
+        )
+      )
+      .returning();
+    
+    return updated;
   }
 }
 
