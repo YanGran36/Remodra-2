@@ -52,10 +52,11 @@ const estimateFormSchema = z.object({
   expiryDate: z.date().optional(),
   terms: z.string().optional(),
   notes: z.string().optional(),
-  subtotal: z.coerce.number().min(0),
-  tax: z.coerce.number().min(0),
-  discount: z.coerce.number().min(0),
-  total: z.coerce.number().min(0),
+  // Cambiamos los tipos de campos monetarios a string para compatibilidad con el backend
+  subtotal: z.coerce.number().min(0).transform(val => String(val)),
+  tax: z.coerce.number().min(0).transform(val => String(val)),
+  discount: z.coerce.number().min(0).transform(val => String(val)),
+  total: z.coerce.number().min(0).transform(val => String(val)),
 });
 
 type EstimateFormValues = z.infer<typeof estimateFormSchema>;
@@ -64,8 +65,9 @@ type EstimateFormValues = z.infer<typeof estimateFormSchema>;
 const estimateItemSchema = z.object({
   description: z.string().min(1, "La descripción es requerida"),
   quantity: z.coerce.number().min(1, "La cantidad debe ser al menos 1"),
-  unitPrice: z.coerce.number().min(0, "El precio unitario debe ser al menos 0"),
-  amount: z.coerce.number(),
+  // Convertimos los valores monetarios a string para compatibilidad con el backend
+  unitPrice: z.coerce.number().min(0, "El precio unitario debe ser al menos 0").transform(val => String(val)),
+  amount: z.coerce.number().transform(val => String(val)),
   notes: z.string().optional(),
 });
 
@@ -98,10 +100,10 @@ export default function EstimateForm({ clientId, projectId, onSuccess, onCancel 
       clientId: clientId || 0,
       projectId: projectId || 0,
       issueDate: new Date(),
-      subtotal: 0,
-      tax: 0,
-      discount: 0,
-      total: 0,
+      subtotal: "0", // Convertidos a string para compatibilidad con el backend
+      tax: "0",      // Convertidos a string para compatibilidad con el backend
+      discount: "0", // Convertidos a string para compatibilidad con el backend
+      total: "0",    // Convertidos a string para compatibilidad con el backend
     }
   });
   

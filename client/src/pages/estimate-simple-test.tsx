@@ -14,11 +14,11 @@ export default function EstimateSimpleTest() {
     clientId: 1,
     projectId: 2,
     estimateNumber: `EST-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}-${Math.floor(Math.random() * 900) + 100}`,
-    issueDate: new Date().toISOString(),
-    subtotal: 1000,
-    tax: 0,
-    discount: 0,
-    total: 1000,
+    issueDate: new Date(), // Enviamos un objeto Date directamente, no un string
+    subtotal: "1000", // Convertimos a string
+    tax: "0", // Convertimos a string
+    discount: "0", // Convertimos a string
+    total: "1000", // Convertimos a string
     status: "pending",
     items: [
       {
@@ -34,9 +34,11 @@ export default function EstimateSimpleTest() {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: name === 'clientId' || name === 'projectId' || name === 'subtotal' || name === 'tax' || name === 'discount' || name === 'total' 
-        ? Number(value) 
-        : value
+      [name]: name === 'clientId' || name === 'projectId' 
+        ? Number(value)  // Solo convertimos a número los IDs
+        : name === 'subtotal' || name === 'tax' || name === 'discount' || name === 'total'
+          ? String(value) // Nos aseguramos que los valores monetarios sean strings
+          : value
     });
   };
 
