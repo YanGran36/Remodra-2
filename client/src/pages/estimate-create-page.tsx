@@ -21,8 +21,15 @@ export default function EstimateCreatePage() {
   
   // Usando los hooks para obtener datos del proyecto y cliente
   const { data: projectData, isLoading: isLoadingProject } = useProject(projectId || null);
+  
+  // Extraer el clientId del proyecto si está disponible usando una aserción segura
+  let projectClientId: number | undefined;
+  if (projectData && typeof projectData === 'object' && projectData !== null && 'clientId' in projectData) {
+    projectClientId = Number(projectData.clientId);
+  }
+  
   const { data: clientData, isLoading: isLoadingClient } = useClient(
-    projectData?.clientId || clientId || null
+    projectClientId || clientId || null
   );
 
   // Actualiza el estado cuando los datos estén disponibles
@@ -38,7 +45,7 @@ export default function EstimateCreatePage() {
     // Una vez que tenemos todos los datos o confirmamos que no hay datos para cargar
     if (
       (!isLoadingProject && (projectData || !projectId)) &&
-      (!isLoadingClient && (clientData || (!clientId && !projectData?.clientId)))
+      (!isLoadingClient && (clientData || (!clientId && !projectClientId)))
     ) {
       setIsLoading(false);
     }

@@ -343,6 +343,7 @@ export default function ProjectDetailView({ project, isOpen, onClose, onEdit }: 
                         // Ir a la página de crear un nuevo estimado estándar
                         setLocation(`/estimates/new?projectId=${project.id}`);
                         onClose();
+                        console.log("Botón de crear estimado presionado, redirigiendo a:", `/estimates/new?projectId=${project.id}`);
                       }}
                     >
                       <FilePlus className="h-4 w-4 mr-2" />
@@ -418,6 +419,7 @@ export default function ProjectDetailView({ project, isOpen, onClose, onEdit }: 
                             // Ir a la página de crear un nuevo estimado estándar
                             setLocation(`/estimates/new?projectId=${project.id}`);
                             onClose();
+                            console.log("Botón de crear estimado (sin estimados) presionado, redirigiendo a:", `/estimates/new?projectId=${project.id}`);
                           }}
                         >
                           <FilePlus className="h-4 w-4 mr-2" />
