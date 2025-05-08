@@ -110,6 +110,12 @@ export default function ClientDetail({
           ...data,
           contractorId: 1 // Estamos usando el ID 1 para el contratista logueado
         }
+      }, {
+        onSuccess: () => {
+          // Cerrar el formulario después de actualizar exitosamente
+          setIsProjectFormOpen(false);
+          setSelectedProject(null);
+        }
       });
     } else {
       // Asegurarse de que el objeto tenga todos los campos requeridos
@@ -118,9 +124,14 @@ export default function ClientDetail({
         contractorId: 1, // ID del contratista logueado
         status: data.status || "pending"
       };
-      createProject(projectData);
+      createProject(projectData, {
+        onSuccess: () => {
+          // Cerrar el formulario después de crear exitosamente
+          setIsProjectFormOpen(false);
+          setSelectedProject(null);
+        }
+      });
     }
-    setIsProjectFormOpen(false);
   };
 
   return (

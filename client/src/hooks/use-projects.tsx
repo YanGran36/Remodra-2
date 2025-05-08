@@ -150,8 +150,8 @@ export const useProjects = () => {
     projectsError,
     
     // Mutations
-    createProject: createProjectMutation.mutate,
-    updateProject: updateProjectMutation.mutate,
+    createProject: createProjectMutation.mutateAsync,
+    updateProject: updateProjectMutation.mutateAsync,
     deleteProject: deleteProjectMutation.mutate,
     
     // Mutation states
