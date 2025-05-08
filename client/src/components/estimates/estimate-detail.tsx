@@ -1,423 +1,526 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { useToast } from "@/hooks/use-toast";
+import { useEstimates } from "@/hooks/use-estimates";
+import { formatCurrency } from "@/lib/utils";
 import { 
-  FileEdit, 
-  Download, 
-  Printer, 
-  Mail, 
-  BanknoteIcon, 
-  Check, 
-  X,
-  Calendar
+  Check, Edit, Loader2, FileText, Send, X, 
+  Printer, Download, FilePlus, BanknoteIcon, AlertTriangle 
 } from "lucide-react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogTitle,
-  DialogFooter
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow, 
-  TableFooter
-} from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
-// Helper function to format currency
-const formatCurrency = (amount: number | string) => {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
-    .format(typeof amount === 'string' ? parseFloat(amount) : amount);
-};
-
-// Helper function to get status badge style
-const getStatusBadge = (status: string) => {
-  switch (status) {
-    case 'draft':
-      return <Badge variant="outline" className="bg-gray-100 text-gray-800 hover:bg-gray-100">Borrador</Badge>;
-    case 'sent':
-      return <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100">Enviado</Badge>;
-    case 'accepted':
-      return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">Aceptado</Badge>;
-    case 'rejected':
-      return <Badge variant="outline" className="bg-red-100 text-red-800 hover:bg-red-100">Rechazado</Badge>;
-    case 'expired':
-      return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Expirado</Badge>;
-    default:
-      return <Badge variant="outline">{status}</Badge>;
-  }
-};
-
-interface EstimateDetailProps {
-  estimate: any;
+export interface EstimateDetailProps {
+  estimateId: number;
   isOpen: boolean;
   onClose: () => void;
-  onEdit: (estimate: any) => void;
 }
 
-export default function EstimateDetail({ estimate, isOpen, onClose, onEdit }: EstimateDetailProps) {
-  const [isCreatingWorkOrder, setIsCreatingWorkOrder] = useState(false);
+export default function EstimateDetail({ estimateId, isOpen, onClose }: EstimateDetailProps) {
+  const [isConfirmAccept, setIsConfirmAccept] = useState(false);
+  const [isConfirmReject, setIsConfirmReject] = useState(false);
+  const [isConfirmConvert, setIsConfirmConvert] = useState(false);
+
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  
-  if (!estimate) return null;
-  
-  // Update estimate status mutation
-  const updateEstimateMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: number, status: string }) => {
-      const res = await apiRequest("PATCH", `/api/protected/estimates/${id}`, { status });
-      return await res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/protected/estimates"] });
-      toast({
-        title: "Estado actualizado",
-        description: "El estado del estimado ha sido actualizado correctamente.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error al actualizar",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+  const { getEstimate, updateEstimateStatusMutation, convertToInvoiceMutation } = useEstimates();
 
-  // Convert to invoice mutation
-  const convertToInvoiceMutation = useMutation({
-    mutationFn: async (estimateId: number) => {
-      setIsCreatingWorkOrder(true);
-      const res = await apiRequest("POST", `/api/protected/estimates/${estimateId}/convert-to-invoice`, {});
-      return await res.json();
-    },
-    onSuccess: (data) => {
-      setIsCreatingWorkOrder(false);
-      queryClient.invalidateQueries({ queryKey: ["/api/protected/invoices"] });
-      toast({
-        title: "Orden de trabajo creada",
-        description: "El estimado ha sido convertido en una orden de trabajo exitosamente.",
-      });
-      onClose();
-    },
-    onError: (error: Error) => {
-      setIsCreatingWorkOrder(false);
-      toast({
-        title: "Error al crear orden de trabajo",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+  // Obtener los datos del estimado
+  const { data: estimate, isLoading, error } = getEstimate(estimateId);
 
-  const handleStatusChange = (status: string) => {
-    updateEstimateMutation.mutate({ id: estimate.id, status });
+  if (isLoading) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent>
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (error || !estimate) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Error</DialogTitle>
+            <DialogDescription>
+              {error ? error.message : "No se pudo cargar el estimado."}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={onClose}>
+              Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Función para formatear fechas
+  const formatDate = (dateString?: string | Date | null) => {
+    if (!dateString) return "No especificada";
+    return format(new Date(dateString), "d 'de' MMMM, yyyy", { locale: es });
   };
 
-  const handleConvertToInvoice = () => {
-    if (estimate.status !== 'accepted') {
-      toast({
-        title: "Acción no permitida",
-        description: "Solo los estimados aceptados pueden ser convertidos a órdenes de trabajo.",
-        variant: "destructive",
-      });
-      return;
+  // Obtener clase para badge según el estado del estimado
+  const getStatusClass = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "accepted":
+      case "aceptado":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "pending":
+      case "pendiente":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "rejected":
+      case "rechazado":
+        return "bg-red-100 text-red-800 border-red-200";
+      case "sent":
+      case "enviado":
+        return "bg-purple-100 text-purple-800 border-purple-200";
+      case "draft":
+      case "borrador":
+        return "bg-gray-100 text-gray-800 border-gray-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
-    
-    convertToInvoiceMutation.mutate(estimate.id);
+  };
+
+  // Texto legible para el estado
+  const getStatusText = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "accepted":
+        return "Aceptado";
+      case "pending":
+        return "Pendiente";
+      case "rejected":
+        return "Rechazado";
+      case "sent":
+        return "Enviado";
+      case "draft":
+        return "Borrador";
+      default:
+        return status;
+    }
+  };
+
+  // Función para aceptar el estimado
+  const handleAcceptEstimate = () => {
+    setIsConfirmAccept(true);
+  };
+
+  // Función para rechazar el estimado
+  const handleRejectEstimate = () => {
+    setIsConfirmReject(true);
+  };
+
+  // Función para convertir a orden de trabajo
+  const handleConvertToWorkOrder = () => {
+    setIsConfirmConvert(true);
+  };
+
+  // Confirmar la aceptación del estimado
+  const confirmAcceptEstimate = () => {
+    updateEstimateStatusMutation.mutate(
+      { id: estimateId, status: "accepted" },
+      {
+        onSuccess: () => {
+          setIsConfirmAccept(false);
+          toast({
+            title: "Estimado aceptado",
+            description: "El estimado ha sido marcado como aceptado.",
+          });
+        }
+      }
+    );
+  };
+
+  // Confirmar el rechazo del estimado
+  const confirmRejectEstimate = () => {
+    updateEstimateStatusMutation.mutate(
+      { id: estimateId, status: "rejected" },
+      {
+        onSuccess: () => {
+          setIsConfirmReject(false);
+          toast({
+            title: "Estimado rechazado",
+            description: "El estimado ha sido marcado como rechazado.",
+          });
+        }
+      }
+    );
+  };
+
+  // Confirmar la conversión a orden de trabajo
+  const confirmConvertToWorkOrder = () => {
+    convertToInvoiceMutation.mutate(
+      estimateId,
+      {
+        onSuccess: (invoice) => {
+          setIsConfirmConvert(false);
+          toast({
+            title: "Orden de trabajo creada",
+            description: `Se ha creado la orden de trabajo ${invoice.invoiceNumber} a partir del estimado.`,
+          });
+          // Aquí se podría redirigir a la página de la orden de trabajo
+        }
+      }
+    );
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex justify-between items-center">
-            <span>Detalles del Estimado #{estimate.estimateNumber}</span>
-            {getStatusBadge(estimate.status)}
+          <DialogTitle className="text-xl">
+            Estimado {estimate.estimateNumber || `#${estimate.id}`}
           </DialogTitle>
+          <DialogDescription>
+            <div className="flex items-center gap-2 mt-1">
+              <Badge className={getStatusClass(estimate.status)}>
+                {getStatusText(estimate.status)}
+              </Badge>
+              {estimate.total && (
+                <Badge variant="outline">
+                  {formatCurrency(Number(estimate.total))}
+                </Badge>
+              )}
+            </div>
+          </DialogDescription>
         </DialogHeader>
-        
-        <div className="space-y-6">
-          {/* Client and Project Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Información del Cliente</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center space-x-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback>
-                      {estimate.client?.firstName?.[0]}{estimate.client?.lastName?.[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium">{estimate.client?.firstName} {estimate.client?.lastName}</p>
-                    <p className="text-sm text-muted-foreground">{estimate.client?.email}</p>
-                    <p className="text-sm text-muted-foreground">{estimate.client?.phone}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Información del Proyecto</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div>
-                  <p className="font-medium">{estimate.project?.title || "Sin proyecto asignado"}</p>
-                  {estimate.project && (
-                    <>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {estimate.project.description}
-                      </p>
-                      <div className="mt-1 flex items-center text-sm text-muted-foreground">
-                        <Calendar className="h-3.5 w-3.5 mr-1" />
-                        {estimate.project.startDate && format(new Date(estimate.project.startDate), 'MMM d, yyyy')}
-                        {estimate.project.endDate && ` - ${format(new Date(estimate.project.endDate), 'MMM d, yyyy')}`}
-                      </div>
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          
-          {/* Estimate Details */}
-          <Card>
-            <CardHeader className="pb-4">
-              <CardTitle>Detalles del Estimado</CardTitle>
-              <CardDescription>
-                Emitido: {format(new Date(estimate.issueDate), 'dd MMMM, yyyy')}
-                {estimate.expiryDate && ` | Válido hasta: ${format(new Date(estimate.expiryDate), 'dd MMMM, yyyy')}`}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="items">
-                <TabsList className="mb-4">
-                  <TabsTrigger value="items">Artículos</TabsTrigger>
-                  <TabsTrigger value="details">Detalles</TabsTrigger>
-                  <TabsTrigger value="notes">Notas</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="items">
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Descripción</TableHead>
-                          <TableHead className="text-right">Cantidad</TableHead>
-                          <TableHead className="text-right">Precio Unitario</TableHead>
-                          <TableHead className="text-right">Total</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {estimate.items && estimate.items.length > 0 ? (
-                          estimate.items.map((item: any) => (
-                            <TableRow key={item.id}>
-                              <TableCell>
-                                <div>
-                                  <p className="font-medium">{item.description}</p>
-                                  {item.notes && <p className="text-sm text-muted-foreground">{item.notes}</p>}
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-right">{item.quantity}</TableCell>
-                              <TableCell className="text-right">{formatCurrency(item.unitPrice)}</TableCell>
-                              <TableCell className="text-right">{formatCurrency(item.amount)}</TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
-                              No hay artículos en este estimado
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                      <TableFooter>
-                        <TableRow>
-                          <TableCell colSpan={3} className="text-right font-medium">Subtotal</TableCell>
-                          <TableCell className="text-right">{formatCurrency(estimate.subtotal)}</TableCell>
-                        </TableRow>
-                        {parseFloat(estimate.tax) > 0 && (
-                          <TableRow>
-                            <TableCell colSpan={3} className="text-right font-medium">Impuestos</TableCell>
-                            <TableCell className="text-right">{formatCurrency(estimate.tax)}</TableCell>
-                          </TableRow>
-                        )}
-                        {parseFloat(estimate.discount) > 0 && (
-                          <TableRow>
-                            <TableCell colSpan={3} className="text-right font-medium">Descuento</TableCell>
-                            <TableCell className="text-right">-{formatCurrency(estimate.discount)}</TableCell>
-                          </TableRow>
-                        )}
-                        <TableRow>
-                          <TableCell colSpan={3} className="text-right font-medium">Total</TableCell>
-                          <TableCell className="text-right font-bold">{formatCurrency(estimate.total)}</TableCell>
-                        </TableRow>
-                      </TableFooter>
-                    </Table>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="details">
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-medium mb-2">Términos y Condiciones</h4>
-                      <div className="rounded-md bg-muted p-4">
-                        <p className="whitespace-pre-line">{estimate.terms || "No se han especificado términos y condiciones."}</p>
-                      </div>
+
+        <Tabs defaultValue="details" className="mt-4">
+          <TabsList className="mb-4">
+            <TabsTrigger value="details">Detalles</TabsTrigger>
+            <TabsTrigger value="items">Ítems</TabsTrigger>
+            <TabsTrigger value="terms">Términos</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="details">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">Información general</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Fecha de emisión:</span>
+                      <span>{formatDate(estimate.issueDate)}</span>
                     </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <h4 className="font-medium mb-2">Firma del Contratista</h4>
-                        <div className="rounded-md bg-muted p-4 h-20 flex items-center justify-center">
-                          {estimate.contractorSignature ? (
-                            <p className="italic">{estimate.contractorSignature}</p>
-                          ) : (
-                            <p className="text-muted-foreground">No hay firma</p>
-                          )}
-                        </div>
+                    {estimate.expiryDate && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Fecha de expiración:</span>
+                        <span>{formatDate(estimate.expiryDate)}</span>
                       </div>
-                      
-                      <div>
-                        <h4 className="font-medium mb-2">Firma del Cliente</h4>
-                        <div className="rounded-md bg-muted p-4 h-20 flex items-center justify-center">
-                          {estimate.clientSignature ? (
-                            <p className="italic">{estimate.clientSignature}</p>
-                          ) : (
-                            <p className="text-muted-foreground">No hay firma</p>
-                          )}
-                        </div>
-                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Cliente:</span>
+                      <span>{estimate.client?.firstName} {estimate.client?.lastName}</span>
                     </div>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="notes">
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-medium mb-2">Notas</h4>
-                      <div className="rounded-md bg-muted p-4">
-                        <p className="whitespace-pre-line">{estimate.notes || "No hay notas para este estimado."}</p>
-                      </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Proyecto:</span>
+                      <span>{estimate.project?.title || "No especificado"}</span>
                     </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-          
-          {/* Actions for different estimate statuses */}
-          {estimate.status === 'draft' && (
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">Financiero</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Subtotal:</span>
+                      <span>{formatCurrency(Number(estimate.subtotal) || 0)}</span>
+                    </div>
+                    {Number(estimate.tax) > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Impuesto:</span>
+                        <span>{formatCurrency((Number(estimate.subtotal) * Number(estimate.tax)) / 100)}</span>
+                      </div>
+                    )}
+                    {Number(estimate.discount) > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Descuento:</span>
+                        <span>-{formatCurrency((Number(estimate.subtotal) * Number(estimate.discount)) / 100)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between font-medium pt-2 border-t">
+                      <span>Total:</span>
+                      <span>{formatCurrency(Number(estimate.total) || 0)}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {estimate.status !== "rejected" && (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">Acciones</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-3">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          // Implementar la funcionalidad de enviar
+                          toast({
+                            title: "Funcionalidad en desarrollo",
+                            description: "La funcionalidad de envío por email será implementada próximamente.",
+                          });
+                        }}
+                      >
+                        <Send className="h-4 w-4 mr-2" />
+                        Enviar por email
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          // Implementar la funcionalidad de impresión/PDF
+                          toast({
+                            title: "Funcionalidad en desarrollo",
+                            description: "La funcionalidad de generar PDF será implementada próximamente.",
+                          });
+                        }}
+                      >
+                        <Printer className="h-4 w-4 mr-2" />
+                        Generar PDF
+                      </Button>
+
+                      {estimate.status === "pending" && (
+                        <>
+                          <Button
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                            onClick={handleAcceptEstimate}
+                          >
+                            <Check className="h-4 w-4 mr-2" />
+                            Aceptar
+                          </Button>
+
+                          <Button
+                            variant="destructive"
+                            onClick={handleRejectEstimate}
+                          >
+                            <X className="h-4 w-4 mr-2" />
+                            Rechazar
+                          </Button>
+                        </>
+                      )}
+
+                      {estimate.status === "accepted" && (
+                        <Button
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                          onClick={handleConvertToWorkOrder}
+                        >
+                          <BanknoteIcon className="h-4 w-4 mr-2" />
+                          Convertir a orden de trabajo
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="items">
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Acciones Disponibles</CardTitle>
+              <CardHeader>
+                <CardTitle className="text-sm">Ítems del estimado</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-wrap gap-3">
-                  <Button variant="default" onClick={() => handleStatusChange('sent')}>
-                    <Mail className="h-4 w-4 mr-2" />
-                    Marcar como Enviado
-                  </Button>
-                  <Button variant="outline" onClick={() => onEdit(estimate)}>
-                    <FileEdit className="h-4 w-4 mr-2" />
-                    Editar Estimado
-                  </Button>
-                </div>
+                {estimate.items && estimate.items.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[300px]">Descripción</TableHead>
+                        <TableHead>Cantidad</TableHead>
+                        <TableHead>Precio unitario</TableHead>
+                        <TableHead>Monto</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {estimate.items.map((item: any) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-medium">{item.description}</TableCell>
+                          <TableCell>{item.quantity}</TableCell>
+                          <TableCell>{formatCurrency(Number(item.unitPrice))}</TableCell>
+                          <TableCell>{formatCurrency(Number(item.amount))}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-gray-500 text-sm">No hay ítems registrados en este estimado.</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
-          )}
-          
-          {estimate.status === 'sent' && (
+          </TabsContent>
+
+          <TabsContent value="terms">
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Acciones Disponibles</CardTitle>
+              <CardHeader>
+                <CardTitle className="text-sm">Términos y condiciones</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    Este estimado ha sido enviado al cliente. Puede actualizar su estado basado en la respuesta del cliente.
-                  </p>
-                  <div className="flex flex-wrap gap-3">
-                    <Button variant="default" className="bg-green-600 hover:bg-green-700" onClick={() => handleStatusChange('accepted')}>
-                      <Check className="h-4 w-4 mr-2" />
-                      Marcar como Aceptado
-                    </Button>
-                    <Button variant="default" className="bg-red-600 hover:bg-red-700" onClick={() => handleStatusChange('rejected')}>
-                      <X className="h-4 w-4 mr-2" />
-                      Marcar como Rechazado
-                    </Button>
-                    <Button variant="outline" onClick={() => onEdit(estimate)}>
-                      <FileEdit className="h-4 w-4 mr-2" />
-                      Editar Estimado
-                    </Button>
-                  </div>
-                </div>
+                {estimate.terms ? (
+                  <div className="text-sm whitespace-pre-line">{estimate.terms}</div>
+                ) : (
+                  <p className="text-sm text-gray-500 italic">No se han especificado términos para este estimado.</p>
+                )}
+
+                {estimate.notes && (
+                  <>
+                    <h3 className="font-medium mt-6 mb-2">Notas adicionales</h3>
+                    <div className="text-sm whitespace-pre-line">{estimate.notes}</div>
+                  </>
+                )}
               </CardContent>
             </Card>
-          )}
-          
-          {estimate.status === 'accepted' && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Acciones Disponibles</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    ¡Enhorabuena! Este estimado ha sido aceptado por el cliente. Ahora puede crear una orden de trabajo basada en este estimado.
-                  </p>
-                  <div className="flex flex-wrap gap-3">
-                    <Button 
-                      variant="default" 
-                      onClick={handleConvertToInvoice} 
-                      disabled={isCreatingWorkOrder || convertToInvoiceMutation.isPending}
-                    >
-                      <BanknoteIcon className="h-4 w-4 mr-2" />
-                      {isCreatingWorkOrder ? "Creando..." : "Crear Orden de Trabajo"}
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-        
-        <DialogFooter className="flex flex-wrap gap-2 sm:space-x-2">
+          </TabsContent>
+        </Tabs>
+
+        <DialogFooter className="flex justify-end gap-2 mt-4">
           <Button variant="outline" onClick={onClose}>
             Cerrar
           </Button>
-          <Button variant="outline">
-            <Printer className="h-4 w-4 mr-2" />
-            Imprimir
-          </Button>
-          <Button variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Descargar PDF
-          </Button>
-          {estimate.status !== 'rejected' && estimate.status !== 'expired' && (
-            <Button variant="outline">
-              <Mail className="h-4 w-4 mr-2" />
-              Enviar por Email
-            </Button>
-          )}
         </DialogFooter>
       </DialogContent>
+
+      {/* Diálogo de confirmación para aceptar estimado */}
+      <AlertDialog open={isConfirmAccept} onOpenChange={setIsConfirmAccept}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Aceptar este estimado?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Al aceptar este estimado, se registrará como aprobado. Podrá convertirlo en una orden de trabajo posteriormente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={updateEstimateStatusMutation.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                confirmAcceptEstimate();
+              }}
+              className="bg-green-600 hover:bg-green-700 text-white"
+              disabled={updateEstimateStatusMutation.isPending}
+            >
+              {updateEstimateStatusMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Aceptar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Diálogo de confirmación para rechazar estimado */}
+      <AlertDialog open={isConfirmReject} onOpenChange={setIsConfirmReject}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Rechazar este estimado?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Al rechazar este estimado, se marcará como no aprobado y no podrá convertirlo en una orden de trabajo.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={updateEstimateStatusMutation.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                confirmRejectEstimate();
+              }}
+              className="bg-destructive hover:bg-destructive/90"
+              disabled={updateEstimateStatusMutation.isPending}
+            >
+              {updateEstimateStatusMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Rechazar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Diálogo de confirmación para convertir a orden de trabajo */}
+      <AlertDialog open={isConfirmConvert} onOpenChange={setIsConfirmConvert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Convertir a orden de trabajo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Al convertir este estimado en una orden de trabajo, se creará una nueva factura/orden con los mismos detalles.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={convertToInvoiceMutation.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                confirmConvertToWorkOrder();
+              }}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              disabled={convertToInvoiceMutation.isPending}
+            >
+              {convertToInvoiceMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Convertir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

@@ -12,6 +12,7 @@ import CalendarPage from "@/pages/calendar-page";
 import ClientsPage from "@/pages/clients-page-new";
 import EstimatesPage from "@/pages/estimates-page";
 import EstimateCreatePage from "@/pages/estimate-create-page";
+import EstimateDetailPage from "@/pages/estimate-detail-page";
 import PremiumEstimatePage from "@/pages/premium-estimate-page";
 import VendorEstimateFormPage from "@/pages/vendor-estimate-form-page";
 import PropertyMeasurementsPage from "@/pages/property-measurements-page";
@@ -30,7 +31,8 @@ function Router() {
       <ProtectedRoute path="/clients" component={ClientsPage} />
       <ProtectedRoute path="/estimates" component={EstimatesPage} />
       <ProtectedRoute path="/estimates/new" component={EstimateCreatePage} />
-      <ProtectedRoute path="/estimates/:id" component={PremiumEstimatePage} />
+      <ProtectedRoute path="/estimates/:id" component={EstimateDetailPage} />
+      <ProtectedRoute path="/premium-estimate" component={PremiumEstimatePage} />
       <ProtectedRoute path="/vendor-estimate-form" component={VendorEstimateFormPage} />
       <ProtectedRoute path="/property-measurements" component={PropertyMeasurementsPage} />
       <ProtectedRoute path="/invoices" component={InvoicesPage} />
