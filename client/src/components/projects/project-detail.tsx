@@ -337,30 +337,31 @@ export default function ProjectDetailView({ project, isOpen, onClose, onEdit }: 
                 <h3 className="text-sm font-medium">Estimados del proyecto</h3>
                 {project.status !== "cancelled" && project.status !== "completed" && (
                   <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        // Ir a la página de crear un nuevo estimado estándar
-                        setLocation(`/estimates/new?projectId=${project.id}`);
-                        onClose();
-                        console.log("Botón de crear estimado presionado, redirigiendo a:", `/estimates/new?projectId=${project.id}`);
-                      }}
-                    >
-                      <FilePlus className="h-4 w-4 mr-2" />
-                      Nuevo estimado estándar
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        // Ir a la página de crear un estimado premium con IA
-                        setLocation(`/premium-estimate?projectId=${project.id}`);
-                        onClose();
-                      }}
-                    >
-                      <BarChart3 className="h-4 w-4 mr-2" />
-                      Estimado premium
-                    </Button>
+                    <a href={`/estimates/new?projectId=${project.id}`}>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          console.log("Botón de crear estimado presionado, redirigiendo a:", `/estimates/new?projectId=${project.id}`);
+                          onClose();
+                        }}
+                      >
+                        <FilePlus className="h-4 w-4 mr-2" />
+                        Nuevo estimado estándar
+                      </Button>
+                    </a>
+                    <a href={`/premium-estimate?projectId=${project.id}`}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          console.log("Botón de estimado premium presionado, redirigiendo a:", `/premium-estimate?projectId=${project.id}`);
+                          onClose();
+                        }}
+                      >
+                        <BarChart3 className="h-4 w-4 mr-2" />
+                        Estimado premium
+                      </Button>
+                    </a>
                   </div>
                 )}
               </div>
@@ -392,17 +393,19 @@ export default function ProjectDetailView({ project, isOpen, onClose, onEdit }: 
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setLocation(`/estimates/${estimate.id}`);
-                              onClose();
-                            }}
-                          >
-                            <FileText className="h-4 w-4" />
-                            <span className="sr-only">Ver estimado</span>
-                          </Button>
+                          <a href={`/estimates/${estimate.id}`}>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                console.log("Botón ver estimado presionado, redirigiendo a:", `/estimates/${estimate.id}`);
+                                onClose();
+                              }}
+                            >
+                              <FileText className="h-4 w-4" />
+                              <span className="sr-only">Ver estimado</span>
+                            </Button>
+                          </a>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -414,17 +417,17 @@ export default function ProjectDetailView({ project, isOpen, onClose, onEdit }: 
                     <p className="text-sm text-gray-500 mb-4">No hay estimados asociados a este proyecto.</p>
                     {project.status !== "cancelled" && project.status !== "completed" && (
                       <div className="flex justify-center gap-3">
-                        <Button
-                          onClick={() => {
-                            // Ir a la página de crear un nuevo estimado estándar
-                            setLocation(`/estimates/new?projectId=${project.id}`);
-                            onClose();
-                            console.log("Botón de crear estimado (sin estimados) presionado, redirigiendo a:", `/estimates/new?projectId=${project.id}`);
-                          }}
-                        >
-                          <FilePlus className="h-4 w-4 mr-2" />
-                          Crear estimado
-                        </Button>
+                        <a href={`/estimates/new?projectId=${project.id}`}>
+                          <Button
+                            onClick={() => {
+                              console.log("Botón de crear estimado (sin estimados) presionado, redirigiendo a:", `/estimates/new?projectId=${project.id}`);
+                              onClose();
+                            }}
+                          >
+                            <FilePlus className="h-4 w-4 mr-2" />
+                            Crear estimado
+                          </Button>
+                        </a>
                       </div>
                     )}
                   </CardContent>

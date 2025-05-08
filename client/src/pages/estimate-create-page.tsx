@@ -72,6 +72,22 @@ export default function EstimateCreatePage() {
 
   return (
     <div className="container py-8">
+      <div className="flex items-center mb-8 gap-3">
+        <a href="/projects" className="text-sm text-blue-500 hover:underline">
+          Proyectos
+        </a>
+        <span className="text-gray-400">/</span>
+        {project && (
+          <>
+            <a href={`/projects?id=${project.id}`} className="text-sm text-blue-500 hover:underline">
+              {project.title}
+            </a>
+            <span className="text-gray-400">/</span>
+          </>
+        )}
+        <span className="text-sm">Nuevo estimado</span>
+      </div>
+
       {project && (
         <div className="mb-6">
           <h1 className="text-3xl font-bold mb-2">Nuevo estimado para proyecto: {project.title}</h1>
