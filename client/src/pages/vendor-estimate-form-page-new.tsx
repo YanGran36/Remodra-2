@@ -156,6 +156,8 @@ export default function VendorEstimateFormPageNew() {
   const [selectedOptions, setSelectedOptions] = useState<SelectedItem[]>([]);
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [todayEvents, setTodayEvents] = useState<any[]>([]);
+  const [clientsWithAppointments, setClientsWithAppointments] = useState<any[]>([]);
   
   // Estados para herramientas de medición
   const [isDigitalMeasurementOpen, setIsDigitalMeasurementOpen] = useState(false);
@@ -195,6 +197,52 @@ export default function VendorEstimateFormPageNew() {
   const { data: projects = [] } = useQuery<any[]>({
     queryKey: ["/api/protected/projects"],
   });
+  
+  // Fetch events (Para obtener las citas programadas)
+  const { data: events = [] } = useQuery<any[]>({
+    queryKey: ["/api/protected/events"]
+  });
+  
+  // Procesar eventos y filtrar clientes con citas para hoy
+  useEffect(() => {
+    if (events.length > 0 && clients.length > 0) {
+      // Filtrar los eventos de hoy
+      const today = new Date();
+      const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+      
+      const eventsToday = events.filter((event: any) => {
+        const eventDate = new Date(event.startDate);
+        return eventDate >= todayStart && eventDate <= todayEnd;
+      });
+      
+      setTodayEvents(eventsToday);
+      
+      // Extraer los clientes que tienen citas programadas hoy
+      const clientIds = eventsToday
+        .filter((event: any) => event.clientId)
+        .map((event: any) => event.clientId.toString());
+        
+      // Eliminar duplicados
+      const uniqueClientIds = Array.from(new Set(clientIds));
+      
+      if (uniqueClientIds.length > 0) {
+        // Encontrar los clientes que corresponden a esos IDs
+        const clientsWithTodayAppointments = clients.filter((client: any) => 
+          uniqueClientIds.includes(client.id.toString())
+        );
+        
+        setClientsWithAppointments(clientsWithTodayAppointments);
+        
+        if (clientsWithTodayAppointments.length > 0) {
+          toast({
+            title: "Clientes con citas hoy",
+            description: `Se han encontrado ${clientsWithTodayAppointments.length} clientes con citas programadas para hoy`,
+          });
+        }
+      }
+    }
+  }, [events, clients, toast]);
   
   // Form definition
   const form = useForm<FormValues>({
@@ -622,14 +670,24 @@ export default function VendorEstimateFormPageNew() {
       />
       
       <div className="flex items-center justify-between">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={() => setLocation('/estimates')}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Volver a Estimados
-        </Button>
+        <div className="space-x-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setLocation('/')}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Home
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setLocation('/estimates')}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Estimates
+          </Button>
+        </div>
       </div>
       
       <Form {...form}>
@@ -667,6 +725,26 @@ export default function VendorEstimateFormPageNew() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
+                            {/* Mostrar primero los clientes con citas programadas para hoy */}
+                            {clientsWithAppointments.length > 0 && (
+                              <>
+                                <div className="px-2 py-1.5 text-sm font-medium text-primary">
+                                  Clientes con citas hoy
+                                </div>
+                                {clientsWithAppointments.map((client: any) => (
+                                  <SelectItem key={`appointment-${client.id}`} value={client.id.toString()}>
+                                    <div className="flex items-center">
+                                      <span className="mr-2">📅</span>
+                                      <span>{client.firstName} {client.lastName}</span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                                <Separator className="my-1" />
+                                <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground">
+                                  Todos los clientes
+                                </div>
+                              </>
+                            )}
                             {clients.map((client: any) => (
                               <SelectItem key={client.id} value={client.id.toString()}>
                                 {client.firstName} {client.lastName}
@@ -677,6 +755,13 @@ export default function VendorEstimateFormPageNew() {
                         <FormDescription>
                           El cliente para quien se realizará este trabajo
                         </FormDescription>
+                        {clientsWithAppointments.length > 0 && (
+                          <div className="mt-2">
+                            <p className="text-sm text-muted-foreground">
+                              Los clientes con ícono de calendario 📅 tienen citas programadas para hoy
+                            </p>
+                          </div>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}
