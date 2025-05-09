@@ -661,7 +661,7 @@ export default function VendorEstimateFormPageNew() {
                             <SelectItem value="none">Ninguno / Nuevo Proyecto</SelectItem>
                             {filteredProjects.map((project: any) => (
                               <SelectItem key={project.id} value={project.id.toString()}>
-                                {project.name}
+                                {project.title}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -1053,7 +1053,7 @@ export default function VendorEstimateFormPageNew() {
                           <h3 className="text-sm font-semibold">Proyecto:</h3>
                           <p>
                             {watchProjectId && watchProjectId !== "none"
-                              ? projects.find((p: any) => p.id.toString() === watchProjectId)?.name
+                              ? projects.find((p: any) => p.id.toString() === watchProjectId)?.title
                               : "Nuevo proyecto"}
                           </p>
                         </div>
