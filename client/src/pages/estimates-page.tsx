@@ -98,7 +98,12 @@ export default function EstimatesPage() {
   
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { convertToInvoiceMutation } = useEstimates();
+  
+  // Use the estimates hook for all estimate-related operations
+  const { 
+    deleteEstimateMutation, 
+    convertToInvoiceMutation 
+  } = useEstimates();
 
   // Fetch estimates
   const { data: estimates = [], isLoading, error } = useQuery({
@@ -395,7 +400,15 @@ export default function EstimatesPage() {
                                   Print
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-destructive">
+                                <DropdownMenuItem 
+                                  className="text-destructive"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (confirm(`¿Está seguro que desea eliminar el estimado ${estimate.estimateNumber}?`)) {
+                                      deleteEstimateMutation.mutate(estimate.id);
+                                    }
+                                  }}
+                                >
                                   <Trash2 className="mr-2 h-4 w-4" />
                                   Delete
                                 </DropdownMenuItem>
