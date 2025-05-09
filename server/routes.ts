@@ -841,15 +841,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/protected/events", async (req, res) => {
     try {
-      const validatedData = eventInsertSchema.parse({
+      console.log("Datos recibidos del cliente:", JSON.stringify(req.body, null, 2));
+      
+      // Convertir strings de fecha a objetos Date para la validación
+      const dataToValidate = {
         ...req.body,
-        contractorId: req.user!.id
-      });
+        contractorId: req.user!.id,
+        startTime: new Date(req.body.startTime),
+        endTime: new Date(req.body.endTime)
+      };
+      
+      console.log("Datos preparados para validación:", JSON.stringify({
+        ...dataToValidate,
+        startTime: dataToValidate.startTime.toISOString(),
+        endTime: dataToValidate.endTime.toISOString()
+      }, null, 2));
+      
+      const validatedData = eventInsertSchema.parse(dataToValidate);
       
       const event = await storage.createEvent(validatedData);
       res.status(201).json(event);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error("Error de validación ZOD:", JSON.stringify(error.errors, null, 2));
         return res.status(400).json({ errors: error.errors });
       }
       console.error("Error creating event:", error);
