@@ -375,7 +375,19 @@ export const estimateInsertSchema = createInsertSchema(estimates).extend({
 export const estimateItemInsertSchema = createInsertSchema(estimateItems);
 export const invoiceInsertSchema = createInsertSchema(invoices);
 export const invoiceItemInsertSchema = createInsertSchema(invoiceItems);
-export const eventInsertSchema = createInsertSchema(events);
+// Validación personalizada para el tipo de evento
+const eventTypeValidator = z.enum(["meeting", "site-visit", "delivery", "estimate", "invoice", "other"], {
+  errorMap: () => ({ message: "Tipo de evento inválido" })
+});
+
+// Validación personalizada para el estado del evento
+const eventStatusValidator = z.enum(["pending", "confirmed", "completed", "cancelled"], {
+  errorMap: () => ({ message: "Estado de evento inválido" })
+});
+
+export const eventInsertSchema = createInsertSchema(events, {
+  title: (schema) => schema.min(3, "El título debe tener al menos 3 caracteres")
+});
 export const materialInsertSchema = createInsertSchema(materials);
 export const attachmentInsertSchema = createInsertSchema(attachments);
 export const followUpInsertSchema = createInsertSchema(followUps);

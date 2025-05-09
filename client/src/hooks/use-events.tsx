@@ -66,12 +66,23 @@ export function useEvents() {
   // Crear un nuevo evento
   const createEventMutation = useMutation({
     mutationFn: async (data: EventInput) => {
-      const res = await apiRequest("POST", "/api/protected/events", data);
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Error al crear el evento");
+      try {
+        console.log("Enviando datos para crear evento:", JSON.stringify(data, null, 2));
+        const res = await apiRequest("POST", "/api/protected/events", data);
+        if (!res.ok) {
+          const error = await res.json();
+          console.error("Error al crear evento:", error);
+          throw new Error(
+            error.errors ? 
+              JSON.stringify(error.errors, null, 2) : 
+              (error.message || "Error al crear el evento")
+          );
+        }
+        return await res.json();
+      } catch (error: any) {
+        console.error("Excepción al crear evento:", error);
+        throw error;
       }
-      return await res.json();
     },
     onSuccess: () => {
       toast({
