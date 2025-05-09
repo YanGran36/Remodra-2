@@ -31,13 +31,16 @@ export async function comparePasswords(supplied: string, stored: string) {
 export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "contractor-hub-secret",
-    resave: false,
-    saveUninitialized: false,
+    // Configuración mejorada para manejo de sesiones
+    resave: true, // Guardar la sesión en cada solicitud, incluso si no hay cambios
+    saveUninitialized: true, // Guardar sesiones no inicializadas
+    rolling: true, // Reiniciar el tiempo de expiración en cada respuesta
     store: storage.sessionStore,
     cookie: {
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 días para mayor persistencia
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
+      httpOnly: true, // Previene acceso mediante JavaScript en cliente
     }
   };
 

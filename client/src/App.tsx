@@ -6,6 +6,7 @@ import NotFound from "@/pages/not-found";
 import { AuthProvider } from "@/hooks/use-auth";
 import { LanguageProvider } from "@/hooks/use-language";
 import { ProtectedRoute } from "@/lib/protected-route";
+import { SessionRecoveryAlert } from "@/components/session-recovery-alert";
 import AuthPage from "@/pages/auth-page";
 import Dashboard from "@/pages/dashboard";
 import CalendarPage from "@/pages/calendar-page";
@@ -61,6 +62,7 @@ function App() {
       <AuthProvider>
         <LanguageProvider>
           <Router />
+          <SessionRecoveryAlert />
           <Toaster />
         </LanguageProvider>
       </AuthProvider>

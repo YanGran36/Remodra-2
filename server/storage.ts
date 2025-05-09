@@ -130,19 +130,24 @@ class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
+    // Configuración mejorada para manejar problemas de conexión
     this.sessionStore = new PostgresSessionStore({
       conObject: {
         connectionString: process.env.DATABASE_URL,
         ssl: process.env.NODE_ENV === "production",
-        // Configuración más robusta para conexiones
-        max: 20, // máximo número de clientes en el pool
-        idleTimeoutMillis: 30000, // tiempo máximo que un cliente puede estar inactivo antes de cerrarse
-        connectionTimeoutMillis: 2000, // tiempo máximo para establecer una conexión
+        // Configuración robusta para conexiones
+        max: 10, // reducido para evitar sobrecarga 
+        idleTimeoutMillis: 60000, // incrementado para ser más tolerante con conexiones lentas
+        connectionTimeoutMillis: 10000, // tiempo mayor para establecer conexión
+        keepAlive: true, // mantener la conexión activa
+        keepAliveInitialDelayMillis: 10000, // delay inicial para keepAlive
       },
       createTableIfMissing: true,
       tableName: "session",
       // Mejorar el manejo de sesiones
-      pruneSessionInterval: 60, // en segundos, cada cuánto eliminar sesiones expiradas
+      pruneSessionInterval: 300, // cada 5 minutos
+      // Configuración para sesiones de larga duración
+      ttl: 24 * 60 * 60 // sesiones válidas por 24 horas (en segundos)
     });
   }
 
