@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Plus, Trash2, Loader2 } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Trash2, Loader2, Save, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useEstimates } from "@/hooks/use-estimates";
 import { useClients } from "@/hooks/use-clients";
@@ -361,7 +361,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
         </h2>
         <p className="text-sm text-gray-500 mt-1">
           {isEditing 
-            ? "Actualice los detalles del estimado y sus ítems." 
+            ? "Actualice los detalles del estimado y sus ítems. Cuando termine, haga clic en 'Guardar y Cerrar'." 
             : "Complete los detalles del estimado y agregue los ítems a incluir."}
         </p>
       </div>
@@ -787,13 +787,30 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
               <Button variant="outline" type="button" onClick={onCancel}>
                 Cancelar
               </Button>
-              <Button 
-                type="submit" 
-                disabled={createEstimateMutation.isPending}
-              >
-                {createEstimateMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Crear estimado
-              </Button>
+              {isEditing ? (
+                <div className="flex gap-2">
+                  <Button 
+                    type="submit" 
+                    disabled={updateEstimateMutation.isPending}
+                    className="bg-green-600 hover:bg-green-700"
+                    onClick={() => {
+                      // El formulario se enviará y onSubmit se encargará de guardar
+                      // El callback onSuccess se encargará de cerrar la vista
+                    }}
+                  >
+                    {updateEstimateMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                    Guardar y Cerrar
+                  </Button>
+                </div>
+              ) : (
+                <Button 
+                  type="submit" 
+                  disabled={createEstimateMutation.isPending}
+                >
+                  {createEstimateMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Crear estimado
+                </Button>
+              )}
             </CardFooter>
           </Card>
         </form>
