@@ -57,8 +57,10 @@ export interface IStorage {
   // Estimates
   getEstimates: (contractorId: number) => Promise<any[]>;
   getEstimate: (id: number, contractorId: number) => Promise<any>;
+  getEstimateById: (id: number) => Promise<any>; // Método público para clientes
   createEstimate: (data: Omit<EstimateInsert, "id">) => Promise<any>;
   updateEstimate: (id: number, contractorId: number, data: Partial<EstimateInsert>) => Promise<any>;
+  updateEstimateById: (id: number, data: Partial<EstimateInsert>) => Promise<any>; // Método público para clientes
   deleteEstimate: (id: number, contractorId: number) => Promise<boolean>;
   
   // Price Configurations
@@ -268,7 +270,7 @@ class DatabaseStorage implements IStorage {
           eq(clients.contractorId, contractorId)
         )
       );
-    return result.rowCount > 0;
+    return result.rowCount! > 0;
   }
 
   // Project methods
@@ -322,7 +324,7 @@ class DatabaseStorage implements IStorage {
           eq(projects.contractorId, contractorId)
         )
       );
-    return result.rowCount > 0;
+    return result.rowCount! > 0;
   }
 
   // Estimate methods
@@ -345,6 +347,19 @@ class DatabaseStorage implements IStorage {
       ),
       with: {
         client: true,
+        project: true,
+        items: true
+      }
+    });
+  }
+  
+  // Método público para obtener un estimado por ID sin verificar el contratista
+  async getEstimateById(id: number) {
+    return await db.query.estimates.findFirst({
+      where: eq(estimates.id, id),
+      with: {
+        client: true,
+        contractor: true,
         project: true,
         items: true
       }
@@ -471,6 +486,35 @@ class DatabaseStorage implements IStorage {
     }
   }
 
+  // Método público para actualizar un estimado por ID sin verificar el contratista (para clientes)
+  async updateEstimateById(id: number, data: Partial<EstimateInsert>) {
+    try {
+      console.log("updateEstimateById -> Iniciando actualización pública del estimado:", id);
+      
+      // Actualizar solo los campos permitidos para una acción de cliente
+      // (status, clientSignature, notes)
+      const allowedFields: Partial<EstimateInsert> = {};
+      
+      if (data.status) allowedFields.status = data.status;
+      if (data.clientSignature) allowedFields.clientSignature = data.clientSignature;
+      if (data.notes) allowedFields.notes = data.notes;
+      
+      // Actualizar el estimado
+      const [updated] = await db
+        .update(estimates)
+        .set(allowedFields)
+        .where(eq(estimates.id, id))
+        .returning();
+      
+      // Retornar el estimado actualizado con sus items
+      const updatedEstimate = await this.getEstimateById(id);
+      return updatedEstimate;
+    } catch (error) {
+      console.error("updateEstimateById -> Error:", error);
+      throw error;
+    }
+  }
+
   async deleteEstimate(id: number, contractorId: number) {
     try {
       // Verify the estimate belongs to the contractor
@@ -500,7 +544,7 @@ class DatabaseStorage implements IStorage {
           )
         );
       
-      return result.rowCount > 0;
+      return result.rowCount! > 0;
     } catch (error) {
       console.error("Error deleting estimate:", error);
       throw error;
@@ -578,7 +622,7 @@ class DatabaseStorage implements IStorage {
           eq(estimateItems.estimateId, estimateId)
         )
       );
-    return result.rowCount > 0;
+    return result.rowCount! > 0;
   }
 
   // Invoice methods
@@ -656,7 +700,7 @@ class DatabaseStorage implements IStorage {
           )
         );
       
-      return result.rowCount > 0;
+      return result.rowCount! > 0;
     } catch (error) {
       console.error("Error deleting invoice:", error);
       throw error;
@@ -734,7 +778,7 @@ class DatabaseStorage implements IStorage {
           eq(invoiceItems.invoiceId, invoiceId)
         )
       );
-    return result.rowCount > 0;
+    return result.rowCount! > 0;
   }
 
   // Events methods
@@ -790,7 +834,7 @@ class DatabaseStorage implements IStorage {
           eq(events.contractorId, contractorId)
         )
       );
-    return result.rowCount > 0;
+    return result.rowCount! > 0;
   }
 
   // Materials methods
@@ -844,7 +888,7 @@ class DatabaseStorage implements IStorage {
           eq(materials.contractorId, contractorId)
         )
       );
-    return result.rowCount > 0;
+    return result.rowCount! > 0;
   }
 
   // Attachment methods
@@ -873,7 +917,7 @@ class DatabaseStorage implements IStorage {
           eq(attachments.contractorId, contractorId)
         )
       );
-    return result.rowCount > 0;
+    return result.rowCount! > 0;
   }
 
   // Follow-up methods
@@ -915,7 +959,7 @@ class DatabaseStorage implements IStorage {
           eq(followUps.contractorId, contractorId)
         )
       );
-    return result.rowCount > 0;
+    return result.rowCount! > 0;
   }
   
   // Property Measurements methods
@@ -971,7 +1015,7 @@ class DatabaseStorage implements IStorage {
           eq(propertyMeasurements.contractorId, contractorId)
         )
       );
-    return result.rowCount > 0;
+    return result.rowCount! > 0;
   }
   
   // Price Configurations methods
@@ -1076,7 +1120,7 @@ class DatabaseStorage implements IStorage {
           eq(priceConfigurations.contractorId, contractorId)
         )
       );
-    return result.rowCount > 0;
+    return result.rowCount! > 0;
   }
 
   async setDefaultPriceConfiguration(id: number, contractorId: number, serviceType: string) {
