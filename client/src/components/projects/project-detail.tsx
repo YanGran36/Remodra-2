@@ -7,7 +7,7 @@ import { es } from "date-fns/locale";
 import { 
   Check, Edit, FileText, Loader2, MapPin, Phone, Mail, User, 
   Trash2, Building, Calendar, FilePlus, BanknoteIcon, 
-  BarChart3, X, Plus, Clock
+  BarChart3, X, Plus, Clock, Ban
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ProjectDetail, ProjectWithClient } from "@/hooks/use-projects";
@@ -62,6 +62,8 @@ interface ProjectDetailProps {
 
 export default function ProjectDetailView({ project, isOpen, onClose, onEdit }: ProjectDetailProps) {
   const [isConfirmComplete, setIsConfirmComplete] = useState(false);
+  const [isConfirmCancel, setIsConfirmCancel] = useState(false);
+  const [cancelNotes, setCancelNotes] = useState("");
   const [isCreateEstimateModalOpen, setIsCreateEstimateModalOpen] = useState(false);
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
@@ -75,6 +77,36 @@ export default function ProjectDetailView({ project, isOpen, onClose, onEdit }: 
       return await res.json();
     },
     enabled: !!project?.id,
+  });
+  
+  // Mutation for cancelling project
+  const cancelProjectMutation = useMutation({
+    mutationFn: async (notes?: string) => {
+      const res = await apiRequest("POST", `/api/protected/projects/${project.id}/cancel`, { notes });
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/protected/projects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/protected/projects", project.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/protected/clients"] });
+      
+      toast({
+        title: "Proyecto cancelado",
+        description: "El proyecto ha sido cancelado correctamente.",
+      });
+      
+      setIsConfirmCancel(false);
+      setCancelNotes("");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error al cancelar proyecto",
+        description: error.message,
+        variant: "destructive",
+      });
+      
+      setIsConfirmCancel(false);
+    },
   });
   
   if (!project) return null;
@@ -179,6 +211,24 @@ export default function ProjectDetailView({ project, isOpen, onClose, onEdit }: 
   const confirmCompleteProject = () => {
     updateProjectStatusMutation.mutate("completed");
   };
+  
+  // Cancel project
+  const handleCancelProject = () => {
+    if (project.status === "cancelled") {
+      toast({
+        title: "Proyecto ya cancelado",
+        description: "Este proyecto ya está marcado como cancelado.",
+      });
+      return;
+    }
+    
+    setIsConfirmCancel(true);
+  };
+  
+  // Confirm project cancellation
+  const confirmCancelProject = () => {
+    cancelProjectMutation.mutate(cancelNotes);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -276,6 +326,15 @@ export default function ProjectDetailView({ project, isOpen, onClose, onEdit }: 
                             Marcar como completado
                           </Button>
                         )}
+                        
+                        <Button 
+                          variant="outline"
+                          className="text-red-600 border-red-200 hover:bg-red-50"
+                          onClick={handleCancelProject}
+                        >
+                          <Ban className="h-4 w-4 mr-2" />
+                          Cancelar proyecto
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -302,6 +361,46 @@ export default function ProjectDetailView({ project, isOpen, onClose, onEdit }: 
                         disabled={updateProjectStatusMutation.isPending}
                       >
                         Cancelar
+                      </Button>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+              
+              {isConfirmCancel && (
+                <Alert className="bg-red-50 border-red-200">
+                  <AlertTitle className="text-red-800">¿Cancelar proyecto?</AlertTitle>
+                  <AlertDescription className="text-red-700 mt-2">
+                    <p>¿Está seguro de que desea cancelar este proyecto? Esta acción cancelará el proyecto y todas sus operaciones asociadas.</p>
+                    <div className="mt-3">
+                      <label htmlFor="cancel-notes" className="text-sm font-medium mb-1 block">
+                        Motivo de cancelación (opcional)
+                      </label>
+                      <textarea
+                        id="cancel-notes"
+                        rows={3}
+                        className="w-full px-3 py-2 border border-red-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                        placeholder="Ingrese el motivo de la cancelación..."
+                        value={cancelNotes}
+                        onChange={(e) => setCancelNotes(e.target.value)}
+                        disabled={cancelProjectMutation.isPending}
+                      />
+                    </div>
+                    <div className="flex gap-3 mt-3">
+                      <Button 
+                        onClick={confirmCancelProject}
+                        className="bg-red-600 hover:bg-red-700 text-white"
+                        disabled={cancelProjectMutation.isPending}
+                      >
+                        {cancelProjectMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                        Confirmar cancelación
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setIsConfirmCancel(false)}
+                        disabled={cancelProjectMutation.isPending}
+                      >
+                        Volver
                       </Button>
                     </div>
                   </AlertDescription>
