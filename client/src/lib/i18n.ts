@@ -1,7 +1,7 @@
-// Traducciones para la aplicación
+// Translations for the application
 
-// Definir tipos para los idiomas y traducciones
-export type Language = 'es' | 'en';
+// Define types for languages and translations
+export type Language = 'en' | 'es' | 'fr' | 'pt';
 
 export type Translation = {
   [key: string]: string | Translation;
@@ -11,8 +11,8 @@ export type TranslationsByLanguage = {
   [key in Language]: Translation;
 };
 
-// Definir las traducciones para componentes comunes
-export const translations: TranslationsByLanguage = {
+// Define translations for common components
+export const translations: Partial<TranslationsByLanguage> = {
   es: {
     common: {
       save: 'Guardar',
@@ -533,14 +533,130 @@ export const translations: TranslationsByLanguage = {
   },
 };
 
-// Función auxiliar para obtener traducciones anidadas a partir de una ruta (ej: "common.save")
+// Add French translations
+export const frenchTranslations: Translation = {
+  common: {
+    save: 'Enregistrer',
+    cancel: 'Annuler',
+    edit: 'Modifier',
+    delete: 'Supprimer',
+    create: 'Créer',
+    search: 'Rechercher',
+    filter: 'Filtrer',
+    add: 'Ajouter',
+    remove: 'Supprimer',
+    back: 'Retour',
+    next: 'Suivant',
+    previous: 'Précédent',
+    loading: 'Chargement...',
+    noData: 'Aucune donnée disponible',
+    confirm: 'Confirmer',
+    yes: 'Oui',
+    no: 'Non',
+  },
+  navigation: {
+    dashboard: 'Tableau de Bord',
+    clients: 'Clients',
+    projects: 'Projets',
+    estimates: 'Devis',
+    invoices: 'Factures',
+    calendar: 'Calendrier',
+    settings: 'Paramètres',
+    materials: 'Matériaux',
+    measurements: 'Mesures',
+    aiAssistant: 'Assistant IA',
+    vendorForm: 'Formulaire Fournisseur',
+    logout: 'Déconnexion',
+  },
+  dashboard: {
+    welcomeBack: 'Bienvenue',
+    todayActivity: 'Voici ce qui se passe aujourd\'hui',
+    upcomingJobs: 'Travaux à Venir',
+    pendingInvoices: 'Factures en Attente',
+    pendingEstimates: 'Devis en Attente',
+    thisWeek: 'Cette semaine',
+    nextWeek: 'Semaine prochaine',
+    dueThisWeek: 'Dû cette semaine',
+    overdue: 'En retard',
+    sent: 'Envoyé',
+    draft: 'Brouillon',
+    todaySchedule: 'Planning d\'Aujourd\'hui',
+    viewCalendar: 'Voir le Calendrier',
+    activeProjects: 'Projets Actifs',
+    viewAllProjects: 'Voir Tous les Projets',
+    recentActivity: 'Activité Récente',
+  },
+  // Add other sections as needed for French
+};
+
+// Add Portuguese translations
+export const portugueseTranslations: Translation = {
+  common: {
+    save: 'Salvar',
+    cancel: 'Cancelar',
+    edit: 'Editar',
+    delete: 'Excluir',
+    create: 'Criar',
+    search: 'Pesquisar',
+    filter: 'Filtrar',
+    add: 'Adicionar',
+    remove: 'Remover',
+    back: 'Voltar',
+    next: 'Próximo',
+    previous: 'Anterior',
+    loading: 'Carregando...',
+    noData: 'Nenhum dado disponível',
+    confirm: 'Confirmar',
+    yes: 'Sim',
+    no: 'Não',
+  },
+  navigation: {
+    dashboard: 'Painel Principal',
+    clients: 'Clientes',
+    projects: 'Projetos',
+    estimates: 'Orçamentos',
+    invoices: 'Faturas',
+    calendar: 'Calendário',
+    settings: 'Configurações',
+    materials: 'Materiais',
+    measurements: 'Medições',
+    aiAssistant: 'Assistente IA',
+    vendorForm: 'Formulário de Fornecedor',
+    logout: 'Sair',
+  },
+  dashboard: {
+    welcomeBack: 'Bem-vindo de volta',
+    todayActivity: 'Aqui está o que está acontecendo hoje',
+    upcomingJobs: 'Trabalhos Futuros',
+    pendingInvoices: 'Faturas Pendentes',
+    pendingEstimates: 'Orçamentos Pendentes',
+    thisWeek: 'Esta semana',
+    nextWeek: 'Próxima semana',
+    dueThisWeek: 'Vence esta semana',
+    overdue: 'Atrasado',
+    sent: 'Enviado',
+    draft: 'Rascunho',
+    todaySchedule: 'Agenda de Hoje',
+    viewCalendar: 'Ver Calendário',
+    activeProjects: 'Projetos Ativos',
+    viewAllProjects: 'Ver Todos os Projetos',
+    recentActivity: 'Atividade Recente',
+  },
+  // Add other sections as needed for Portuguese
+};
+
+// Update translations to include French and Portuguese
+translations.fr = frenchTranslations;
+translations.pt = portugueseTranslations;
+
+// Helper function to get nested translations from a path (e.g., "common.save")
 export function getTranslation(obj: Translation, path: string): string {
   const parts = path.split('.');
   let result: any = obj;
   
   for (const part of parts) {
     if (result[part] === undefined) {
-      return path; // Si no se encuentra la traducción, devolver la clave
+      return path; // If translation not found, return the key
     }
     result = result[part];
   }
