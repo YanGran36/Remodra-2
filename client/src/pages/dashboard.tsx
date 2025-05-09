@@ -205,11 +205,11 @@ export default function Dashboard() {
               icon={<DollarSign className="h-5 w-5" />}
               iconColor="text-green-600"
               iconBgColor="bg-green-100"
-              title="Pending Invoices"
+              title={t('dashboard.pendingInvoices')}
               value={pendingInvoices.total}
               details={[
-                { label: "Due this week", value: pendingInvoices.dueThisWeek },
-                { label: "Overdue", value: pendingInvoices.overdue, className: "text-red-600" }
+                { label: t('dashboard.dueThisWeek'), value: pendingInvoices.dueThisWeek },
+                { label: t('dashboard.overdue'), value: pendingInvoices.overdue, className: "text-red-600" }
               ]}
             />
             
@@ -217,11 +217,11 @@ export default function Dashboard() {
               icon={<FileText className="h-5 w-5" />}
               iconColor="text-purple-600"
               iconBgColor="bg-purple-100"
-              title="Pending Estimates"
+              title={t('dashboard.pendingEstimates')}
               value={pendingEstimates.total}
               details={[
-                { label: "Sent", value: pendingEstimates.sent },
-                { label: "Draft", value: pendingEstimates.draft }
+                { label: t('dashboard.sent'), value: pendingEstimates.sent },
+                { label: t('dashboard.draft'), value: pendingEstimates.draft }
               ]}
             />
           </div>
@@ -229,9 +229,9 @@ export default function Dashboard() {
           {/* Today's Schedule */}
           <section className="mb-8">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Today's Schedule</h2>
+              <h2 className="text-xl font-bold text-gray-900">{t('dashboard.todaySchedule')}</h2>
               <Link href="/calendar" className="text-primary hover:text-primary/80 text-sm font-medium flex items-center">
-                View Calendar
+                {t('dashboard.viewCalendar')}
                 <ArrowRight className="ml-1 h-4 w-4" />
               </Link>
             </div>
@@ -259,9 +259,9 @@ export default function Dashboard() {
           {/* Project Status */}
           <section className="mb-8">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Active Projects</h2>
+              <h2 className="text-xl font-bold text-gray-900">{t('dashboard.activeProjects')}</h2>
               <Link href="/projects" className="text-primary hover:text-primary/80 text-sm font-medium flex items-center">
-                View All Projects
+                {t('dashboard.viewAllProjects')}
                 <ArrowRight className="ml-1 h-4 w-4" />
               </Link>
             </div>
@@ -284,7 +284,7 @@ export default function Dashboard() {
           {/* Recent Activity */}
           <section>
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Recent Activity</h2>
+              <h2 className="text-xl font-bold text-gray-900">{t('dashboard.recentActivity')}</h2>
               <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
                   <circle cx="12" cy="12" r="1"/>
