@@ -159,6 +159,29 @@ export default function VendorEstimateFormPageNew() {
   const [measurements, setMeasurements] = useState<any[]>([]);
   const [scanResults, setScanResults] = useState<any[]>([]);
   
+  // Funciones auxiliares
+  function addDays(date: Date, days: number): Date {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+  }
+  
+  function generateEstimateNumber(): string {
+    const date = new Date();
+    const year = date.getFullYear();
+    // Generate a random 3-digit number
+    const random = Math.floor(Math.random() * 900) + 100;
+    return `EST-${year}-${random}`;
+  }
+  
+  function generateInvoiceNumber(): string {
+    const date = new Date();
+    const year = date.getFullYear();
+    // Generate a random 3-digit number
+    const random = Math.floor(Math.random() * 900) + 100;
+    return `INV-${year}-${random}`;
+  }
+  
   // Fetch clients
   const { data: clients = [] } = useQuery<any[]>({
     queryKey: ["/api/protected/clients"],
@@ -227,6 +250,52 @@ export default function VendorEstimateFormPageNew() {
     }
   }, [watchServiceType]);
   
+  // Función para manejar el envío del formulario
+  const onSubmit = (data: any) => {
+    // Verificar que se haya seleccionado un cliente
+    if (!data.clientId) {
+      toast({
+        title: "Error",
+        description: "Debe seleccionar un cliente antes de crear un estimado",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Preparar los materiales para el estimado
+    const items = selectedMaterials.map(material => ({
+      description: material.name,
+      quantity: material.quantity.toString(),
+      unitPrice: material.unitPrice.toString(),
+      amount: (material.quantity * material.unitPrice).toString(),
+      notes: ""
+    }));
+
+    // Calcular totales
+    const subtotal = totalAmount;
+    
+    // Preparar datos del estimado
+    const estimateData = {
+      clientId: Number(data.clientId),
+      projectId: data.projectId && data.projectId !== "none" ? Number(data.projectId) : null,
+      estimateNumber: generateEstimateNumber(),
+      issueDate: new Date(),
+      expiryDate: addDays(new Date(), 30),
+      status: "draft",
+      subtotal: subtotal.toString(),
+      tax: "0",
+      discount: "0",
+      total: subtotal.toString(),
+      terms: "1. Este estimado es válido por 30 días a partir de la fecha de emisión.\n2. Se requiere un pago del 50% para iniciar el trabajo.\n3. El balance restante se pagará al completar el trabajo.\n4. Cualquier modificación al alcance del trabajo puede resultar en costos adicionales.",
+      notes: data.notes || "",
+      contractorSignature: user?.firstName + " " + user?.lastName,
+      items
+    };
+    
+    // Enviar petición para crear estimado
+    createEstimateMutation.mutate(estimateData);
+  };
+
   // Crear mutation para estimados
   const createEstimateMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -522,7 +591,7 @@ export default function VendorEstimateFormPageNew() {
       </div>
       
       <Form {...form}>
-        <form className="space-y-6">
+        <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="information">Información Básica</TabsTrigger>
