@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Search, Plus } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Loader2 } from "lucide-react";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, getDay } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import PageHeader from "@/components/shared/page-header";
 import SearchInput from "@/components/shared/search-input";
 import ScheduleItem from "@/components/dashboard/schedule-item";
 import { useLocation } from "wouter";
+import { useEvents } from "@/hooks/use-events";
+import EventDialog from "@/components/events/event-dialog";
 
 // Event interface
 interface CalendarEvent {
@@ -30,6 +32,8 @@ interface CalendarEvent {
   };
   orderNumber?: string;
   clientId?: number;
+  projectId?: number;
+  description?: string;
 }
 
 export default function CalendarPage() {
@@ -39,85 +43,17 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [filter, setFilter] = useState<string>("all");
   const [, setLocation] = useLocation();
-
-  // Sample calendar events - in a real app, this would come from an API call
-  const events: CalendarEvent[] = [
-    {
-      id: "1",
-      title: "Site visit - Johnson Kitchen Remodel",
-      date: new Date(),
-      time: "9:00 AM",
-      timeColor: "bg-blue-100 text-blue-800",
-      location: "1234 Oak Street, Springfield",
-      type: "site-visit",
-      status: "confirmed",
-      contact: {
-        name: "Sarah Johnson",
-        initials: "SJ",
-        id: 1
-      },
-      clientId: 1
-    },
-    {
-      id: "2",
-      title: "Material pickup - Home Supply Co.",
-      date: new Date(),
-      time: "11:30 AM",
-      timeColor: "bg-green-100 text-green-800",
-      location: "520 Industrial Blvd",
-      type: "delivery",
-      status: "confirmed",
-      orderNumber: "45622"
-    },
-    {
-      id: "3",
-      title: "Estimate Presentation - Taylor Bathroom Renovation",
-      date: new Date(),
-      time: "2:00 PM",
-      timeColor: "bg-purple-100 text-purple-800",
-      location: "567 Maple Drive, Springfield",
-      type: "estimate",
-      status: "confirmed",
-      contact: {
-        name: "Mark Taylor",
-        initials: "MT",
-        id: 2
-      },
-      clientId: 2
-    },
-    {
-      id: "4",
-      title: "Follow-up call - Wilson Project",
-      date: new Date(new Date().setDate(new Date().getDate() + 1)),
-      time: "10:00 AM",
-      timeColor: "bg-blue-100 text-blue-800",
-      location: "Phone call",
-      type: "meeting",
-      status: "pending",
-      contact: {
-        name: "Robert Wilson",
-        initials: "RW",
-        id: 3
-      },
-      clientId: 3
-    },
-    {
-      id: "5",
-      title: "Final inspection - Garcia Basement",
-      date: new Date(new Date().setDate(new Date().getDate() + 2)),
-      time: "1:00 PM",
-      timeColor: "bg-yellow-100 text-yellow-800",
-      location: "789 Elm Street, Springfield",
-      type: "site-visit",
-      status: "confirmed",
-      contact: {
-        name: "Luis Garcia",
-        initials: "LG",
-        id: 4
-      },
-      clientId: 4
-    }
-  ];
+  const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
+  const [currentEventId, setCurrentEventId] = useState<number | undefined>(undefined);
+  const [defaultClientId, setDefaultClientId] = useState<string | undefined>(undefined);
+  const [defaultEventType, setDefaultEventType] = useState<string | undefined>("estimate");
+  
+  // Obtener eventos reales desde la API
+  const { getEvents, formatEvent } = useEvents();
+  const { data: apiEvents = [], isLoading } = getEvents();
+  
+  // Convertir los eventos de la API al formato que espera el calendario
+  const events: CalendarEvent[] = isLoading ? [] : apiEvents.map(formatEvent);
 
   // Filter events based on selected date and search term
   const filteredEvents = events.filter(event => {
@@ -128,7 +64,7 @@ export default function CalendarPage() {
     const searchMatches = search === "" || 
       event.title.toLowerCase().includes(search.toLowerCase()) ||
       event.location.toLowerCase().includes(search.toLowerCase()) ||
-      event.contact?.name.toLowerCase().includes(search.toLowerCase()) ||
+      event.contact?.name?.toLowerCase().includes(search.toLowerCase()) ||
       event.orderNumber?.toLowerCase().includes(search.toLowerCase());
     
     // Type filter
@@ -162,6 +98,22 @@ export default function CalendarPage() {
     setLocation(`/vendor-estimate-form-new?clientId=${clientId}`);
   };
 
+  // Manejadores para eventos
+  const handleOpenEventDialog = (eventId?: number) => {
+    setCurrentEventId(eventId);
+    setIsEventDialogOpen(true);
+  };
+
+  const handleCloseEventDialog = () => {
+    setIsEventDialogOpen(false);
+    setCurrentEventId(undefined);
+  };
+
+  // Handler para editar un evento existente
+  const handleEditEvent = (eventId: string) => {
+    handleOpenEventDialog(Number(eventId));
+  };
+
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
@@ -173,7 +125,10 @@ export default function CalendarPage() {
             title="Calendar" 
             description="Manage your schedule and appointments"
             actions={
-              <Button className="flex items-center">
+              <Button 
+                className="flex items-center"
+                onClick={() => handleOpenEventDialog()}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 New Event
               </Button>
@@ -222,64 +177,79 @@ export default function CalendarPage() {
                     </div>
                   </div>
 
-                  {/* Month view calendar */}
-                  {view === "month" && (
-                    <div className="grid grid-cols-7 gap-1">
-                      {/* Day headers */}
-                      {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, i) => (
-                        <div key={day} className="text-center text-sm font-medium py-2 text-gray-500">
-                          {day}
-                        </div>
-                      ))}
-                      
-                      {/* Calendar days */}
-                      {calendarDays.map((day, index) => {
-                        if (!day) {
-                          return <div key={`empty-${index}`} className="p-2 border border-transparent" />;
-                        }
-                        
-                        const isCurrentMonth = isSameMonth(day, currentDate);
-                        const isSelected = selectedDate && isSameDay(day, selectedDate);
-                        const dayHasEvents = hasEvents(day);
-                        
-                        return (
-                          <div
-                            key={day.toISOString()}
-                            className={`min-h-[80px] p-1 border rounded-md cursor-pointer transition ${
-                              isCurrentMonth ? "bg-white" : "bg-gray-50 text-gray-400"
-                            } ${
-                              isSelected ? "border-primary" : "border-gray-100 hover:border-gray-300"
-                            } ${
-                              isToday(day) ? "font-bold" : ""
-                            }`}
-                            onClick={() => setSelectedDate(day)}
-                          >
-                            <div className="flex justify-between items-center mb-1">
-                              <span className={`text-sm p-1 rounded-full w-6 h-6 flex items-center justify-center ${
-                                isToday(day) ? "bg-primary text-white" : ""
-                              }`}>
-                                {format(day, "d")}
-                              </span>
-                              {dayHasEvents && (
-                                <span className="h-2 w-2 rounded-full bg-primary"></span>
-                              )}
-                            </div>
-                            <div className="space-y-1">
-                              {events.filter(event => isSameDay(event.date, day)).slice(0, 2).map((event, i) => (
-                                <div key={event.id} className="text-xs px-1 py-0.5 truncate rounded bg-primary/10 text-primary">
-                                  {event.time} {event.title.substring(0, 14)}...
-                                </div>
-                              ))}
-                              {events.filter(event => isSameDay(event.date, day)).length > 2 && (
-                                <div className="text-xs text-gray-500 pl-1">
-                                  +{events.filter(event => isSameDay(event.date, day)).length - 2} more
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
+                  {/* Loading indicator */}
+                  {isLoading ? (
+                    <div className="flex justify-center items-center py-20">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <span className="ml-2 text-gray-500">Loading events...</span>
                     </div>
+                  ) : (
+                    /* Month view calendar */
+                    view === "month" && (
+                      <div className="grid grid-cols-7 gap-1">
+                        {/* Day headers */}
+                        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                          <div key={day} className="text-center text-sm font-medium py-2 text-gray-500">
+                            {day}
+                          </div>
+                        ))}
+                        
+                        {/* Calendar days */}
+                        {calendarDays.map((day, index) => {
+                          if (!day) {
+                            return <div key={`empty-${index}`} className="p-2 border border-transparent" />;
+                          }
+                          
+                          const isCurrentMonth = isSameMonth(day, currentDate);
+                          const isSelected = selectedDate && isSameDay(day, selectedDate);
+                          const dayHasEvents = hasEvents(day);
+                          
+                          return (
+                            <div
+                              key={day.toISOString()}
+                              className={`min-h-[80px] p-1 border rounded-md cursor-pointer transition ${
+                                isCurrentMonth ? "bg-white" : "bg-gray-50 text-gray-400"
+                              } ${
+                                isSelected ? "border-primary" : "border-gray-100 hover:border-gray-300"
+                              } ${
+                                isToday(day) ? "font-bold" : ""
+                              }`}
+                              onClick={() => setSelectedDate(day)}
+                            >
+                              <div className="flex justify-between items-center mb-1">
+                                <span className={`text-sm p-1 rounded-full w-6 h-6 flex items-center justify-center ${
+                                  isToday(day) ? "bg-primary text-white" : ""
+                                }`}>
+                                  {format(day, "d")}
+                                </span>
+                                {dayHasEvents && (
+                                  <span className="h-2 w-2 rounded-full bg-primary"></span>
+                                )}
+                              </div>
+                              <div className="space-y-1">
+                                {events.filter(event => isSameDay(event.date, day)).slice(0, 2).map((event) => (
+                                  <div 
+                                    key={event.id} 
+                                    className="text-xs px-1 py-0.5 truncate rounded bg-primary/10 text-primary cursor-pointer hover:bg-primary/20"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleEditEvent(event.id);
+                                    }}
+                                  >
+                                    {event.time} {event.title.substring(0, 14)}...
+                                  </div>
+                                ))}
+                                {events.filter(event => isSameDay(event.date, day)).length > 2 && (
+                                  <div className="text-xs text-gray-500 pl-1">
+                                    +{events.filter(event => isSameDay(event.date, day)).length - 2} more
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )
                   )}
                 </CardContent>
               </Card>
@@ -325,36 +295,67 @@ export default function CalendarPage() {
                     </Select>
                   </div>
                   
-                  <div className="space-y-2 max-h-[600px] overflow-y-auto">
-                    {filteredEvents.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">
-                        No events found for the selected criteria
-                      </div>
-                    ) : (
-                      filteredEvents.map(event => (
-                        <Card key={event.id} className="overflow-hidden">
-                          <ScheduleItem 
-                            time={event.time}
-                            timeColor={event.timeColor}
-                            title={event.title}
-                            location={event.location}
-                            contact={event.contact}
-                            orderNumber={event.orderNumber}
-                            onPhoneClick={() => {}}
-                            onMessageClick={event.contact ? () => {} : undefined}
-                            onMapClick={() => {}}
-                            onCreateEstimateClick={event.clientId ? () => handleCreateEstimate(event.clientId!) : undefined}
-                          />
-                        </Card>
-                      ))
-                    )}
-                  </div>
+                  {isLoading ? (
+                    <div className="flex justify-center items-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-[600px] overflow-y-auto">
+                      {filteredEvents.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">
+                          No events found for the selected criteria
+                        </div>
+                      ) : (
+                        filteredEvents.map(event => (
+                          <Card 
+                            key={event.id} 
+                            className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+                            onClick={() => handleEditEvent(event.id)}
+                          >
+                            <ScheduleItem 
+                              time={event.time}
+                              timeColor={event.timeColor}
+                              title={event.title}
+                              location={event.location}
+                              contact={event.contact}
+                              orderNumber={event.orderNumber}
+                              onPhoneClick={(e) => {
+                                e.stopPropagation();
+                                // Implementar llamada telefónica
+                              }}
+                              onMessageClick={event.contact ? (e) => {
+                                e.stopPropagation();
+                                // Implementar envío de mensaje
+                              } : undefined}
+                              onMapClick={(e) => {
+                                e.stopPropagation();
+                                // Abrir ubicación en mapa
+                              }}
+                              onCreateEstimateClick={event.clientId ? (e) => {
+                                e.stopPropagation();
+                                handleCreateEstimate(event.clientId!);
+                              } : undefined}
+                            />
+                          </Card>
+                        ))
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
           </div>
         </div>
       </main>
+
+      {/* Dialog para crear/editar eventos */}
+      <EventDialog
+        isOpen={isEventDialogOpen}
+        onClose={handleCloseEventDialog}
+        eventId={currentEventId}
+        defaultClientId={defaultClientId}
+        defaultType={defaultEventType}
+      />
     </div>
   );
 }
