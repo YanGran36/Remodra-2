@@ -636,6 +636,53 @@ export default function InvoiceDetailPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de cancelación */}
+      <Dialog open={isCancelModalOpen} onOpenChange={setIsCancelModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancelar factura</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de que deseas cancelar esta factura? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="cancel-notes" className="text-sm font-medium">
+              Motivo de cancelación (opcional)
+            </Label>
+            <textarea
+              id="cancel-notes"
+              className="w-full mt-2 p-3 border rounded-md text-sm"
+              placeholder="Explica el motivo de la cancelación..."
+              rows={3}
+              value={cancelNotes}
+              onChange={(e) => setCancelNotes(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsCancelModalOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={handleCancelInvoice}
+              disabled={cancelInvoiceMutation.isPending}
+            >
+              {cancelInvoiceMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Cancelando...
+                </>
+              ) : (
+                "Confirmar cancelación"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
