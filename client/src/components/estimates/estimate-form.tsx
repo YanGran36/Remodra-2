@@ -379,12 +379,12 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold">
-          {isEditing ? "Editar estimado" : "Crear nuevo estimado"}
+          {isEditing ? "Edit Estimate" : "Create New Estimate"}
         </h2>
         <p className="text-sm text-gray-500 mt-1">
           {isEditing 
-            ? "Actualice los detalles del estimado y sus ítems. Cuando termine, haga clic en 'Guardar y Cerrar'." 
-            : "Complete los detalles del estimado y agregue los ítems a incluir."}
+            ? "Update the estimate details and items. When finished, click 'Save & Close'." 
+            : "Complete the estimate details and add the items to include."}
         </p>
       </div>
       
@@ -393,28 +393,28 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Información general</CardTitle>
+                <CardTitle className="text-lg">General Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Selector de cliente */}
+                {/* Client selector */}
                 <FormField
                   control={form.control}
                   name="clientId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Cliente*</FormLabel>
+                      <FormLabel>Client*</FormLabel>
                       <Select
                         value={field.value ? field.value.toString() : ""}
                         onValueChange={(value) => {
                           field.onChange(parseInt(value));
-                          // Reiniciar el valor del proyecto si se cambia el cliente
+                          // Reset project value when client changes
                           form.setValue("projectId", 0);
                         }}
-                        disabled={isEditing} // Deshabilitar cambio de cliente en edición
+                        disabled={isEditing} // Disable client change in edit mode
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar cliente" />
+                            <SelectValue placeholder="Select client" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -426,19 +426,19 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                         </SelectContent>
                       </Select>
                       <FormDescription>
-                        Seleccione el cliente para este estimado
+                        Select the client for this estimate
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {/* Selector de proyecto - Ahora totalmente opcional */}
+                {/* Project selector - completely optional */}
                 <FormField
                   control={form.control}
                   name="projectId"
                   render={({ field }) => {
-                    // Filtrar proyectos por cliente seleccionado
+                    // Filter projects by selected client
                     const clientId = form.watch("clientId");
                     const filteredProjects = clientId
                       ? projects.filter((p: any) => p.clientId === clientId)
@@ -446,19 +446,19 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                     
                     return (
                       <FormItem>
-                        <FormLabel>Proyecto (Opcional)</FormLabel>
+                        <FormLabel>Project (Optional)</FormLabel>
                         <Select
                           value={field.value ? field.value.toString() : "0"}
                           onValueChange={(value) => field.onChange(parseInt(value))}
-                          disabled={!clientId || isLoadingProjects || isEditing} // Deshabilitar en edición también
+                          disabled={!clientId || isLoadingProjects || isEditing} // Disable in edit mode
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Sin proyecto - Se creará más tarde" />
+                              <SelectValue placeholder="No project - Will be created later" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="0">Sin proyecto - Se creará más tarde</SelectItem>
+                            <SelectItem value="0">No project - Will be created later</SelectItem>
                             {filteredProjects.length > 0 && (
                               <SelectSeparator />
                             )}
@@ -470,7 +470,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                           </SelectContent>
                         </Select>
                         <FormDescription>
-                          Los proyectos se pueden asociar después de que el cliente acepte el estimado
+                          Projects can be associated after the client accepts the estimate
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -483,12 +483,12 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                   name="estimateNumber"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Número de estimado</FormLabel>
+                      <FormLabel>Estimate Number</FormLabel>
                       <FormControl>
-                        <Input placeholder="Generado automáticamente" {...field} value={field.value || ""} />
+                        <Input placeholder="Automatically generated" {...field} value={field.value || ""} />
                       </FormControl>
                       <FormDescription>
-                        Deje en blanco para generar automáticamente
+                        Leave blank to generate automatically
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -500,7 +500,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                   name="issueDate"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Fecha de emisión</FormLabel>
+                      <FormLabel>Issue Date</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -511,9 +511,9 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                               }
                             >
                               {field.value ? (
-                                format(field.value, "dd/MM/yyyy")
+                                format(field.value, "MM/dd/yyyy")
                               ) : (
-                                <span>Seleccione una fecha</span>
+                                <span>Select a date</span>
                               )}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
@@ -541,7 +541,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                   name="expiryDate"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Fecha de expiración</FormLabel>
+                      <FormLabel>Expiry Date</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -552,9 +552,9 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                               }
                             >
                               {field.value ? (
-                                format(field.value, "dd/MM/yyyy")
+                                format(field.value, "MM/dd/yyyy")
                               ) : (
-                                <span>Seleccione una fecha</span>
+                                <span>Select a date</span>
                               )}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
@@ -581,7 +581,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
             
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Términos y condiciones</CardTitle>
+                <CardTitle className="text-lg">Terms & Conditions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <FormField
@@ -589,10 +589,10 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                   name="terms"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Términos</FormLabel>
+                      <FormLabel>Terms</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Términos del estimado..."
+                          placeholder="Estimate terms..."
                           className="min-h-[100px]"
                           {...field}
                           value={field.value || ""}
@@ -608,10 +608,10 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Notas adicionales</FormLabel>
+                      <FormLabel>Additional Notes</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Notas para el cliente..."
+                          placeholder="Notes for the client..."
                           className="min-h-[100px]"
                           {...field}
                           value={field.value || ""}
@@ -627,24 +627,24 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
           
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Ítems del estimado</CardTitle>
+              <CardTitle className="text-lg">Estimate Items</CardTitle>
               <CardDescription>
-                Agregue los productos o servicios que serán incluidos en este estimado.
+                Add the products or services that will be included in this estimate.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="grid grid-cols-12 gap-4">
                   <div className="col-span-5">
-                    <FormLabel>Descripción</FormLabel>
+                    <FormLabel>Description</FormLabel>
                     <Input
-                      placeholder="Descripción del ítem"
+                      placeholder="Item description"
                       value={newItem.description}
                       onChange={(e) => handleItemChange('description', e.target.value)}
                     />
                   </div>
                   <div className="col-span-2">
-                    <FormLabel>Cantidad</FormLabel>
+                    <FormLabel>Quantity</FormLabel>
                     <Input
                       type="number"
                       min="1"
@@ -653,7 +653,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                     />
                   </div>
                   <div className="col-span-2">
-                    <FormLabel>Precio unitario</FormLabel>
+                    <FormLabel>Unit Price</FormLabel>
                     <Input
                       type="number"
                       min="0"
@@ -663,7 +663,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                     />
                   </div>
                   <div className="col-span-2">
-                    <FormLabel>Monto</FormLabel>
+                    <FormLabel>Amount</FormLabel>
                     <Input
                       disabled
                       value={formatCurrency(newItem.amount)}
@@ -677,7 +677,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                       className="w-full h-10"
                     >
                       <Plus className="h-4 w-4" />
-                      <span className="sr-only">Agregar ítem</span>
+                      <span className="sr-only">Add item</span>
                     </Button>
                   </div>
                 </div>
@@ -686,11 +686,11 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[300px]">Descripción</TableHead>
-                        <TableHead>Cantidad</TableHead>
-                        <TableHead>Precio unitario</TableHead>
-                        <TableHead>Monto</TableHead>
-                        <TableHead>Acciones</TableHead>
+                        <TableHead className="w-[300px]">Description</TableHead>
+                        <TableHead>Quantity</TableHead>
+                        <TableHead>Unit Price</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -708,7 +708,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                               size="icon"
                             >
                               <Trash2 className="h-4 w-4" />
-                              <span className="sr-only">Eliminar ítem</span>
+                              <span className="sr-only">Remove item</span>
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -717,16 +717,16 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                   </Table>
                 ) : (
                   <div className="text-center py-4 text-gray-500">
-                    No se han agregado ítems al estimado.
+                    No items have been added to the estimate.
                   </div>
                 )}
                 
               </div>
               
-              {/* Nueva sección de resumen más clara */}
+              {/* Clearer summary section */}
               <div className="mt-8 border rounded-lg overflow-hidden">
                 <div className="bg-muted p-4 border-b">
-                  <h3 className="text-lg font-medium">Resumen del Estimado</h3>
+                  <h3 className="text-lg font-medium">Estimate Summary</h3>
                 </div>
                 
                 <div className="p-4 space-y-4">
@@ -734,7 +734,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                     <div>
                       <Card>
                         <CardHeader className="pb-2">
-                          <CardTitle className="text-sm font-medium">Ajustes de Precios</CardTitle>
+                          <CardTitle className="text-sm font-medium">Price Adjustments</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                           <FormField
@@ -742,7 +742,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                             name="tax"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Impuesto (%)</FormLabel>
+                                <FormLabel>Tax (%)</FormLabel>
                                 <FormControl>
                                   <Input
                                     type="number"
@@ -768,7 +768,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                             name="discount"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Descuento (%)</FormLabel>
+                                <FormLabel>Discount (%)</FormLabel>
                                 <FormControl>
                                   <Input
                                     type="number"
@@ -795,7 +795,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                     <div>
                       <Card>
                         <CardHeader className="pb-2">
-                          <CardTitle className="text-sm font-medium">Totales</CardTitle>
+                          <CardTitle className="text-sm font-medium">Totals</CardTitle>
                         </CardHeader>
                         <CardContent>
                           <div className="space-y-2">
@@ -806,14 +806,14 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                             
                             {Number(form.getValues("tax")) > 0 && (
                               <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Impuesto ({form.getValues("tax")}%):</span>
+                                <span className="text-muted-foreground">Tax ({form.getValues("tax")}%):</span>
                                 <span className="font-medium">{formatCurrency((Number(form.getValues("subtotal")) * Number(form.getValues("tax"))) / 100)}</span>
                               </div>
                             )}
                             
                             {Number(form.getValues("discount")) > 0 && (
                               <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Descuento ({form.getValues("discount")}%):</span>
+                                <span className="text-muted-foreground">Discount ({form.getValues("discount")}%):</span>
                                 <span className="font-medium text-destructive">-{formatCurrency((Number(form.getValues("subtotal")) * Number(form.getValues("discount"))) / 100)}</span>
                               </div>
                             )}
@@ -835,7 +835,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
             
             <CardFooter className="flex justify-between">
               <Button variant="outline" type="button" onClick={onCancel}>
-                Cancelar
+                Cancel
               </Button>
               {isEditing ? (
                 <div className="flex gap-2">
@@ -844,12 +844,12 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                     disabled={updateEstimateMutation.isPending}
                     className="bg-green-600 hover:bg-green-700"
                     onClick={() => {
-                      // El formulario se enviará y onSubmit se encargará de guardar
-                      // El callback onSuccess se encargará de cerrar la vista
+                      // The form will be submitted and onSubmit will handle saving
+                      // The onSuccess callback will handle closing the view
                     }}
                   >
                     {updateEstimateMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-                    Guardar y Cerrar
+                    Save & Close
                   </Button>
                 </div>
               ) : (
@@ -858,7 +858,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                   disabled={createEstimateMutation.isPending}
                 >
                   {createEstimateMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Crear estimado
+                  Create Estimate
                 </Button>
               )}
             </CardFooter>
