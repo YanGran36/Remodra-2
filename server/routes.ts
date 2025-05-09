@@ -391,9 +391,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Estimate not found" });
       }
       
-      // Verify the estimate status is 'accepted'
-      if (estimate.status !== 'accepted') {
-        return res.status(400).json({ message: "Only accepted estimates can be converted to work orders" });
+      // Verify the estimate status allows conversion
+      // Permitir que estimados con estado 'draft', 'sent' y 'accepted' puedan ser convertidos
+      const validStatuses = ['draft', 'sent', 'accepted'];
+      if (!validStatuses.includes(estimate.status)) {
+        return res.status(400).json({ message: "Only draft, sent, or accepted estimates can be converted to work orders" });
       }
       
       // Get the estimate items
