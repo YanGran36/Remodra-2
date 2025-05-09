@@ -420,15 +420,39 @@ class DatabaseStorage implements IStorage {
   }
 
   async deleteEstimate(id: number, contractorId: number) {
-    const result = await db
-      .delete(estimates)
-      .where(
-        and(
+    try {
+      // Verify the estimate belongs to the contractor
+      const estimateCheck = await db.query.estimates.findFirst({
+        where: and(
           eq(estimates.id, id),
           eq(estimates.contractorId, contractorId)
         )
-      );
-    return result.rowCount > 0;
+      });
+      
+      if (!estimateCheck) {
+        return false;
+      }
+      
+      // First delete all estimate items related to this estimate
+      await db
+        .delete(estimateItems)
+        .where(eq(estimateItems.estimateId, id));
+      
+      // Then delete the estimate itself
+      const result = await db
+        .delete(estimates)
+        .where(
+          and(
+            eq(estimates.id, id),
+            eq(estimates.contractorId, contractorId)
+          )
+        );
+      
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error("Error deleting estimate:", error);
+      throw error;
+    }
   }
 
   // Estimate Item methods
@@ -552,15 +576,39 @@ class DatabaseStorage implements IStorage {
   }
 
   async deleteInvoice(id: number, contractorId: number) {
-    const result = await db
-      .delete(invoices)
-      .where(
-        and(
+    try {
+      // Verify the invoice belongs to the contractor
+      const invoiceCheck = await db.query.invoices.findFirst({
+        where: and(
           eq(invoices.id, id),
           eq(invoices.contractorId, contractorId)
         )
-      );
-    return result.rowCount > 0;
+      });
+      
+      if (!invoiceCheck) {
+        return false;
+      }
+      
+      // First delete all invoice items related to this invoice
+      await db
+        .delete(invoiceItems)
+        .where(eq(invoiceItems.invoiceId, id));
+      
+      // Then delete the invoice itself
+      const result = await db
+        .delete(invoices)
+        .where(
+          and(
+            eq(invoices.id, id),
+            eq(invoices.contractorId, contractorId)
+          )
+        );
+      
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error("Error deleting invoice:", error);
+      throw error;
+    }
   }
 
   // Invoice Item methods
