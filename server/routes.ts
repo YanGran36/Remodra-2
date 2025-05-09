@@ -344,6 +344,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const estimateId = Number(req.params.id);
       
+      console.log("updateEstimate -> API - Actualizando estimado ID:", estimateId);
+      console.log("updateEstimate -> API - Datos recibidos:", JSON.stringify(req.body, null, 2));
+      
       // First check if estimate exists and belongs to contractor
       const existingEstimate = await storage.getEstimate(estimateId, req.user!.id);
       if (!existingEstimate) {
@@ -363,16 +366,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dataWithDateObjects.expiryDate = new Date(dataWithDateObjects.expiryDate);
       }
       
+      // Validamos los items si existen
+      if (dataWithDateObjects.items && Array.isArray(dataWithDateObjects.items)) {
+        console.log(`updateEstimate -> API - El estimado tiene ${dataWithDateObjects.items.length} items`);
+      }
+      
       const validatedData = estimateInsertSchema.partial().parse(dataWithDateObjects);
       
+      console.log("updateEstimate -> API - Datos validados, procediendo a actualizar");
+      
       const estimate = await storage.updateEstimate(estimateId, req.user!.id, validatedData);
+      
+      console.log("updateEstimate -> API - Estimado actualizado exitosamente");
+      
       res.json(estimate);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
+        console.error("updateEstimate -> API - Error de validación:", JSON.stringify(error.errors, null, 2));
+        return res.status(400).json({ 
+          message: "Validation error", 
+          errors: error.errors,
+          details: error.format()
+        });
       }
-      console.error("Error updating estimate:", error);
-      res.status(500).json({ message: "Failed to update estimate" });
+      
+      console.error("updateEstimate -> API - Error:", error);
+      res.status(500).json({ 
+        message: "Failed to update estimate", 
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 

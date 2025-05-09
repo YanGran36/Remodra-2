@@ -406,17 +406,58 @@ class DatabaseStorage implements IStorage {
   }
 
   async updateEstimate(id: number, contractorId: number, data: Partial<EstimateInsert>) {
-    const [updated] = await db
-      .update(estimates)
-      .set(data)
-      .where(
-        and(
-          eq(estimates.id, id),
-          eq(estimates.contractorId, contractorId)
+    try {
+      console.log("updateEstimate -> Iniciando actualización de estimado:", id);
+      
+      // Extraer items de data si existen
+      const items = data.items;
+      delete data.items;
+      
+      // Actualizar el estimado principal
+      const [updated] = await db
+        .update(estimates)
+        .set(data)
+        .where(
+          and(
+            eq(estimates.id, id),
+            eq(estimates.contractorId, contractorId)
+          )
         )
-      )
-      .returning();
-    return updated;
+        .returning();
+      
+      // Si hay items en el parámetro, actualizar los items también
+      if (items && Array.isArray(items)) {
+        console.log(`updateEstimate -> Procesando ${items.length} items...`);
+        
+        // Primero eliminar todos los items existentes
+        await db
+          .delete(estimateItems)
+          .where(eq(estimateItems.estimateId, id));
+        
+        // Luego insertar los nuevos items
+        for (const item of items) {
+          // Asegurarse de que las cantidades numéricas sean strings para la DB
+          const itemData = {
+            estimateId: id,
+            description: item.description,
+            quantity: String(item.quantity),
+            unitPrice: String(item.unitPrice),
+            amount: String(item.amount),
+            notes: item.notes
+          };
+          
+          console.log("updateEstimate -> Insertando item:", JSON.stringify(itemData, null, 2));
+          await db.insert(estimateItems).values(itemData);
+        }
+      }
+      
+      // Retornar el estimado actualizado con sus items
+      const updatedEstimate = await this.getEstimate(id, contractorId);
+      return updatedEstimate;
+    } catch (error) {
+      console.error("updateEstimate -> Error:", error);
+      throw error;
+    }
   }
 
   async deleteEstimate(id: number, contractorId: number) {
