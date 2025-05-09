@@ -383,8 +383,8 @@ export default function InvoiceDetailPage() {
             <CardContent className="py-4">
               <div className="flex justify-between items-center mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold">Historial de pagos</h3>
-                  <p className="text-sm text-gray-600">Registro de todos los pagos realizados</p>
+                  <h3 className="text-lg font-semibold">Estado de materiales</h3>
+                  <p className="text-sm text-gray-600">Control de materiales provistos y pendientes</p>
                 </div>
                 <div className="space-x-2">
                   <Button 
@@ -392,16 +392,16 @@ export default function InvoiceDetailPage() {
                     onClick={() => setIsPaymentModalOpen(true)}
                     disabled={isPaidInFull}
                   >
-                    <DollarSign className="h-4 w-4 mr-2" />
-                    Registrar pago
+                    <Check className="h-4 w-4 mr-2" />
+                    Registrar materiales
                   </Button>
-                  {!isPaidInFull && invoice.status !== "paid" && (
+                  {!isPaidInFull && invoice.status !== "completed" && (
                     <Button 
                       className="bg-green-600 hover:bg-green-700 text-white"
                       onClick={handleMarkAsPaid}
                     >
                       <Check className="h-4 w-4 mr-2" />
-                      Marcar como pagada
+                      Marcar como completada
                     </Button>
                   )}
                 </div>
@@ -410,7 +410,7 @@ export default function InvoiceDetailPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <Card>
                   <CardHeader className="py-4">
-                    <CardTitle className="text-sm">Total facturado</CardTitle>
+                    <CardTitle className="text-sm">Total materiales</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-2xl font-bold">{formatCurrency(total)}</p>
@@ -418,7 +418,7 @@ export default function InvoiceDetailPage() {
                 </Card>
                 <Card>
                   <CardHeader className="py-4">
-                    <CardTitle className="text-sm">Total pagado</CardTitle>
+                    <CardTitle className="text-sm">Materiales provistos</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-2xl font-bold text-green-600">{formatCurrency(amountPaid)}</p>
@@ -426,7 +426,7 @@ export default function InvoiceDetailPage() {
                 </Card>
                 <Card>
                   <CardHeader className="py-4">
-                    <CardTitle className="text-sm">Pendiente por pagar</CardTitle>
+                    <CardTitle className="text-sm">Materiales pendientes</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className={`text-2xl font-bold ${pendingAmount > 0 ? "text-red-600" : "text-green-600"}`}>
@@ -441,9 +441,9 @@ export default function InvoiceDetailPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Fecha</TableHead>
-                      <TableHead>Monto</TableHead>
-                      <TableHead>Método</TableHead>
-                      <TableHead>Notas</TableHead>
+                      <TableHead>Valor</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Detalles</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -452,10 +452,10 @@ export default function InvoiceDetailPage() {
                         <TableCell>{formatDate(payment.paymentDate)}</TableCell>
                         <TableCell>{formatCurrency(Number(payment.amount))}</TableCell>
                         <TableCell>
-                          {payment.paymentMethod === "cash" && "Efectivo"}
-                          {payment.paymentMethod === "credit_card" && "Tarjeta de crédito"}
-                          {payment.paymentMethod === "bank_transfer" && "Transferencia bancaria"}
-                          {payment.paymentMethod === "check" && "Cheque"}
+                          {payment.paymentMethod === "cash" && "Materiales básicos"}
+                          {payment.paymentMethod === "credit_card" && "Materiales especiales"}
+                          {payment.paymentMethod === "bank_transfer" && "Materiales de acabado"}
+                          {payment.paymentMethod === "check" && "Herramientas"}
                           {payment.paymentMethod !== "cash" && 
                            payment.paymentMethod !== "credit_card" && 
                            payment.paymentMethod !== "bank_transfer" && 
@@ -469,14 +469,14 @@ export default function InvoiceDetailPage() {
               ) : (
                 <div className="text-center py-8">
                   <Receipt className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">No hay pagos registrados</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">No hay materiales registrados</h3>
                   <p className="text-sm text-gray-500 mb-4">
-                    Aún no se han registrado pagos para esta factura
+                    Aún no se han registrado materiales provistos para esta orden
                   </p>
                   {!isPaidInFull && (
                     <Button onClick={() => setIsPaymentModalOpen(true)}>
-                      <DollarSign className="h-4 w-4 mr-2" />
-                      Registrar primer pago
+                      <Check className="h-4 w-4 mr-2" />
+                      Registrar materiales
                     </Button>
                   )}
                 </div>
@@ -493,27 +493,27 @@ export default function InvoiceDetailPage() {
                   <p>{invoice.terms}</p>
                 </div>
               ) : (
-                <p className="text-gray-500 italic">No se han especificado términos y condiciones para esta factura.</p>
+                <p className="text-gray-500 italic">No se han especificado instrucciones de trabajo para esta orden.</p>
               )}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
       
-      {/* Modal para registrar pago */}
+      {/* Modal para registrar materiales */}
       <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Registrar pago</DialogTitle>
+            <DialogTitle>Registrar materiales</DialogTitle>
             <DialogDescription>
-              Registre un pago para la factura {invoice.invoiceNumber}. El monto pendiente es {formatCurrency(pendingAmount)}.
+              Registre materiales provistos para la orden {invoice.invoiceNumber}. El valor de materiales pendientes es {formatCurrency(pendingAmount)}.
             </DialogDescription>
           </DialogHeader>
           
           <form onSubmit={form.handleSubmit(handlePaymentSubmit)}>
             <div className="space-y-4 py-2">
               <div className="space-y-2">
-                <Label htmlFor="amount">Monto</Label>
+                <Label htmlFor="amount">Valor</Label>
                 <Input
                   id="amount"
                   placeholder="0.00"
@@ -528,16 +528,16 @@ export default function InvoiceDetailPage() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="paymentMethod">Método de pago</Label>
+                <Label htmlFor="paymentMethod">Tipo de material</Label>
                 <select
                   id="paymentMethod"
                   className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   {...form.register("paymentMethod")}
                 >
-                  <option value="cash">Efectivo</option>
-                  <option value="credit_card">Tarjeta de crédito</option>
-                  <option value="bank_transfer">Transferencia bancaria</option>
-                  <option value="check">Cheque</option>
+                  <option value="cash">Materiales básicos</option>
+                  <option value="credit_card">Materiales especiales</option>
+                  <option value="bank_transfer">Materiales de acabado</option>
+                  <option value="check">Herramientas</option>
                 </select>
                 {form.formState.errors.paymentMethod && (
                   <p className="text-sm text-red-600">{form.formState.errors.paymentMethod.message}</p>
@@ -545,7 +545,7 @@ export default function InvoiceDetailPage() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="paymentDate">Fecha de pago</Label>
+                <Label htmlFor="paymentDate">Fecha de entrega</Label>
                 <Input
                   id="paymentDate"
                   type="date"
@@ -554,10 +554,10 @@ export default function InvoiceDetailPage() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="notes">Notas</Label>
+                <Label htmlFor="notes">Detalles</Label>
                 <Input
                   id="notes"
-                  placeholder="Notas adicionales sobre el pago"
+                  placeholder="Detalles adicionales sobre los materiales"
                   {...form.register("notes")}
                 />
               </div>
@@ -572,8 +572,8 @@ export default function InvoiceDetailPage() {
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <>
-                    <DollarSign className="h-4 w-4 mr-2" />
-                    Registrar pago
+                    <Check className="h-4 w-4 mr-2" />
+                    Registrar materiales
                   </>
                 )}
               </Button>
