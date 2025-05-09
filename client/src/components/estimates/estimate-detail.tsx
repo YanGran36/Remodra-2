@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { useEstimates } from "@/hooks/use-estimates";
 import { formatCurrency } from "@/lib/utils";
@@ -69,7 +68,7 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
   const { toast } = useToast();
   const { getEstimate, updateEstimateStatusMutation, convertToInvoiceMutation } = useEstimates();
 
-  // Obtener los datos del estimado
+  // Get estimate data
   const { data: estimate, isLoading, error } = getEstimate(estimateId);
 
   if (isLoading) {
@@ -104,13 +103,13 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
     );
   }
 
-  // Función para formatear fechas en formato MES/DÍA/AÑO
+  // Function to format dates in MONTH/DAY/YEAR format
   const formatDate = (dateString?: string | Date | null) => {
     if (!dateString) return "Not specified";
     return format(new Date(dateString), "MMMM d, yyyy");
   };
 
-  // Obtener clase para badge según el estado del estimado
+  // Get badge class based on estimate status
   const getStatusClass = (status: string) => {
     switch (status.toLowerCase()) {
       case "accepted":
@@ -133,7 +132,7 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
     }
   };
 
-  // Texto legible para el estado (en inglés por defecto)
+  // Get readable text for status (English by default)
   const getStatusText = (status: string) => {
     switch (status.toLowerCase()) {
       case "accepted":
@@ -156,22 +155,22 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
     }
   };
 
-  // Función para aceptar el estimado
+  // Function to accept the estimate
   const handleAcceptEstimate = () => {
     setIsConfirmAccept(true);
   };
 
-  // Función para rechazar el estimado
+  // Function to reject the estimate
   const handleRejectEstimate = () => {
     setIsConfirmReject(true);
   };
 
-  // Función para convertir a orden de trabajo
+  // Function to convert to work order
   const handleConvertToWorkOrder = () => {
     setIsConfirmConvert(true);
   };
 
-  // Confirmar la aceptación del estimado
+  // Confirm estimate acceptance
   const confirmAcceptEstimate = () => {
     updateEstimateStatusMutation.mutate(
       { id: estimateId, status: "accepted" },
@@ -179,8 +178,8 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
         onSuccess: () => {
           setIsConfirmAccept(false);
           toast({
-            title: "Estimado aceptado",
-            description: "El estimado ha sido marcado como aceptado.",
+            title: "Estimate Accepted",
+            description: "The estimate has been marked as accepted.",
           });
         }
       }
@@ -438,22 +437,22 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
 
         <DialogFooter className="flex justify-end gap-2 mt-4">
           <Button variant="outline" onClick={onClose}>
-            Cerrar
+            Close
           </Button>
         </DialogFooter>
       </DialogContent>
 
-      {/* Diálogo de confirmación para aceptar estimado */}
+      {/* Accept Estimate confirmation dialog */}
       <AlertDialog open={isConfirmAccept} onOpenChange={setIsConfirmAccept}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Aceptar este estimado?</AlertDialogTitle>
+            <AlertDialogTitle>Accept this estimate?</AlertDialogTitle>
             <AlertDialogDescription>
-              Al aceptar este estimado, se registrará como aprobado. Podrá convertirlo en una orden de trabajo posteriormente.
+              By accepting this estimate, it will be marked as approved. You can convert it to a work order later.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={updateEstimateStatusMutation.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={updateEstimateStatusMutation.isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
@@ -465,23 +464,23 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
               {updateEstimateStatusMutation.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              Aceptar
+              Accept
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Diálogo de confirmación para rechazar estimado */}
+      {/* Reject Estimate confirmation dialog */}
       <AlertDialog open={isConfirmReject} onOpenChange={setIsConfirmReject}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Rechazar este estimado?</AlertDialogTitle>
+            <AlertDialogTitle>Reject this estimate?</AlertDialogTitle>
             <AlertDialogDescription>
-              Al rechazar este estimado, se marcará como no aprobado y no podrá convertirlo en una orden de trabajo.
+              By rejecting this estimate, it will be marked as not approved and you will not be able to convert it to a work order.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={updateEstimateStatusMutation.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={updateEstimateStatusMutation.isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
@@ -493,13 +492,13 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
               {updateEstimateStatusMutation.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              Rechazar
+              Reject
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Diálogo de confirmación para convertir a orden de trabajo */}
+      {/* Convert to Work Order confirmation dialog */}
       <AlertDialog open={isConfirmConvert} onOpenChange={setIsConfirmConvert}>
         <AlertDialogContent>
           <AlertDialogHeader>
