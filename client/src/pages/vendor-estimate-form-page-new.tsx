@@ -161,6 +161,8 @@ export default function VendorEstimateFormPageNew() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [todayEvents, setTodayEvents] = useState<any[]>([]);
   const [clientsWithAppointments, setClientsWithAppointments] = useState<any[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [showAppointmentCalendar, setShowAppointmentCalendar] = useState(false);
   
   // Estados para herramientas de medición
   const [isDigitalMeasurementOpen, setIsDigitalMeasurementOpen] = useState(false);
@@ -224,6 +226,50 @@ export default function VendorEstimateFormPageNew() {
     }
   });
   
+  // Función para filtrar clientes con citas en una fecha específica
+  const getClientsWithAppointmentsForDate = (date: Date) => {
+    if (!events.length || !clients.length) return [];
+    
+    // Crear límites de la fecha seleccionada (principio y fin de día)
+    const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59);
+    
+    // Filtrar eventos para la fecha seleccionada
+    const eventsForSelectedDate = events.filter((event: any) => {
+      const eventDate = new Date(event.startTime);
+      return eventDate >= dayStart && eventDate <= dayEnd;
+    });
+    
+    // Extraer los IDs de clientes con citas en esa fecha
+    const clientIds = eventsForSelectedDate
+      .filter((event: any) => event.clientId)
+      .map((event: any) => event.clientId.toString());
+      
+    // Eliminar duplicados
+    const uniqueClientIds = Array.from(new Set(clientIds));
+    
+    // Encontrar los clientes que corresponden a esos IDs
+    return clients.filter((client: any) => 
+      uniqueClientIds.includes(client.id.toString())
+    );
+  };
+  
+  // Función para actualizar la fecha seleccionada y los clientes con citas
+  const updateSelectedDateAndClients = (date: Date) => {
+    setSelectedDate(date);
+    const clientsForDate = getClientsWithAppointmentsForDate(date);
+    setClientsWithAppointments(clientsForDate);
+    
+    // Mostrar mensaje con el número de clientes encontrados
+    if (clientsForDate.length > 0) {
+      const formattedDate = format(date, "PPP", { locale: es });
+      toast({
+        title: `Clientes con citas para ${formattedDate}`,
+        description: `Se han encontrado ${clientsForDate.length} clientes con citas programadas`,
+      });
+    }
+  };
+
   // Procesar eventos y filtrar clientes con citas para hoy
   useEffect(() => {
     if (events.length > 0 && clients.length > 0) {
@@ -264,43 +310,11 @@ export default function VendorEstimateFormPageNew() {
         }
       }
       
-      // Filtrar los eventos de hoy
+      // Inicialmente, cargar clientes con citas para hoy
       const today = new Date();
-      const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
-      
-      const eventsToday = events.filter((event: any) => {
-        const eventDate = new Date(event.startTime);
-        return eventDate >= todayStart && eventDate <= todayEnd;
-      });
-      
-      setTodayEvents(eventsToday);
-      
-      // Extraer los clientes que tienen citas programadas hoy
-      const clientIds = eventsToday
-        .filter((event: any) => event.clientId)
-        .map((event: any) => event.clientId.toString());
-        
-      // Eliminar duplicados
-      const uniqueClientIds = Array.from(new Set(clientIds));
-      
-      if (uniqueClientIds.length > 0) {
-        // Encontrar los clientes que corresponden a esos IDs
-        const clientsWithTodayAppointments = clients.filter((client: any) => 
-          uniqueClientIds.includes(client.id.toString())
-        );
-        
-        setClientsWithAppointments(clientsWithTodayAppointments);
-        
-        if (clientsWithTodayAppointments.length > 0 && !clientIdFromUrl) {
-          toast({
-            title: "Clientes con citas hoy",
-            description: `Se han encontrado ${clientsWithTodayAppointments.length} clientes con citas programadas para hoy`,
-          });
-        }
-      }
+      updateSelectedDateAndClients(today);
     }
-  }, [events, clients, toast, clientIdFromUrl, projects]);
+  }, [events, clients, projects, clientIdFromUrl]);
   
   // Watch values
   const watchServiceType = form.watch("serviceType");
