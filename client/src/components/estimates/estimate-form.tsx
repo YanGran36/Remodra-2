@@ -124,8 +124,17 @@ export default function EstimateForm({ clientId, projectId, onSuccess, onCancel 
   const handleAddItem = () => {
     // Validar el ítem antes de agregarlo
     try {
-      const validatedItem = estimateItemSchema.parse(newItem);
-      setItems([...items, validatedItem]);
+      // Asegurarse de que los valores numéricos sean correctos
+      const itemToValidate = {
+        ...newItem,
+        quantity: Number(newItem.quantity) || 1,
+        unitPrice: newItem.unitPrice || "0",
+        amount: (Number(newItem.quantity) * Number(newItem.unitPrice)).toString()
+      };
+      
+      const validatedItem = estimateItemSchema.parse(itemToValidate);
+      const updatedItems = [...items, validatedItem];
+      setItems(updatedItems);
       
       // Limpiar el formulario para un nuevo ítem
       setNewItem({
@@ -137,7 +146,10 @@ export default function EstimateForm({ clientId, projectId, onSuccess, onCancel 
       });
       
       // Recalcular totales
-      recalculateTotals([...items, validatedItem]);
+      recalculateTotals(updatedItems);
+      
+      console.log("Ítem agregado:", validatedItem);
+      console.log("Items actuales:", updatedItems);
     } catch (error) {
       if (error instanceof z.ZodError) {
         const errorMessages = error.errors.map(err => `${err.path}: ${err.message}`).join(", ");
@@ -162,17 +174,25 @@ export default function EstimateForm({ clientId, projectId, onSuccess, onCancel 
   
   // Recalcular subtotal, impuestos y total
   const recalculateTotals = (currentItems: EstimateItemValues[]) => {
+    // Calcular el subtotal sumando los montos de todos los items
     const subtotal = currentItems.reduce((sum, item) => sum + Number(item.amount), 0);
     
+    // Obtener porcentajes de impuesto y descuento del formulario
     const tax = Number(form.getValues("tax") || "0");
     const discount = Number(form.getValues("discount") || "0");
     
+    // Calcular montos de impuesto y descuento
     const taxAmount = (subtotal * tax) / 100;
     const discountAmount = (subtotal * discount) / 100;
+    
+    // Calcular total: subtotal + impuestos - descuento
     const total = subtotal + taxAmount - discountAmount;
     
-    form.setValue("subtotal", subtotal.toString());
-    form.setValue("total", total.toString());
+    // Actualizar valores en el formulario
+    form.setValue("subtotal", subtotal.toString(), { shouldValidate: true });
+    form.setValue("total", total.toString(), { shouldValidate: true });
+    
+    console.log(`Subtotal: ${subtotal}, Tax: ${tax}%, TaxAmount: ${taxAmount}, Discount: ${discount}%, DiscountAmount: ${discountAmount}, Total: ${total}`);
   };
   
   // Actualizar totales cuando cambian los impuestos o descuentos
