@@ -29,7 +29,8 @@ export default function ScheduleItem({
   orderNumber,
   onPhoneClick,
   onMessageClick,
-  onMapClick
+  onMapClick,
+  onCreateEstimateClick
 }: ScheduleItemProps) {
   return (
     <div className="p-4 flex items-start">
@@ -77,6 +78,12 @@ export default function ScheduleItem({
           {onMapClick && (
             <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-700" onClick={onMapClick}>
               <MapPin className="h-4 w-4" />
+            </Button>
+          )}
+          
+          {onCreateEstimateClick && contact?.id && (
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-green-700" onClick={onCreateEstimateClick} title="Crear estimado">
+              <FileText className="h-4 w-4" />
             </Button>
           )}
         </div>

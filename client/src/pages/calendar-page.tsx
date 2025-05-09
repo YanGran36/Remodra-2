@@ -10,6 +10,7 @@ import MobileSidebar from "@/components/layout/mobile-sidebar";
 import PageHeader from "@/components/shared/page-header";
 import SearchInput from "@/components/shared/search-input";
 import ScheduleItem from "@/components/dashboard/schedule-item";
+import { useLocation } from "wouter";
 
 // Event interface
 interface CalendarEvent {
@@ -25,8 +26,10 @@ interface CalendarEvent {
     name: string;
     avatar?: string;
     initials?: string;
+    id?: number;
   };
   orderNumber?: string;
+  clientId?: number;
 }
 
 export default function CalendarPage() {
@@ -35,6 +38,7 @@ export default function CalendarPage() {
   const [search, setSearch] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [filter, setFilter] = useState<string>("all");
+  const [, setLocation] = useLocation();
 
   // Sample calendar events - in a real app, this would come from an API call
   const events: CalendarEvent[] = [
@@ -49,8 +53,10 @@ export default function CalendarPage() {
       status: "confirmed",
       contact: {
         name: "Sarah Johnson",
-        initials: "SJ"
-      }
+        initials: "SJ",
+        id: 1
+      },
+      clientId: 1
     },
     {
       id: "2",
@@ -74,8 +80,10 @@ export default function CalendarPage() {
       status: "confirmed",
       contact: {
         name: "Mark Taylor",
-        initials: "MT"
-      }
+        initials: "MT",
+        id: 2
+      },
+      clientId: 2
     },
     {
       id: "4",
@@ -88,8 +96,10 @@ export default function CalendarPage() {
       status: "pending",
       contact: {
         name: "Robert Wilson",
-        initials: "RW"
-      }
+        initials: "RW",
+        id: 3
+      },
+      clientId: 3
     },
     {
       id: "5",
@@ -102,8 +112,10 @@ export default function CalendarPage() {
       status: "confirmed",
       contact: {
         name: "Luis Garcia",
-        initials: "LG"
-      }
+        initials: "LG",
+        id: 4
+      },
+      clientId: 4
     }
   ];
 
@@ -143,6 +155,11 @@ export default function CalendarPage() {
   // Function to check if a date has events
   const hasEvents = (date: Date) => {
     return events.some(event => isSameDay(event.date, date));
+  };
+  
+  // Handler para crear un estimado desde una cita
+  const handleCreateEstimate = (clientId: number) => {
+    setLocation(`/vendor-estimate-form-new?clientId=${clientId}`);
   };
 
   return (
@@ -326,6 +343,7 @@ export default function CalendarPage() {
                             onPhoneClick={() => {}}
                             onMessageClick={event.contact ? () => {} : undefined}
                             onMapClick={() => {}}
+                            onCreateEstimateClick={event.clientId ? () => handleCreateEstimate(event.clientId!) : undefined}
                           />
                         </Card>
                       ))
