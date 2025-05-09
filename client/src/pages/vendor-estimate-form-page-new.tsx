@@ -457,27 +457,8 @@ export default function VendorEstimateFormPageNew() {
     createInvoiceMutation.mutate(invoiceData);
   };
   
-  function addDays(date: Date, days: number): Date {
-    const result = new Date(date);
-    result.setDate(result.getDate() + days);
-    return result;
-  }
-  
-  function generateEstimateNumber(): string {
-    const date = new Date();
-    const year = date.getFullYear();
-    // Generate a random 3-digit number
-    const random = Math.floor(Math.random() * 900) + 100;
-    return `EST-${year}-${random}`;
-  }
-  
-  function generateInvoiceNumber(): string {
-    const date = new Date();
-    const year = date.getFullYear();
-    // Generate a random 3-digit number
-    const random = Math.floor(Math.random() * 900) + 100;
-    return `INV-${year}-${random}`;
-  }
+  // Las funciones auxiliares addDays, generateEstimateNumber y generateInvoiceNumber
+  // ya están definidas al inicio del componente, por lo que se omiten aquí.
   
   // Funciones para las herramientas de medición
   const handleMeasurementsChange = (newMeasurements: any[]) => {
