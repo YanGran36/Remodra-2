@@ -167,6 +167,7 @@ export default function VendorEstimateFormPageNew() {
   const [isLidarScannerOpen, setIsLidarScannerOpen] = useState(false);
   const [measurements, setMeasurements] = useState<any[]>([]);
   const [scanResults, setScanResults] = useState<any[]>([]);
+  const [selectedProjectFromEvent, setSelectedProjectFromEvent] = useState<string>();
   
   // Funciones auxiliares
   function addDays(date: Date, days: number): Date {
@@ -252,11 +253,11 @@ export default function VendorEstimateFormPageNew() {
               description: `Se ha cargado la información de ${selectedClient.firstName} ${selectedClient.lastName} desde el calendario`,
             });
             
-            // Prefill project if available
+            // Almacenar el ID del proyecto para usarlo en otro useEffect
             if (latestEvent.projectId) {
               const relatedProject = projects.find((p: any) => p.id === latestEvent.projectId);
               if (relatedProject) {
-                form.setValue("projectId", relatedProject.id.toString());
+                setSelectedProjectFromEvent(relatedProject.id.toString());
               }
             }
           }
@@ -299,7 +300,7 @@ export default function VendorEstimateFormPageNew() {
         }
       }
     }
-  }, [events, clients, toast, clientIdFromUrl, projects, form]);
+  }, [events, clients, toast, clientIdFromUrl, projects]);
   
   // Watch values
   const watchServiceType = form.watch("serviceType");
@@ -330,6 +331,17 @@ export default function VendorEstimateFormPageNew() {
       }
     }
   }, [clientIdFromUrl, clients]);
+  
+  // Efecto para establecer el proyecto cuando se selecciona desde un evento
+  useEffect(() => {
+    if (selectedProjectFromEvent && form) {
+      form.setValue("projectId", selectedProjectFromEvent);
+      toast({
+        title: "Proyecto cargado automáticamente",
+        description: "Se ha seleccionado el proyecto asociado a la cita programada."
+      });
+    }
+  }, [selectedProjectFromEvent, form]);
   
   // Efecto para cargar materiales relevantes cuando cambia el tipo de servicio
   useEffect(() => {
