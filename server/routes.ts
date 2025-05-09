@@ -413,6 +413,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to delete estimate" });
     }
   });
+  
+  // Accept estimate
+  app.post("/api/protected/estimates/:id/accept", async (req, res) => {
+    try {
+      const estimateId = Number(req.params.id);
+      
+      // First check if estimate exists and belongs to contractor
+      const existingEstimate = await storage.getEstimate(estimateId, req.user!.id);
+      if (!existingEstimate) {
+        return res.status(404).json({ message: "Estimate not found" });
+      }
+      
+      // Check if estimate can be accepted
+      if (existingEstimate.status !== 'draft' && existingEstimate.status !== 'sent') {
+        return res.status(400).json({ 
+          message: `Estimate cannot be accepted from current status: ${existingEstimate.status}` 
+        });
+      }
+      
+      // Update estimate status to 'accepted'
+      const updatedEstimate = await storage.updateEstimate(estimateId, req.user!.id, {
+        status: 'accepted',
+        notes: req.body.notes 
+          ? `${existingEstimate.notes ? existingEstimate.notes + '\n\n' : ''}Accepted: ${req.body.notes}`
+          : `${existingEstimate.notes ? existingEstimate.notes + '\n\n' : ''}Estimate accepted`
+      });
+      
+      res.json(updatedEstimate);
+    } catch (error) {
+      console.error("Error accepting estimate:", error);
+      res.status(500).json({ message: "Failed to accept estimate" });
+    }
+  });
+  
+  // Reject estimate
+  app.post("/api/protected/estimates/:id/reject", async (req, res) => {
+    try {
+      const estimateId = Number(req.params.id);
+      
+      // First check if estimate exists and belongs to contractor
+      const existingEstimate = await storage.getEstimate(estimateId, req.user!.id);
+      if (!existingEstimate) {
+        return res.status(404).json({ message: "Estimate not found" });
+      }
+      
+      // Check if estimate can be rejected
+      if (existingEstimate.status !== 'draft' && existingEstimate.status !== 'sent') {
+        return res.status(400).json({ 
+          message: `Estimate cannot be rejected from current status: ${existingEstimate.status}` 
+        });
+      }
+      
+      // Require rejection reason
+      if (!req.body.notes) {
+        return res.status(400).json({ message: "Rejection reason is required" });
+      }
+      
+      // Update estimate status to 'rejected'
+      const updatedEstimate = await storage.updateEstimate(estimateId, req.user!.id, {
+        status: 'rejected',
+        notes: `${existingEstimate.notes ? existingEstimate.notes + '\n\n' : ''}Rejected: ${req.body.notes}`
+      });
+      
+      res.json(updatedEstimate);
+    } catch (error) {
+      console.error("Error rejecting estimate:", error);
+      res.status(500).json({ message: "Failed to reject estimate" });
+    }
+  });
 
   // Convert estimate to invoice
   app.post("/api/protected/estimates/:id/convert-to-invoice", async (req, res) => {
@@ -427,10 +496,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Verify the estimate status allows conversion
-      // Permitir que estimados con estado 'draft', 'sent' y 'accepted' puedan ser convertidos
-      const validStatuses = ['draft', 'sent', 'accepted'];
-      if (!validStatuses.includes(estimate.status)) {
-        return res.status(400).json({ message: "Only draft, sent, or accepted estimates can be converted to work orders" });
+      // Solo permitir que estimados con estado 'accepted' puedan ser convertidos
+      if (estimate.status !== 'accepted') {
+        return res.status(400).json({ message: "Only accepted estimates can be converted to invoices. Please accept the estimate first." });
       }
       
       // Get the estimate items
@@ -478,6 +546,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       }
+      
+      // Mark the estimate as converted
+      await storage.updateEstimate(estimateId, req.user!.id, {
+        status: 'converted',
+        notes: `${estimate.notes ? estimate.notes + '\n\n' : ''}Converted to Invoice #${invoiceNumber}`
+      });
       
       // Return the created invoice with items
       const completeInvoice = await storage.getInvoice(invoice.id, req.user!.id);
@@ -815,6 +889,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public client routes to accept/reject estimates
+  app.post("/api/public/estimates/:id/client-action", async (req, res) => {
+    try {
+      const estimateId = Number(req.params.id);
+      const { action, clientId, clientSignature, notes } = req.body;
+      
+      // Validate required fields
+      if (!action || !clientId || !clientSignature) {
+        return res.status(400).json({ 
+          message: "Missing required fields", 
+          required: ["action", "clientId", "clientSignature"] 
+        });
+      }
+      
+      // Validate action type
+      if (action !== 'accept' && action !== 'reject') {
+        return res.status(400).json({ 
+          message: "Invalid action. Must be 'accept' or 'reject'" 
+        });
+      }
+      
+      // Get the estimate and verify it's for this client
+      const estimate = await storage.getEstimateById(estimateId);
+      
+      if (!estimate) {
+        return res.status(404).json({ message: "Estimate not found" });
+      }
+      
+      // Verify estimate belongs to the specified client
+      if (estimate.clientId !== Number(clientId)) {
+        return res.status(403).json({ 
+          message: "Estimate does not belong to this client" 
+        });
+      }
+      
+      // Check if estimate can be accepted/rejected
+      if (estimate.status !== 'sent') {
+        return res.status(400).json({ 
+          message: `Estimate cannot be ${action}ed from current status: ${estimate.status}` 
+        });
+      }
+      
+      // If rejecting, require a reason
+      if (action === 'reject' && !notes) {
+        return res.status(400).json({ message: "Rejection reason is required" });
+      }
+      
+      // Update estimate based on action
+      const updateData = {
+        status: action === 'accept' ? 'accepted' : 'rejected',
+        clientSignature,
+        notes: notes 
+          ? `${estimate.notes ? estimate.notes + '\n\n' : ''}Client ${action}ed: ${notes}`
+          : `${estimate.notes ? estimate.notes + '\n\n' : ''}Estimate ${action}ed by client`
+      };
+      
+      // Update the estimate
+      const updatedEstimate = await storage.updateEstimateById(estimateId, updateData);
+      
+      res.json({
+        success: true,
+        message: `Estimate has been ${action}ed successfully`,
+        estimate: updatedEstimate
+      });
+      
+    } catch (error) {
+      console.error(`Error processing client ${req.body.action} action:`, error);
+      res.status(500).json({ 
+        message: `Failed to process client action`, 
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
   // Events routes
   app.get("/api/protected/events", async (req, res) => {
     try {
