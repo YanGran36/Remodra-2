@@ -114,13 +114,13 @@ export default function ProjectDetailView({ project, isOpen, onClose, onEdit }: 
     },
   });
 
-  // Función para formatear fechas
+  // Function to format dates
   const formatDate = (dateString?: string | Date | null) => {
-    if (!dateString) return "No especificada";
-    return format(new Date(dateString), "d 'de' MMMM, yyyy", { locale: es });
+    if (!dateString) return "Not specified";
+    return format(new Date(dateString), "d MMMM, yyyy");
   };
 
-  // Obtener clase para badge según el estado del proyecto
+  // Get badge class based on project status
   const getStatusClass = (status: string) => {
     switch (status.toLowerCase()) {
       case "completed":
@@ -140,30 +140,34 @@ export default function ProjectDetailView({ project, isOpen, onClose, onEdit }: 
     }
   };
 
-  // Texto legible para el estado
+  // Human readable status text
   const getStatusText = (status: string) => {
     switch (status.toLowerCase()) {
       case "completed":
-        return "Completado";
+      case "completado":
+        return "Completed";
       case "in_progress":
-        return "En progreso";
+      case "en progreso":
+        return "In Progress";
       case "on_hold":
-        return "En espera";
+      case "en espera":
+        return "On Hold";
       case "cancelled":
-        return "Cancelado";
+      case "cancelado":
+        return "Cancelled";
       case "pending":
-        return "Pendiente";
+        return "Pending";
       default:
         return status;
     }
   };
 
-  // Completar proyecto
+  // Complete project
   const handleCompleteProject = () => {
     if (project.status === "completed") {
       toast({
-        title: "Proyecto ya completado",
-        description: "Este proyecto ya se encuentra en estado completado.",
+        title: "Project already completed",
+        description: "This project is already marked as completed.",
       });
       return;
     }
@@ -171,7 +175,7 @@ export default function ProjectDetailView({ project, isOpen, onClose, onEdit }: 
     setIsConfirmComplete(true);
   };
 
-  // Confirmar completar proyecto
+  // Confirm complete project
   const confirmCompleteProject = () => {
     updateProjectStatusMutation.mutate("completed");
   };
