@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useRoute, Link } from "wouter";
-import { Loader2, ChevronLeft, FileText, Send, Printer, Check, DollarSign, Receipt } from "lucide-react";
+import { Loader2, ChevronLeft, FileText, Send, Printer, Check, DollarSign, Receipt, Ban } from "lucide-react";
 import { useInvoices } from "@/hooks/use-invoices";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -57,9 +57,16 @@ export default function InvoiceDetailPage() {
   const [, params] = useRoute("/invoices/:id");
   const invoiceId = params?.id ? parseInt(params.id) : 0;
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [cancelNotes, setCancelNotes] = useState("");
   
   const { toast } = useToast();
-  const { getInvoice, registerPaymentMutation, updateInvoiceStatusMutation } = useInvoices();
+  const { 
+    getInvoice, 
+    registerPaymentMutation, 
+    updateInvoiceStatusMutation,
+    cancelInvoiceMutation
+  } = useInvoices();
   const { data: invoice, isLoading, error } = getInvoice(invoiceId);
 
   // Form para registro de pago
@@ -150,6 +157,26 @@ export default function InvoiceDetailPage() {
           toast({
             title: "Estado actualizado",
             description: "La factura ha sido marcada como pagada.",
+          });
+        },
+      }
+    );
+  };
+  
+  // Cancelar factura
+  const handleCancelInvoice = () => {
+    cancelInvoiceMutation.mutate(
+      { 
+        id: invoiceId, 
+        notes: cancelNotes 
+      },
+      {
+        onSuccess: () => {
+          setIsCancelModalOpen(false);
+          setCancelNotes("");
+          toast({
+            title: "Factura cancelada",
+            description: "La factura ha sido cancelada exitosamente.",
           });
         },
       }
@@ -252,6 +279,18 @@ export default function InvoiceDetailPage() {
               <Printer className="h-4 w-4 mr-2" />
               Imprimir
             </Button>
+            
+            {/* Botón de cancelar, solo visible si la factura no está cancelada ni pagada */}
+            {invoice.status !== "cancelled" && invoice.status !== "paid" && (
+              <Button 
+                variant="outline" 
+                className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
+                onClick={() => setIsCancelModalOpen(true)}
+              >
+                <Ban className="h-4 w-4 mr-2" />
+                Cancelar factura
+              </Button>
+            )}
             
             {!isPaidInFull && (
               <Button 
