@@ -52,6 +52,7 @@ import {
   SelectValue,
   SelectSeparator,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 
 // Esquema de validación para el formulario
 const estimateFormSchema = z.object({
@@ -722,84 +723,112 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                 
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-                <div>
-                  <FormField
-                    control={form.control}
-                    name="tax"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Impuesto (%)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={field.value}
-                            onChange={(e) => {
-                              const value = parseFloat(e.target.value) || 0;
-                              field.onChange(value.toString());
-                              if (items.length > 0) {
-                                recalculateTotals(items);
-                              }
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              {/* Nueva sección de resumen más clara */}
+              <div className="mt-8 border rounded-lg overflow-hidden">
+                <div className="bg-muted p-4 border-b">
+                  <h3 className="text-lg font-medium">Resumen del Estimado</h3>
                 </div>
                 
-                <div>
-                  <FormField
-                    control={form.control}
-                    name="discount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Descuento (%)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={field.value}
-                            onChange={(e) => {
-                              const value = parseFloat(e.target.value) || 0;
-                              field.onChange(value.toString());
-                              if (items.length > 0) {
-                                recalculateTotals(items);
-                              }
-                            }}
+                <div className="p-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm font-medium">Ajustes de Precios</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <FormField
+                            control={form.control}
+                            name="tax"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Impuesto (%)</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={field.value}
+                                    onChange={(e) => {
+                                      const value = parseFloat(e.target.value) || 0;
+                                      field.onChange(value.toString());
+                                      if (items.length > 0) {
+                                        recalculateTotals(items);
+                                      }
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
                           />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-              
-              <div className="flex flex-col space-y-2 mt-6 border-t pt-4">
-                <div className="flex justify-between">
-                  <span className="font-medium">Subtotal:</span>
-                  <span>{formatCurrency(form.getValues("subtotal"))}</span>
-                </div>
-                {Number(form.getValues("tax")) > 0 && (
-                  <div className="flex justify-between">
-                    <span>Impuesto ({form.getValues("tax")}%):</span>
-                    <span>{formatCurrency((Number(form.getValues("subtotal")) * Number(form.getValues("tax"))) / 100)}</span>
+                          
+                          <FormField
+                            control={form.control}
+                            name="discount"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Descuento (%)</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={field.value}
+                                    onChange={(e) => {
+                                      const value = parseFloat(e.target.value) || 0;
+                                      field.onChange(value.toString());
+                                      if (items.length > 0) {
+                                        recalculateTotals(items);
+                                      }
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </CardContent>
+                      </Card>
+                    </div>
+                  
+                    <div>
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm font-medium">Totales</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">Subtotal:</span>
+                              <span className="font-medium">{formatCurrency(form.getValues("subtotal"))}</span>
+                            </div>
+                            
+                            {Number(form.getValues("tax")) > 0 && (
+                              <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">Impuesto ({form.getValues("tax")}%):</span>
+                                <span className="font-medium">{formatCurrency((Number(form.getValues("subtotal")) * Number(form.getValues("tax"))) / 100)}</span>
+                              </div>
+                            )}
+                            
+                            {Number(form.getValues("discount")) > 0 && (
+                              <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">Descuento ({form.getValues("discount")}%):</span>
+                                <span className="font-medium text-destructive">-{formatCurrency((Number(form.getValues("subtotal")) * Number(form.getValues("discount"))) / 100)}</span>
+                              </div>
+                            )}
+                            
+                            <Separator className="my-2" />
+                            
+                            <div className="flex justify-between pt-1">
+                              <span className="font-bold">TOTAL:</span>
+                              <span className="font-bold text-lg">{formatCurrency(form.getValues("total"))}</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
                   </div>
-                )}
-                {Number(form.getValues("discount")) > 0 && (
-                  <div className="flex justify-between">
-                    <span>Descuento ({form.getValues("discount")}%):</span>
-                    <span>-{formatCurrency((Number(form.getValues("subtotal")) * Number(form.getValues("discount"))) / 100)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between text-lg font-bold">
-                  <span>Total:</span>
-                  <span>{formatCurrency(form.getValues("total"))}</span>
                 </div>
               </div>
             </CardContent>
