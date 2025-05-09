@@ -372,7 +372,7 @@ export default function VendorEstimateFormPageNew() {
       tax: "0",
       discount: "0",
       total: subtotal.toString(),
-      terms: t('estimateTerms', "1. This estimate is valid for 30 days from the issue date.\n2. A payment of 50% is required to start the work.\n3. The remaining balance will be paid upon completion of the work.\n4. Any modifications to the scope of work may result in additional costs."),
+      terms: t("estimateTerms"),
       notes: data.notes || "",
       contractorSignature: user?.firstName + " " + user?.lastName,
       items
@@ -506,7 +506,7 @@ export default function VendorEstimateFormPageNew() {
       tax: "0",
       discount: "0",
       total: analysisResult.recommendedTotal.toString(),
-      terms: "1. Este estimado es válido por 30 días a partir de la fecha de emisión.\n2. Se requiere un pago del 50% para iniciar el trabajo.\n3. El balance restante se pagará al completar el trabajo.\n4. Cualquier modificación al alcance del trabajo puede resultar en costos adicionales.",
+      terms: t("estimateTerms"),
       notes: analysisResult.summary,
       contractorSignature: user?.firstName + " " + user?.lastName,
       items
@@ -561,7 +561,7 @@ export default function VendorEstimateFormPageNew() {
       discount: "0",
       total: analysisResult.recommendedTotal.toString(),
       notes: analysisResult.summary,
-      paymentTerms: "Pago a 15 días",
+      paymentTerms: t("invoicePaymentTerms"),
       items
     };
     

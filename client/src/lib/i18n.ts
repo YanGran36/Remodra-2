@@ -33,6 +33,8 @@ export const translations: Partial<TranslationsByLanguage> = {
       yes: 'Yes',
       no: 'No',
     },
+    estimateTerms: '1. This estimate is valid for 30 days from the issue date.\n2. A payment of 50% is required to start the work.\n3. The remaining balance will be paid upon completion of the work.\n4. Any modifications to the scope of work may result in additional costs.',
+    invoicePaymentTerms: 'Payment due in 15 days',
     navigation: {
       dashboard: 'Dashboard',
       clients: 'Clients',
@@ -178,6 +180,8 @@ export const translations: Partial<TranslationsByLanguage> = {
       yes: 'Sí',
       no: 'No',
     },
+    estimateTerms: '1. Este estimado es válido por 30 días a partir de la fecha de emisión.\n2. Se requiere un pago del 50% para iniciar el trabajo.\n3. El balance restante se pagará al completar el trabajo.\n4. Cualquier modificación al alcance del trabajo puede resultar en costos adicionales.',
+    invoicePaymentTerms: 'Pago a 15 días',
     navigation: {
       dashboard: 'Panel Principal',
       clients: 'Clientes',
