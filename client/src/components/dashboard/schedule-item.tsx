@@ -1,5 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Phone, MessageSquare, MapPin } from "lucide-react";
+import { Phone, MessageSquare, MapPin, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export interface ScheduleItemProps {
@@ -11,11 +11,13 @@ export interface ScheduleItemProps {
     name: string;
     avatar?: string;
     initials?: string;
+    id?: number;
   };
   orderNumber?: string;
   onPhoneClick?: () => void;
   onMessageClick?: () => void;
   onMapClick?: () => void;
+  onCreateEstimateClick?: () => void;
 }
 
 export default function ScheduleItem({

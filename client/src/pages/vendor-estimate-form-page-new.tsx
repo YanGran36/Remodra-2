@@ -141,10 +141,14 @@ interface SelectedItem {
 }
 
 export default function VendorEstimateFormPageNew() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  
+  // Obtener clientId de la URL si existe
+  const urlParams = new URLSearchParams(location.split('?')[1] || '');
+  const clientIdFromUrl = urlParams.get('clientId');
   
   // Estados locales
   const [activeTab, setActiveTab] = useState("information");
@@ -196,7 +200,7 @@ export default function VendorEstimateFormPageNew() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      clientId: "",
+      clientId: clientIdFromUrl || "",
       projectId: "",
       serviceType: "",
       materialType: "",
@@ -225,6 +229,19 @@ export default function VendorEstimateFormPageNew() {
   const filteredProjects = watchClientId
     ? projects.filter((project: any) => project.clientId?.toString() === watchClientId)
     : [];
+    
+  // Efecto para notificar cuando se carga un cliente automáticamente desde la URL
+  useEffect(() => {
+    if (clientIdFromUrl && clients.length > 0) {
+      const selectedClient = clients.find((c: any) => c.id.toString() === clientIdFromUrl);
+      if (selectedClient) {
+        toast({
+          title: "Cliente cargado automáticamente",
+          description: `Se ha seleccionado al cliente ${selectedClient.firstName} ${selectedClient.lastName} desde la cita programada.`,
+        });
+      }
+    }
+  }, [clientIdFromUrl, clients]);
   
   // Efecto para cargar materiales relevantes cuando cambia el tipo de servicio
   useEffect(() => {
