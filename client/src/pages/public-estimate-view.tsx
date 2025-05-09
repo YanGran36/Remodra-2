@@ -372,311 +372,359 @@ export default function PublicEstimateView() {
 
   // Si todavía no se ha tomado acción (estimate.status === 'sent')
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-gray-50">
-      <Card className="w-full max-w-4xl shadow-lg">
-        <CardHeader className="bg-blue-50">
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle className="text-blue-600 flex items-center gap-2 text-2xl">
-                <Send className="h-6 w-6" />
-                Estimado para su aprobación
-              </CardTitle>
-              <CardDescription className="text-lg mt-2">
-                <span className="font-medium">{contractor?.companyName || `${contractor?.firstName} ${contractor?.lastName}`}</span> le ha enviado un estimado para su revisión.
-              </CardDescription>
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-blue-50 via-white to-blue-50">
+      <div className="w-full max-w-4xl relative">
+        {/* Efecto de sombra decorativa */}
+        <div className="absolute -top-4 -left-4 w-full h-full bg-blue-200 rounded-lg opacity-30 hidden sm:block" style={{transform: 'rotate(1deg)'}}></div>
+        <div className="absolute -bottom-4 -right-4 w-full h-full bg-blue-300 rounded-lg opacity-30 hidden sm:block" style={{transform: 'rotate(-1deg)'}}></div>
+        
+        <Card className="w-full shadow-xl relative z-10 border border-blue-200 overflow-hidden">
+          <CardHeader className="bg-blue-50">
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="text-blue-600 flex items-center gap-2 text-2xl">
+                  <Send className="h-6 w-6" />
+                  Estimado para su aprobación
+                </CardTitle>
+                <CardDescription className="text-lg mt-2">
+                  <span className="font-medium">{contractor?.companyName || `${contractor?.firstName} ${contractor?.lastName}`}</span> le ha enviado un estimado para su revisión.
+                </CardDescription>
+              </div>
+              <div className="hidden sm:flex">
+                <Button
+                  size="lg"
+                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-lg h-auto rounded-xl shadow-lg transition-all hover:shadow-xl"
+                  onClick={() => setAcceptDialogOpen(true)}
+                >
+                  <CheckCircle className="h-5 w-5 mr-2" />
+                  Aprobar Estimado
+                </Button>
+              </div>
             </div>
-            <div className="hidden sm:flex">
-              <Button
-                size="lg"
-                className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-lg h-auto rounded-xl shadow-lg transition-all hover:shadow-xl"
-                onClick={() => setAcceptDialogOpen(true)}
-              >
-                <CheckCircle className="h-5 w-5 mr-2" />
-                Aprobar Estimado
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Detalles del Estimado</h3>
-              <p><span className="font-medium">Número:</span> {estimate.estimateNumber}</p>
-              <p><span className="font-medium">Fecha:</span> {estimate.issueDate ? format(new Date(estimate.issueDate), 'dd/MM/yyyy') : 'No disponible'}</p>
-              <p><span className="font-medium">Expiración:</span> {estimate.expiryDate ? format(new Date(estimate.expiryDate), 'dd/MM/yyyy') : 'No disponible'}</p>
-              <p className="flex items-center gap-1">
-                <span className="font-medium">Estado:</span> 
-                <Badge className={`${statusColors[estimate.status]} text-white flex gap-1 items-center`}>
-                  {statusIcons[estimate.status]} 
-                  {estimate.status === 'draft' && 'Borrador'}
-                  {estimate.status === 'sent' && 'Enviado'}
-                  {estimate.status === 'accepted' && 'Aceptado'}
-                  {estimate.status === 'rejected' && 'Rechazado'}
-                  {estimate.status === 'converted' && 'Convertido'}
-                </Badge>
-              </p>
-            </div>
-            <div>
-              {contractor && (
-                <>
-                  <h3 className="text-lg font-semibold mb-2">Contratista</h3>
-                  <p>{contractor.companyName || `${contractor.firstName} ${contractor.lastName}`}</p>
-                  <p>{contractor.email}</p>
-                  <p>{contractor.phone}</p>
-                </>
-              )}
-              <div className="mt-4">
-                {client && (
+          </CardHeader>
+          <CardContent className="p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Detalles del Estimado</h3>
+                <p><span className="font-medium">Número:</span> {estimate.estimateNumber}</p>
+                <p><span className="font-medium">Fecha:</span> {estimate.issueDate ? format(new Date(estimate.issueDate), 'dd/MM/yyyy') : 'No disponible'}</p>
+                <p><span className="font-medium">Expiración:</span> {estimate.expiryDate ? format(new Date(estimate.expiryDate), 'dd/MM/yyyy') : 'No disponible'}</p>
+                <p className="flex items-center gap-1">
+                  <span className="font-medium">Estado:</span> 
+                  <Badge className={`${statusColors[estimate.status]} text-white flex gap-1 items-center`}>
+                    {statusIcons[estimate.status]} 
+                    {estimate.status === 'draft' && 'Borrador'}
+                    {estimate.status === 'sent' && 'Enviado'}
+                    {estimate.status === 'accepted' && 'Aceptado'}
+                    {estimate.status === 'rejected' && 'Rechazado'}
+                    {estimate.status === 'converted' && 'Convertido'}
+                  </Badge>
+                </p>
+              </div>
+              <div>
+                {contractor && (
                   <>
-                    <h3 className="text-lg font-semibold mb-2">Cliente</h3>
-                    <p>{client.firstName} {client.lastName}</p>
-                    <p>{client.email}</p>
-                    <p>{client.phone}</p>
-                    <p>{client.address}</p>
+                    <h3 className="text-lg font-semibold mb-2">Contratista</h3>
+                    <p>{contractor.companyName || `${contractor.firstName} ${contractor.lastName}`}</p>
+                    <p>{contractor.email}</p>
+                    <p>{contractor.phone}</p>
                   </>
                 )}
+                <div className="mt-4">
+                  {client && (
+                    <>
+                      <h3 className="text-lg font-semibold mb-2">Cliente</h3>
+                      <p>{client.firstName} {client.lastName}</p>
+                      <p>{client.email}</p>
+                      <p>{client.phone}</p>
+                      <p>{client.address}</p>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
 
-          <Separator />
+            <Separator />
 
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Detalle de Ítems</h3>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Descripción</TableHead>
-                  <TableHead className="text-right">Cantidad</TableHead>
-                  <TableHead className="text-right">Precio Unitario</TableHead>
-                  <TableHead className="text-right">Importe</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {estimate.items?.map((item: any) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.description}</TableCell>
-                    <TableCell className="text-right">{item.quantity}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.unitPrice)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.amount)}</TableCell>
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Detalle de Ítems</h3>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Descripción</TableHead>
+                    <TableHead className="text-right">Cantidad</TableHead>
+                    <TableHead className="text-right">Precio Unitario</TableHead>
+                    <TableHead className="text-right">Importe</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {estimate.items?.map((item: any) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium">{item.description}</TableCell>
+                      <TableCell className="text-right">{item.quantity}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(item.unitPrice)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(item.amount)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
 
-          <div className="flex justify-end">
-            <div className="w-full max-w-xs">
-              <div className="flex justify-between py-1">
-                <span>Subtotal:</span>
-                <span>{formatCurrency(estimate.subtotal)}</span>
-              </div>
-              {Number(estimate.tax) > 0 && (
+            <div className="flex justify-end">
+              <div className="w-full max-w-xs">
                 <div className="flex justify-between py-1">
-                  <span>Impuesto ({estimate.tax}%):</span>
-                  <span>{formatCurrency((Number(estimate.subtotal) * Number(estimate.tax) / 100))}</span>
+                  <span>Subtotal:</span>
+                  <span>{formatCurrency(estimate.subtotal)}</span>
                 </div>
-              )}
-              {Number(estimate.discount) > 0 && (
-                <div className="flex justify-between py-1">
-                  <span>Descuento ({estimate.discount}%):</span>
-                  <span>-{formatCurrency((Number(estimate.subtotal) * Number(estimate.discount) / 100))}</span>
+                {Number(estimate.tax) > 0 && (
+                  <div className="flex justify-between py-1">
+                    <span>Impuesto ({estimate.tax}%):</span>
+                    <span>{formatCurrency((Number(estimate.subtotal) * Number(estimate.tax) / 100))}</span>
+                  </div>
+                )}
+                {Number(estimate.discount) > 0 && (
+                  <div className="flex justify-between py-1">
+                    <span>Descuento ({estimate.discount}%):</span>
+                    <span>-{formatCurrency((Number(estimate.subtotal) * Number(estimate.discount) / 100))}</span>
+                  </div>
+                )}
+                <Separator className="my-2" />
+                <div className="flex justify-between py-1 font-bold">
+                  <span>Total:</span>
+                  <span>{formatCurrency(estimate.total)}</span>
                 </div>
-              )}
-              <Separator className="my-2" />
-              <div className="flex justify-between py-1 font-bold">
-                <span>Total:</span>
-                <span>{formatCurrency(estimate.total)}</span>
               </div>
             </div>
-          </div>
 
-          {estimate.terms && (
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Términos</h3>
-              <div className="bg-gray-50 p-4 rounded-md whitespace-pre-wrap">
-                {estimate.terms}
+            {estimate.terms && (
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Términos</h3>
+                <div className="bg-gray-50 p-4 rounded-md whitespace-pre-wrap">
+                  {estimate.terms}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {estimate.notes && (
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Notas</h3>
-              <div className="bg-gray-50 p-4 rounded-md whitespace-pre-wrap">
-                {estimate.notes}
+            {estimate.notes && (
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Notas</h3>
+                <div className="bg-gray-50 p-4 rounded-md whitespace-pre-wrap">
+                  {estimate.notes}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-md">
-              {error}
-            </div>
-          )}
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-md">
+                {error}
+              </div>
+            )}
 
-          <div className="bg-blue-50 border border-blue-200 p-4 rounded-md">
-            <h3 className="text-lg font-semibold text-blue-700 mb-2">Su firma</h3>
-            <p className="text-sm text-blue-600 mb-4">
-              Por favor, escriba su nombre completo como firma para aceptar o rechazar este estimado.
-            </p>
-            <Input
-              placeholder="Su nombre completo aquí"
-              value={signature}
-              onChange={(e) => setSignature(e.target.value)}
-              className="mb-4"
-            />
-          </div>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-4 bg-gradient-to-b from-blue-50 to-blue-100 p-8 border-t border-blue-200">
-          <div className="text-center mb-2">
-            <h3 className="text-xl font-bold text-blue-800">¿Está de acuerdo con este estimado?</h3>
-            <p className="text-blue-600 mt-1">Seleccione una de las siguientes opciones:</p>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row justify-center gap-4 w-full max-w-2xl mx-auto">
-            <Button
-              variant="outline"
-              onClick={() => setRejectDialogOpen(true)}
-              className="w-full sm:w-1/3 py-6 text-lg h-auto border-2 border-gray-300 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-all"
-              disabled={!signature}
-            >
-              <XCircle className="h-5 w-5 mr-2 text-red-600" />
-              Rechazar
-            </Button>
+            <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 p-6 rounded-lg shadow-sm">
+              <h3 className="text-xl font-bold text-blue-800 mb-3 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pen-line">
+                  <path d="M12 20h9"></path>
+                  <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+                </svg>
+                Firma Digital
+              </h3>
+              <div className="border-l-4 border-blue-400 pl-4 mb-4">
+                <p className="text-blue-800">
+                  Por favor, escriba su nombre completo como firma para proceder con la revisión de este estimado.
+                </p>
+              </div>
+              <div className="relative">
+                <Input
+                  placeholder="Escriba su nombre completo aquí"
+                  value={signature}
+                  onChange={(e) => setSignature(e.target.value)}
+                  className="bg-white border-2 border-blue-300 focus:border-blue-500 py-6 px-4 text-lg rounded-md"
+                />
+                {signature && (
+                  <div className="absolute top-0 right-0 bg-blue-600 text-white rounded-full p-1 transform translate-x-1/2 -translate-y-1/2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-check">
+                      <path d="M20 6 9 17l-5-5"></path>
+                    </svg>
+                  </div>
+                )}
+              </div>
+              <p className="text-sm text-blue-600 mt-3 italic">
+                Esta firma confirma su revisión del estimado y será usada en todos los documentos relacionados.
+              </p>
+            </div>
+          </CardContent>
+          <CardFooter className="flex flex-col gap-4 bg-gradient-to-b from-blue-50 to-blue-100 p-8 border-t border-blue-200">
+            <div className="text-center mb-2">
+              <h3 className="text-xl font-bold text-blue-800">¿Está de acuerdo con este estimado?</h3>
+              <p className="text-blue-600 mt-1">Seleccione una de las siguientes opciones:</p>
+            </div>
             
-            <Button
-              onClick={() => setAcceptDialogOpen(true)}
-              className="w-full sm:w-2/3 bg-green-600 hover:bg-green-700 text-white py-8 text-xl h-auto rounded-lg shadow-lg transition-all hover:shadow-xl relative overflow-hidden"
-              disabled={!signature}
-            >
-              <div className="absolute inset-0 bg-white/10 flex items-center justify-center">
-                <div className="animate-pulse bg-white/5 w-full h-full"></div>
+            <div className="flex flex-col sm:flex-row justify-center gap-4 w-full max-w-2xl mx-auto">
+              <Button
+                variant="outline"
+                onClick={() => setRejectDialogOpen(true)}
+                className="w-full sm:w-1/3 py-6 text-lg h-auto border-2 border-gray-300 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-all"
+                disabled={!signature}
+              >
+                <XCircle className="h-5 w-5 mr-2 text-red-600" />
+                Rechazar
+              </Button>
+              
+              <Button
+                onClick={() => setAcceptDialogOpen(true)}
+                className="w-full sm:w-2/3 bg-green-600 hover:bg-green-700 text-white py-8 text-xl h-auto rounded-lg shadow-lg transition-all hover:shadow-xl relative overflow-hidden"
+                disabled={!signature}
+              >
+                <div className="absolute inset-0 bg-white/10 flex items-center justify-center">
+                  <div className="animate-pulse bg-white/5 w-full h-full"></div>
+                </div>
+                <div className="relative z-10 flex items-center justify-center gap-2">
+                  <CheckCircle className="h-6 w-6" />
+                  <span>APROBAR ESTIMADO</span>
+                </div>
+              </Button>
+            </div>
+            
+            {!signature && (
+              <div className="text-center text-amber-600 bg-amber-50 p-3 rounded-md border border-amber-200 mt-2">
+                <p>Por favor, ingrese su firma arriba para habilitar los botones de aprobación.</p>
               </div>
-              <div className="relative z-10 flex items-center justify-center gap-2">
+            )}
+          </CardFooter>
+        </Card>
+
+        {/* Diálogo de aceptación */}
+        <Dialog open={acceptDialogOpen} onOpenChange={setAcceptDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-2xl text-green-700 flex items-center gap-2">
                 <CheckCircle className="h-6 w-6" />
-                <span>APROBAR ESTIMADO</span>
+                Confirmar Aprobación
+              </DialogTitle>
+              <DialogDescription className="text-base">
+                Al aprobar este estimado, está autorizando al contratista a proceder con el trabajo.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-6 space-y-4">
+              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-green-800 font-medium">Total a pagar:</span>
+                  <span className="text-2xl font-bold text-green-800">{formatCurrency(estimate.total)}</span>
+                </div>
+                <p className="text-sm text-green-700">
+                  Este es el importe total acordado para los trabajos descritos en este estimado.
+                </p>
               </div>
-            </Button>
-          </div>
-          
-          {!signature && (
-            <div className="text-center text-amber-600 bg-amber-50 p-3 rounded-md border border-amber-200 mt-2">
-              <p>Por favor, ingrese su firma arriba para habilitar los botones de aprobación.</p>
+              
+              <div className="border-t border-b border-gray-200 py-4">
+                <p className="font-medium mb-1">Confirmación del cliente:</p>
+                <div className="bg-blue-50 p-3 rounded border border-blue-100">
+                  <p className="text-lg font-medium text-blue-800">{signature}</p>
+                </div>
+                <p className="text-sm text-gray-500 mt-2">
+                  Su nombre será utilizado como firma electrónica para este acuerdo.
+                </p>
+              </div>
             </div>
-          )}
-        </CardFooter>
-      </Card>
+            <DialogFooter className="gap-3 sm:gap-0">
+              <Button 
+                variant="outline" 
+                onClick={() => setAcceptDialogOpen(false)}
+                disabled={actionInProgress}
+                className="w-full sm:w-auto"
+              >
+                Cancelar
+              </Button>
+              <Button 
+                onClick={() => handleAction('accept')}
+                disabled={actionInProgress}
+                className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-lg"
+              >
+                {actionInProgress ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Procesando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="mr-2 h-5 w-5" />
+                    Aprobar Estimado
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-      {/* Diálogo de aceptación */}
-      <Dialog open={acceptDialogOpen} onOpenChange={setAcceptDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-2xl text-green-700 flex items-center gap-2">
-              <CheckCircle className="h-6 w-6" />
-              Confirmar Aprobación
-            </DialogTitle>
-            <DialogDescription className="text-base">
-              Al aprobar este estimado, está autorizando al contratista a proceder con el trabajo.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-6 space-y-4">
-            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-green-800 font-medium">Total a pagar:</span>
-                <span className="text-2xl font-bold text-green-800">{formatCurrency(estimate.total)}</span>
+        {/* Diálogo de rechazo */}
+        <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-2xl text-red-700 flex items-center gap-2">
+                <XCircle className="h-6 w-6" />
+                Confirmar Rechazo
+              </DialogTitle>
+              <DialogDescription className="text-base">
+                Por favor, ayúdenos a mejorar indicando el motivo de su rechazo.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-6 space-y-4">
+              <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                <p className="font-medium text-red-800 mb-2">Motivo de rechazo:</p>
+                <Textarea
+                  placeholder="Por favor, explique brevemente por qué no está satisfecho con este estimado..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="min-h-[100px] border-red-200 focus:border-red-400 focus:ring-red-400"
+                />
+                {!notes && (
+                  <p className="text-sm text-red-600 mt-2">
+                    * Este campo es obligatorio para rechazar el estimado
+                  </p>
+                )}
               </div>
-              <p className="text-sm text-green-700">
-                Este es el importe total acordado para los trabajos descritos en este estimado.
-              </p>
-            </div>
-            
-            <div className="border-t border-b border-gray-200 py-4">
-              <p className="font-medium mb-1">Confirmación del cliente:</p>
-              <div className="bg-blue-50 p-3 rounded border border-blue-100">
-                <p className="text-lg font-medium text-blue-800">{signature}</p>
+              
+              <div className="border-t border-b border-gray-200 py-4">
+                <p className="font-medium mb-1">Confirmación del cliente:</p>
+                <div className="bg-blue-50 p-3 rounded border border-blue-100">
+                  <p className="text-lg font-medium text-blue-800">{signature}</p>
+                </div>
+                <p className="text-sm text-gray-500 mt-2">
+                  Su nombre será utilizado como firma electrónica para este rechazo.
+                </p>
               </div>
-              <p className="text-sm text-gray-500 mt-2">
-                Su nombre será utilizado como firma electrónica para este acuerdo.
-              </p>
             </div>
-          </div>
-          <DialogFooter className="gap-3 sm:gap-0">
-            <Button 
-              variant="outline" 
-              onClick={() => setAcceptDialogOpen(false)}
-              disabled={actionInProgress}
-              className="w-full sm:w-auto"
-            >
-              Cancelar
-            </Button>
-            <Button 
-              onClick={() => handleAction('accept')}
-              disabled={actionInProgress}
-              className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-lg"
-            >
-              {actionInProgress ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Procesando...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="mr-2 h-5 w-5" />
-                  Aprobar Estimado
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Diálogo de rechazo */}
-      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmar Rechazo</DialogTitle>
-            <DialogDescription>
-              Por favor, indique el motivo por el cual está rechazando este estimado.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4 space-y-4">
-            <div>
-              <p className="mb-2 font-medium">Motivo de rechazo:</p>
-              <Textarea
-                placeholder="Por favor, explique por qué está rechazando este estimado..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="min-h-[100px]"
-              />
-            </div>
-            <p>Su firma: <span className="font-semibold">{signature}</span></p>
-          </div>
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setRejectDialogOpen(false)}
-              disabled={actionInProgress}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              variant="destructive"
-              onClick={() => handleAction('reject')}
-              disabled={actionInProgress || !notes}
-            >
-              {actionInProgress ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Procesando...
-                </>
-              ) : (
-                <>Confirmar Rechazo</>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter className="gap-3 sm:gap-0">
+              <Button 
+                variant="outline" 
+                onClick={() => setRejectDialogOpen(false)}
+                disabled={actionInProgress}
+                className="w-full sm:w-auto"
+              >
+                Cancelar
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={() => handleAction('reject')}
+                disabled={actionInProgress || !notes}
+                className="w-full sm:w-auto text-lg"
+              >
+                {actionInProgress ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Procesando...
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="mr-2 h-5 w-5" />
+                    Rechazar Estimado
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 }
