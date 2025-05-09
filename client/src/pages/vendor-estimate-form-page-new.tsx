@@ -777,8 +777,29 @@ export default function VendorEstimateFormPageNew() {
     setSelectedMaterials(prev => [...prev, newMaterial]);
   };
   
-  const handleRemoveMaterial = (index: number) => {
-    setSelectedMaterials(prev => prev.filter((_, i) => i !== index));
+  const handleRemoveMaterial = (index: number, e?: React.MouseEvent) => {
+    // Evitar que se propague el evento y cause un envío del formulario
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    // Actualizar los materiales seleccionados eliminando el que está en el índice especificado
+    setSelectedMaterials(prev => {
+      const newMaterials = prev.filter((_, i) => i !== index);
+      
+      // Actualizar el total después de eliminar el material
+      const newTotal = newMaterials.reduce((sum, mat) => sum + (mat.quantity * mat.unitPrice), 0);
+      setTotalAmount(newTotal);
+      
+      return newMaterials;
+    });
+    
+    // Notificar al usuario que se ha eliminado el material
+    toast({
+      title: "Material eliminado",
+      description: "Se ha eliminado el material del estimado",
+    });
   };
   
   const handleUpdateMaterialQuantity = (index: number, newQuantity: number) => {
@@ -1199,7 +1220,8 @@ export default function VendorEstimateFormPageNew() {
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    onClick={() => handleRemoveMaterial(index)}
+                                    type="button" 
+                                    onClick={(e) => handleRemoveMaterial(index, e)}
                                   >
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
