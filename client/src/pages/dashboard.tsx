@@ -163,8 +163,8 @@ export default function Dashboard() {
         <div className="p-6">
           <header className="mb-6 flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-              <p className="text-gray-600">Welcome back, {user?.firstName}. Here's what's happening today.</p>
+              <h1 className="text-2xl font-bold text-gray-900">{t('navigation.dashboard')}</h1>
+              <p className="text-gray-600">{t('dashboard.welcomeBack')}, {user?.firstName}. {t('dashboard.todayActivity')}</p>
             </div>
             
             <div className="flex space-x-4">
@@ -193,7 +193,7 @@ export default function Dashboard() {
               icon={<CalendarCheck className="h-5 w-5" />}
               iconColor="text-primary"
               iconBgColor="bg-primary/15"
-              title="Upcoming Jobs"
+              title={t('dashboard.upcomingJobs')}
               value={upcomingJobs.total}
               details={[
                 { label: "This week", value: upcomingJobs.thisWeek },
