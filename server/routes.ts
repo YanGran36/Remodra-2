@@ -20,6 +20,25 @@ import {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
   setupAuth(app);
+  
+  // Language update route
+  app.post("/api/protected/language", async (req, res) => {
+    try {
+      const { language } = req.body;
+      
+      // Validate language is supported
+      if (!["en", "es", "fr", "pt"].includes(language)) {
+        return res.status(400).json({ message: "Unsupported language" });
+      }
+      
+      // Update user's language preference
+      const updatedUser = await storage.updateContractor(req.user!.id, { language });
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating language:", error);
+      res.status(500).json({ message: "Failed to update language preference" });
+    }
+  });
 
   // Clients routes
   app.get("/api/protected/clients", async (req, res) => {
