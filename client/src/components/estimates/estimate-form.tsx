@@ -6,6 +6,8 @@ import { format } from "date-fns";
 import { Calendar as CalendarIcon, Plus, Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useEstimates } from "@/hooks/use-estimates";
+import { useClients } from "@/hooks/use-clients";
+import { useProjects } from "@/hooks/use-projects";
 import { formatCurrency } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
@@ -42,6 +44,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Esquema de validación para el formulario
 const estimateFormSchema = z.object({
