@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useQueryClient } from "@tanstack/react-query";
+import { EstimateClientLink } from "@/components/estimates/estimate-client-link";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -227,7 +228,21 @@ export default function EstimateDetailPage() {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div className="col-span-1 lg:col-span-3">
+          <EstimateClientLink 
+            estimateId={estimate.id} 
+            estimateNumber={estimate.estimateNumber || `#${estimate.id}`}
+            clientEmail={estimate.client?.email}
+            onSendEmail={() => {
+              toast({
+                title: "Envío de correo",
+                description: "Esta funcionalidad será implementada próximamente.",
+              });
+            }}
+          />
+        </div>
+        
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Información del cliente</CardTitle>
