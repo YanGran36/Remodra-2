@@ -889,7 +889,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Public client routes to accept/reject estimates
+  // Public client routes for estimates
+  app.get("/api/public/estimates/:id", async (req, res) => {
+    try {
+      const estimateId = Number(req.params.id);
+      
+      const estimate = await storage.getEstimateById(estimateId);
+      
+      if (!estimate) {
+        return res.status(404).json({ message: "Estimate not found" });
+      }
+      
+      res.json(estimate);
+    } catch (error) {
+      console.error("Error fetching public estimate:", error);
+      res.status(500).json({ 
+        message: "Failed to fetch estimate", 
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
   app.post("/api/public/estimates/:id/client-action", async (req, res) => {
     try {
       const estimateId = Number(req.params.id);
