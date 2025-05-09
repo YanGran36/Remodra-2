@@ -350,7 +350,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Estimate not found" });
       }
       
-      const validatedData = estimateInsertSchema.partial().parse(req.body);
+      // Preparar datos con conversión de fechas
+      const dataWithDateObjects = { ...req.body };
+      
+      // Aseguramos que issueDate sea un objeto Date válido
+      if (dataWithDateObjects.issueDate && typeof dataWithDateObjects.issueDate === 'string') {
+        dataWithDateObjects.issueDate = new Date(dataWithDateObjects.issueDate);
+      }
+      
+      // Aseguramos que expiryDate sea un objeto Date válido si está presente
+      if (dataWithDateObjects.expiryDate && typeof dataWithDateObjects.expiryDate === 'string') {
+        dataWithDateObjects.expiryDate = new Date(dataWithDateObjects.expiryDate);
+      }
+      
+      const validatedData = estimateInsertSchema.partial().parse(dataWithDateObjects);
       
       const estimate = await storage.updateEstimate(estimateId, req.user!.id, validatedData);
       res.json(estimate);
