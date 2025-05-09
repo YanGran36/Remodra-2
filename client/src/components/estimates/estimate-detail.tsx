@@ -90,12 +90,12 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
           <DialogHeader>
             <DialogTitle>Error</DialogTitle>
             <DialogDescription>
-              {error ? error.message : "No se pudo cargar el estimado."}
+              {error ? error.message : "Unable to load the estimate."}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={onClose}>
-              Cerrar
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -186,7 +186,7 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
     );
   };
 
-  // Confirmar el rechazo del estimado
+  // Confirm estimate rejection
   const confirmRejectEstimate = () => {
     updateEstimateStatusMutation.mutate(
       { id: estimateId, status: "rejected" },
@@ -194,15 +194,15 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
         onSuccess: () => {
           setIsConfirmReject(false);
           toast({
-            title: "Estimado rechazado",
-            description: "El estimado ha sido marcado como rechazado.",
+            title: "Estimate Rejected",
+            description: "The estimate has been marked as rejected.",
           });
         }
       }
     );
   };
 
-  // Confirmar la conversión a orden de trabajo
+  // Confirm conversion to work order
   const confirmConvertToWorkOrder = () => {
     convertToInvoiceMutation.mutate(
       estimateId,
@@ -213,7 +213,7 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
             title: "Work Order Created",
             description: `Work order ${invoice.invoiceNumber} has been created from this estimate.`,
           });
-          // Aquí se podría redirigir a la página de la orden de trabajo
+          // Here we could redirect to the work order page
         }
       }
     );
@@ -224,7 +224,7 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl">
-            Estimado {estimate.estimateNumber || `#${estimate.id}`}
+            Estimate {estimate.estimateNumber || `#${estimate.id}`}
           </DialogTitle>
           <DialogDescription>
             <div className="flex items-center gap-2 mt-1">
