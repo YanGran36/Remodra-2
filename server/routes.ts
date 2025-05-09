@@ -197,6 +197,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to update project" });
     }
   });
+  
+  // Cancelar proyecto
+  app.post("/api/protected/projects/:id/cancel", async (req, res) => {
+    try {
+      const projectId = Number(req.params.id);
+      
+      // Verificar que el proyecto existe y pertenece al contratista
+      const existingProject = await storage.getProject(projectId, req.user!.id);
+      if (!existingProject) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      // Verificar que el proyecto no esté ya cancelado
+      if (existingProject.status === "cancelled") {
+        return res.status(400).json({ message: "Project is already cancelled" });
+      }
+      
+      // Actualizar el estado del proyecto a "cancelled"
+      const project = await storage.updateProject(projectId, req.user!.id, { 
+        status: "cancelled",
+        notes: req.body.notes 
+          ? `${existingProject.notes ? existingProject.notes + '\n\n' : ''}Cancelled: ${req.body.notes}`
+          : `${existingProject.notes ? existingProject.notes + '\n\n' : ''}Project cancelled`
+      });
+      
+      res.json(project);
+    } catch (error) {
+      console.error("Error cancelling project:", error);
+      res.status(500).json({ message: "Failed to cancel project" });
+    }
+  });
 
   app.delete("/api/protected/projects/:id", async (req, res) => {
     try {
