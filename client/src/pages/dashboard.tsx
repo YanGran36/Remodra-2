@@ -178,7 +178,7 @@ export default function Dashboard() {
                 <Search className="text-gray-400 mr-2 h-4 w-4" />
                 <Input 
                   type="text" 
-                  placeholder="Search..." 
+                  placeholder={t('common.search')} 
                   className="bg-transparent border-none shadow-none focus-visible:ring-0 text-sm w-40 p-0"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -196,8 +196,8 @@ export default function Dashboard() {
               title={t('dashboard.upcomingJobs')}
               value={upcomingJobs.total}
               details={[
-                { label: "This week", value: upcomingJobs.thisWeek },
-                { label: "Next week", value: upcomingJobs.nextWeek }
+                { label: t('dashboard.thisWeek'), value: upcomingJobs.thisWeek },
+                { label: t('dashboard.nextWeek'), value: upcomingJobs.nextWeek }
               ]}
             />
             
