@@ -132,8 +132,18 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
     
     // Recalcular el monto si cambia la cantidad o el precio unitario
     if (field === 'quantity' || field === 'unitPrice') {
-      const amount = Number(updatedItem.quantity) * Number(updatedItem.unitPrice);
-      updatedItem.amount = amount.toString();
+      const quantity = Number(updatedItem.quantity);
+      const unitPrice = Number(updatedItem.unitPrice);
+      
+      // Asegurar que son números válidos
+      if (!isNaN(quantity) && !isNaN(unitPrice)) {
+        // Calcular monto con precisión de 2 decimales
+        const amount = quantity * unitPrice;
+        const roundedAmount = parseFloat(amount.toFixed(2));
+        updatedItem.amount = roundedAmount.toString();
+      } else {
+        updatedItem.amount = "0";
+      }
     }
     
     setNewItem(updatedItem);
@@ -144,11 +154,18 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
     // Validar el ítem antes de agregarlo
     try {
       // Asegurarse de que los valores numéricos sean correctos
+      const quantity = Number(newItem.quantity) || 1;
+      const unitPrice = Number(newItem.unitPrice) || 0;
+      
+      // Calcular el monto con precisión de 2 decimales
+      const amount = quantity * unitPrice;
+      const roundedAmount = parseFloat(amount.toFixed(2));
+      
       const itemToValidate = {
         ...newItem,
-        quantity: Number(newItem.quantity) || 1,
-        unitPrice: newItem.unitPrice || "0",
-        amount: (Number(newItem.quantity) * Number(newItem.unitPrice)).toString()
+        quantity: quantity,
+        unitPrice: unitPrice.toString(),
+        amount: roundedAmount.toString()
       };
       
       const validatedItem = estimateItemSchema.parse(itemToValidate);
@@ -207,11 +224,15 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
     // Calcular total: subtotal + impuestos - descuento
     const total = subtotal + taxAmount - discountAmount;
     
-    // Actualizar valores en el formulario
-    form.setValue("subtotal", subtotal.toString(), { shouldValidate: true });
-    form.setValue("total", total.toString(), { shouldValidate: true });
+    // Asegurarse de utilizar valores numéricos precisos antes de convertir a string
+    const subtotalRounded = parseFloat(subtotal.toFixed(2));
+    const totalRounded = parseFloat(total.toFixed(2));
     
-    console.log(`Subtotal: ${subtotal}, Tax: ${tax}%, TaxAmount: ${taxAmount}, Discount: ${discount}%, DiscountAmount: ${discountAmount}, Total: ${total}`);
+    // Actualizar valores en el formulario
+    form.setValue("subtotal", subtotalRounded.toString(), { shouldValidate: true });
+    form.setValue("total", totalRounded.toString(), { shouldValidate: true });
+    
+    console.log(`Subtotal: ${subtotalRounded}, Tax: ${tax}%, TaxAmount: ${taxAmount.toFixed(2)}, Discount: ${discount}%, DiscountAmount: ${discountAmount.toFixed(2)}, Total: ${totalRounded}`);
   };
   
   // Actualizar totales cuando cambian los impuestos o descuentos
