@@ -15,7 +15,8 @@ import {
   SettingsIcon, 
   LogOutIcon,
   MenuIcon,
-  X
+  X,
+  ClipboardCheckIcon
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -167,6 +168,10 @@ export default function MobileSidebar() {
             <Link href="/ai-assistant" className={getLinkClass("/ai-assistant")}>
               <BotIcon className="mr-3 h-5 w-5" />
               <span>{t('navigation.aiAssistant')}</span>
+            </Link>
+            <Link href="/vendor-estimate-form-new" className={getLinkClass("/vendor-estimate-form-new")}>
+              <ClipboardCheckIcon className="mr-3 h-5 w-5" />
+              <span>Formulario Vendedor</span>
             </Link>
             <Link href="/settings" className={getLinkClass("/settings")}>
               <SettingsIcon className="mr-3 h-5 w-5" />
