@@ -243,9 +243,9 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
 
         <Tabs defaultValue="details" className="mt-4">
           <TabsList className="mb-4">
-            <TabsTrigger value="details">Detalles</TabsTrigger>
-            <TabsTrigger value="items">Ítems</TabsTrigger>
-            <TabsTrigger value="terms">Términos</TabsTrigger>
+            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="items">Items</TabsTrigger>
+            <TabsTrigger value="terms">Terms</TabsTrigger>
           </TabsList>
 
           <TabsContent value="details">
@@ -253,33 +253,33 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Información general</CardTitle>
+                    <CardTitle className="text-sm">General Information</CardTitle>
                   </CardHeader>
                   <CardContent className="text-sm space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Fecha de emisión:</span>
+                      <span className="text-gray-600">Issue Date:</span>
                       <span>{formatDate(estimate.issueDate)}</span>
                     </div>
                     {estimate.expiryDate && (
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Fecha de expiración:</span>
+                        <span className="text-gray-600">Expiry Date:</span>
                         <span>{formatDate(estimate.expiryDate)}</span>
                       </div>
                     )}
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Cliente:</span>
+                      <span className="text-gray-600">Client:</span>
                       <span>{estimate.client?.firstName} {estimate.client?.lastName}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Proyecto:</span>
-                      <span>{estimate.project?.title || "No especificado"}</span>
+                      <span className="text-gray-600">Project:</span>
+                      <span>{estimate.project?.title || "Not specified"}</span>
                     </div>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Financiero</CardTitle>
+                    <CardTitle className="text-sm">Financial</CardTitle>
                   </CardHeader>
                   <CardContent className="text-sm space-y-2">
                     <div className="flex justify-between">
@@ -288,13 +288,13 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
                     </div>
                     {Number(estimate.tax) > 0 && (
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Impuesto:</span>
+                        <span className="text-gray-600">Tax:</span>
                         <span>{formatCurrency((Number(estimate.subtotal) * Number(estimate.tax)) / 100)}</span>
                       </div>
                     )}
                     {Number(estimate.discount) > 0 && (
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Descuento:</span>
+                        <span className="text-gray-600">Discount:</span>
                         <span>-{formatCurrency((Number(estimate.subtotal) * Number(estimate.discount)) / 100)}</span>
                       </div>
                     )}
@@ -309,36 +309,36 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
               {estimate.status !== "rejected" && (
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Acciones</CardTitle>
+                    <CardTitle className="text-sm">Actions</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-3">
                       <Button
                         variant="outline"
                         onClick={() => {
-                          // Implementar la funcionalidad de enviar
+                          // Implement email functionality
                           toast({
-                            title: "Funcionalidad en desarrollo",
-                            description: "La funcionalidad de envío por email será implementada próximamente.",
+                            title: "Feature in development",
+                            description: "Email sending functionality will be implemented soon.",
                           });
                         }}
                       >
                         <Send className="h-4 w-4 mr-2" />
-                        Enviar por email
+                        Send by Email
                       </Button>
 
                       <Button
                         variant="outline"
                         onClick={() => {
-                          // Implementar la funcionalidad de impresión/PDF
+                          // Implement PDF functionality
                           toast({
-                            title: "Funcionalidad en desarrollo",
-                            description: "La funcionalidad de generar PDF será implementada próximamente.",
+                            title: "Feature in development",
+                            description: "PDF generation functionality will be implemented soon.",
                           });
                         }}
                       >
                         <Printer className="h-4 w-4 mr-2" />
-                        Generar PDF
+                        Generate PDF
                       </Button>
 
                       {estimate.status === "pending" && (
@@ -348,7 +348,7 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
                             onClick={handleAcceptEstimate}
                           >
                             <Check className="h-4 w-4 mr-2" />
-                            Aceptar
+                            Accept
                           </Button>
 
                           <Button
@@ -356,7 +356,7 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
                             onClick={handleRejectEstimate}
                           >
                             <X className="h-4 w-4 mr-2" />
-                            Rechazar
+                            Reject
                           </Button>
                         </>
                       )}
@@ -380,17 +380,17 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
           <TabsContent value="items">
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Ítems del estimado</CardTitle>
+                <CardTitle className="text-sm">Estimate Items</CardTitle>
               </CardHeader>
               <CardContent>
                 {estimate.items && estimate.items.length > 0 ? (
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[300px]">Descripción</TableHead>
-                        <TableHead>Cantidad</TableHead>
-                        <TableHead>Precio unitario</TableHead>
-                        <TableHead>Monto</TableHead>
+                        <TableHead className="w-[300px]">Description</TableHead>
+                        <TableHead>Quantity</TableHead>
+                        <TableHead>Unit Price</TableHead>
+                        <TableHead>Amount</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -406,7 +406,7 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
                   </Table>
                 ) : (
                   <div className="text-center py-4">
-                    <p className="text-gray-500 text-sm">No hay ítems registrados en este estimado.</p>
+                    <p className="text-gray-500 text-sm">No items registered in this estimate.</p>
                   </div>
                 )}
               </CardContent>
@@ -416,18 +416,18 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
           <TabsContent value="terms">
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Términos y condiciones</CardTitle>
+                <CardTitle className="text-sm">Terms and Conditions</CardTitle>
               </CardHeader>
               <CardContent>
                 {estimate.terms ? (
                   <div className="text-sm whitespace-pre-line">{estimate.terms}</div>
                 ) : (
-                  <p className="text-sm text-gray-500 italic">No se han especificado términos para este estimado.</p>
+                  <p className="text-sm text-gray-500 italic">No terms have been specified for this estimate.</p>
                 )}
 
                 {estimate.notes && (
                   <>
-                    <h3 className="font-medium mt-6 mb-2">Notas adicionales</h3>
+                    <h3 className="font-medium mt-6 mb-2">Additional Notes</h3>
                     <div className="text-sm whitespace-pre-line">{estimate.notes}</div>
                   </>
                 )}
