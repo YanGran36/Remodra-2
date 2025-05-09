@@ -175,13 +175,29 @@ export default function InvoiceDetailPage() {
             </Button>
           </Link>
           
-          <h1 className="text-2xl font-bold">Error</h1>
+          <h1 className="text-2xl font-bold">Factura no encontrada</h1>
           <p className="text-gray-600 mt-2">
             {error 
               ? `Ocurrió un error: ${error.message}` 
-              : "No se pudo encontrar la factura solicitada."
+              : "No se pudo encontrar la factura solicitada. Es posible que la factura haya sido eliminada o que aún no se haya creado."
             }
           </p>
+          <div className="mt-6">
+            <h2 className="text-lg font-medium mb-2">Sugerencias:</h2>
+            <ul className="list-disc list-inside text-gray-600 space-y-1">
+              <li>Verifica que estás accediendo a una factura existente</li>
+              <li>Para crear una nueva factura, puedes convertir un estimado aceptado a factura</li>
+              <li>Revisa la página de estimados para ver si hay alguno que se pueda convertir a factura</li>
+            </ul>
+            <div className="mt-6">
+              <Link href="/estimates">
+                <Button>
+                  <FileText className="h-4 w-4 mr-2" />
+                  Ver estimados
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     );
