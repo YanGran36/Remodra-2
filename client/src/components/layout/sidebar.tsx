@@ -89,7 +89,7 @@ export default function Sidebar() {
           </Link>
           <Link href="/vendor-estimate-form-new" className={getLinkClass("/vendor-estimate-form-new")}>
             <ClipboardCheckIcon className="mr-3 h-5 w-5" />
-            <span>Formulario Vendedor</span>
+            <span>{t('navigation.vendorForm')}</span>
           </Link>
           <Link href="/settings" className={getLinkClass("/settings")}>
             <SettingsIcon className="mr-3 h-5 w-5" />

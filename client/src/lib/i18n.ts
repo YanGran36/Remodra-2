@@ -44,6 +44,7 @@ export const translations: TranslationsByLanguage = {
       materials: 'Materiales',
       measurements: 'Mediciones',
       aiAssistant: 'Asistente IA',
+      vendorForm: 'Formulario Vendedor',
       logout: 'Cerrar Sesión',
     },
     auth: {
@@ -284,6 +285,7 @@ export const translations: TranslationsByLanguage = {
       materials: 'Materials',
       measurements: 'Measurements',
       aiAssistant: 'AI Assistant',
+      vendorForm: 'Vendor Form',
       logout: 'Logout',
     },
     auth: {
