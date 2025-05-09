@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { useEstimates } from "@/hooks/use-estimates";
+import { useToast } from "@/hooks/use-toast";
 import { 
   ChevronDown, 
   FileText, 
@@ -87,9 +90,13 @@ export default function EstimatesPage() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEstimate, setEditingEstimate] = useState<any>(null);
+  
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const { convertToInvoiceMutation } = useEstimates();
 
   // Fetch estimates
-  const { data: estimates, isLoading, error } = useQuery({
+  const { data: estimates = [], isLoading, error } = useQuery({
     queryKey: ["/api/protected/estimates"],
   });
 
@@ -348,9 +355,30 @@ export default function EstimatesPage() {
                                   <Mail className="mr-2 h-4 w-4" />
                                   Send
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => {
+                                  e.stopPropagation();
+                                  // Verificar que el estimado esté aceptado
+                                  if (estimate.status !== "accepted") {
+                                    toast({
+                                      title: "No se puede convertir",
+                                      description: "Solo los estimados con estado 'Aceptado' pueden ser convertidos a facturas.",
+                                      variant: "destructive"
+                                    });
+                                    return;
+                                  }
+                                  
+                                  // Confirmar antes de convertir
+                                  if (confirm("¿Estás seguro que deseas convertir este estimado a una factura?")) {
+                                    convertToInvoiceMutation.mutate(estimate.id, {
+                                      onSuccess: (invoice) => {
+                                        // Redireccionar a la factura creada
+                                        setLocation(`/invoices/${invoice.id}`);
+                                      }
+                                    });
+                                  }
+                                }}>
                                   <BanknoteIcon className="mr-2 h-4 w-4" />
-                                  Convert to Invoice
+                                  Convertir a factura
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem>

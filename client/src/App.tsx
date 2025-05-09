@@ -18,6 +18,7 @@ import VendorEstimateFormPage from "@/pages/vendor-estimate-form-page";
 import VendorEstimateFormPageNew from "@/pages/vendor-estimate-form-page-new";
 import PropertyMeasurementsPage from "@/pages/property-measurements-page";
 import InvoicesPage from "@/pages/invoices-page";
+import InvoiceDetailPage from "@/pages/invoice-detail-page";
 import ProjectsPage from "@/pages/projects-page";
 import ProjectsDebugPage from "@/pages/projects-debug";
 import EstimateSimpleTest from "@/pages/estimate-simple-test";
@@ -40,6 +41,7 @@ function Router() {
       <ProtectedRoute path="/vendor-estimate-form-new" component={VendorEstimateFormPageNew} />
       <ProtectedRoute path="/property-measurements" component={PropertyMeasurementsPage} />
       <ProtectedRoute path="/invoices" component={InvoicesPage} />
+      <ProtectedRoute path="/invoices/:id" component={InvoiceDetailPage} />
       <ProtectedRoute path="/projects" component={ProjectsPage} />
       <ProtectedRoute path="/projects-debug" component={ProjectsDebugPage} />
       <ProtectedRoute path="/estimate-simple-test" component={EstimateSimpleTest} />
