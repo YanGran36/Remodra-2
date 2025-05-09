@@ -37,13 +37,13 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     return getTranslation(translations.en as Translation, key);
   };
 
-  // Función para cambiar el idioma
+  // Function to change the language
   const changeLanguage = (newLanguage: Language) => {
     setLanguage(newLanguage);
     localStorage.setItem('language', newLanguage);
   };
 
-  // Actualizar el atributo lang del HTML cuando cambia el idioma
+  // Update the HTML lang attribute when language changes
   useEffect(() => {
     document.documentElement.lang = language;
   }, [language]);
@@ -55,7 +55,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Hook personalizado para usar el contexto
+// Custom hook to use the context
 export function useLanguage() {
   const context = useContext(LanguageContext);
   if (!context) {

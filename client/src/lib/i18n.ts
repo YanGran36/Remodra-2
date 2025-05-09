@@ -656,7 +656,9 @@ export function getTranslation(obj: Translation, path: string): string {
   
   for (const part of parts) {
     if (result[part] === undefined) {
-      return path; // If translation not found, return the key
+      // If translation not found, return the key and log it to help identify missing translations
+      console.debug(`Translation missing: ${path}`);
+      return path;
     }
     result = result[part];
   }

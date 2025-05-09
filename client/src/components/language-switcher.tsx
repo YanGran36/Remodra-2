@@ -11,7 +11,7 @@ import { Globe } from "lucide-react";
 export function LanguageSwitcher() {
   const { language, changeLanguage, supportedLanguages } = useLanguage();
 
-  // Obtener el nombre del idioma actual para mostrarlo
+  // Get the current language name to display
   const currentLanguageName = supportedLanguages.find(lang => lang.code === language)?.name || '';
 
   return (
