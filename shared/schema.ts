@@ -3,6 +3,13 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
+// Sessions table for authentication
+export const sessions = pgTable("session", {
+  sid: text("sid").primaryKey(),
+  sess: jsonb("sess").notNull(),
+  expire: timestamp("expire", { mode: "date" }).notNull()
+});
+
 // Contractors (users of the platform)
 export const contractors = pgTable("contractors", {
   id: serial("id").primaryKey(),
@@ -16,6 +23,7 @@ export const contractors = pgTable("contractors", {
   city: text("city"),
   state: text("state"),
   zip: text("zip"),
+  language: text("language").default("en").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull()
 });
 
@@ -336,7 +344,8 @@ export const contractorInsertSchema = createInsertSchema(contractors, {
   lastName: (schema) => schema.min(2, "Last name must be at least 2 characters"),
   email: (schema) => schema.email("Must provide a valid email"),
   password: (schema) => schema.min(6, "Password must be at least 6 characters"),
-  companyName: (schema) => schema.min(2, "Company name must be at least 2 characters")
+  companyName: (schema) => schema.min(2, "Company name must be at least 2 characters"),
+  language: (schema) => schema.refine(val => ["en", "es", "fr", "pt"].includes(val), "Language must be one of: en, es, fr, pt")
 });
 
 export const clientInsertSchema = createInsertSchema(clients, {
