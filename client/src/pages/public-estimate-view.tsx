@@ -375,13 +375,27 @@ export default function PublicEstimateView() {
     <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-gray-50">
       <Card className="w-full max-w-4xl shadow-lg">
         <CardHeader className="bg-blue-50">
-          <CardTitle className="text-blue-600 flex items-center gap-2">
-            <Send className="h-6 w-6" />
-            Estimado para Revisión
-          </CardTitle>
-          <CardDescription>
-            Este estimado requiere de su revisión. Por favor, revise los detalles y acepte o rechace el estimado.
-          </CardDescription>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle className="text-blue-600 flex items-center gap-2 text-2xl">
+                <Send className="h-6 w-6" />
+                Estimado para su aprobación
+              </CardTitle>
+              <CardDescription className="text-lg mt-2">
+                <span className="font-medium">{contractor?.companyName || `${contractor?.firstName} ${contractor?.lastName}`}</span> le ha enviado un estimado para su revisión.
+              </CardDescription>
+            </div>
+            <div className="hidden sm:flex">
+              <Button
+                size="lg"
+                className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-lg h-auto rounded-xl shadow-lg transition-all hover:shadow-xl"
+                onClick={() => setAcceptDialogOpen(true)}
+              >
+                <CheckCircle className="h-5 w-5 mr-2" />
+                Aprobar Estimado
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -514,55 +528,103 @@ export default function PublicEstimateView() {
             />
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-50 p-6">
-          <Button
-            variant="outline"
-            onClick={() => setRejectDialogOpen(true)}
-            className="w-full sm:w-auto"
-          >
-            Rechazar Estimado
-          </Button>
-          <Button
-            onClick={() => setAcceptDialogOpen(true)}
-            className="w-full sm:w-auto"
-          >
-            Aceptar Estimado
-          </Button>
+        <CardFooter className="flex flex-col gap-4 bg-gradient-to-b from-blue-50 to-blue-100 p-8 border-t border-blue-200">
+          <div className="text-center mb-2">
+            <h3 className="text-xl font-bold text-blue-800">¿Está de acuerdo con este estimado?</h3>
+            <p className="text-blue-600 mt-1">Seleccione una de las siguientes opciones:</p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row justify-center gap-4 w-full max-w-2xl mx-auto">
+            <Button
+              variant="outline"
+              onClick={() => setRejectDialogOpen(true)}
+              className="w-full sm:w-1/3 py-6 text-lg h-auto border-2 border-gray-300 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-all"
+              disabled={!signature}
+            >
+              <XCircle className="h-5 w-5 mr-2 text-red-600" />
+              Rechazar
+            </Button>
+            
+            <Button
+              onClick={() => setAcceptDialogOpen(true)}
+              className="w-full sm:w-2/3 bg-green-600 hover:bg-green-700 text-white py-8 text-xl h-auto rounded-lg shadow-lg transition-all hover:shadow-xl relative overflow-hidden"
+              disabled={!signature}
+            >
+              <div className="absolute inset-0 bg-white/10 flex items-center justify-center">
+                <div className="animate-pulse bg-white/5 w-full h-full"></div>
+              </div>
+              <div className="relative z-10 flex items-center justify-center gap-2">
+                <CheckCircle className="h-6 w-6" />
+                <span>APROBAR ESTIMADO</span>
+              </div>
+            </Button>
+          </div>
+          
+          {!signature && (
+            <div className="text-center text-amber-600 bg-amber-50 p-3 rounded-md border border-amber-200 mt-2">
+              <p>Por favor, ingrese su firma arriba para habilitar los botones de aprobación.</p>
+            </div>
+          )}
         </CardFooter>
       </Card>
 
       {/* Diálogo de aceptación */}
       <Dialog open={acceptDialogOpen} onOpenChange={setAcceptDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Confirmar Aceptación</DialogTitle>
-            <DialogDescription>
-              Al aceptar este estimado, está autorizando al contratista a proceder con el trabajo descrito.
+            <DialogTitle className="text-2xl text-green-700 flex items-center gap-2">
+              <CheckCircle className="h-6 w-6" />
+              Confirmar Aprobación
+            </DialogTitle>
+            <DialogDescription className="text-base">
+              Al aprobar este estimado, está autorizando al contratista a proceder con el trabajo.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <p className="mb-4">El importe total a pagar será: <span className="font-bold">{formatCurrency(estimate.total)}</span>.</p>
-            <p>Su firma: <span className="font-semibold">{signature}</span></p>
+          <div className="py-6 space-y-4">
+            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-green-800 font-medium">Total a pagar:</span>
+                <span className="text-2xl font-bold text-green-800">{formatCurrency(estimate.total)}</span>
+              </div>
+              <p className="text-sm text-green-700">
+                Este es el importe total acordado para los trabajos descritos en este estimado.
+              </p>
+            </div>
+            
+            <div className="border-t border-b border-gray-200 py-4">
+              <p className="font-medium mb-1">Confirmación del cliente:</p>
+              <div className="bg-blue-50 p-3 rounded border border-blue-100">
+                <p className="text-lg font-medium text-blue-800">{signature}</p>
+              </div>
+              <p className="text-sm text-gray-500 mt-2">
+                Su nombre será utilizado como firma electrónica para este acuerdo.
+              </p>
+            </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-3 sm:gap-0">
             <Button 
               variant="outline" 
               onClick={() => setAcceptDialogOpen(false)}
               disabled={actionInProgress}
+              className="w-full sm:w-auto"
             >
               Cancelar
             </Button>
             <Button 
               onClick={() => handleAction('accept')}
               disabled={actionInProgress}
+              className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-lg"
             >
               {actionInProgress ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Procesando...
                 </>
               ) : (
-                <>Confirmar Aceptación</>
+                <>
+                  <CheckCircle className="mr-2 h-5 w-5" />
+                  Aprobar Estimado
+                </>
               )}
             </Button>
           </DialogFooter>
