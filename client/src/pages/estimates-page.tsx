@@ -499,12 +499,8 @@ export default function EstimatesPage() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
           {selectedEstimate && (
             <EstimateDetail 
-              estimate={selectedEstimate} 
-              onEdit={() => {
-                setIsDetailOpen(false);
-                setEditingEstimate(selectedEstimate);
-                setIsFormOpen(true);
-              }}
+              estimateId={selectedEstimate.id} 
+              isOpen={true}
               onClose={() => setIsDetailOpen(false)}
             />
           )}
@@ -515,8 +511,9 @@ export default function EstimatesPage() {
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
           <EstimateForm 
-            estimate={editingEstimate} 
-            onClose={() => setIsFormOpen(false)}
+            clientId={editingEstimate?.clientId}
+            projectId={editingEstimate?.projectId}
+            onCancel={() => setIsFormOpen(false)}
             onSuccess={() => {
               setIsFormOpen(false);
               // Refetch estimates if needed
