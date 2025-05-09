@@ -209,13 +209,50 @@ export default function VendorEstimateFormPageNew() {
   // Procesar eventos y filtrar clientes con citas para hoy
   useEffect(() => {
     if (events.length > 0 && clients.length > 0) {
+      // Si hay un clientId en la URL, buscar ese cliente
+      if (clientIdFromUrl) {
+        const selectedClient = clients.find((client: any) => 
+          client.id.toString() === clientIdFromUrl
+        );
+        
+        if (selectedClient) {
+          // Si encontramos el cliente, buscar eventos relacionados
+          const clientEvents = events.filter((event: any) => 
+            event.clientId && event.clientId.toString() === clientIdFromUrl
+          );
+          
+          if (clientEvents.length > 0) {
+            // Ordenar eventos por fecha (más reciente primero)
+            clientEvents.sort((a: any, b: any) => 
+              new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+            );
+            
+            // Tomar el evento más reciente
+            const latestEvent = clientEvents[0];
+            
+            toast({
+              title: "Cliente con cita programada",
+              description: `Se ha cargado la información de ${selectedClient.firstName} ${selectedClient.lastName} desde el calendario`,
+            });
+            
+            // Prefill project if available
+            if (latestEvent.projectId) {
+              const relatedProject = projects.find((p: any) => p.id === latestEvent.projectId);
+              if (relatedProject) {
+                form.setValue("projectId", relatedProject.id.toString());
+              }
+            }
+          }
+        }
+      }
+      
       // Filtrar los eventos de hoy
       const today = new Date();
       const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
       
       const eventsToday = events.filter((event: any) => {
-        const eventDate = new Date(event.startDate);
+        const eventDate = new Date(event.startTime);
         return eventDate >= todayStart && eventDate <= todayEnd;
       });
       
@@ -237,7 +274,7 @@ export default function VendorEstimateFormPageNew() {
         
         setClientsWithAppointments(clientsWithTodayAppointments);
         
-        if (clientsWithTodayAppointments.length > 0) {
+        if (clientsWithTodayAppointments.length > 0 && !clientIdFromUrl) {
           toast({
             title: "Clientes con citas hoy",
             description: `Se han encontrado ${clientsWithTodayAppointments.length} clientes con citas programadas para hoy`,
@@ -245,7 +282,7 @@ export default function VendorEstimateFormPageNew() {
         }
       }
     }
-  }, [events, clients, toast]);
+  }, [events, clients, toast, clientIdFromUrl, projects, form]);
   
   // Form definition
   const form = useForm<FormValues>({
