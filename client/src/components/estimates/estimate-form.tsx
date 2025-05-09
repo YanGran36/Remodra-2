@@ -50,12 +50,13 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectSeparator,
 } from "@/components/ui/select";
 
 // Esquema de validación para el formulario
 const estimateFormSchema = z.object({
   clientId: z.coerce.number().min(1, "El cliente es requerido"),
-  projectId: z.coerce.number().min(1, "El proyecto es requerido"),
+  projectId: z.coerce.number(), // El proyecto ahora es opcional, puede ser 0
   estimateNumber: z.string().optional(),
   issueDate: z.date(),
   expiryDate: z.date().optional(),
@@ -408,7 +409,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                   )}
                 />
 
-                {/* Selector de proyecto */}
+                {/* Selector de proyecto - Ahora totalmente opcional */}
                 <FormField
                   control={form.control}
                   name="projectId"
@@ -421,19 +422,22 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                     
                     return (
                       <FormItem>
-                        <FormLabel>Proyecto</FormLabel>
+                        <FormLabel>Proyecto (Opcional)</FormLabel>
                         <Select
-                          value={field.value ? field.value.toString() : ""}
+                          value={field.value ? field.value.toString() : "0"}
                           onValueChange={(value) => field.onChange(parseInt(value))}
-                          disabled={!clientId || isLoadingProjects}
+                          disabled={!clientId || isLoadingProjects || isEditing} // Deshabilitar en edición también
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Seleccionar proyecto (opcional)" />
+                              <SelectValue placeholder="Sin proyecto - Se creará más tarde" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="0">Ninguno (Nuevo Proyecto)</SelectItem>
+                            <SelectItem value="0">Sin proyecto - Se creará más tarde</SelectItem>
+                            {filteredProjects.length > 0 && (
+                              <SelectSeparator />
+                            )}
                             {filteredProjects.map((project: any) => (
                               <SelectItem key={project.id} value={project.id.toString()}>
                                 {project.title}
@@ -442,7 +446,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                           </SelectContent>
                         </Select>
                         <FormDescription>
-                          Seleccione un proyecto existente o cree uno nuevo
+                          Los proyectos se pueden asociar después de que el cliente acepte el estimado
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
