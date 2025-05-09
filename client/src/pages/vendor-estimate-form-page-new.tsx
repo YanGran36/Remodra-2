@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/hooks/use-language";
 import { useAiCostAnalysis, MaterialInput, AiAnalysisResult } from "@/hooks/use-ai-cost-analysis";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
@@ -115,10 +116,11 @@ import {
 } from "@/lib/service-options";
 
 // Define el esquema de validación del formulario
+// Note: The translations will be applied by useForm when rendering the form
 const formSchema = z.object({
-  clientId: z.string().min(1, { message: "Por favor seleccione un cliente" }),
+  clientId: z.string().min(1, { message: "Please select a client" }),
   projectId: z.string().optional(),
-  serviceType: z.string().min(1, { message: "Por favor seleccione un tipo de servicio" }),
+  serviceType: z.string().min(1, { message: "Please select a service type" }),
   materialType: z.string().optional(),
   squareFeet: z.string().optional(),
   linearFeet: z.string().optional(),
@@ -144,6 +146,7 @@ export default function VendorEstimateFormPageNew() {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   
   // Obtener clientId de la URL si existe
