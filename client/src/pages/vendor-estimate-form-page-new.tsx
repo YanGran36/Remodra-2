@@ -347,8 +347,31 @@ export default function VendorEstimateFormPageNew() {
   const createInvoiceMutation = useMutation({
     mutationFn: async (data: any) => {
       setIsSubmitting(true);
-      const res = await apiRequest("POST", "/api/protected/invoices", data);
-      return await res.json();
+      try {
+        // Validar datos mínimos requeridos
+        if (!data.clientId) {
+          throw new Error("El ID del cliente es obligatorio");
+        }
+        
+        // Validar que items sea un array
+        if (!Array.isArray(data.items) || data.items.length === 0) {
+          throw new Error("Debe incluir al menos un ítem en la factura");
+        }
+        
+        console.log("Enviando datos de factura:", JSON.stringify(data, null, 2));
+        
+        const res = await apiRequest("POST", "/api/protected/invoices", data);
+        
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || "Error al crear la factura");
+        }
+        
+        return await res.json();
+      } catch (error) {
+        console.error("Error en createInvoiceMutation:", error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
       setIsSubmitting(false);
@@ -362,9 +385,10 @@ export default function VendorEstimateFormPageNew() {
     },
     onError: (error: Error) => {
       setIsSubmitting(false);
+      console.error("Error en createInvoiceMutation.onError:", error);
       toast({
         title: "Error al crear factura",
-        description: error.message,
+        description: error.message || "Ocurrió un error inesperado al crear la factura",
         variant: "destructive",
       });
     },
