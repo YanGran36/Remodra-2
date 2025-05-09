@@ -56,7 +56,7 @@ import {
 // Esquema de validación para el formulario
 const estimateFormSchema = z.object({
   clientId: z.coerce.number().min(1, "El cliente es requerido"),
-  projectId: z.coerce.number(), // El proyecto ahora es opcional, puede ser 0
+  projectId: z.coerce.number().optional().nullable(), // El proyecto es completamente opcional
   estimateNumber: z.string().optional(),
   issueDate: z.date(),
   expiryDate: z.date().optional(),
@@ -296,6 +296,8 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
     // Preparar objeto de estimado completo con sus ítems
     const estimateData = {
       ...data,
+      // Si proyecto es 0, enviar null para evitar error de clave foránea
+      projectId: data.projectId === 0 ? null : data.projectId,
       // Si estamos editando, mantener el status actual, si no, establecer como "pending"
       status: isEditing ? form.getValues("status") || "pending" : "pending",
       items: items.map(item => ({
