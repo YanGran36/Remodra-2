@@ -134,9 +134,15 @@ class DatabaseStorage implements IStorage {
       conObject: {
         connectionString: process.env.DATABASE_URL,
         ssl: process.env.NODE_ENV === "production",
+        // Configuración más robusta para conexiones
+        max: 20, // máximo número de clientes en el pool
+        idleTimeoutMillis: 30000, // tiempo máximo que un cliente puede estar inactivo antes de cerrarse
+        connectionTimeoutMillis: 2000, // tiempo máximo para establecer una conexión
       },
       createTableIfMissing: true,
       tableName: "session",
+      // Mejorar el manejo de sesiones
+      pruneSessionInterval: 60, // en segundos, cada cuánto eliminar sesiones expiradas
     });
   }
 
