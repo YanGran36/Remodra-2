@@ -78,9 +78,10 @@ export interface EstimateFormProps {
   projectId?: number;
   onSuccess?: (estimate: any) => void;
   onCancel?: () => void;
+  estimateId?: number; // ID del estimado a editar
 }
 
-export default function EstimateForm({ clientId, projectId, onSuccess, onCancel }: EstimateFormProps) {
+export default function EstimateForm({ clientId, projectId, estimateId, onSuccess, onCancel }: EstimateFormProps) {
   const [items, setItems] = useState<EstimateItemValues[]>([]);
   const [newItem, setNewItem] = useState<EstimateItemValues>({
     description: "",
@@ -91,7 +92,7 @@ export default function EstimateForm({ clientId, projectId, onSuccess, onCancel 
   });
   
   const { toast } = useToast();
-  const { createEstimateMutation } = useEstimates();
+  const { createEstimateMutation, updateEstimateMutation, getEstimate } = useEstimates();
   
   // Formulario principal del estimado
   const form = useForm<EstimateFormValues>({
