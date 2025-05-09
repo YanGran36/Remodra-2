@@ -775,6 +775,48 @@ export default function VendorEstimateFormPageNew() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  {/* Selector de fecha para filtrar clientes con citas */}
+                  <div className="mb-6 border rounded-lg p-4 bg-muted/30">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-sm font-medium">Filtrar clientes por citas programadas</h3>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            type="button"
+                            className="ml-auto h-8 w-auto gap-1"
+                          >
+                            <CalendarIcon className="h-3.5 w-3.5" />
+                            <span>{format(selectedDate, "PPP", { locale: es })}</span>
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={selectedDate}
+                            onSelect={(date) => {
+                              if (date) {
+                                updateSelectedDateAndClients(date);
+                              }
+                            }}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="outline" className="text-xs font-normal gap-1 py-0 h-6">
+                        <span className="text-primary">•</span>
+                        {clientsWithAppointments.length === 0 
+                          ? "No hay clientes con citas para esta fecha" 
+                          : `${clientsWithAppointments.length} cliente(s) con citas programadas`}
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  {/* Cliente */}
                   <FormField
                     control={form.control}
                     name="clientId"
@@ -791,11 +833,11 @@ export default function VendorEstimateFormPageNew() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {/* Mostrar primero los clientes con citas programadas para hoy */}
+                            {/* Mostrar primero los clientes con citas programadas para la fecha seleccionada */}
                             {clientsWithAppointments.length > 0 && (
                               <>
                                 <div className="px-2 py-1.5 text-sm font-medium text-primary">
-                                  Clientes con citas hoy
+                                  Clientes con citas el {format(selectedDate, "PP", { locale: es })}
                                 </div>
                                 {clientsWithAppointments.map((client: any) => (
                                   <SelectItem key={`appointment-${client.id}`} value={client.id.toString()}>
@@ -811,23 +853,22 @@ export default function VendorEstimateFormPageNew() {
                                 </div>
                               </>
                             )}
-                            {clients.map((client: any) => (
-                              <SelectItem key={client.id} value={client.id.toString()}>
-                                {client.firstName} {client.lastName}
-                              </SelectItem>
-                            ))}
+                            {/* Filtrar para no mostrar duplicados de clientes con citas */}
+                            {clients
+                              .filter((client: any) => 
+                                !clientsWithAppointments.some((c: any) => c.id === client.id)
+                              )
+                              .map((client: any) => (
+                                <SelectItem key={client.id} value={client.id.toString()}>
+                                  {client.firstName} {client.lastName}
+                                </SelectItem>
+                              ))
+                            }
                           </SelectContent>
                         </Select>
                         <FormDescription>
                           El cliente para quien se realizará este trabajo
                         </FormDescription>
-                        {clientsWithAppointments.length > 0 && (
-                          <div className="mt-2">
-                            <p className="text-sm text-muted-foreground">
-                              Los clientes con ícono de calendario 📅 tienen citas programadas para hoy
-                            </p>
-                          </div>
-                        )}
                         <FormMessage />
                       </FormItem>
                     )}
