@@ -77,34 +77,53 @@ export default function AiAnalysisPanel({
       return;
     }
     
+    // Mostrar toast de inicio de análisis
+    toast({
+      title: "Analizando",
+      description: "Estamos analizando los datos. Esto puede tomar un momento...",
+    });
+    
+    const params: AiAnalysisParams = {
+      serviceType,
+      materials,
+      propertySize,
+      difficulty,
+      additionalInfo,
+    };
+    
+    // Paso 1: Análisis de costos
     try {
-      const params: AiAnalysisParams = {
-        serviceType,
-        materials,
-        propertySize,
-        difficulty,
-        additionalInfo,
-      };
-      
-      // Realizar análisis de costos
       const result = await analyzeJobCost(params);
       setAnalysisResult(result);
       
-      // Generar descripción del trabajo
-      const description = await generateJobDescription(params);
-      setJobDescription(description);
+      // Análisis de costos exitoso, intentar generar descripción
+      try {
+        const description = await generateJobDescription(params);
+        setJobDescription(description);
+        
+        // Todo exitoso
+        toast({
+          title: "Análisis completado",
+          description: "El análisis de costos y la descripción han sido generados exitosamente.",
+        });
+      } catch (descError) {
+        // Análisis exitoso pero falló la descripción
+        console.error("Error al generar descripción:", descError);
+        toast({
+          title: "Análisis parcial",
+          description: "Se completó el análisis de costos, pero no se pudo generar la descripción.",
+          variant: "default",
+        });
+      }
       
-      toast({
-        title: "Análisis completado",
-        description: "El análisis de costos y la descripción del trabajo han sido generados exitosamente.",
-      });
-      
+      // Cambiar a la pestaña de análisis en cualquier caso
       setActiveTab("analysis");
-    } catch (error) {
-      console.error("Error al analizar trabajo:", error);
+    } catch (analyzeError) {
+      // Falló el análisis de costos
+      console.error("Error en el análisis de costos:", analyzeError);
       toast({
         title: "Error en el análisis",
-        description: error instanceof Error ? error.message : "Ocurrió un error al realizar el análisis",
+        description: analyzeError instanceof Error ? analyzeError.message : "No se pudo completar el análisis. Intente nuevamente.",
         variant: "destructive",
       });
     }
