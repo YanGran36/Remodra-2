@@ -1106,6 +1106,19 @@ export default function VendorEstimateFormPageNew() {
                   <AiAnalysisPanel {...aiAnalysisProps} />
                 </div>
               </div>
+              
+              {/* Botón de envío del formulario */}
+              <div className="flex justify-center mt-8">
+                <Button 
+                  type="submit" 
+                  size="lg"
+                  className="w-full max-w-md"
+                  disabled={isSubmitting}
+                >
+                  <Save className="mr-2 h-5 w-5" />
+                  {isSubmitting ? "Creando estimado..." : "Crear Estimado desde Formulario"}
+                </Button>
+              </div>
             </TabsContent>
           </Tabs>
         </form>
