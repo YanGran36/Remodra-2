@@ -27,6 +27,7 @@ import MaterialsPage from "@/pages/materials-page";
 import AIAssistantPage from "@/pages/ai-assistant-page";
 import SettingsPage from "@/pages/settings-page";
 import PriceConfigurationsPage from "@/pages/price-configurations-page";
+import PublicEstimateView from "@/pages/public-estimate-view";
 
 function Router() {
   return (
@@ -51,6 +52,7 @@ function Router() {
       <ProtectedRoute path="/price-configurations" component={PriceConfigurationsPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/public/estimates/:id" component={PublicEstimateView} />
       <Route component={NotFound} />
     </Switch>
   );
