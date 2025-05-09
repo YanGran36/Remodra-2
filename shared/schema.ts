@@ -67,7 +67,7 @@ export const estimates = pgTable("estimates", {
   estimateNumber: text("estimate_number").notNull(),
   issueDate: timestamp("issue_date").notNull().defaultNow(),
   expiryDate: timestamp("expiry_date"),
-  status: text("status").notNull().default("draft"), // draft, sent, accepted, rejected, expired
+  status: text("status").notNull().default("draft"), // draft, sent, accepted, rejected, expired, converted
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
   tax: decimal("tax", { precision: 10, scale: 2 }).notNull().default("0"),
   discount: decimal("discount", { precision: 10, scale: 2 }).notNull().default("0"),
@@ -100,7 +100,7 @@ export const invoices = pgTable("invoices", {
   invoiceNumber: text("invoice_number").notNull(),
   issueDate: timestamp("issue_date").notNull().defaultNow(),
   dueDate: timestamp("due_date").notNull(),
-  status: text("status").notNull().default("pending"), // pending, paid, overdue, cancelled
+  status: text("status").notNull().default("pending"), // pending, paid, overdue, partially_paid, cancelled
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
   tax: decimal("tax", { precision: 10, scale: 2 }).notNull().default("0"),
   discount: decimal("discount", { precision: 10, scale: 2 }).notNull().default("0"),
