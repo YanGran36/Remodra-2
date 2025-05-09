@@ -595,6 +595,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to update invoice" });
     }
   });
+  
+  // Cancelar factura
+  app.post("/api/protected/invoices/:id/cancel", async (req, res) => {
+    try {
+      const invoiceId = Number(req.params.id);
+      
+      // Verificar que la factura existe y pertenece al contratista
+      const existingInvoice = await storage.getInvoice(invoiceId, req.user!.id);
+      if (!existingInvoice) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+      
+      // Verificar que la factura no esté ya cancelada
+      if (existingInvoice.status === "cancelled") {
+        return res.status(400).json({ message: "Invoice is already cancelled" });
+      }
+      
+      // Si la factura está pagada, no se puede cancelar
+      if (existingInvoice.status === "paid") {
+        return res.status(400).json({ message: "Cannot cancel a paid invoice" });
+      }
+      
+      // Actualizar el estado de la factura a "cancelled"
+      const invoice = await storage.updateInvoice(invoiceId, req.user!.id, { 
+        status: "cancelled",
+        notes: req.body.notes 
+          ? `${existingInvoice.notes ? existingInvoice.notes + '\n\n' : ''}Cancelled: ${req.body.notes}`
+          : `${existingInvoice.notes ? existingInvoice.notes + '\n\n' : ''}Invoice cancelled`
+      });
+      
+      res.json(invoice);
+    } catch (error) {
+      console.error("Error cancelling invoice:", error);
+      res.status(500).json({ message: "Failed to cancel invoice" });
+    }
+  });
 
   app.delete("/api/protected/invoices/:id", async (req, res) => {
     try {

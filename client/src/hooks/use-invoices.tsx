@@ -122,6 +122,30 @@ export function useInvoices() {
       });
     },
   });
+  
+  // Cancelar una factura
+  const cancelInvoiceMutation = useMutation({
+    mutationFn: async ({ id, notes }: { id: number, notes?: string }) => {
+      const res = await apiRequest("POST", `/api/protected/invoices/${id}/cancel`, { notes });
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/protected/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/protected/invoices", data.id] });
+      toast({
+        title: "Factura cancelada",
+        description: "La factura ha sido cancelada correctamente.",
+      });
+      return data;
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error al cancelar factura",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   // Registrar un pago para una factura
   const registerPaymentMutation = useMutation({
@@ -169,6 +193,7 @@ export function useInvoices() {
     updateInvoiceMutation,
     deleteInvoiceMutation,
     updateInvoiceStatusMutation,
+    cancelInvoiceMutation,
     registerPaymentMutation,
     getInvoicesByProject,
   };

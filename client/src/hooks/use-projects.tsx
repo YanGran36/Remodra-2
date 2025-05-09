@@ -136,6 +136,30 @@ export const useProjects = () => {
     }
   });
 
+  // Cancelar un proyecto
+  const cancelProjectMutation = useMutation({
+    mutationFn: async ({ id, notes }: { id: number, notes?: string }) => {
+      const response = await apiRequest("POST", `/api/protected/projects/${id}/cancel`, { notes });
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/protected/projects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/protected/projects", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/protected/clients"] });
+      toast({
+        title: "Proyecto cancelado",
+        description: "El proyecto ha sido cancelado exitosamente.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `No se pudo cancelar el proyecto: ${error.message}`,
+        variant: "destructive"
+      });
+    }
+  });
+
   return {
     // Data
     projects,
@@ -153,10 +177,12 @@ export const useProjects = () => {
     createProject: createProjectMutation.mutateAsync,
     updateProject: updateProjectMutation.mutateAsync,
     deleteProject: deleteProjectMutation.mutate,
+    cancelProject: cancelProjectMutation.mutate,
     
     // Mutation states
     isCreating: createProjectMutation.isPending,
     isUpdating: updateProjectMutation.isPending,
     isDeleting: deleteProjectMutation.isPending,
+    isCancelling: cancelProjectMutation.isPending,
   };
 };
