@@ -233,9 +233,9 @@ export default function VendorEstimateFormPageNew() {
       setSelectedMaterials([]);
       setSelectedOptions([]);
       
-      // Para este ejemplo, cargaríamos algunos materiales por defecto
-      const defaultMaterials = MATERIALS_BY_SERVICE[watchServiceType as keyof typeof MATERIALS_BY_SERVICE] || [];
-      const initialMaterials: MaterialInput[] = defaultMaterials.slice(0, 3).map((material: any) => ({
+      // Incluir TODOS los materiales básicos automáticamente para este tipo de servicio
+      const allMaterials = MATERIALS_BY_SERVICE[watchServiceType as keyof typeof MATERIALS_BY_SERVICE] || [];
+      const initialMaterials: MaterialInput[] = allMaterials.map((material: any) => ({
         name: material.name,
         quantity: 1,
         unit: material.unit,
@@ -247,6 +247,11 @@ export default function VendorEstimateFormPageNew() {
       // Calcular total inicial
       const initialTotal = initialMaterials.reduce((sum, mat) => sum + (mat.quantity * mat.unitPrice), 0);
       setTotalAmount(initialTotal);
+      
+      toast({
+        title: "Materiales básicos incluidos",
+        description: `Se han agregado automáticamente ${initialMaterials.length} materiales básicos para ${getServiceLabel(watchServiceType)}`,
+      });
     }
   }, [watchServiceType]);
   

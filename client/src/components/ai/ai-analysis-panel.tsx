@@ -336,17 +336,19 @@ export default function AiAnalysisPanel({
                 variant="outline" 
                 className="flex-1"
                 onClick={handleCreateEstimate}
+                title="Esto sólo transfiere el análisis al formulario, no crea el estimado directamente"
               >
                 <FileText className="h-4 w-4 mr-2" />
-                Crear Estimado
+                Incluir en Estimado
               </Button>
               <Button 
                 variant="default" 
                 className="flex-1"
                 onClick={handleCreateInvoice}
+                title="Esto sólo transfiere el análisis al formulario, no crea la factura directamente"
               >
                 <FileCheck className="h-4 w-4 mr-2" />
-                Crear Factura
+                Incluir en Factura
               </Button>
             </div>
             <Button 
