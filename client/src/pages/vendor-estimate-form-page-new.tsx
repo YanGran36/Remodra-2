@@ -386,6 +386,82 @@ export default function VendorEstimateFormPageNew() {
     }
   }, [watchServiceType]);
   
+  // Función para seleccionar un cliente con cita y rellenar sus datos automáticamente
+  const handleSelectClientWithAppointment = (client: any) => {
+    if (!client) return;
+    
+    // Configurar el ID del cliente
+    form.setValue("clientId", client.id.toString());
+    
+    // Verificar si el cliente tiene proyectos y si hay alguno seleccionado
+    const clientProjects = projects.filter((project: any) => project.clientId === client.id);
+    if (clientProjects.length > 0) {
+      // Si el cliente tiene proyectos, mostrar toast con esa información
+      toast({
+        title: "Proyectos disponibles",
+        description: `El cliente tiene ${clientProjects.length} proyecto(s) disponible(s)`,
+      });
+    }
+    
+    // Buscar eventos (citas) relacionados con este cliente
+    const clientEvents = events.filter((event: any) => 
+      event.clientId && event.clientId === client.id
+    );
+    
+    if (clientEvents.length > 0) {
+      // Ordenar eventos por fecha (más reciente primero)
+      clientEvents.sort((a: any, b: any) => 
+        new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+      );
+      
+      // Usar el evento más reciente
+      const latestEvent = clientEvents[0];
+      
+      // Si el evento tiene un proyecto asociado, seleccionarlo automáticamente
+      if (latestEvent.projectId) {
+        form.setValue("projectId", latestEvent.projectId.toString());
+        
+        // Buscar información del proyecto
+        const relatedProject = projects.find((p: any) => p.id === latestEvent.projectId);
+        if (relatedProject) {
+          // Si el proyecto tiene información sobre el tipo de servicio, seleccionarlo automáticamente
+          if (relatedProject.serviceType) {
+            form.setValue("serviceType", relatedProject.serviceType);
+          }
+          
+          // Si hay notas en el proyecto, incluirlas
+          if (relatedProject.description) {
+            form.setValue("notes", form.getValues("notes") 
+              ? `${form.getValues("notes")}\n\nDesde proyecto: ${relatedProject.description}`
+              : `Desde proyecto: ${relatedProject.description}`
+            );
+          }
+        }
+      }
+      
+      // Si el evento tiene información sobre ubicación, incluirla en notas adicionales
+      if (latestEvent.location) {
+        form.setValue("additionalInfo", form.getValues("additionalInfo") 
+          ? `${form.getValues("additionalInfo")}\n\nUbicación desde cita: ${latestEvent.location}`
+          : `Ubicación desde cita: ${latestEvent.location}`
+        );
+      }
+      
+      // Si hay descripción en el evento, incluirla en notas adicionales
+      if (latestEvent.description) {
+        form.setValue("additionalInfo", form.getValues("additionalInfo") 
+          ? `${form.getValues("additionalInfo")}\n\nDescripción desde cita: ${latestEvent.description}`
+          : `Descripción desde cita: ${latestEvent.description}`
+        );
+      }
+    }
+    
+    toast({
+      title: "Cliente seleccionado",
+      description: `Datos de ${client.firstName} ${client.lastName} cargados automáticamente`,
+    });
+  };
+
   // Función para manejar el envío del formulario
   const onSubmit = (data: any) => {
     console.log("Enviando formulario para crear estimado con datos:", data);
@@ -815,6 +891,45 @@ export default function VendorEstimateFormPageNew() {
                       </Badge>
                     </div>
                   </div>
+                  
+                  {/* Mostrar clientes con citas como tarjetas clicables */}
+                  {clientsWithAppointments.length > 0 && (
+                    <div className="mb-4">
+                      <h3 className="text-sm font-medium mb-2 text-primary">
+                        Clientes con citas para {format(selectedDate, "PPP", { locale: es })}:
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                        {clientsWithAppointments.map((client: any) => (
+                          <Card key={client.id} className="cursor-pointer hover:border-primary transition-colors duration-200"
+                            onClick={() => handleSelectClientWithAppointment(client)}
+                          >
+                            <CardContent className="p-3">
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-primary text-lg">📅</span>
+                                  <span className="font-medium">{client.firstName} {client.lastName}</span>
+                                </div>
+                                <div className="text-xs text-muted-foreground overflow-hidden text-ellipsis">
+                                  {client.email && (
+                                    <div>📧 {client.email}</div>
+                                  )}
+                                  {client.phone && (
+                                    <div>📱 {client.phone}</div>
+                                  )}
+                                  {client.address && (
+                                    <div>🏠 {client.address}</div>
+                                  )}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Haga clic en un cliente para cargar automáticamente sus datos
+                      </div>
+                    </div>
+                  )}
                   
                   {/* Cliente */}
                   <FormField
