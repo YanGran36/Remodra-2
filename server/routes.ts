@@ -843,21 +843,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("Datos recibidos del cliente:", JSON.stringify(req.body, null, 2));
       
-      // Convertir strings de fecha a objetos Date para la validación
+      // Preparar datos incluyendo el ID del contratista
       const dataToValidate = {
         ...req.body,
         contractorId: req.user!.id,
-        startTime: new Date(req.body.startTime),
-        endTime: new Date(req.body.endTime)
       };
       
-      console.log("Datos preparados para validación:", JSON.stringify({
-        ...dataToValidate,
-        startTime: dataToValidate.startTime.toISOString(),
-        endTime: dataToValidate.endTime.toISOString()
-      }, null, 2));
+      console.log("Datos preparados para validación:", JSON.stringify(dataToValidate, null, 2));
       
+      // z.coerce.date() convierte automáticamente las strings a objetos Date
       const validatedData = eventInsertSchema.parse(dataToValidate);
+      
+      console.log("Datos validados:", JSON.stringify({
+        ...validatedData,
+        startTime: validatedData.startTime instanceof Date ? validatedData.startTime.toISOString() : validatedData.startTime,
+        endTime: validatedData.endTime instanceof Date ? validatedData.endTime.toISOString() : validatedData.endTime
+      }, null, 2));
       
       const event = await storage.createEvent(validatedData);
       res.status(201).json(event);
@@ -881,12 +882,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Event not found" });
       }
       
-      const validatedData = eventInsertSchema.partial().parse(req.body);
+      // Usar el esquema parcial para validación
+      const validatedData = eventInsertSchema.partial().parse({
+        ...req.body,
+        // Asegurarse de que las fechas se conviertan correctamente si están presentes
+        startTime: req.body.startTime ? req.body.startTime : undefined,
+        endTime: req.body.endTime ? req.body.endTime : undefined
+      });
+      
+      console.log("Datos validados para actualización:", JSON.stringify({
+        ...validatedData,
+        startTime: validatedData.startTime instanceof Date ? validatedData.startTime.toISOString() : validatedData.startTime,
+        endTime: validatedData.endTime instanceof Date ? validatedData.endTime.toISOString() : validatedData.endTime
+      }, null, 2));
       
       const event = await storage.updateEvent(eventId, req.user!.id, validatedData);
       res.json(event);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error("Error de validación ZOD:", JSON.stringify(error.errors, null, 2));
         return res.status(400).json({ errors: error.errors });
       }
       console.error("Error updating event:", error);

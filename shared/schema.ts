@@ -375,18 +375,23 @@ export const estimateInsertSchema = createInsertSchema(estimates).extend({
 export const estimateItemInsertSchema = createInsertSchema(estimateItems);
 export const invoiceInsertSchema = createInsertSchema(invoices);
 export const invoiceItemInsertSchema = createInsertSchema(invoiceItems);
-// Validación personalizada para el tipo de evento
-const eventTypeValidator = z.enum(["meeting", "site-visit", "delivery", "estimate", "invoice", "other"], {
-  errorMap: () => ({ message: "Tipo de evento inválido" })
-});
-
-// Validación personalizada para el estado del evento
-const eventStatusValidator = z.enum(["pending", "confirmed", "completed", "cancelled"], {
-  errorMap: () => ({ message: "Estado de evento inválido" })
-});
-
-export const eventInsertSchema = createInsertSchema(events, {
-  title: (schema) => schema.min(3, "El título debe tener al menos 3 caracteres")
+// Esquema personalizado para eventos en lugar de usar createInsertSchema
+export const eventInsertSchema = z.object({
+  contractorId: z.number(),
+  title: z.string().min(3, "El título debe tener al menos 3 caracteres"),
+  description: z.string().optional(),
+  startTime: z.coerce.date(),
+  endTime: z.coerce.date(),
+  location: z.string().optional(),
+  type: z.enum(["meeting", "site-visit", "delivery", "estimate", "invoice", "other"], {
+    errorMap: () => ({ message: "Tipo de evento inválido" })
+  }),
+  status: z.enum(["pending", "confirmed", "completed", "cancelled"], {
+    errorMap: () => ({ message: "Estado de evento inválido" })
+  }),
+  clientId: z.number().optional(),
+  projectId: z.number().optional(),
+  notes: z.string().optional()
 });
 export const materialInsertSchema = createInsertSchema(materials);
 export const attachmentInsertSchema = createInsertSchema(attachments);
