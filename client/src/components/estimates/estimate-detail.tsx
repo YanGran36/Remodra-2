@@ -104,10 +104,10 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
     );
   }
 
-  // Función para formatear fechas
+  // Función para formatear fechas en formato MES/DÍA/AÑO
   const formatDate = (dateString?: string | Date | null) => {
-    if (!dateString) return "No especificada";
-    return format(new Date(dateString), "d 'de' MMMM, yyyy", { locale: es });
+    if (!dateString) return "Not specified";
+    return format(new Date(dateString), "MMMM d, yyyy");
   };
 
   // Obtener clase para badge según el estado del estimado
@@ -133,19 +133,24 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
     }
   };
 
-  // Texto legible para el estado
+  // Texto legible para el estado (en inglés por defecto)
   const getStatusText = (status: string) => {
     switch (status.toLowerCase()) {
       case "accepted":
-        return "Aceptado";
+      case "aceptado":
+        return "Accepted";
       case "pending":
-        return "Pendiente";
+      case "pendiente":
+        return "Pending";
       case "rejected":
-        return "Rechazado";
+      case "rechazado":
+        return "Rejected";
       case "sent":
-        return "Enviado";
+      case "enviado":
+        return "Sent";
       case "draft":
-        return "Borrador";
+      case "borrador":
+        return "Draft";
       default:
         return status;
     }
@@ -206,8 +211,8 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
         onSuccess: (invoice) => {
           setIsConfirmConvert(false);
           toast({
-            title: "Orden de trabajo creada",
-            description: `Se ha creado la orden de trabajo ${invoice.invoiceNumber} a partir del estimado.`,
+            title: "Work Order Created",
+            description: `Work order ${invoice.invoiceNumber} has been created from this estimate.`,
           });
           // Aquí se podría redirigir a la página de la orden de trabajo
         }
@@ -356,13 +361,13 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
                         </>
                       )}
 
-                      {estimate.status === "accepted" && (
+                      {(estimate.status === "accepted" || estimate.status === "draft" || estimate.status === "sent") && (
                         <Button
                           className="bg-blue-600 hover:bg-blue-700 text-white"
                           onClick={handleConvertToWorkOrder}
                         >
                           <BanknoteIcon className="h-4 w-4 mr-2" />
-                          Convertir a orden de trabajo
+                          Convert to Work Order
                         </Button>
                       )}
                     </div>
@@ -498,13 +503,13 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
       <AlertDialog open={isConfirmConvert} onOpenChange={setIsConfirmConvert}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Convertir a orden de trabajo?</AlertDialogTitle>
+            <AlertDialogTitle>Convert to Work Order?</AlertDialogTitle>
             <AlertDialogDescription>
-              Al convertir este estimado en una orden de trabajo, se creará una nueva factura/orden con los mismos detalles.
+              By converting this estimate into a work order, a new invoice will be created with the same details.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={convertToInvoiceMutation.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={convertToInvoiceMutation.isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
@@ -516,7 +521,7 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
               {convertToInvoiceMutation.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              Convertir
+              Convert
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
