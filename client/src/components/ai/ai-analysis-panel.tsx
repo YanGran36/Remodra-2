@@ -177,6 +177,7 @@ export default function AiAnalysisPanel({
                 className="w-full mt-4" 
                 onClick={handleAnalyze}
                 disabled={isAnalyzing || materials.length === 0}
+                type="button"
               >
                 {isAnalyzing ? (
                   <>
@@ -356,6 +357,7 @@ export default function AiAnalysisPanel({
                 className="flex-1"
                 onClick={handleCreateEstimate}
                 title="Esto sólo transfiere el análisis al formulario, no crea el estimado directamente"
+                type="button"
               >
                 <FileText className="h-4 w-4 mr-2" />
                 Incluir en Estimado
@@ -365,6 +367,7 @@ export default function AiAnalysisPanel({
                 className="flex-1"
                 onClick={handleCreateInvoice}
                 title="Esto sólo transfiere el análisis al formulario, no crea la factura directamente"
+                type="button"
               >
                 <FileCheck className="h-4 w-4 mr-2" />
                 Incluir en Factura
@@ -374,6 +377,7 @@ export default function AiAnalysisPanel({
               variant="ghost" 
               className="w-full"
               onClick={handleAnalyze}
+              type="button"
             >
               <BarChart2 className="h-4 w-4 mr-2" />
               Nuevo análisis
