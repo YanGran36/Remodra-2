@@ -257,11 +257,23 @@ export default function VendorEstimateFormPageNew() {
   
   // Función para manejar el envío del formulario
   const onSubmit = (data: any) => {
+    console.log("Enviando formulario para crear estimado con datos:", data);
+    
     // Verificar que se haya seleccionado un cliente
     if (!data.clientId) {
       toast({
         title: "Error",
         description: "Debe seleccionar un cliente antes de crear un estimado",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Verificar que haya materiales seleccionados
+    if (selectedMaterials.length === 0) {
+      toast({
+        title: "Error",
+        description: "Debe agregar al menos un material al estimado",
         variant: "destructive",
       });
       return;
@@ -277,7 +289,8 @@ export default function VendorEstimateFormPageNew() {
     }));
 
     // Calcular totales
-    const subtotal = totalAmount;
+    const subtotal = selectedMaterials.reduce((sum, mat) => sum + (mat.quantity * mat.unitPrice), 0);
+    setTotalAmount(subtotal); // Actualizar el estado de totalAmount
     
     // Preparar datos del estimado
     const estimateData = {
@@ -296,6 +309,8 @@ export default function VendorEstimateFormPageNew() {
       contractorSignature: user?.firstName + " " + user?.lastName,
       items
     };
+    
+    console.log("Datos del estimado a crear:", estimateData);
     
     // Enviar petición para crear estimado
     createEstimateMutation.mutate(estimateData);
@@ -577,7 +592,7 @@ export default function VendorEstimateFormPageNew() {
       </div>
       
       <Form {...form}>
-        <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
+        <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)} id="vendor-estimate-form">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="information">Información Básica</TabsTrigger>
@@ -1100,6 +1115,30 @@ export default function VendorEstimateFormPageNew() {
                   size="lg"
                   className="w-full max-w-md"
                   disabled={isSubmitting}
+                  onClick={() => {
+                    // Forzar que cambie a la pestaña de información básica si no hay cliente seleccionado
+                    if (!watchClientId) {
+                      setActiveTab("information");
+                      toast({
+                        title: "Atención",
+                        description: "Debe seleccionar un cliente primero",
+                      });
+                      return;
+                    }
+                    
+                    // Asegurarse de que el formulario se envíe correctamente
+                    console.log("Haciendo click en Crear Estimado desde Formulario");
+                    if (selectedMaterials.length === 0) {
+                      toast({
+                        title: "Atención",
+                        description: "Debe agregar al menos un material",
+                      });
+                      return;
+                    }
+                    
+                    // No necesitamos llamar a onSubmit aquí, ya que el botón es de tipo submit
+                    // y el formulario ya tiene el controlador onSubmit asociado
+                  }}
                 >
                   <Save className="mr-2 h-5 w-5" />
                   {isSubmitting ? "Creando estimado..." : "Crear Estimado desde Formulario"}
