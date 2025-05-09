@@ -395,7 +395,7 @@ export default function EventForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">Ninguno</SelectItem>
+                    <SelectItem value="none">Ninguno</SelectItem>
                     {clients.map((client: any) => (
                       <SelectItem key={client.id} value={client.id.toString()}>
                         {client.firstName} {client.lastName}
@@ -426,7 +426,7 @@ export default function EventForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">Ninguno</SelectItem>
+                    <SelectItem value="none">Ninguno</SelectItem>
                     {filteredProjects.map((project: any) => (
                       <SelectItem key={project.id} value={project.id.toString()}>
                         {project.title}

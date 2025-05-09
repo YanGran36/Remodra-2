@@ -206,6 +206,23 @@ export default function VendorEstimateFormPageNew() {
     queryKey: ["/api/protected/events"]
   });
   
+  // Form definition
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      clientId: clientIdFromUrl || "",
+      projectId: "",
+      serviceType: "",
+      materialType: "",
+      squareFeet: "",
+      linearFeet: "",
+      units: "",
+      difficulty: "medium",
+      notes: "",
+      additionalInfo: ""
+    }
+  });
+  
   // Procesar eventos y filtrar clientes con citas para hoy
   useEffect(() => {
     if (events.length > 0 && clients.length > 0) {
@@ -283,23 +300,6 @@ export default function VendorEstimateFormPageNew() {
       }
     }
   }, [events, clients, toast, clientIdFromUrl, projects, form]);
-  
-  // Form definition
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      clientId: clientIdFromUrl || "",
-      projectId: "",
-      serviceType: "",
-      materialType: "",
-      squareFeet: "",
-      linearFeet: "",
-      units: "",
-      difficulty: "medium",
-      notes: "",
-      additionalInfo: ""
-    }
-  });
   
   // Watch values
   const watchServiceType = form.watch("serviceType");
