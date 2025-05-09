@@ -54,7 +54,12 @@ import PageHeader from "@/components/shared/page-header";
 import SearchInput from "@/components/shared/search-input";
 import EstimateDetail from "@/components/estimates/estimate-detail";
 import EstimateForm from "@/components/estimates/estimate-form";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { 
+  Dialog, 
+  DialogContent,
+  DialogTitle,
+  DialogDescription
+} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -508,15 +513,33 @@ export default function EstimatesPage() {
       </Dialog>
       
       {/* Estimate Form Dialog */}
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+      <Dialog open={isFormOpen} onOpenChange={(open) => {
+        setIsFormOpen(open);
+        if (!open) setEditingEstimate(null); // Limpiar el estimado en edición si se cierra
+      }}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
+          <div className="sr-only">
+            <DialogTitle>
+              {editingEstimate ? "Editar estimado" : "Crear nuevo estimado"}
+            </DialogTitle>
+            <DialogDescription>
+              {editingEstimate 
+                ? "Actualice los detalles del estimado existente" 
+                : "Complete el formulario para crear un nuevo estimado"
+              }
+            </DialogDescription>
+          </div>
           <EstimateForm 
             clientId={editingEstimate?.clientId}
             projectId={editingEstimate?.projectId}
-            onCancel={() => setIsFormOpen(false)}
+            estimateId={editingEstimate?.id} // Pasar el ID del estimado para edición
+            onCancel={() => {
+              setIsFormOpen(false);
+              setEditingEstimate(null); // Limpiar el estimado en edición
+            }}
             onSuccess={() => {
               setIsFormOpen(false);
-              // Refetch estimates if needed
+              setEditingEstimate(null); // Limpiar el estimado en edición
             }}
           />
         </DialogContent>

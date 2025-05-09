@@ -103,6 +103,8 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
   
   const { toast } = useToast();
   const { createEstimateMutation, updateEstimateMutation, getEstimate } = useEstimates();
+  const { clients = [], isLoadingClients } = useClients();
+  const { projects = [], isLoadingProjects } = useProjects();
   
   // Estado para indicar si es edición o creación
   const [isEditing, setIsEditing] = useState(!!estimateId);
@@ -369,6 +371,85 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                 <CardTitle className="text-lg">Información general</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Selector de cliente */}
+                <FormField
+                  control={form.control}
+                  name="clientId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cliente*</FormLabel>
+                      <Select
+                        value={field.value ? field.value.toString() : ""}
+                        onValueChange={(value) => {
+                          field.onChange(parseInt(value));
+                          // Reiniciar el valor del proyecto si se cambia el cliente
+                          form.setValue("projectId", 0);
+                        }}
+                        disabled={isEditing} // Deshabilitar cambio de cliente en edición
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccionar cliente" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {clients.map((client: any) => (
+                            <SelectItem key={client.id} value={client.id.toString()}>
+                              {client.firstName} {client.lastName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Seleccione el cliente para este estimado
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Selector de proyecto */}
+                <FormField
+                  control={form.control}
+                  name="projectId"
+                  render={({ field }) => {
+                    // Filtrar proyectos por cliente seleccionado
+                    const clientId = form.watch("clientId");
+                    const filteredProjects = clientId
+                      ? projects.filter((p: any) => p.clientId === clientId)
+                      : [];
+                    
+                    return (
+                      <FormItem>
+                        <FormLabel>Proyecto</FormLabel>
+                        <Select
+                          value={field.value ? field.value.toString() : ""}
+                          onValueChange={(value) => field.onChange(parseInt(value))}
+                          disabled={!clientId || isLoadingProjects}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Seleccionar proyecto (opcional)" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="0">Ninguno (Nuevo Proyecto)</SelectItem>
+                            {filteredProjects.map((project: any) => (
+                              <SelectItem key={project.id} value={project.id.toString()}>
+                                {project.title}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Seleccione un proyecto existente o cree uno nuevo
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
+                />
+
                 <FormField
                   control={form.control}
                   name="estimateNumber"
