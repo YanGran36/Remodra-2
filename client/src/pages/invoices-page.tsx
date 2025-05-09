@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useInvoices } from "@/hooks/use-invoices";
+import { useLanguage } from "@/hooks/use-language";
+import { Link, useLocation } from "wouter";
 import { 
   ChevronDown, 
-  BanknoteIcon, 
+  FileText, 
   Plus, 
   Search, 
   Filter, 
@@ -12,11 +14,12 @@ import {
   Download, 
   Eye, 
   Trash2,
+  BanknoteIcon,
   Calendar, 
   CheckCircle,
   XCircle,
   Clock,
-  AlertTriangle
+  Receipt
 } from "lucide-react";
 import { 
   Select, 
@@ -49,8 +52,6 @@ import Sidebar from "@/components/layout/sidebar";
 import MobileSidebar from "@/components/layout/mobile-sidebar";
 import PageHeader from "@/components/shared/page-header";
 import SearchInput from "@/components/shared/search-input";
-import InvoiceDetail from "@/components/invoices/invoice-detail";
-import InvoiceForm from "@/components/invoices/invoice-form";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -63,15 +64,22 @@ const formatCurrency = (amount: number | string) => {
 
 // Helper function to get status badge style
 const getStatusBadge = (status: string) => {
-  switch (status) {
-    case 'pending':
-      return <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100">Pending</Badge>;
+  switch (status.toLowerCase()) {
     case 'paid':
-      return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">Paid</Badge>;
+    case 'pagado':
+      return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">Pagado</Badge>;
+    case 'pending':
+    case 'pendiente':
+      return <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100">Pendiente</Badge>;
     case 'overdue':
-      return <Badge variant="outline" className="bg-red-100 text-red-800 hover:bg-red-100">Overdue</Badge>;
+    case 'vencido':
+      return <Badge variant="outline" className="bg-red-100 text-red-800 hover:bg-red-100">Vencido</Badge>;
+    case 'partially_paid':
+    case 'parcialmente_pagado':
+      return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Parcial</Badge>;
     case 'cancelled':
-      return <Badge variant="outline" className="bg-gray-100 text-gray-800 hover:bg-gray-100">Cancelled</Badge>;
+    case 'cancelado':
+      return <Badge variant="outline" className="bg-gray-100 text-gray-800 hover:bg-gray-100">Cancelado</Badge>;
     default:
       return <Badge variant="outline">{status}</Badge>;
   }
@@ -81,19 +89,15 @@ export default function InvoicesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("date_desc");
-  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingInvoice, setEditingInvoice] = useState<any>(null);
+  const [, setLocation] = useLocation();
+  const { t } = useLanguage();
 
   // Fetch invoices
-  const { data: invoices, isLoading, error } = useQuery({
-    queryKey: ["/api/protected/invoices"],
-  });
+  const { invoices = [], isLoadingInvoices, invoicesError } = useInvoices();
 
   // Filter and sort invoices
   const filteredInvoices = invoices
-    ? invoices
+    ? (invoices as any[])
         .filter((invoice: any) => {
           // Status filter
           if (statusFilter !== "all" && invoice.status !== statusFilter) {
@@ -104,9 +108,9 @@ export default function InvoicesPage() {
           if (searchQuery) {
             const lowerCaseQuery = searchQuery.toLowerCase();
             return (
-              invoice.invoiceNumber.toLowerCase().includes(lowerCaseQuery) ||
-              invoice.client?.firstName.toLowerCase().includes(lowerCaseQuery) ||
-              invoice.client?.lastName.toLowerCase().includes(lowerCaseQuery) ||
+              invoice.invoiceNumber?.toLowerCase().includes(lowerCaseQuery) ||
+              invoice.client?.firstName?.toLowerCase().includes(lowerCaseQuery) ||
+              invoice.client?.lastName?.toLowerCase().includes(lowerCaseQuery) ||
               (invoice.project?.title && invoice.project.title.toLowerCase().includes(lowerCaseQuery))
             );
           }
@@ -122,52 +126,42 @@ export default function InvoicesPage() {
             return parseFloat(b.total) - parseFloat(a.total);
           } else if (sortBy === "amount_asc") {
             return parseFloat(a.total) - parseFloat(b.total);
-          } else if (sortBy === "due_date") {
-            return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
           }
           return 0;
         })
     : [];
 
-  const viewInvoiceDetails = (invoice: any) => {
-    setSelectedInvoice(invoice);
-    setIsDetailOpen(true);
+  const viewInvoiceDetails = (invoiceId: number) => {
+    setLocation(`/invoices/${invoiceId}`);
   };
 
-  const createNewInvoice = () => {
-    setEditingInvoice(null);
-    setIsFormOpen(true);
-  };
-
-  const editInvoice = (invoice: any) => {
-    setEditingInvoice(invoice);
-    setIsFormOpen(true);
-  };
-
-  const calculateTotals = () => {
-    if (!invoices) return { total: 0, count: 0, overdue: 0, paid: 0 };
+  const calculateTotal = () => {
+    if (!invoices || !Array.isArray(invoices)) return { total: 0, count: 0, paid: 0, pending: 0 };
     
-    const total = invoices.reduce((sum: number, invoice: any) => {
-      return sum + parseFloat(invoice.total);
-    }, 0);
-
-    const paid = invoices.reduce((sum: number, invoice: any) => {
-      return invoice.status === 'paid' ? sum + parseFloat(invoice.total) : sum;
-    }, 0);
-
-    const overdue = invoices.reduce((sum: number, invoice: any) => {
-      return invoice.status === 'overdue' ? sum + parseFloat(invoice.total) : sum;
-    }, 0);
+    let total = 0;
+    let paid = 0;
+    let pending = 0;
+    
+    (invoices as any[]).forEach((invoice: any) => {
+      const invoiceTotal = parseFloat(invoice.total || 0);
+      total += invoiceTotal;
+      
+      if (invoice.status.toLowerCase() === 'paid' || invoice.status.toLowerCase() === 'pagado') {
+        paid += invoiceTotal;
+      } else {
+        pending += invoiceTotal;
+      }
+    });
     
     return { 
       total, 
       count: invoices.length,
       paid,
-      overdue
+      pending
     };
   };
 
-  const totals = calculateTotals();
+  const { total, count, paid, pending } = calculateTotal();
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -177,50 +171,52 @@ export default function InvoicesPage() {
       <main className="flex-1 overflow-y-auto bg-gray-50">
         <div className="p-6">
           <PageHeader 
-            title="Invoices" 
-            description="Create and manage customer invoices"
+            title={t('invoices.title')}
+            description="Gestiona órdenes de trabajo y pagos"
             actions={
-              <Button className="flex items-center" onClick={createNewInvoice}>
-                <Plus className="h-4 w-4 mr-2" />
-                New Invoice
-              </Button>
+              <Link href="/invoices/new">
+                <Button className="flex items-center">
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t('invoices.addInvoice')}
+                </Button>
+              </Link>
             }
           />
           
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Total Invoices</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-500">Total Órdenes</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{totals.count}</div>
+                <div className="text-2xl font-bold">{count}</div>
               </CardContent>
             </Card>
             
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Total Value</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-500">Valor Total</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(totals.total)}</div>
+                <div className="text-2xl font-bold">{formatCurrency(total)}</div>
               </CardContent>
             </Card>
             
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Paid</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-500">Pagado</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{formatCurrency(totals.paid)}</div>
+                <div className="text-2xl font-bold text-green-600">{formatCurrency(paid)}</div>
               </CardContent>
             </Card>
             
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Overdue</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-500">Pendiente</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600">{formatCurrency(totals.overdue)}</div>
+                <div className="text-2xl font-bold text-yellow-600">{formatCurrency(pending)}</div>
               </CardContent>
             </Card>
           </div>
@@ -230,34 +226,34 @@ export default function InvoicesPage() {
               <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
                 <div className="flex flex-col sm:flex-row gap-4">
                   <SearchInput 
-                    placeholder="Search invoices..." 
+                    placeholder="Buscar órdenes..." 
                     onSearch={setSearchQuery}
                     className="w-full sm:w-80"
                   />
                   
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-full sm:w-40">
-                      <SelectValue placeholder="Filter by status" />
+                      <SelectValue placeholder="Filtrar por estado" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="paid">Paid</SelectItem>
-                      <SelectItem value="overdue">Overdue</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                      <SelectItem value="all">Todos los estados</SelectItem>
+                      <SelectItem value="pending">Pendiente</SelectItem>
+                      <SelectItem value="paid">Pagado</SelectItem>
+                      <SelectItem value="overdue">Vencido</SelectItem>
+                      <SelectItem value="partially_paid">Parcialmente pagado</SelectItem>
+                      <SelectItem value="cancelled">Cancelado</SelectItem>
                     </SelectContent>
                   </Select>
                   
                   <Select value={sortBy} onValueChange={setSortBy}>
                     <SelectTrigger className="w-full sm:w-40">
-                      <SelectValue placeholder="Sort by" />
+                      <SelectValue placeholder="Ordenar por" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="date_desc">Newest First</SelectItem>
-                      <SelectItem value="date_asc">Oldest First</SelectItem>
-                      <SelectItem value="amount_desc">Highest Amount</SelectItem>
-                      <SelectItem value="amount_asc">Lowest Amount</SelectItem>
-                      <SelectItem value="due_date">Due Date</SelectItem>
+                      <SelectItem value="date_desc">Más recientes</SelectItem>
+                      <SelectItem value="date_asc">Más antiguos</SelectItem>
+                      <SelectItem value="amount_desc">Mayor importe</SelectItem>
+                      <SelectItem value="amount_asc">Menor importe</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -265,7 +261,7 @@ export default function InvoicesPage() {
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm">
                     <Download className="h-4 w-4 mr-2" />
-                    Export
+                    Exportar
                   </Button>
                 </div>
               </div>
@@ -274,110 +270,108 @@ export default function InvoicesPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[120px]">Invoice #</TableHead>
-                      <TableHead>Client</TableHead>
-                      <TableHead>Project</TableHead>
-                      <TableHead>Issue Date</TableHead>
-                      <TableHead>Due Date</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead className="w-[120px]">Orden #</TableHead>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Proyecto</TableHead>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Importe</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead className="text-right">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {isLoading ? (
+                    {isLoadingInvoices ? (
                       Array(5).fill(0).map((_, index) => (
                         <TableRow key={index}>
                           <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                           <TableCell><Skeleton className="h-5 w-32" /></TableCell>
                           <TableCell><Skeleton className="h-5 w-40" /></TableCell>
                           <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                          <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                           <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                           <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                           <TableCell className="text-right"><Skeleton className="h-9 w-12 ml-auto" /></TableCell>
                         </TableRow>
                       ))
-                    ) : error ? (
+                    ) : invoicesError ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center py-4 text-gray-500">
-                          Error loading invoices. Please try again.
+                        <TableCell colSpan={7} className="text-center py-4 text-gray-500">
+                          Error al cargar órdenes de trabajo. Por favor, inténtalo de nuevo.
                         </TableCell>
                       </TableRow>
                     ) : filteredInvoices.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center py-8">
+                        <TableCell colSpan={7} className="text-center py-8">
                           <div className="flex flex-col items-center">
-                            <BanknoteIcon className="h-12 w-12 text-gray-300 mb-3" />
-                            <h3 className="text-lg font-medium text-gray-900 mb-1">No invoices found</h3>
+                            <Receipt className="h-12 w-12 text-gray-300 mb-3" />
+                            <h3 className="text-lg font-medium text-gray-900 mb-1">No se encontraron órdenes de trabajo</h3>
                             <p className="text-sm text-gray-500 mb-4">
                               {searchQuery || statusFilter !== "all" 
-                                ? "Try adjusting your filters"
-                                : "Create your first invoice to get started"}
+                                ? "Intenta ajustar tus filtros"
+                                : "Crea tu primera orden de trabajo para comenzar"}
                             </p>
                             {!searchQuery && statusFilter === "all" && (
-                              <Button onClick={createNewInvoice}>
-                                <Plus className="h-4 w-4 mr-2" />
-                                New Invoice
-                              </Button>
+                              <Link href="/invoices/new">
+                                <Button>
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  Nueva Orden de Trabajo
+                                </Button>
+                              </Link>
                             )}
                           </div>
                         </TableCell>
                       </TableRow>
                     ) : (
                       filteredInvoices.map((invoice: any) => (
-                        <TableRow key={invoice.id} className="cursor-pointer hover:bg-gray-50" onClick={() => viewInvoiceDetails(invoice)}>
-                          <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
+                        <TableRow key={invoice.id} className="cursor-pointer hover:bg-gray-50" onClick={() => viewInvoiceDetails(invoice.id)}>
+                          <TableCell className="font-medium">{invoice.invoiceNumber || `#${invoice.id}`}</TableCell>
                           <TableCell>{invoice.client?.firstName} {invoice.client?.lastName}</TableCell>
                           <TableCell>{invoice.project?.title || "—"}</TableCell>
-                          <TableCell>{format(new Date(invoice.issueDate), 'MMM d, yyyy')}</TableCell>
-                          <TableCell>{format(new Date(invoice.dueDate), 'MMM d, yyyy')}</TableCell>
-                          <TableCell>{formatCurrency(invoice.total)}</TableCell>
+                          <TableCell>{format(new Date(invoice.issueDate), 'dd/MM/yyyy')}</TableCell>
+                          <TableCell>{formatCurrency(invoice.total || 0)}</TableCell>
                           <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                  <span className="sr-only">Open menu</span>
+                                  <span className="sr-only">Abrir menú</span>
                                   <ChevronDown className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={(e) => {
                                   e.stopPropagation();
-                                  viewInvoiceDetails(invoice);
+                                  viewInvoiceDetails(invoice.id);
                                 }}>
                                   <Eye className="mr-2 h-4 w-4" />
-                                  View
+                                  Ver detalles
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={(e) => {
-                                  e.stopPropagation();
-                                  editInvoice(invoice);
-                                }}>
+                                <DropdownMenuItem>
                                   <FileEdit className="mr-2 h-4 w-4" />
-                                  Edit
+                                  Editar
                                 </DropdownMenuItem>
                                 <DropdownMenuItem>
                                   <Mail className="mr-2 h-4 w-4" />
-                                  Send
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <CheckCircle className="mr-2 h-4 w-4" />
-                                  Mark as Paid
+                                  Enviar
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
+                                {invoice.status !== 'paid' && (
+                                  <DropdownMenuItem>
+                                    <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
+                                    Marcar como pagada
+                                  </DropdownMenuItem>
+                                )}
                                 <DropdownMenuItem>
                                   <Download className="mr-2 h-4 w-4" />
-                                  Download PDF
+                                  Descargar PDF
                                 </DropdownMenuItem>
                                 <DropdownMenuItem>
                                   <Printer className="mr-2 h-4 w-4" />
-                                  Print
+                                  Imprimir
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem className="text-destructive">
                                   <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete
+                                  Eliminar
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -393,11 +387,11 @@ export default function InvoicesPage() {
           
           <Card>
             <CardContent className="p-4">
-              <h3 className="text-lg font-semibold mb-4">Invoice Status Overview</h3>
+              <h3 className="text-lg font-semibold mb-4">Estado de órdenes de trabajo</h3>
               <Tabs defaultValue="byStatus">
                 <TabsList className="mb-4">
-                  <TabsTrigger value="byStatus">By Status</TabsTrigger>
-                  <TabsTrigger value="byMonth">By Month</TabsTrigger>
+                  <TabsTrigger value="byStatus">Por estado</TabsTrigger>
+                  <TabsTrigger value="byMonth">Por mes</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="byStatus">
@@ -408,10 +402,10 @@ export default function InvoicesPage() {
                           <Clock className="h-5 w-5 text-blue-600" />
                         </div>
                         <div>
-                          <p className="text-gray-500 text-sm">Pending</p>
+                          <p className="text-gray-500 text-sm">Pendiente</p>
                           <p className="text-xl font-bold">
-                            {invoices 
-                              ? invoices.filter((e: any) => e.status === 'pending').length 
+                            {Array.isArray(invoices) 
+                              ? (invoices as any[]).filter((e: any) => e.status.toLowerCase() === 'pending' || e.status.toLowerCase() === 'pendiente').length 
                               : 0}
                           </p>
                         </div>
@@ -424,10 +418,10 @@ export default function InvoicesPage() {
                           <CheckCircle className="h-5 w-5 text-green-600" />
                         </div>
                         <div>
-                          <p className="text-gray-500 text-sm">Paid</p>
+                          <p className="text-gray-500 text-sm">Pagado</p>
                           <p className="text-xl font-bold">
-                            {invoices 
-                              ? invoices.filter((e: any) => e.status === 'paid').length 
+                            {Array.isArray(invoices) 
+                              ? (invoices as any[]).filter((e: any) => e.status.toLowerCase() === 'paid' || e.status.toLowerCase() === 'pagado').length 
                               : 0}
                           </p>
                         </div>
@@ -437,13 +431,13 @@ export default function InvoicesPage() {
                     <Card>
                       <CardContent className="p-4 flex items-center">
                         <div className="bg-red-100 rounded-full p-3 mr-3">
-                          <AlertTriangle className="h-5 w-5 text-red-600" />
+                          <XCircle className="h-5 w-5 text-red-600" />
                         </div>
                         <div>
-                          <p className="text-gray-500 text-sm">Overdue</p>
+                          <p className="text-gray-500 text-sm">Vencido</p>
                           <p className="text-xl font-bold">
-                            {invoices 
-                              ? invoices.filter((e: any) => e.status === 'overdue').length 
+                            {Array.isArray(invoices) 
+                              ? (invoices as any[]).filter((e: any) => e.status.toLowerCase() === 'overdue' || e.status.toLowerCase() === 'vencido').length 
                               : 0}
                           </p>
                         </div>
@@ -452,14 +446,14 @@ export default function InvoicesPage() {
                     
                     <Card>
                       <CardContent className="p-4 flex items-center">
-                        <div className="bg-gray-100 rounded-full p-3 mr-3">
-                          <XCircle className="h-5 w-5 text-gray-600" />
+                        <div className="bg-yellow-100 rounded-full p-3 mr-3">
+                          <Calendar className="h-5 w-5 text-yellow-600" />
                         </div>
                         <div>
-                          <p className="text-gray-500 text-sm">Cancelled</p>
+                          <p className="text-gray-500 text-sm">Parcial</p>
                           <p className="text-xl font-bold">
-                            {invoices 
-                              ? invoices.filter((e: any) => e.status === 'cancelled').length 
+                            {Array.isArray(invoices) 
+                              ? (invoices as any[]).filter((e: any) => e.status.toLowerCase() === 'partially_paid' || e.status.toLowerCase() === 'parcialmente_pagado').length 
                               : 0}
                           </p>
                         </div>
@@ -470,7 +464,7 @@ export default function InvoicesPage() {
                 
                 <TabsContent value="byMonth">
                   <div className="h-80 flex items-center justify-center text-gray-500">
-                    <p>Monthly breakdown chart would go here</p>
+                    <p>El gráfico de resumen por mes aparecerá aquí</p>
                   </div>
                 </TabsContent>
               </Tabs>
@@ -478,37 +472,6 @@ export default function InvoicesPage() {
           </Card>
         </div>
       </main>
-      
-      {/* Invoice Detail Dialog */}
-      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
-          {selectedInvoice && (
-            <InvoiceDetail 
-              invoice={selectedInvoice} 
-              onEdit={() => {
-                setIsDetailOpen(false);
-                setEditingInvoice(selectedInvoice);
-                setIsFormOpen(true);
-              }}
-              onClose={() => setIsDetailOpen(false)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-      
-      {/* Invoice Form Dialog */}
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
-          <InvoiceForm 
-            invoice={editingInvoice} 
-            onClose={() => setIsFormOpen(false)}
-            onSuccess={() => {
-              setIsFormOpen(false);
-              // Refetch invoices if needed
-            }}
-          />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
