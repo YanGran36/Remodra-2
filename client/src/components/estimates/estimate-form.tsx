@@ -52,6 +52,7 @@ const estimateFormSchema = z.object({
   expiryDate: z.date().optional(),
   terms: z.string().optional(),
   notes: z.string().optional(),
+  status: z.string().optional(),
   // Cambiamos los tipos de campos monetarios a string para compatibilidad con el backend
   subtotal: z.string().or(z.number().transform(val => String(val))),
   tax: z.string().or(z.number().transform(val => String(val))),
@@ -94,6 +95,10 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
   const { toast } = useToast();
   const { createEstimateMutation, updateEstimateMutation, getEstimate } = useEstimates();
   
+  // Estado para indicar si es edición o creación
+  const [isEditing, setIsEditing] = useState(!!estimateId);
+  const [isLoading, setIsLoading] = useState(!!estimateId);
+  
   // Formulario principal del estimado
   const form = useForm<EstimateFormValues>({
     resolver: zodResolver(estimateFormSchema),
@@ -101,6 +106,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
       clientId: clientId || 0,
       projectId: projectId || 0,
       issueDate: new Date(),
+      status: "pending", // Estado predeterminado
       subtotal: "0", // Convertidos a string para compatibilidad con el backend
       tax: "0",      // Convertidos a string para compatibilidad con el backend
       discount: "0", // Convertidos a string para compatibilidad con el backend
@@ -207,6 +213,54 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
     return () => subscription.unsubscribe();
   }, [form, items]);
   
+  // Cargar datos del estimado si estamos en modo edición
+  useEffect(() => {
+    if (estimateId) {
+      // Realizar consulta para obtener los datos del estimado
+      setIsLoading(true);
+      
+      const fetchEstimate = async () => {
+        try {
+          const response = await fetch(`/api/protected/estimates/${estimateId}`);
+          if (!response.ok) {
+            throw new Error('No se pudo cargar el estimado');
+          }
+          
+          const estimateData = await response.json();
+          
+          // Convertir fechas de string a objetos Date
+          if (estimateData.issueDate) {
+            estimateData.issueDate = new Date(estimateData.issueDate);
+          }
+          if (estimateData.expiryDate) {
+            estimateData.expiryDate = new Date(estimateData.expiryDate);
+          }
+          
+          // Actualizar formulario con datos del estimado
+          form.reset(estimateData);
+          
+          // Cargar ítems del estimado
+          if (estimateData.items && Array.isArray(estimateData.items)) {
+            setItems(estimateData.items);
+          }
+          
+          setIsEditing(true);
+          setIsLoading(false);
+        } catch (error) {
+          console.error("Error loading estimate:", error);
+          toast({
+            title: "Error",
+            description: "No se pudo cargar el estimado",
+            variant: "destructive",
+          });
+          setIsLoading(false);
+        }
+      };
+      
+      fetchEstimate();
+    }
+  }, [estimateId, form]);
+  
   // Manejar el envío del formulario
   const onSubmit = (data: EstimateFormValues) => {
     if (items.length === 0) {
@@ -230,33 +284,71 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
     // Preparar objeto de estimado completo con sus ítems
     const estimateData = {
       ...data,
-      status: "pending",
+      // Si estamos editando, mantener el status actual, si no, establecer como "pending"
+      status: isEditing ? form.getValues("status") || "pending" : "pending",
       items: items.map(item => ({
         ...item,
-        estimateId: 0, // Esto se asignará en el servidor
+        estimateId: isEditing && estimateId ? estimateId : 0, // Mantener relación con el estimado si es edición
       })),
     };
     
-    createEstimateMutation.mutate(estimateData, {
-      onSuccess: (newEstimate) => {
-        toast({
-          title: "Estimado creado",
-          description: `El estimado ${newEstimate.estimateNumber} ha sido creado exitosamente.`,
-        });
-        
-        if (onSuccess) {
-          onSuccess(newEstimate);
+    if (isEditing && estimateId) {
+      // Actualizar estimado existente
+      updateEstimateMutation.mutate(
+        { 
+          id: estimateId, 
+          data: estimateData
+        }, 
+        {
+          onSuccess: (updatedEstimate) => {
+            toast({
+              title: "Estimado actualizado",
+              description: `El estimado ${updatedEstimate.estimateNumber} ha sido actualizado exitosamente.`,
+            });
+            
+            if (onSuccess) {
+              onSuccess(updatedEstimate);
+            }
+          }
         }
-      }
-    });
+      );
+    } else {
+      // Crear nuevo estimado
+      createEstimateMutation.mutate(estimateData, {
+        onSuccess: (newEstimate) => {
+          toast({
+            title: "Estimado creado",
+            description: `El estimado ${newEstimate.estimateNumber} ha sido creado exitosamente.`,
+          });
+          
+          if (onSuccess) {
+            onSuccess(newEstimate);
+          }
+        }
+      });
+    }
   };
+
+  // Si está cargando, mostrar indicador de carga
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center w-full h-64">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <p className="text-gray-500">Cargando datos del estimado...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold">Crear nuevo estimado</h2>
+        <h2 className="text-2xl font-bold">
+          {isEditing ? "Editar estimado" : "Crear nuevo estimado"}
+        </h2>
         <p className="text-sm text-gray-500 mt-1">
-          Complete los detalles del estimado y agregue los ítems a incluir.
+          {isEditing 
+            ? "Actualice los detalles del estimado y sus ítems." 
+            : "Complete los detalles del estimado y agregue los ítems a incluir."}
         </p>
       </div>
       
