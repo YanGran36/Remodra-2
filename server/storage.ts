@@ -82,8 +82,10 @@ export interface IStorage {
   // Invoices
   getInvoices: (contractorId: number) => Promise<any[]>;
   getInvoice: (id: number, contractorId: number) => Promise<any>;
+  getInvoiceById: (id: number) => Promise<any>; // Método público para clientes
   createInvoice: (data: Omit<InvoiceInsert, "id">) => Promise<any>;
   updateInvoice: (id: number, contractorId: number, data: Partial<InvoiceInsert>) => Promise<any>;
+  updateInvoiceById: (id: number, data: Partial<InvoiceInsert>) => Promise<any>; // Método público para clientes
   deleteInvoice: (id: number, contractorId: number) => Promise<boolean>;
   
   // Invoice Items
@@ -651,6 +653,20 @@ class DatabaseStorage implements IStorage {
       }
     });
   }
+  
+  // Método público para obtener una factura por ID sin verificar el contratista
+  async getInvoiceById(id: number) {
+    return await db.query.invoices.findFirst({
+      where: eq(invoices.id, id),
+      with: {
+        client: true,
+        contractor: true,
+        project: true,
+        items: true,
+        estimate: true
+      }
+    });
+  }
 
   async createInvoice(data: Omit<InvoiceInsert, "id">) {
     const [invoice] = await db.insert(invoices).values(data).returning();
@@ -667,6 +683,16 @@ class DatabaseStorage implements IStorage {
           eq(invoices.contractorId, contractorId)
         )
       )
+      .returning();
+    return updated;
+  }
+  
+  // Método público para actualizar una factura por ID sin verificar el contratista
+  async updateInvoiceById(id: number, data: Partial<InvoiceInsert>) {
+    const [updated] = await db
+      .update(invoices)
+      .set(data)
+      .where(eq(invoices.id, id))
       .returning();
     return updated;
   }
