@@ -913,13 +913,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/public/estimates/:id/client-action", async (req, res) => {
     try {
       const estimateId = Number(req.params.id);
-      const { action, clientId, clientSignature, notes } = req.body;
+      const { action, clientId, notes } = req.body;
       
       // Validate required fields
-      if (!action || !clientId || !clientSignature) {
+      if (!action || !clientId) {
         return res.status(400).json({ 
           message: "Missing required fields", 
-          required: ["action", "clientId", "clientSignature"] 
+          required: ["action", "clientId"] 
         });
       }
       
@@ -944,34 +944,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Permitir aceptar/rechazar en cualquier estado
-      // Removido la restricción de estado para permitir más flexibilidad
-      
       // If rejecting, require a reason
       if (action === 'reject' && !notes) {
         return res.status(400).json({ message: "Rejection reason is required" });
       }
       
-      // Update estimate based on action
-      const updateData = {
-        status: action === 'accept' ? 'accepted' : 'rejected',
-        clientSignature,
-        notes: notes 
-          ? `${estimate.notes ? estimate.notes + '\n\n' : ''}Client ${action}ed: ${notes}`
-          : `${estimate.notes ? estimate.notes + '\n\n' : ''}Estimate ${action}ed by client`
-      };
-      
-      // Update the estimate
-      const updatedEstimate = await storage.updateEstimateById(estimateId, updateData);
-      
-      res.json({
-        success: true,
-        message: `Estimate has been ${action}ed successfully`,
-        estimate: updatedEstimate
-      });
+      if (action === 'accept') {
+        // Para aceptar, convertimos el estimado a factura automáticamente
+        try {
+          console.log("Creando factura a partir de estimado aceptado:", estimateId);
+          
+          // Crear la factura con los mismos datos del estimado
+          const invoiceData = {
+            contractorId: estimate.contractorId,
+            clientId: estimate.clientId,
+            projectId: estimate.projectId,
+            estimateId: estimateId,
+            invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
+            status: 'pending',
+            issueDate: new Date(),
+            dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // 15 días para vencimiento
+            subtotal: estimate.subtotal,
+            taxRate: estimate.taxRate,
+            taxAmount: estimate.taxAmount,
+            discountRate: estimate.discountRate || 0,
+            discountAmount: estimate.discountAmount || 0,
+            total: estimate.total,
+            notes: `Factura generada automáticamente a partir del estimado #${estimate.estimateNumber}`,
+          };
+          
+          console.log("Datos de factura a crear:", invoiceData);
+          
+          // Crear la factura
+          const newInvoice = await storage.createInvoice(invoiceData);
+          console.log("Factura creada exitosamente:", newInvoice.id);
+          
+          // Copiar los items del estimado a la factura
+          if (estimate.items && estimate.items.length > 0) {
+            console.log(`Copiando ${estimate.items.length} items a la factura`);
+            for (const item of estimate.items) {
+              await storage.createInvoiceItem({
+                invoiceId: newInvoice.id,
+                contractorId: estimate.contractorId,
+                description: item.description,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+                amount: item.amount
+              });
+            }
+          }
+          
+          // Actualizar el estimado a estado convertido
+          const updateData = {
+            status: 'converted',
+            convertedToInvoiceId: newInvoice.id,
+            notes: `${estimate.notes ? estimate.notes + '\n\n' : ''}Estimate accepted and converted to Invoice #${newInvoice.invoiceNumber}`
+          };
+          
+          // Actualizar el estimado
+          const updatedEstimate = await storage.updateEstimateById(estimateId, updateData);
+          
+          res.json({
+            success: true,
+            message: "Estimate has been accepted and converted to invoice successfully",
+            estimate: updatedEstimate,
+            invoice: newInvoice
+          });
+          
+        } catch (error) {
+          console.error("Error al convertir estimado a factura:", error);
+          // En caso de error al crear la factura, aceptamos el estimado pero no lo convertimos
+          const updateData = {
+            status: 'accepted',
+            notes: `${estimate.notes ? estimate.notes + '\n\n' : ''}Estimate accepted but failed to convert to invoice`
+          };
+          
+          const updatedEstimate = await storage.updateEstimateById(estimateId, updateData);
+          
+          res.json({
+            success: true,
+            message: "Estimate has been accepted, but failed to create invoice",
+            estimate: updatedEstimate,
+            error: error instanceof Error ? error.message : String(error)
+          });
+        }
+      } else {
+        // Para rechazar, actualizamos el estado a rechazado
+        const updateData = {
+          status: 'rejected',
+          rejectionNotes: notes,
+          rejectedDate: new Date(),
+          notes: notes 
+            ? `${estimate.notes ? estimate.notes + '\n\n' : ''}Client rejected: ${notes}`
+            : `${estimate.notes ? estimate.notes + '\n\n' : ''}Estimate rejected by client`
+        };
+        
+        // Actualizar el estimado
+        const updatedEstimate = await storage.updateEstimateById(estimateId, updateData);
+        
+        res.json({
+          success: true,
+          message: "Estimate has been rejected successfully",
+          estimate: updatedEstimate
+        });
+      }
       
     } catch (error) {
-      console.error(`Error processing client ${req.body.action} action:`, error);
+      console.error(`Error processing client ${req.body?.action || 'unknown'} action:`, error);
       res.status(500).json({ 
         message: `Failed to process client action`, 
         error: error instanceof Error ? error.message : String(error)

@@ -312,7 +312,6 @@ export default function PublicEstimateView() {
         body: JSON.stringify({
           action,
           clientId: client?.id,
-          clientSignature: signature,
           notes: action === 'accept' ? '' : notes
         }),
       });
