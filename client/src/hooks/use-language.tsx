@@ -16,12 +16,9 @@ type LanguageContextType = {
 // Create context
 export const LanguageContext = createContext<LanguageContextType | null>(null);
 
-// List of supported languages
+// English only
 const supportedLanguages = [
   { code: 'en' as Language, name: 'English' },
-  { code: 'es' as Language, name: 'Español' },
-  { code: 'fr' as Language, name: 'Français' },
-  { code: 'pt' as Language, name: 'Português' },
 ];
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
@@ -29,23 +26,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   
-  // Initialize language from user preferences or localStorage - use English as default
-  const [language, setLanguage] = useState<Language>(() => {
-    // If user is logged in, use their saved preference
-    if (user?.language) {
-      return user.language as Language;
-    }
-    // Otherwise try to get from localStorage - default is English
-    const savedLanguage = localStorage.getItem('language');
-    return (savedLanguage as Language) || 'en';
-  });
-
-  // Update language when user data changes
-  useEffect(() => {
-    if (user?.language) {
-      setLanguage(user.language as Language);
-    }
-  }, [user]);
+  // Always use English as the only language
+  const [language, setLanguage] = useState<Language>('en');
 
   // Translation function
   const t = (key: string): string => {
@@ -57,30 +39,13 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     return getTranslation(translations.en as Translation, key);
   };
 
-  // Function to change the language
+  // Function to change the language (simplified to only use English)
   const changeLanguage = async (newLanguage: Language) => {
-    // Always update localStorage
-    localStorage.setItem('language', newLanguage);
-    
-    // Update local state
-    setLanguage(newLanguage);
-    
-    // If user is logged in, also update in the database
-    if (user) {
-      try {
-        setIsLoading(true);
-        await apiRequest("POST", "/api/protected/language", { language: newLanguage });
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to save language preference to server",
-          variant: "destructive",
-        });
-        console.error("Error saving language preference:", error);
-      } finally {
-        setIsLoading(false);
-      }
+    // Always use English regardless of what was passed
+    if (newLanguage !== 'en') {
+      console.warn('Only English is supported');
     }
+    setLanguage('en');
   };
 
   // Update the HTML lang attribute when language changes
