@@ -8,7 +8,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Globe, Loader2 } from "lucide-react";
 
-export function LanguageSwitcher() {
+export function LanguageSwitcher({ variant = "ghost", showText = true }: { 
+  variant?: "ghost" | "outline" | "secondary" | "default"; 
+  showText?: boolean;
+}) {
   const { language, changeLanguage, supportedLanguages, isLoading } = useLanguage();
 
   // Get the current language name to display
@@ -17,13 +20,17 @@ export function LanguageSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="flex items-center gap-2">
+        <Button 
+          variant={variant} 
+          size="sm" 
+          className="flex items-center gap-2 rounded-full"
+        >
           {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-5 w-5 animate-spin" />
           ) : (
-            <Globe className="h-4 w-4" />
+            <Globe className="h-5 w-5" />
           )}
-          <span className="hidden md:inline-block">{currentLanguageName}</span>
+          {showText && <span className="hidden md:inline-block">{currentLanguageName}</span>}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -31,12 +38,16 @@ export function LanguageSwitcher() {
           <DropdownMenuItem
             key={lang.code}
             onClick={() => changeLanguage(lang.code)}
-            className={language === lang.code ? "bg-muted" : ""}
+            className={language === lang.code ? "bg-muted font-medium" : ""}
             disabled={isLoading}
           >
             {language === lang.code && isLoading ? (
               <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-            ) : null}
+            ) : language === lang.code ? (
+              <span className="h-3 w-3 mr-2 rounded-full bg-primary" />
+            ) : (
+              <span className="h-3 w-3 mr-2" />
+            )}
             {lang.name}
           </DropdownMenuItem>
         ))}

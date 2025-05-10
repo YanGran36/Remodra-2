@@ -29,13 +29,13 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   
-  // Initialize language from user preferences or localStorage
+  // Initialize language from user preferences or localStorage - use English as default
   const [language, setLanguage] = useState<Language>(() => {
     // If user is logged in, use their saved preference
     if (user?.language) {
       return user.language as Language;
     }
-    // Otherwise try to get from localStorage or use English as default
+    // Otherwise try to get from localStorage - default is English
     const savedLanguage = localStorage.getItem('language');
     return (savedLanguage as Language) || 'en';
   });
