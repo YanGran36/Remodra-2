@@ -1670,6 +1670,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "No se pudo establecer la configuración como predeterminada" });
     }
   });
+  
+  // Public routes for invoices
+  app.get("/api/public/invoices/:id", async (req, res) => {
+    try {
+      const invoiceId = Number(req.params.id);
+      
+      // Get invoice by ID
+      const invoice = await storage.getInvoiceById(invoiceId);
+      
+      if (!invoice) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+      
+      // Get invoice items
+      const items = await storage.getInvoiceItems(invoiceId);
+      
+      // Get contractor info
+      const contractor = await storage.getContractor(invoice.contractorId);
+      // Get client info
+      const client = await storage.getClient(invoice.clientId, invoice.contractorId);
+      
+      // Get project info if available
+      let project = null;
+      if (invoice.projectId) {
+        project = await storage.getProject(invoice.projectId, invoice.contractorId);
+      }
+      
+      // Return combined data
+      res.json({
+        ...invoice,
+        items,
+        contractor,
+        client,
+        project
+      });
+      
+    } catch (error) {
+      console.error("Error fetching public invoice:", error);
+      res.status(500).json({ 
+        message: "Failed to fetch invoice", 
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Public endpoint for clients to sign invoices
+  app.post("/api/public/invoices/:id/client-action", async (req, res) => {
+    try {
+      const invoiceId = Number(req.params.id);
+      const { action, signature, notes } = req.body;
+      
+      if (!action) {
+        return res.status(400).json({ message: "Action is required" });
+      }
+      
+      // Get invoice by ID (public endpoint)
+      const invoice = await storage.getInvoiceById(invoiceId);
+      
+      if (!invoice) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+      
+      // For now we only support 'sign' action
+      if (action !== 'sign') {
+        return res.status(400).json({ message: "Invalid action. Only 'sign' is supported." });
+      }
+      
+      // Validate signature is provided
+      if (!signature) {
+        return res.status(400).json({ message: "Signature is required for signing" });
+      }
+      
+      // Make sure invoice is in a valid state for signing
+      if (invoice.status !== 'pending') {
+        return res.status(400).json({ 
+          message: `Cannot sign invoice in "${invoice.status}" status. Invoice must be in "pending" status.` 
+        });
+      }
+      
+      // Update invoice with signature and change status to 'signed'
+      const updatedInvoice = await storage.updateInvoiceById(invoiceId, {
+        status: 'signed',
+        clientSignature: signature,
+        notes: notes ? 
+          (invoice.notes ? `${invoice.notes}\n\n${notes}` : notes) : 
+          invoice.notes
+      });
+      
+      res.json({
+        success: true,
+        message: "Invoice has been signed successfully",
+        invoice: updatedInvoice
+      });
+      
+    } catch (error) {
+      console.error("Error processing invoice action:", error);
+      res.status(500).json({ 
+        message: "Error processing invoice action", 
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
 
   // Create HTTP server
   const httpServer = createServer(app);
