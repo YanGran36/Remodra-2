@@ -43,6 +43,7 @@ export interface IStorage {
   // Clients
   getClients: (contractorId: number) => Promise<any[]>;
   getClient: (id: number, contractorId: number) => Promise<any>;
+  getClientById: (id: number) => Promise<any>; // Método público para client
   createClient: (data: Omit<ClientInsert, "id">) => Promise<any>;
   updateClient: (id: number, contractorId: number, data: Partial<ClientInsert>) => Promise<any>;
   deleteClient: (id: number, contractorId: number) => Promise<boolean>;
@@ -90,6 +91,7 @@ export interface IStorage {
   
   // Invoice Items
   getInvoiceItems: (invoiceId: number, contractorId: number) => Promise<any[]>;
+  getInvoiceItemsById: (invoiceId: number) => Promise<any[]>; // Método público para clientes
   createInvoiceItem: (data: Omit<InvoiceItemInsert, "id">) => Promise<any>;
   updateInvoiceItem: (id: number, invoiceId: number, contractorId: number, data: Partial<InvoiceItemInsert>) => Promise<any>;
   deleteInvoiceItem: (id: number, invoiceId: number, contractorId: number) => Promise<boolean>;
@@ -241,6 +243,13 @@ class DatabaseStorage implements IStorage {
           orderBy: desc(projects.createdAt)
         }
       }
+    });
+  }
+  
+  // Método público para obtener un cliente por ID sin verificar el contratista
+  async getClientById(id: number) {
+    return await db.query.clients.findFirst({
+      where: eq(clients.id, id)
     });
   }
 
@@ -747,6 +756,13 @@ class DatabaseStorage implements IStorage {
       return [];
     }
     
+    return await db.query.invoiceItems.findMany({
+      where: eq(invoiceItems.invoiceId, invoiceId)
+    });
+  }
+  
+  // Método público para obtener items de factura por ID sin verificar el contratista
+  async getInvoiceItemsById(invoiceId: number) {
     return await db.query.invoiceItems.findMany({
       where: eq(invoiceItems.invoiceId, invoiceId)
     });
