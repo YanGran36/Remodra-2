@@ -964,12 +964,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             status: 'pending',
             issueDate: new Date(),
             dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // 15 días para vencimiento
-            subtotal: estimate.subtotal,
-            taxRate: estimate.taxRate,
-            taxAmount: estimate.taxAmount,
-            discountRate: estimate.discountRate || 0,
-            discountAmount: estimate.discountAmount || 0,
-            total: estimate.total,
+            subtotal: String(estimate.subtotal),
+            tax: String(estimate.tax || 0),
+            discount: String(estimate.discount || 0),
+            total: String(estimate.total),
             notes: `Factura generada automáticamente a partir del estimado #${estimate.estimateNumber}`,
           };
           
@@ -985,7 +983,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             for (const item of estimate.items) {
               await storage.createInvoiceItem({
                 invoiceId: newInvoice.id,
-                contractorId: estimate.contractorId,
                 description: item.description,
                 quantity: item.quantity,
                 unitPrice: item.unitPrice,
