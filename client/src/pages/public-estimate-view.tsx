@@ -8,9 +8,8 @@ import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Tabl
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
-import { AlertCircle, CheckCircle, XCircle, Send, Loader2, Undo, Download, Check } from "lucide-react";
+import { AlertCircle, CheckCircle, XCircle, Send, Loader2, Undo, Check, Pencil } from "lucide-react";
 import { format } from "date-fns";
-import { fabric } from "fabric";
 
 // Colores personalizados según el estado
 const statusColors: Record<string, string> = {
@@ -36,6 +35,9 @@ export default function PublicEstimateView() {
   const [contractor, setContractor] = useState<any>(null);
   const [client, setClient] = useState<any>(null);
   const [signature, setSignature] = useState("");
+  const [signatureType, setSignatureType] = useState<"text" | "draw">("draw");
+  const [textSignature, setTextSignature] = useState("");
+  const [drawSignature, setDrawSignature] = useState("");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -523,10 +525,7 @@ export default function PublicEstimateView() {
 
             <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 p-6 rounded-lg shadow-sm">
               <h3 className="text-xl font-bold text-blue-800 mb-3 flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pen-line">
-                  <path d="M12 20h9"></path>
-                  <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
-                </svg>
+                <Pencil className="h-6 w-6" />
                 Firma Digital
               </h3>
               <div className="border-l-4 border-blue-400 pl-4 mb-4">
@@ -534,21 +533,81 @@ export default function PublicEstimateView() {
                   Por favor, escriba su nombre completo como firma para proceder con la revisión de este estimado.
                 </p>
               </div>
-              <div className="relative">
-                <Input
-                  placeholder="Escriba su nombre completo aquí"
-                  value={signature}
-                  onChange={(e) => setSignature(e.target.value)}
-                  className="bg-white border-2 border-blue-300 focus:border-blue-500 py-6 px-4 text-lg rounded-md"
-                />
-                {signature && (
-                  <div className="absolute top-0 right-0 bg-blue-600 text-white rounded-full p-1 transform translate-x-1/2 -translate-y-1/2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-check">
-                      <path d="M20 6 9 17l-5-5"></path>
-                    </svg>
+              <div className="flex flex-col gap-4">
+                {/* Selector de tipo de firma */}
+                <div className="flex gap-4 w-full mb-2">
+                  <Button
+                    type="button"
+                    onClick={() => setSignatureType("text")}
+                    variant={signatureType === "text" ? "default" : "outline"}
+                    className={`flex-1 ${signatureType === "text" ? "bg-blue-600 hover:bg-blue-700" : ""}`}
+                  >
+                    Firma por Texto
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => setSignatureType("draw")}
+                    variant={signatureType === "draw" ? "default" : "outline"}
+                    className={`flex-1 ${signatureType === "draw" ? "bg-blue-600 hover:bg-blue-700" : ""}`}
+                  >
+                    Firma Escrita
+                  </Button>
+                </div>
+                
+                {/* Firma por texto */}
+                {signatureType === "text" && (
+                  <div className="relative">
+                    <Input
+                      placeholder="Escriba su nombre completo aquí"
+                      value={textSignature}
+                      onChange={(e) => {
+                        setTextSignature(e.target.value);
+                        setSignature(e.target.value);
+                      }}
+                      className="bg-white border-2 border-blue-300 focus:border-blue-500 py-6 px-4 text-lg rounded-md font-handwriting"
+                    />
+                    {textSignature && (
+                      <div className="absolute top-0 right-0 bg-blue-600 text-white rounded-full p-1 transform translate-x-1/2 -translate-y-1/2">
+                        <Check className="h-4 w-4" />
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Firma dibujada - usamos una simulación más simple */}
+                {signatureType === "draw" && (
+                  <div className="border-2 border-blue-300 bg-white p-3 rounded-md flex flex-col items-center">
+                    <div className="p-3 bg-gray-100 w-full rounded-md mb-3 flex justify-center">
+                      <p className="text-gray-600 text-center italic font-handwriting text-2xl">
+                        {textSignature || "Su firma aquí"}
+                      </p>
+                    </div>
+                    <div className="flex gap-3 w-full">
+                      <Input
+                        placeholder="Escriba su nombre"
+                        value={textSignature}
+                        onChange={(e) => {
+                          setTextSignature(e.target.value);
+                          setSignature(e.target.value);
+                        }}
+                        className="flex-1"
+                      />
+                      <Button 
+                        variant="outline" 
+                        className="bg-blue-50 hover:bg-blue-100"
+                        onClick={() => {
+                          setTextSignature("");
+                          setSignature("");
+                        }}
+                      >
+                        <Undo className="h-4 w-4 mr-2" />
+                        Borrar
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
+              
               <p className="text-sm text-blue-600 mt-3 italic">
                 Esta firma confirma su revisión del estimado y será usada en todos los documentos relacionados.
               </p>

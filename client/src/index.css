@@ -56,6 +56,17 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: 'Handwriting';
+  src: url('https://fonts.googleapis.com/css2?family=Homemade+Apple&display=swap');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.font-handwriting {
+  font-family: 'Handwriting', 'Signature', cursive;
+}
+
 /* Premium styles */
 .glass-card {
   background: rgba(255, 255, 255, 0.2);
