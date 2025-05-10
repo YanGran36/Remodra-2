@@ -8,8 +8,208 @@ import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Tabl
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
-import { AlertCircle, CheckCircle, XCircle, Send, Loader2, Undo, Check, Pencil } from "lucide-react";
+import { AlertCircle, CheckCircle, XCircle, Send, Loader2, Undo, Check, Pencil, Edit3 } from "lucide-react";
 import { format } from "date-fns";
+
+// Componente para firmar digitalmente con touchscreen
+function SignaturePad({
+  onChange,
+  value,
+  width = 350,
+  height = 200,
+  lineWidth = 2.5,
+  lineColor = "#000000",
+  clearLabel = "Borrar",
+  confirmLabel = "Confirmar Firma"
+}: {
+  onChange: (value: string) => void;
+  value?: string;
+  width?: number;
+  height?: number;
+  lineWidth?: number;
+  lineColor?: string;
+  clearLabel?: string;
+  confirmLabel?: string;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [drawing, setDrawing] = useState(false);
+  const [hasDrawn, setHasDrawn] = useState(false);
+  const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const isFirstRender = useRef(true);
+  
+  // Detectar si es dispositivo móvil
+  useEffect(() => {
+    setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
+  }, []);
+  
+  // Inicializar el canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    // Configurar el contexto del canvas
+    const context = canvas.getContext('2d');
+    if (!context) return;
+    
+    // Establecer las dimensiones exactas del canvas
+    canvas.width = width;
+    canvas.height = height;
+    
+    // Configurar el contexto de dibujo
+    context.lineWidth = lineWidth;
+    context.strokeStyle = lineColor;
+    context.lineJoin = 'round';
+    context.lineCap = 'round';
+    
+    setCtx(context);
+    
+    // Limpiar el canvas si es primera renderización
+    if (isFirstRender.current) {
+      clearCanvas();
+      isFirstRender.current = false;
+    }
+    
+    // Si hay un valor previo (por ejemplo, al editar), mostrarlo
+    if (value && !hasDrawn) {
+      const image = new Image();
+      image.onload = () => {
+        context.drawImage(image, 0, 0);
+        setHasDrawn(true);
+      };
+      image.src = value;
+    }
+  }, [width, height, lineWidth, lineColor, value]);
+  
+  // Función para comenzar a dibujar
+  const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+    setDrawing(true);
+    draw(e);
+  };
+  
+  // Función para dibujar
+  const draw = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!drawing || !ctx) return;
+    
+    // Prevenir desplazamiento en dispositivos táctiles
+    if (e.nativeEvent instanceof TouchEvent) {
+      e.preventDefault();
+    }
+    
+    // Obtener coordenadas
+    let x: number, y: number;
+    
+    if ('touches' in e.nativeEvent) {
+      // Evento táctil
+      const touch = e.nativeEvent.touches[0];
+      const rect = canvasRef.current?.getBoundingClientRect();
+      x = touch.clientX - (rect?.left || 0);
+      y = touch.clientY - (rect?.top || 0);
+    } else {
+      // Evento de ratón
+      const rect = canvasRef.current?.getBoundingClientRect();
+      x = e.nativeEvent.clientX - (rect?.left || 0);
+      y = e.nativeEvent.clientY - (rect?.top || 0);
+    }
+    
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    
+    setHasDrawn(true);
+  };
+  
+  // Función para dejar de dibujar
+  const finishDrawing = () => {
+    if (!ctx) return;
+    
+    ctx.beginPath();
+    setDrawing(false);
+  };
+  
+  // Función para limpiar el canvas
+  const clearCanvas = () => {
+    if (!ctx || !canvasRef.current) return;
+    
+    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    ctx.beginPath();
+    setHasDrawn(false);
+    onChange('');
+  };
+  
+  // Función para guardar la firma
+  const saveSignature = () => {
+    if (!canvasRef.current || !hasDrawn) return;
+    
+    try {
+      const dataURL = canvasRef.current.toDataURL('image/png');
+      onChange(dataURL);
+    } catch (e) {
+      console.error('Error al guardar la firma:', e);
+    }
+  };
+  
+  return (
+    <div className="flex flex-col items-center w-full">
+      <div 
+        className="border-2 border-blue-300 rounded-lg overflow-hidden bg-white mb-3 relative"
+        style={{ width: `${width}px`, height: `${height}px`, touchAction: 'none' }}
+      >
+        <canvas
+          ref={canvasRef}
+          className="cursor-crosshair"
+          width={width}
+          height={height}
+          onMouseDown={startDrawing}
+          onMouseMove={draw}
+          onMouseUp={finishDrawing}
+          onMouseLeave={finishDrawing}
+          onTouchStart={startDrawing}
+          onTouchMove={draw}
+          onTouchEnd={finishDrawing}
+        />
+        
+        {!hasDrawn && (
+          <div className="absolute inset-0 flex items-center justify-center text-gray-400 pointer-events-none">
+            <div className="text-center p-4">
+              <Edit3 className="h-6 w-6 mx-auto mb-2 opacity-50" />
+              <p>Dibuje su firma aquí</p>
+            </div>
+          </div>
+        )}
+      </div>
+      
+      <div className="flex gap-3 w-full justify-center">
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={clearCanvas}
+          className="flex items-center gap-2"
+        >
+          <Undo className="h-4 w-4" />
+          {clearLabel}
+        </Button>
+        
+        <Button 
+          type="button" 
+          onClick={saveSignature}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+          disabled={!hasDrawn}
+        >
+          <Check className="h-4 w-4" />
+          {confirmLabel}
+        </Button>
+      </div>
+      
+      {isMobile && (
+        <p className="text-sm text-blue-600 mt-3 text-center">
+          Use su dedo o un lápiz táctil para firmar
+        </p>
+      )}
+    </div>
+  );
+}
 
 // Colores personalizados según el estado
 const statusColors: Record<string, string> = {
@@ -574,37 +774,19 @@ export default function PublicEstimateView() {
                   </div>
                 )}
                 
-                {/* Firma dibujada - usamos una simulación más simple */}
+                {/* Firma dibujada - ahora con canvas interactivo */}
                 {signatureType === "draw" && (
-                  <div className="border-2 border-blue-300 bg-white p-3 rounded-md flex flex-col items-center">
-                    <div className="p-3 bg-gray-100 w-full rounded-md mb-3 flex justify-center">
-                      <p className="text-gray-600 text-center italic font-handwriting text-2xl">
-                        {textSignature || "Su firma aquí"}
-                      </p>
-                    </div>
-                    <div className="flex gap-3 w-full">
-                      <Input
-                        placeholder="Escriba su nombre"
-                        value={textSignature}
-                        onChange={(e) => {
-                          setTextSignature(e.target.value);
-                          setSignature(e.target.value);
-                        }}
-                        className="flex-1"
-                      />
-                      <Button 
-                        variant="outline" 
-                        className="bg-blue-50 hover:bg-blue-100"
-                        onClick={() => {
-                          setTextSignature("");
-                          setSignature("");
-                        }}
-                      >
-                        <Undo className="h-4 w-4 mr-2" />
-                        Borrar
-                      </Button>
-                    </div>
-                  </div>
+                  <SignaturePad
+                    onChange={(dataUrl) => {
+                      setDrawSignature(dataUrl);
+                      setSignature(dataUrl);
+                    }}
+                    value={drawSignature}
+                    width={350}
+                    height={200}
+                    clearLabel="Borrar Firma"
+                    confirmLabel="Confirmar Firma"
+                  />
                 )}
               </div>
               
@@ -679,10 +861,16 @@ export default function PublicEstimateView() {
               <div className="border-t border-b border-gray-200 py-4">
                 <p className="font-medium mb-1">Confirmación del cliente:</p>
                 <div className="bg-blue-50 p-3 rounded border border-blue-100">
-                  <p className="text-lg font-medium text-blue-800">{signature}</p>
+                  {signatureType === "text" ? (
+                    <p className="text-lg font-medium text-blue-800 font-handwriting">{signature}</p>
+                  ) : (
+                    <div className="flex justify-center">
+                      <img src={signature} alt="Firma digital" className="max-h-16" />
+                    </div>
+                  )}
                 </div>
                 <p className="text-sm text-gray-500 mt-2">
-                  Su nombre será utilizado como firma electrónica para este acuerdo.
+                  Su firma será utilizada como confirmación digital para este acuerdo.
                 </p>
               </div>
             </div>
@@ -747,10 +935,16 @@ export default function PublicEstimateView() {
               <div className="border-t border-b border-gray-200 py-4">
                 <p className="font-medium mb-1">Confirmación del cliente:</p>
                 <div className="bg-blue-50 p-3 rounded border border-blue-100">
-                  <p className="text-lg font-medium text-blue-800">{signature}</p>
+                  {signatureType === "text" ? (
+                    <p className="text-lg font-medium text-blue-800 font-handwriting">{signature}</p>
+                  ) : (
+                    <div className="flex justify-center">
+                      <img src={signature} alt="Firma digital" className="max-h-16" />
+                    </div>
+                  )}
                 </div>
                 <p className="text-sm text-gray-500 mt-2">
-                  Su nombre será utilizado como firma electrónica para este rechazo.
+                  Su firma será utilizada como confirmación digital para este rechazo.
                 </p>
               </div>
             </div>
