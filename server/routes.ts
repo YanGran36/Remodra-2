@@ -1694,7 +1694,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get project info if available
       let project = null;
       if (invoice.projectId) {
-        project = await storage.getProject(invoice.projectId, invoice.contractorId);
+        project = await storage.getProjectById(invoice.projectId);
       }
       
       // Return combined data

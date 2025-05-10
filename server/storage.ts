@@ -51,6 +51,7 @@ export interface IStorage {
   // Projects
   getProjects: (contractorId: number) => Promise<any[]>;
   getProject: (id: number, contractorId: number) => Promise<any>;
+  getProjectById: (id: number) => Promise<any>; // Método público para projects
   createProject: (data: Omit<ProjectInsert, "id">) => Promise<any>;
   updateProject: (id: number, contractorId: number, data: Partial<ProjectInsert>) => Promise<any>;
   deleteProject: (id: number, contractorId: number) => Promise<boolean>;
@@ -301,6 +302,16 @@ class DatabaseStorage implements IStorage {
         eq(projects.id, id),
         eq(projects.contractorId, contractorId)
       ),
+      with: {
+        client: true
+      }
+    });
+  }
+  
+  // Método público para obtener un proyecto por ID sin verificar el contratista
+  async getProjectById(id: number) {
+    return await db.query.projects.findFirst({
+      where: eq(projects.id, id),
       with: {
         client: true
       }
