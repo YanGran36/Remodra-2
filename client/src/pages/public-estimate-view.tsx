@@ -8,7 +8,7 @@ import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Tabl
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
-import { AlertCircle, CheckCircle, XCircle, Send, Loader2, Undo, Check, Pencil, Edit3 } from "lucide-react";
+import { AlertCircle, CheckCircle, XCircle, Send, Loader2, Undo, Check, Pencil, Edit3, ClipboardCheck } from "lucide-react";
 import { format } from "date-fns";
 
 // Componente para firmar digitalmente con touchscreen
@@ -724,74 +724,17 @@ export default function PublicEstimateView() {
 
             <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 p-6 rounded-lg shadow-sm">
               <h3 className="text-xl font-bold text-blue-800 mb-3 flex items-center gap-2">
-                <Pencil className="h-6 w-6" />
-                Firma Digital
+                <ClipboardCheck className="h-6 w-6" />
+                Revisión del Estimado
               </h3>
               <div className="border-l-4 border-blue-400 pl-4 mb-4">
                 <p className="text-blue-800">
-                  Por favor, escriba su nombre completo como firma para proceder con la revisión de este estimado.
+                  Por favor, revise cuidadosamente el estimado antes de tomar una decisión.
+                </p>
+                <p className="text-blue-700 mt-2">
+                  <strong>Nota importante:</strong> Al aceptar este estimado, se generará automáticamente una factura que requerirá su firma para proceder con el pago.
                 </p>
               </div>
-              <div className="flex flex-col gap-4">
-                {/* Selector de tipo de firma */}
-                <div className="flex gap-4 w-full mb-2">
-                  <Button
-                    type="button"
-                    onClick={() => setSignatureType("text")}
-                    variant={signatureType === "text" ? "default" : "outline"}
-                    className={`flex-1 ${signatureType === "text" ? "bg-blue-600 hover:bg-blue-700" : ""}`}
-                  >
-                    Firma por Texto
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => setSignatureType("draw")}
-                    variant={signatureType === "draw" ? "default" : "outline"}
-                    className={`flex-1 ${signatureType === "draw" ? "bg-blue-600 hover:bg-blue-700" : ""}`}
-                  >
-                    Firma Escrita
-                  </Button>
-                </div>
-                
-                {/* Firma por texto */}
-                {signatureType === "text" && (
-                  <div className="relative">
-                    <Input
-                      placeholder="Escriba su nombre completo aquí"
-                      value={textSignature}
-                      onChange={(e) => {
-                        setTextSignature(e.target.value);
-                        setSignature(e.target.value);
-                      }}
-                      className="bg-white border-2 border-blue-300 focus:border-blue-500 py-6 px-4 text-lg rounded-md font-handwriting"
-                    />
-                    {textSignature && (
-                      <div className="absolute top-0 right-0 bg-blue-600 text-white rounded-full p-1 transform translate-x-1/2 -translate-y-1/2">
-                        <Check className="h-4 w-4" />
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {/* Firma dibujada - ahora con canvas interactivo */}
-                {signatureType === "draw" && (
-                  <SignaturePad
-                    onChange={(dataUrl) => {
-                      setDrawSignature(dataUrl);
-                      setSignature(dataUrl);
-                    }}
-                    value={drawSignature}
-                    width={350}
-                    height={200}
-                    clearLabel="Borrar Firma"
-                    confirmLabel="Confirmar Firma"
-                  />
-                )}
-              </div>
-              
-              <p className="text-sm text-blue-600 mt-3 italic">
-                Esta firma confirma su revisión del estimado y será usada en todos los documentos relacionados.
-              </p>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4 bg-gradient-to-b from-blue-50 to-blue-100 p-8 border-t border-blue-200">
@@ -805,7 +748,6 @@ export default function PublicEstimateView() {
                 variant="outline"
                 onClick={() => setRejectDialogOpen(true)}
                 className="w-full sm:w-1/3 py-6 text-lg h-auto border-2 border-gray-300 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-all"
-                disabled={!signature}
               >
                 <XCircle className="h-5 w-5 mr-2 text-red-600" />
                 Rechazar
@@ -814,7 +756,6 @@ export default function PublicEstimateView() {
               <Button
                 onClick={() => setAcceptDialogOpen(true)}
                 className="w-full sm:w-2/3 bg-green-600 hover:bg-green-700 text-white py-8 text-xl h-auto rounded-lg shadow-lg transition-all hover:shadow-xl relative overflow-hidden"
-                disabled={!signature}
               >
                 <div className="absolute inset-0 bg-white/10 flex items-center justify-center">
                   <div className="animate-pulse bg-white/5 w-full h-full"></div>
@@ -826,11 +767,7 @@ export default function PublicEstimateView() {
               </Button>
             </div>
             
-            {!signature && (
-              <div className="text-center text-amber-600 bg-amber-50 p-3 rounded-md border border-amber-200 mt-2">
-                <p>Por favor, ingrese su firma arriba para habilitar los botones de aprobación.</p>
-              </div>
-            )}
+
           </CardFooter>
         </Card>
 
