@@ -7,7 +7,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { LanguageProvider } from "@/hooks/use-language";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { SessionRecoveryAlert } from "@/components/session-recovery-alert";
-import { GlobalLanguageSwitcher } from "@/components/layout/global-language-switcher";
+
 import AuthPage from "@/pages/auth-page";
 import Dashboard from "@/pages/dashboard";
 import CalendarPage from "@/pages/calendar-page";
@@ -65,7 +65,6 @@ function App() {
       <AuthProvider>
         <LanguageProvider>
           <Router />
-          <GlobalLanguageSwitcher />
           <SessionRecoveryAlert />
           <Toaster />
         </LanguageProvider>

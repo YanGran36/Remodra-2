@@ -16,7 +16,7 @@ import {
   ClipboardCheckIcon
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LanguageSwitcher } from "@/components/language-switcher";
+
 
 export default function Sidebar() {
   const [location] = useLocation();
@@ -99,11 +99,6 @@ export default function Sidebar() {
       </div>
       
       <div className="mt-auto border-t border-sidebar-border">
-        {/* Language Switcher */}
-        <div className="p-2 border-b border-sidebar-border flex justify-center">
-          <LanguageSwitcher />
-        </div>
-        
         {/* User Info and Logout */}
         <div className="p-4">
           <div className="flex items-center">
