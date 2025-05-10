@@ -944,12 +944,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Check if estimate can be accepted/rejected
-      if (estimate.status !== 'sent') {
-        return res.status(400).json({ 
-          message: `Estimate cannot be ${action}ed from current status: ${estimate.status}` 
-        });
-      }
+      // Permitir aceptar/rechazar en cualquier estado
+      // Removido la restricción de estado para permitir más flexibilidad
       
       // If rejecting, require a reason
       if (action === 'reject' && !notes) {
