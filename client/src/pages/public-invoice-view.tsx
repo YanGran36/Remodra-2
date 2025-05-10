@@ -251,9 +251,40 @@ function SignaturePad({
   );
 }
 
+// Definición de tipo para la factura
+interface Invoice {
+  id: number;
+  invoiceNumber?: string;
+  status: string;
+  issueDate?: string | Date;
+  dueDate?: string | Date;
+  subtotal?: number | string;
+  tax?: number | string;
+  discount?: number | string;
+  total?: number | string;
+  notes?: string;
+  terms?: string;
+  clientSignature?: string;
+  contractorSignature?: string;
+  updatedAt?: string | Date;
+  estimateId?: number;
+  items?: Array<{
+    id: number;
+    description: string;
+    quantity: number | string;
+    unitPrice: number | string;
+    amount: number | string;
+    notes?: string;
+  }>;
+  contractor?: any;
+  client?: any;
+  project?: any;
+  estimate?: any;
+}
+
 export default function PublicInvoiceView() {
   const { id } = useParams<{ id: string }>();
-  const [invoice, setInvoice] = useState<any>(null);
+  const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [contractor, setContractor] = useState<any>(null);
   const [client, setClient] = useState<any>(null);
   const [signature, setSignature] = useState<string>("");
@@ -333,11 +364,14 @@ export default function PublicInvoiceView() {
       });
       
       // Update local state
-      setInvoice(prevInvoice => ({
-        ...prevInvoice,
-        status: 'signed',
-        clientSignature: signature
-      }));
+      setInvoice((prevInvoice: any) => {
+        if (!prevInvoice) return null;
+        return {
+          ...prevInvoice,
+          status: 'signed',
+          clientSignature: signature
+        };
+      });
       
     } catch (err: any) {
       setActionResult({
