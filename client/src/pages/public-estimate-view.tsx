@@ -234,10 +234,7 @@ export default function PublicEstimateView() {
   const [estimate, setEstimate] = useState<any>(null);
   const [contractor, setContractor] = useState<any>(null);
   const [client, setClient] = useState<any>(null);
-  const [signature, setSignature] = useState("");
-  const [signatureType, setSignatureType] = useState<"text" | "draw">("draw");
-  const [textSignature, setTextSignature] = useState("");
-  const [drawSignature, setDrawSignature] = useState("");
+  // Ya no necesitamos variables para la firma
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -290,11 +287,6 @@ export default function PublicEstimateView() {
   }, [id]);
 
   const handleAction = async (action: 'accept' | 'reject') => {
-    if (!signature) {
-      setError("Por favor, ingrese su firma para continuar.");
-      return;
-    }
-    
     if (action === 'reject' && !notes) {
       setError("Por favor, proporcione un motivo para el rechazo.");
       return;
@@ -795,19 +787,12 @@ export default function PublicEstimateView() {
               </div>
               
               <div className="border-t border-b border-gray-200 py-4">
-                <p className="font-medium mb-1">Confirmación del cliente:</p>
+                <p className="font-medium mb-1">Información importante:</p>
                 <div className="bg-blue-50 p-3 rounded border border-blue-100">
-                  {signatureType === "text" ? (
-                    <p className="text-lg font-medium text-blue-800 font-handwriting">{signature}</p>
-                  ) : (
-                    <div className="flex justify-center">
-                      <img src={signature} alt="Firma digital" className="max-h-16" />
-                    </div>
-                  )}
+                  <p className="text-sm text-blue-800">
+                    Al aceptar este estimado, se generará automáticamente una factura que requerirá su firma para proceder con el pago.
+                  </p>
                 </div>
-                <p className="text-sm text-gray-500 mt-2">
-                  Su firma será utilizada como confirmación digital para este acuerdo.
-                </p>
               </div>
             </div>
             <DialogFooter className="gap-3 sm:gap-0">
@@ -868,19 +853,9 @@ export default function PublicEstimateView() {
                 )}
               </div>
               
-              <div className="border-t border-b border-gray-200 py-4">
-                <p className="font-medium mb-1">Confirmación del cliente:</p>
-                <div className="bg-blue-50 p-3 rounded border border-blue-100">
-                  {signatureType === "text" ? (
-                    <p className="text-lg font-medium text-blue-800 font-handwriting">{signature}</p>
-                  ) : (
-                    <div className="flex justify-center">
-                      <img src={signature} alt="Firma digital" className="max-h-16" />
-                    </div>
-                  )}
-                </div>
-                <p className="text-sm text-gray-500 mt-2">
-                  Su firma será utilizada como confirmación digital para este rechazo.
+              <div className="border-t border-gray-200 py-4">
+                <p className="text-gray-500 text-sm italic">
+                  Sus comentarios ayudarán al contratista a mejorar sus servicios. Gracias por su retroalimentación.
                 </p>
               </div>
             </div>
