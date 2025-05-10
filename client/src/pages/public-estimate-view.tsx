@@ -203,8 +203,8 @@ export default function PublicEstimateView() {
     );
   }
 
-  // Si ya se ha tomado acción (estimate.status !== 'sent'), mostrar resultado
-  if (estimate.status !== 'sent' || actionComplete) {
+  // Si ya se ha tomado acción y se ha completado la acción actual
+  if (actionComplete) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-gray-50">
         <Card className="w-full max-w-4xl shadow-lg">
@@ -390,10 +390,10 @@ export default function PublicEstimateView() {
                   <span className="font-medium">{contractor?.companyName || `${contractor?.firstName} ${contractor?.lastName}`}</span> le ha enviado un estimado para su revisión.
                 </CardDescription>
               </div>
-              <div className="hidden sm:flex">
+              <div className="flex">
                 <Button
                   size="lg"
-                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-lg h-auto rounded-xl shadow-lg transition-all hover:shadow-xl"
+                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-lg h-auto rounded-xl shadow-lg transition-all hover:shadow-xl animate-pulse"
                   onClick={() => setAcceptDialogOpen(true)}
                 >
                   <CheckCircle className="h-5 w-5 mr-2" />
