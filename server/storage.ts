@@ -728,12 +728,14 @@ class DatabaseStorage implements IStorage {
         estimate: {
           columns: {
             id: true,
-            number: true,
-            title: true,
+            estimateNumber: true,
             status: true,
             contractorId: true,
             clientId: true,
             projectId: true,
+            subtotal: true,
+            tax: true,
+            discount: true,
             total: true,
             createdAt: true
           }
@@ -768,12 +770,14 @@ class DatabaseStorage implements IStorage {
         estimate: {
           columns: {
             id: true,
-            number: true,
-            title: true,
+            estimateNumber: true,
             status: true,
             contractorId: true,
             clientId: true,
             projectId: true,
+            subtotal: true,
+            tax: true,
+            discount: true,
             total: true,
             createdAt: true
           }
