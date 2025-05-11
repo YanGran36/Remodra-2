@@ -19,6 +19,8 @@ import {
   contractorInsertSchema
 } from "@shared/schema";
 
+import { analyzeProject, generateSharingContent } from "./ai-service";
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
   setupAuth(app);
@@ -1882,6 +1884,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create HTTP server
+  // Endpoints de IA
+  app.post("/api/ai/analyze-project", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      if (!process.env.OPENAI_API_KEY) {
+        return res.status(500).json({ message: "API key de OpenAI no configurada" });
+      }
+      
+      const projectData = req.body;
+      const analysis = await analyzeProject(projectData);
+      
+      res.json(analysis);
+    } catch (error) {
+      console.error("Error analyzing project with AI:", error);
+      res.status(500).json({ 
+        message: `Error al analizar el proyecto con IA: ${error instanceof Error ? error.message : 'Error desconocido'}` 
+      });
+    }
+  });
+  
+  app.post("/api/ai/sharing-content/:projectId", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      if (!process.env.OPENAI_API_KEY) {
+        return res.status(500).json({ message: "API key de OpenAI no configurada" });
+      }
+      
+      const projectId = parseInt(req.params.projectId);
+      const settings = req.body.settings;
+      
+      // Obtener el proyecto completo
+      const project = await storage.getProject(projectId, req.user!.id);
+      
+      if (!project) {
+        return res.status(404).json({ message: "Proyecto no encontrado" });
+      }
+      
+      const sharingContent = await generateSharingContent(project, settings);
+      
+      res.json(sharingContent);
+    } catch (error) {
+      console.error("Error generating sharing content:", error);
+      res.status(500).json({ 
+        message: `Error al generar contenido para compartir: ${error instanceof Error ? error.message : 'Error desconocido'}` 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

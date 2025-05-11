@@ -13,6 +13,21 @@ export interface ProjectDetail extends Project {
   description: string;
   notes?: string | null;
   createdAt: Date;
+  // Campos para sección de trabajadores
+  workerInstructions?: string | null;
+  workerNotes?: string | null;
+  materialsNeeded?: any[] | null;
+  safetyRequirements?: string | null;
+  // Campos para sección de IA
+  aiProjectSummary?: string | null;
+  aiAnalysis?: any | null;
+  aiGeneratedDescription?: string | null;
+  aiSharingSettings?: {
+    installers: boolean;
+    clients: boolean;
+    estimators: boolean;
+  } | null;
+  lastAiUpdate?: string | Date | null;
 }
 
 export interface ProjectWithClient extends ProjectDetail {
@@ -21,6 +36,11 @@ export interface ProjectWithClient extends ProjectDetail {
     firstName: string;
     lastName: string;
     email?: string | null;
+    phone?: string | null;
+    address?: string | null;
+    city?: string | null;
+    state?: string | null;
+    zip?: string | null;
   }
 }
 
