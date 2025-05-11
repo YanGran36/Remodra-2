@@ -530,116 +530,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const estimateId = Number(req.params.id);
         
         // Obtener el estimado
-      const estimate = await storage.getEstimate(estimateId, req.user!.id);
-      
-      if (!estimate) {
-        return res.status(404).json({ message: "Estimate not found" });
-      }
-      
-      // Verify the estimate status allows conversion
-      // Solo permitir que estimados con estado 'accepted' puedan ser convertidos
-      if (estimate.status !== 'accepted') {
-        return res.status(400).json({ message: "Only accepted estimates can be converted to invoices. Please accept the estimate first." });
-      }
-      
-      // Get the estimate items
-      const estimateItems = await storage.getEstimateItems(estimateId, req.user!.id);
-      
-      // Generate an invoice number
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = (today.getMonth() + 1).toString().padStart(2, '0');
-      const random = Math.floor(Math.random() * 900) + 100; // Random 3-digit number
-      const invoiceNumber = `OT-${year}${month}-${random}`;
-      
-      // Create the invoice
-      const invoiceData = {
-        contractorId: req.user!.id,
-        clientId: estimate.clientId,
-        projectId: estimate.projectId,
-        estimateId: estimate.id,
-        invoiceNumber,
-        issueDate: new Date(),
-        dueDate: new Date(new Date().setDate(new Date().getDate() + 15)), // Due in 15 days
-        status: "pending",
-        subtotal: estimate.subtotal,
-        tax: estimate.tax,
-        discount: estimate.discount,
-        total: estimate.total,
-        amountPaid: "0",
-        terms: estimate.terms,
-        notes: estimate.notes,
-        contractorSignature: estimate.contractorSignature,
-      };
-      
-      const invoice = await storage.createInvoice(invoiceData);
-      
-      // Create invoice items from estimate items
-      if (estimateItems && estimateItems.length > 0) {
-        for (const item of estimateItems) {
-          await storage.createInvoiceItem({
-            invoiceId: invoice.id,
-            description: item.description,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            amount: item.amount,
-            notes: item.notes
-          });
+        const estimate = await storage.getEstimate(estimateId, req.user!.id);
+        
+        if (!estimate) {
+          return res.status(404).json({ message: "Estimate not found" });
         }
+        
+        // Verify the estimate status allows conversion
+        // Solo permitir que estimados con estado 'accepted' puedan ser convertidos
+        if (estimate.status !== 'accepted') {
+          return res.status(400).json({ message: "Only accepted estimates can be converted to invoices. Please accept the estimate first." });
+        }
+        
+        // Get the estimate items
+        const estimateItems = await storage.getEstimateItems(estimateId, req.user!.id);
+      
+        // Generate an invoice number
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = (today.getMonth() + 1).toString().padStart(2, '0');
+        const random = Math.floor(Math.random() * 900) + 100; // Random 3-digit number
+        const invoiceNumber = `OT-${year}${month}-${random}`;
+        
+        // Create the invoice
+        const invoiceData = {
+          contractorId: req.user!.id,
+          clientId: estimate.clientId,
+          projectId: estimate.projectId,
+          estimateId: estimate.id,
+          invoiceNumber,
+          issueDate: new Date(),
+          dueDate: new Date(new Date().setDate(new Date().getDate() + 15)), // Due in 15 days
+          status: "pending",
+          subtotal: estimate.subtotal,
+          tax: estimate.tax,
+          discount: estimate.discount,
+          total: estimate.total,
+          amountPaid: "0",
+          terms: estimate.terms,
+          notes: estimate.notes,
+          contractorSignature: estimate.contractorSignature,
+        };
+      
+        const invoice = await storage.createInvoice(invoiceData);
+        
+        // Create invoice items from estimate items
+        if (estimateItems && estimateItems.length > 0) {
+          for (const item of estimateItems) {
+            await storage.createInvoiceItem({
+              invoiceId: invoice.id,
+              description: item.description,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              amount: item.amount,
+              notes: item.notes
+            });
+          }
+        }
+        
+        // Mark the estimate as converted
+        await storage.updateEstimate(estimateId, req.user!.id, {
+          status: 'converted',
+          notes: `${estimate.notes ? estimate.notes + '\n\n' : ''}Converted to Invoice #${invoiceNumber}`
+        });
+        
+        // Return the created invoice with items
+        const completeInvoice = await storage.getInvoice(invoice.id, req.user!.id);
+        res.status(201).json(completeInvoice);
+        
+      } catch (error) {
+        console.error("Error converting estimate to work order:", error);
+        res.status(500).json({ message: "Failed to convert estimate to work order" });
       }
-      
-      // Mark the estimate as converted
-      await storage.updateEstimate(estimateId, req.user!.id, {
-        status: 'converted',
-        notes: `${estimate.notes ? estimate.notes + '\n\n' : ''}Converted to Invoice #${invoiceNumber}`
-      });
-      
-      // Return the created invoice with items
-      const completeInvoice = await storage.getInvoice(invoice.id, req.user!.id);
-      res.status(201).json(completeInvoice);
-      
-    } catch (error) {
-      console.error("Error converting estimate to work order:", error);
-      res.status(500).json({ message: "Failed to convert estimate to work order" });
     }
-  });
+  );
 
   // Estimate Items routes
-  app.get("/api/protected/estimates/:estimateId/items", async (req, res) => {
-    try {
-      const estimateId = Number(req.params.estimateId);
-      const items = await storage.getEstimateItems(estimateId, req.user!.id);
-      res.json(items);
-    } catch (error) {
-      console.error("Error fetching estimate items:", error);
-      res.status(500).json({ message: "Failed to fetch estimate items" });
+  app.get("/api/protected/estimates/:estimateId/items", 
+    verifyResourceOwnership('estimate', 'estimateId'),
+    async (req, res) => {
+      try {
+        const estimateId = Number(req.params.estimateId);
+        const items = await storage.getEstimateItems(estimateId, req.user!.id);
+        res.json(items);
+      } catch (error) {
+        console.error("Error fetching estimate items:", error);
+        res.status(500).json({ message: "Failed to fetch estimate items" });
+      }
     }
-  });
+  );
 
-  app.post("/api/protected/estimates/:estimateId/items", async (req, res) => {
-    try {
-      const estimateId = Number(req.params.estimateId);
+  app.post("/api/protected/estimates/:estimateId/items", 
+    verifyResourceOwnership('estimate', 'estimateId'),
+    async (req, res) => {
+      try {
+        const estimateId = Number(req.params.estimateId);
+        
+        // Obtener el estimado
+        const existingEstimate = await storage.getEstimate(estimateId, req.user!.id);
+        if (!existingEstimate) {
+          return res.status(404).json({ message: "Estimate not found" });
+        }
       
-      // First check if estimate exists and belongs to contractor
-      const existingEstimate = await storage.getEstimate(estimateId, req.user!.id);
-      if (!existingEstimate) {
-        return res.status(404).json({ message: "Estimate not found" });
+        const validatedData = estimateItemInsertSchema.parse({
+          ...req.body,
+          estimateId
+        });
+        
+        const item = await storage.createEstimateItem(validatedData);
+        res.status(201).json(item);
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return res.status(400).json({ errors: error.errors });
+        }
+        console.error("Error creating estimate item:", error);
+        res.status(500).json({ message: "Failed to create estimate item" });
       }
-      
-      const validatedData = estimateItemInsertSchema.parse({
-        ...req.body,
-        estimateId
-      });
-      
-      const item = await storage.createEstimateItem(validatedData);
-      res.status(201).json(item);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
-      }
-      console.error("Error creating estimate item:", error);
-      res.status(500).json({ message: "Failed to create estimate item" });
-    }
   });
 
   app.patch("/api/protected/estimates/:estimateId/items/:id", async (req, res) => {
