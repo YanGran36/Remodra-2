@@ -515,6 +515,10 @@ export const materialInsertSchema = createInsertSchema(materials);
 export const attachmentInsertSchema = createInsertSchema(attachments);
 export const followUpInsertSchema = createInsertSchema(followUps);
 export const propertyMeasurementInsertSchema = createInsertSchema(propertyMeasurements);
+export const achievementInsertSchema = createInsertSchema(achievements);
+export const contractorAchievementInsertSchema = createInsertSchema(contractorAchievements);
+export const achievementRewardInsertSchema = createInsertSchema(achievementRewards);
+export const contractorStreakInsertSchema = createInsertSchema(contractorStreaks);
 export const priceConfigurationInsertSchema = createInsertSchema(priceConfigurations, {
   configName: (schema) => schema.min(2, "Nombre de configuración debe tener al menos 2 caracteres"),
   serviceType: (schema) => schema.min(1, "Tipo de servicio es requerido")
@@ -534,6 +538,10 @@ export const attachmentSelectSchema = createSelectSchema(attachments);
 export const followUpSelectSchema = createSelectSchema(followUps);
 export const propertyMeasurementSelectSchema = createSelectSchema(propertyMeasurements);
 export const priceConfigurationSelectSchema = createSelectSchema(priceConfigurations);
+export const achievementSelectSchema = createSelectSchema(achievements);
+export const contractorAchievementSelectSchema = createSelectSchema(contractorAchievements);
+export const achievementRewardSelectSchema = createSelectSchema(achievementRewards);
+export const contractorStreakSelectSchema = createSelectSchema(contractorStreaks);
 
 // Export types
 export type Contractor = z.infer<typeof contractorSelectSchema>;
@@ -562,3 +570,12 @@ export type PropertyMeasurement = z.infer<typeof propertyMeasurementSelectSchema
 export type PropertyMeasurementInsert = z.infer<typeof propertyMeasurementInsertSchema>;
 export type PriceConfiguration = z.infer<typeof priceConfigurationSelectSchema>;
 export type PriceConfigurationInsert = z.infer<typeof priceConfigurationInsertSchema>;
+
+export type Achievement = z.infer<typeof achievementSelectSchema>;
+export type AchievementInsert = z.infer<typeof achievementInsertSchema>;
+export type ContractorAchievement = z.infer<typeof contractorAchievementSelectSchema>;
+export type ContractorAchievementInsert = z.infer<typeof contractorAchievementInsertSchema>;
+export type AchievementReward = z.infer<typeof achievementRewardSelectSchema>;
+export type AchievementRewardInsert = z.infer<typeof achievementRewardInsertSchema>;
+export type ContractorStreak = z.infer<typeof contractorStreakSelectSchema>;
+export type ContractorStreakInsert = z.infer<typeof contractorStreakInsertSchema>;

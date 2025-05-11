@@ -1,13 +1,14 @@
 import { db } from "./index";
 import * as schema from "@shared/schema";
 import { hashPassword } from "../server/auth";
+import { achievementSeedData, rewardSeedData } from "./achievement-seeds";
 
 async function seed() {
   try {
     console.log("Starting database seed...");
 
     // Check if database already has data
-    const existingContractors = await db.query.schema.contractors.findMany({
+    const existingContractors = await db.query.contractors.findMany({
       limit: 1
     });
 
@@ -443,6 +444,119 @@ async function seed() {
     ]).returning();
 
     console.log(`Created ${followUps.length} follow-ups`);
+    
+    // Crear logros
+    const createdAchievements = await db.insert(schema.achievements).values(
+      achievementSeedData
+    ).returning();
+    
+    console.log(`Created ${createdAchievements.length} achievements`);
+    
+    // Asignar algunos logros iniciales al contratista demo
+    const achievementMap = createdAchievements.reduce((map, achievement) => {
+      map[achievement.code] = achievement.id;
+      return map;
+    }, {} as Record<string, number>);
+    
+    // El contratista ya ha completado algunos logros iniciales
+    const contractorAchievements = await db.insert(schema.contractorAchievements).values([
+      {
+        contractorId: contractor.id,
+        achievementId: achievementMap['first_client'],
+        progress: 5, // Tiene 5 clientes
+        isCompleted: true,
+        completedAt: new Date(new Date().setDate(today.getDate() - 5)),
+        notified: true,
+        unlockedReward: true
+      },
+      {
+        contractorId: contractor.id,
+        achievementId: achievementMap['first_project'],
+        progress: 6, // Tiene 6 proyectos
+        isCompleted: true,
+        completedAt: new Date(new Date().setDate(today.getDate() - 4)),
+        notified: true,
+        unlockedReward: true
+      },
+      {
+        contractorId: contractor.id,
+        achievementId: achievementMap['first_estimate'],
+        progress: 1, // Tiene 1 estimación
+        isCompleted: true,
+        completedAt: new Date(new Date().setDate(today.getDate() - 3)),
+        notified: true,
+        unlockedReward: true
+      },
+      {
+        contractorId: contractor.id,
+        achievementId: achievementMap['first_invoice'],
+        progress: 1, // Tiene 1 factura
+        isCompleted: true,
+        completedAt: new Date(new Date().setDate(today.getDate() - 2)),
+        notified: true,
+        unlockedReward: true
+      },
+      {
+        contractorId: contractor.id,
+        achievementId: achievementMap['invoice_paid'],
+        progress: 1, // Tiene 1 factura pagada
+        isCompleted: true,
+        completedAt: new Date(new Date().setDate(today.getDate() - 1)),
+        notified: true,
+        unlockedReward: true
+      },
+      {
+        contractorId: contractor.id,
+        achievementId: achievementMap['client_master'],
+        progress: 5, // 5/10 para completar este logro
+        isCompleted: false
+      },
+      // Uno que acaba de completar pero que aún no ha sido notificado
+      {
+        contractorId: contractor.id,
+        achievementId: achievementMap['project_variety'],
+        progress: 3, // 3/3 para completar este logro
+        isCompleted: true,
+        completedAt: new Date(),
+        notified: false,
+        unlockedReward: false
+      }
+    ]).returning();
+    
+    console.log(`Created ${contractorAchievements.length} contractor achievements`);
+    
+    // Crear recompensas de logros
+    const createdRewards = [];
+    
+    for (const reward of rewardSeedData) {
+      const achievement = createdAchievements.find(a => a.code === reward.achievementCode);
+      if (achievement) {
+        const createdReward = await db.insert(schema.achievementRewards).values({
+          achievementId: achievement.id,
+          type: reward.type,
+          description: reward.description,
+          value: reward.value,
+          duration: reward.duration
+        }).returning();
+        
+        createdRewards.push(...createdReward);
+      }
+    }
+    
+    console.log(`Created ${createdRewards.length} achievement rewards`);
+    
+    // Crear una racha para el contratista
+    const streak = await db.insert(schema.contractorStreaks).values({
+      contractorId: contractor.id,
+      currentStreak: 3,
+      longestStreak: 5,
+      lastActivityDate: new Date(),
+      level: 2,
+      xp: 125,
+      nextLevelXp: 200
+    }).returning();
+    
+    console.log(`Created contractor streak record`);
 
     console.log("Database seed completed successfully!");
   } catch (error) {
