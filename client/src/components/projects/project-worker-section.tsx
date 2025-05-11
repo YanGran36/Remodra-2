@@ -228,7 +228,7 @@ export default function ProjectWorkerSection({ project }: ProjectWorkerSectionPr
                 </div>
               ))}
               
-              {(!form.watch("materialsNeeded") || form.watch("materialsNeeded").length === 0) && (
+              {(!form.watch("materialsNeeded") || !form.watch("materialsNeeded")?.length) && (
                 <div className="text-center p-4 border border-dashed rounded-md text-muted-foreground">
                   No hay materiales añadidos
                 </div>
