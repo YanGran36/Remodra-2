@@ -89,14 +89,36 @@ export function NewContractorForm({ onSuccess }: NewContractorFormProps) {
   const [step, setStep] = useState<number>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Definir los valores por defecto del formulario
+  // Definir los valores por defecto del formulario - importante definir TODOS los campos
   const defaultValues: Partial<ContractorFormValues> = {
+    // Información de la empresa
+    companyName: "",
+    email: "",
+    phone: "",
+    website: "",
+    address: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: "USA",
+    
+    // Información del usuario
+    firstName: "",
+    lastName: "",
+    username: "",
+    password: "",
+    
+    // Plan y servicios
     plan: "professional",
-    serviceTypes: [],
+    serviceTypes: ["deck"],
+    
+    // Configuración
     allowClientPortal: true,
     useEstimateTemplates: true,
     enabledAIAssistant: true,
     primaryColor: "#1E40AF",
+    logoUrl: "",
+    companyDescription: ""
   };
   
   // Configurar el formulario con React Hook Form
@@ -142,7 +164,7 @@ export function NewContractorForm({ onSuccess }: NewContractorFormProps) {
         }
         
         return response.json();
-      } catch (error) {
+      } catch (error: any) { // Tipar como 'any' para acceder a las propiedades
         if (error.name === 'AbortError') {
           throw new Error("La solicitud ha tomado demasiado tiempo. Intente nuevamente.");
         }
@@ -187,7 +209,7 @@ export function NewContractorForm({ onSuccess }: NewContractorFormProps) {
       };
       
       await createContractorMutation.mutateAsync(formattedData);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error en el envío del formulario:", error);
       toast({
         title: "Error al crear el contratista",

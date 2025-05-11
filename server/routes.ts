@@ -1790,17 +1790,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     */
     
     try {
+      console.log("Recibiendo solicitud para crear contratista:", JSON.stringify(req.body, null, 2));
+      
       // Validar los datos enviados
       const validData = contractorCreateSchema.parse(req.body);
+      console.log("Datos validados correctamente");
       
       // Buscar si ya existe un contratista con el mismo correo
       const existingEmail = await storage.getContractorByEmail(validData.email);
       if (existingEmail) {
+        console.log("Correo duplicado:", validData.email);
         return res.status(400).json({ message: "Ya existe un contratista con este correo electrónico" });
       }
       
       // Crear el contratista con contraseña hasheada
       const hashedPassword = await hashPassword(validData.password);
+      console.log("Contraseña hasheada correctamente");
       
       // Datos para crear el contratista
       const contractorData = {
@@ -1831,8 +1836,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
       };
       
+      console.log("Intentando guardar contratista con datos:", {
+        ...contractorData,
+        password: "[REDACTED]" // No mostramos la contraseña en los logs
+      });
+      
       // Guardar el contratista en la base de datos
       const newContractor = await storage.createContractor(contractorData);
+      console.log("Contratista guardado con ID:", newContractor.id);
       
       // Retornar el contratista creado (pero omitimos datos sensibles)
       res.status(201).json({
@@ -1846,11 +1857,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Datos inválidos", errors: error.errors });
+        console.error("Error de validación:", JSON.stringify(error.errors, null, 2));
+        return res.status(400).json({ 
+          message: "Datos inválidos", 
+          errors: error.errors,
+          details: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+        });
       }
       
       console.error("Error creating contractor:", error);
-      res.status(500).json({ message: "Error al crear el contratista" });
+      res.status(500).json({ 
+        message: "Error al crear el contratista",
+        details: error instanceof Error ? error.message : "Error desconocido"
+      });
     }
   });
 
