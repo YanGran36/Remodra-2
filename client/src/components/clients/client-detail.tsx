@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { 
   Tabs, 
   TabsContent, 
@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
 import { 
   Dialog,
   DialogContent,
@@ -16,8 +17,31 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 import { ClientWithProjects } from "@/hooks/use-clients";
-import { Edit, FileText, Phone, Mail, MapPin, User, Trash2, Plus } from "lucide-react";
+import { 
+  Edit, 
+  FileText, 
+  Phone, 
+  Mail, 
+  MapPin, 
+  User, 
+  Trash2, 
+  Plus, 
+  Share2, 
+  Copy, 
+  ExternalLink, 
+  FileSignature, 
+  ClipboardCheck 
+} from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import ProjectForm, { ProjectInput } from "@/components/projects/project-form";
 import { useProjects } from "@/hooks/use-projects";
@@ -38,6 +62,8 @@ export default function ClientDetail({
   onNewEstimate 
 }: ClientDetailProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const { toast } = useToast();
+  const portalLinkRef = useRef<HTMLInputElement>(null);
   
   const getInitials = (firstName: string, lastName: string) => {
     return `${firstName.charAt(0)}${lastName.charAt(0)}`;
