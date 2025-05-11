@@ -186,7 +186,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const data = {
         ...req.body,
         startDate: req.body.startDate ? new Date(req.body.startDate) : undefined,
-        endDate: req.body.endDate ? new Date(req.body.endDate) : undefined
+        endDate: req.body.endDate ? new Date(req.body.endDate) : undefined,
+        lastAiUpdate: req.body.lastAiUpdate ? new Date(req.body.lastAiUpdate) : (req.body.aiGeneratedDescription ? new Date() : undefined)
       };
       
       const validatedData = projectInsertSchema.partial().parse(data);
