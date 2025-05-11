@@ -1036,7 +1036,21 @@ class DatabaseStorage implements IStorage {
       where: eq(materials.contractorId, contractorId),
       orderBy: asc(materials.name),
       with: {
-        project: true
+        project: {
+          columns: {
+            id: true,
+            title: true,
+            status: true,
+            contractorId: true,
+            clientId: true,
+            description: true,
+            budget: true,
+            startDate: true,
+            endDate: true,
+            notes: true,
+            createdAt: true
+          }
+        }
       }
     });
   }
