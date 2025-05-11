@@ -1811,26 +1811,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const contractorData = {
         companyName: validData.companyName,
         email: validData.email,
-        phone: validData.phone,
+        phone: validData.phone || null,
         website: validData.website || null,
-        address: validData.address,
-        city: validData.city,
-        state: validData.state,
-        zip: validData.zipCode, // Ajustamos el nombre a 'zip' según el esquema
-        country: validData.country,
+        address: validData.address || null,
+        city: validData.city || null,
+        state: validData.state || null,
+        zip: validData.zipCode || null, // Ajustamos el nombre a 'zip' según el esquema
+        country: validData.country || "USA",
         firstName: validData.firstName,
         lastName: validData.lastName,
         username: validData.username,
         password: hashedPassword,
         role: "contractor", // Rol por defecto
-        plan: validData.plan,
+        plan: validData.plan || "professional",
         language: "en", // Añadimos el campo obligatorio
         settings: JSON.stringify({
-          serviceTypes: validData.serviceTypes,
-          allowClientPortal: validData.allowClientPortal,
-          useEstimateTemplates: validData.useEstimateTemplates,
-          enabledAIAssistant: validData.enabledAIAssistant,
-          primaryColor: validData.primaryColor,
+          serviceTypes: Array.isArray(validData.serviceTypes) && validData.serviceTypes.length > 0 
+            ? validData.serviceTypes 
+            : ["deck"],
+          allowClientPortal: typeof validData.allowClientPortal === 'boolean' 
+            ? validData.allowClientPortal 
+            : true,
+          useEstimateTemplates: typeof validData.useEstimateTemplates === 'boolean' 
+            ? validData.useEstimateTemplates 
+            : true,
+          enabledAIAssistant: typeof validData.enabledAIAssistant === 'boolean' 
+            ? validData.enabledAIAssistant 
+            : true,
+          primaryColor: validData.primaryColor || "#1E40AF",
           logoUrl: validData.logoUrl || null,
           companyDescription: validData.companyDescription || null
         })

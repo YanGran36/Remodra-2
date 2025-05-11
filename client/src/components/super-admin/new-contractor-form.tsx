@@ -47,22 +47,22 @@ const contractorFormSchema = z.object({
   // Información de la empresa
   companyName: z.string().min(2, "El nombre de la empresa debe tener al menos 2 caracteres"),
   email: z.string().email("Introduce un email válido"),
-  phone: z.string().min(6, "Introduce un número de teléfono válido"),
-  website: z.string().url("Introduce una URL válida").optional().or(z.literal('')),
-  address: z.string().min(5, "La dirección debe tener al menos 5 caracteres"),
-  city: z.string().min(2, "La ciudad debe tener al menos 2 caracteres"),
-  state: z.string().min(2, "El estado/provincia debe tener al menos 2 caracteres"),
-  zipCode: z.string().min(3, "El código postal debe tener al menos 3 caracteres"),
-  country: z.string().min(2, "El país debe tener al menos 2 caracteres"),
+  phone: z.string().min(6, "Introduce un número de teléfono válido").or(z.literal('')),
+  website: z.string().optional().or(z.literal('')),
+  address: z.string().min(5, "La dirección debe tener al menos 5 caracteres").or(z.literal('')),
+  city: z.string().min(2, "La ciudad debe tener al menos 2 caracteres").or(z.literal('')),
+  state: z.string().min(2, "El estado/provincia debe tener al menos 2 caracteres").or(z.literal('')),
+  zipCode: z.string().min(3, "El código postal debe tener al menos 3 caracteres").or(z.literal('')),
+  country: z.string().min(2, "El país debe tener al menos 2 caracteres").default("USA"),
   
   // Información del usuario principal
   firstName: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   lastName: z.string().min(2, "El apellido debe tener al menos 2 caracteres"),
-  username: z.string().min(4, "El nombre de usuario debe tener al menos 4 caracteres"),
-  password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
+  username: z.string().min(3, "El nombre de usuario debe tener al menos 3 caracteres"),
+  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
   
   // Información de suscripción
-  plan: z.enum(["basic", "professional", "premium"]),
+  plan: z.enum(["free", "basic", "professional", "premium", "enterprise"]).default("professional"),
   
   // Servicios ofrecidos
   serviceTypes: z.array(z.string()).min(1, "Selecciona al menos un tipo de servicio"),
@@ -73,9 +73,9 @@ const contractorFormSchema = z.object({
   enabledAIAssistant: z.boolean().default(true),
   
   // Datos de configuración visual
-  primaryColor: z.string().regex(/^#[0-9A-F]{6}$/i, "Introduce un color hexadecimal válido").default("#1E40AF"),
-  logoUrl: z.string().url("Introduce una URL válida para el logo").optional().or(z.literal('')),
-  companyDescription: z.string().max(500, "La descripción no debe exceder los 500 caracteres").optional(),
+  primaryColor: z.string().default("#1E40AF"),
+  logoUrl: z.string().optional().or(z.literal('')),
+  companyDescription: z.string().max(500, "La descripción no debe exceder los 500 caracteres").optional().or(z.literal('')),
 });
 
 type ContractorFormValues = z.infer<typeof contractorFormSchema>;
