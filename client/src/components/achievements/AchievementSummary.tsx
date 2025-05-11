@@ -186,7 +186,7 @@ export function AchievementSummary() {
             <div className="mt-4">
               <h4 className="text-sm font-medium mb-2">Próximos logros</h4>
               <div className="space-y-3">
-                {upcomingAchievements.map(achievement => {
+                {upcomingAchievements.map((achievement: ContractorAchievementWithDetails) => {
                   const progress = achievement.progress;
                   const required = achievement.achievement.requiredCount;
                   const percentage = Math.round((progress / required) * 100);

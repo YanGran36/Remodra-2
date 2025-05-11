@@ -283,35 +283,41 @@ export default function Dashboard() {
             </div>
           </section>
 
-          {/* Recent Activity */}
-          <section>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-900">{t('dashboard.recentActivity')}</h2>
-              <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-                  <circle cx="12" cy="12" r="1"/>
-                  <circle cx="19" cy="12" r="1"/>
-                  <circle cx="5" cy="12" r="1"/>
-                </svg>
-              </Button>
-            </div>
+          {/* Gamification Summary and Recent Activity */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+            {/* Achievement Summary */}
+            <AchievementSummary />
+            
+            {/* Recent Activity */}
+            <div className="col-span-full lg:col-span-2">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-900">{t('dashboard.recentActivity')}</h2>
+                <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                    <circle cx="12" cy="12" r="1"/>
+                    <circle cx="19" cy="12" r="1"/>
+                    <circle cx="5" cy="12" r="1"/>
+                  </svg>
+                </Button>
+              </div>
 
-            <Card className="shadow-sm border border-gray-100">
-              <CardContent className="p-0 divide-y divide-gray-100">
-                {recentActivity.map((activity, index) => (
-                  <ActivityItem 
-                    key={index}
-                    icon={activity.icon}
-                    iconBgColor={activity.iconBgColor}
-                    iconColor={activity.iconColor}
-                    title={activity.title}
-                    description={activity.description}
-                    timestamp={activity.timestamp}
-                  />
-                ))}
-              </CardContent>
-            </Card>
-          </section>
+              <Card className="shadow-sm border border-gray-100 h-full">
+                <CardContent className="p-0 divide-y divide-gray-100">
+                  {recentActivity.map((activity, index) => (
+                    <ActivityItem 
+                      key={index}
+                      icon={activity.icon}
+                      iconBgColor={activity.iconBgColor}
+                      iconColor={activity.iconColor}
+                      title={activity.title}
+                      description={activity.description}
+                      timestamp={activity.timestamp}
+                    />
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
       </main>
     </div>
