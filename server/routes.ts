@@ -24,6 +24,7 @@ import {
 } from "@shared/schema";
 
 import { analyzeProject, generateSharingContent } from "./ai-service";
+import * as achievementService from "./services/achievement-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
@@ -2048,6 +2049,206 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Eliminadas todas las rutas relacionadas con Google Sheets
+
+  // Rutas para el sistema de logros (gamificación)
+  app.get("/api/achievements", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "No autenticado" });
+      }
+
+      const achievements = await achievementService.getAllAchievements();
+      res.json(achievements);
+    } catch (error) {
+      console.error("Error al obtener logros:", error);
+      res.status(500).json({
+        message: "Error al obtener logros",
+        details: error instanceof Error ? error.message : "Error desconocido"
+      });
+    }
+  });
+
+  app.get("/api/contractor/achievements", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "No autenticado" });
+      }
+
+      const contractorId = req.user?.id;
+      if (!contractorId) {
+        return res.status(400).json({ message: "ID de contratista no proporcionado" });
+      }
+
+      const achievements = await achievementService.getContractorAchievements(contractorId);
+      res.json(achievements);
+    } catch (error) {
+      console.error("Error al obtener logros del contratista:", error);
+      res.status(500).json({
+        message: "Error al obtener logros del contratista",
+        details: error instanceof Error ? error.message : "Error desconocido"
+      });
+    }
+  });
+
+  app.get("/api/contractor/achievements/unread", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "No autenticado" });
+      }
+
+      const contractorId = req.user?.id;
+      if (!contractorId) {
+        return res.status(400).json({ message: "ID de contratista no proporcionado" });
+      }
+
+      const unreadAchievements = await achievementService.getUnreadAchievements(contractorId);
+      res.json(unreadAchievements);
+    } catch (error) {
+      console.error("Error al obtener logros no leídos:", error);
+      res.status(500).json({
+        message: "Error al obtener logros no leídos",
+        details: error instanceof Error ? error.message : "Error desconocido"
+      });
+    }
+  });
+
+  app.post("/api/contractor/achievements/:achievementId/mark-read", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "No autenticado" });
+      }
+
+      const contractorId = req.user?.id;
+      const achievementId = Number(req.params.achievementId);
+      
+      if (!contractorId) {
+        return res.status(400).json({ message: "ID de contratista no proporcionado" });
+      }
+
+      if (!achievementId) {
+        return res.status(400).json({ message: "ID de logro no válido" });
+      }
+
+      const updated = await achievementService.markAchievementAsNotified(contractorId, achievementId);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error al marcar logro como leído:", error);
+      res.status(500).json({
+        message: "Error al marcar logro como leído",
+        details: error instanceof Error ? error.message : "Error desconocido"
+      });
+    }
+  });
+
+  app.post("/api/contractor/achievements/:achievementId/unlock-reward", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "No autenticado" });
+      }
+
+      const contractorId = req.user?.id;
+      const achievementId = Number(req.params.achievementId);
+      
+      if (!contractorId) {
+        return res.status(400).json({ message: "ID de contratista no proporcionado" });
+      }
+
+      if (!achievementId) {
+        return res.status(400).json({ message: "ID de logro no válido" });
+      }
+
+      const result = await achievementService.unlockReward(contractorId, achievementId);
+      res.json(result);
+    } catch (error) {
+      console.error("Error al desbloquear recompensa:", error);
+      res.status(500).json({
+        message: "Error al desbloquear recompensa",
+        details: error instanceof Error ? error.message : "Error desconocido"
+      });
+    }
+  });
+
+  app.get("/api/contractor/stats", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "No autenticado" });
+      }
+
+      const contractorId = req.user?.id;
+      if (!contractorId) {
+        return res.status(400).json({ message: "ID de contratista no proporcionado" });
+      }
+
+      const stats = await achievementService.getContractorGameStats(contractorId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error al obtener estadísticas del contratista:", error);
+      res.status(500).json({
+        message: "Error al obtener estadísticas del contratista",
+        details: error instanceof Error ? error.message : "Error desconocido"
+      });
+    }
+  });
+
+  app.post("/api/contractor/streak/update", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "No autenticado" });
+      }
+
+      const contractorId = req.user?.id;
+      if (!contractorId) {
+        return res.status(400).json({ message: "ID de contratista no proporcionado" });
+      }
+
+      const streak = await achievementService.updateDailyStreak(contractorId);
+      res.json(streak);
+    } catch (error) {
+      console.error("Error al actualizar racha diaria:", error);
+      res.status(500).json({
+        message: "Error al actualizar racha diaria",
+        details: error instanceof Error ? error.message : "Error desconocido"
+      });
+    }
+  });
+
+  // Ruta para verificar y actualizar un logro 
+  // (Llamada internamente por el sistema cuando ocurren acciones relevantes)
+  app.post("/api/contractor/achievements/check", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "No autenticado" });
+      }
+
+      const contractorId = req.user?.id;
+      if (!contractorId) {
+        return res.status(400).json({ message: "ID de contratista no proporcionado" });
+      }
+
+      const { code, category, progress } = req.body;
+      
+      if (!code || !category || progress === undefined) {
+        return res.status(400).json({ 
+          message: "Datos incompletos. Se requiere code, category y progress" 
+        });
+      }
+
+      const result = await achievementService.checkAndUpdateAchievement({
+        contractorId,
+        code,
+        category,
+        progress
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error al verificar logro:", error);
+      res.status(500).json({
+        message: "Error al verificar logro",
+        details: error instanceof Error ? error.message : "Error desconocido"
+      });
+    }
+  });
 
   const httpServer = createServer(app);
 
