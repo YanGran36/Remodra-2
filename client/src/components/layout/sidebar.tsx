@@ -13,9 +13,12 @@ import {
   BotIcon, 
   SettingsIcon, 
   LogOutIcon,
-  ClipboardCheckIcon
+  ClipboardCheckIcon,
+  Globe
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { Separator } from "@/components/ui/separator";
 
 
 export default function Sidebar() {
@@ -96,6 +99,19 @@ export default function Sidebar() {
             <span>{t('navigation.settings')}</span>
           </Link>
         </nav>
+      </div>
+      
+      {/* Language Switcher Section */}
+      <div className="border-t border-sidebar-border">
+        <div className="p-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Globe className="mr-2 h-4 w-4 text-gray-400" />
+              <span className="text-sm">{t('settings.language')}</span>
+            </div>
+            <LanguageSwitcher variant="ghost" showText={false} size="sm" />
+          </div>
+        </div>
       </div>
       
       <div className="mt-auto border-t border-sidebar-border">
