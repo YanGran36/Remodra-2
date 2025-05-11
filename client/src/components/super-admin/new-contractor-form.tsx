@@ -119,12 +119,35 @@ export function NewContractorForm({ onSuccess }: NewContractorFormProps) {
   // Mutación para crear un nuevo contratista
   const createContractorMutation = useMutation({
     mutationFn: async (data: ContractorFormValues) => {
-      const response = await apiRequest("POST", "/api/super-admin/contractors", data);
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Error al crear el contratista");
+      console.log("Datos a enviar:", JSON.stringify(data, null, 2));
+      
+      // Establecemos un timeout de 10 segundos para la solicitud
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
+      try {
+        const response = await apiRequest(
+          "POST", 
+          "/api/super-admin/contractors", 
+          data, 
+          { signal: controller.signal }
+        );
+        
+        // Limpiar el timeout
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Error al crear el contratista");
+        }
+        
+        return response.json();
+      } catch (error) {
+        if (error.name === 'AbortError') {
+          throw new Error("La solicitud ha tomado demasiado tiempo. Intente nuevamente.");
+        }
+        throw error;
       }
-      return response.json();
     },
     onSuccess: (data) => {
       toast({
@@ -148,7 +171,29 @@ export function NewContractorForm({ onSuccess }: NewContractorFormProps) {
   const onSubmit = async (data: ContractorFormValues) => {
     setIsSubmitting(true);
     try {
-      await createContractorMutation.mutateAsync(data);
+      console.log("Enviando datos:", data);
+      
+      // Aseguramos que los campos tengan valores válidos
+      const formattedData = {
+        ...data,
+        // Aseguramos que estos campos son strings no vacíos
+        website: data.website || '',
+        logoUrl: data.logoUrl || '',
+        companyDescription: data.companyDescription || '',
+        // Aseguramos que serviceTypes es un array
+        serviceTypes: Array.isArray(data.serviceTypes) && data.serviceTypes.length > 0 
+          ? data.serviceTypes 
+          : ['deck'] // valor por defecto
+      };
+      
+      await createContractorMutation.mutateAsync(formattedData);
+    } catch (error) {
+      console.error("Error en el envío del formulario:", error);
+      toast({
+        title: "Error al crear el contratista",
+        description: error instanceof Error ? error.message : "Ocurrió un error inesperado",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
