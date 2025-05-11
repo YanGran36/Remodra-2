@@ -11,9 +11,52 @@ const GOOGLE_SHEETS_ID = process.env.GOOGLE_SHEETS_ID;
 // Crear y autorizar un cliente JWT para la API de Google
 const getJWTClient = async (): Promise<JWT> => {
   try {
-    // Parsear la clave de la cuenta de servicio desde la variable de entorno
-    const serviceAccountKey = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY || '{}');
+    // Obtener la clave de la cuenta de servicio desde la variable de entorno
+    const serviceAccountKeyStr = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
     
+    if (!serviceAccountKeyStr) {
+      throw new Error('No se encontró la clave de cuenta de servicio de Google (GOOGLE_SERVICE_ACCOUNT_KEY)');
+    }
+
+    // Intentar limpiar la cadena antes de parsearla
+    let cleanedStr = serviceAccountKeyStr;
+    
+    // Eliminar posibles caracteres especiales o espacios al inicio y final
+    cleanedStr = cleanedStr.trim();
+    
+    // Eliminar comillas adicionales si hay
+    if ((cleanedStr.startsWith('"') && cleanedStr.endsWith('"')) || 
+        (cleanedStr.startsWith("'") && cleanedStr.endsWith("'"))) {
+      cleanedStr = cleanedStr.substring(1, cleanedStr.length - 1);
+    }
+    
+    console.log('Intentando parsear la clave de servicio...');
+    
+    // Parsear el JSON
+    let serviceAccountKey;
+    try {
+      serviceAccountKey = JSON.parse(cleanedStr);
+    } catch (parseError: any) {
+      console.error('Error al parsear JSON de la clave de servicio:', parseError);
+      
+      // Verificar si necesitamos escapar caracteres
+      if (cleanedStr.includes('\\n')) {
+        console.log('La clave contiene secuencias de escape, intentando usar directamente...');
+        // Intenta usar un enfoque alternativo - creando un objeto manualmente
+        const lines = cleanedStr.split('\\n');
+        if (lines.length > 2) {
+          // Aquí podríamos construir un objeto manualmente si es necesario
+          throw new Error(`Error al parsear la clave: ${parseError.message}. La clave parece contener secuencias de escape.`);
+        }
+      }
+      
+      throw new Error(`Error al parsear la clave: ${parseError.message}`);
+    }
+    
+    if (!serviceAccountKey.client_email || !serviceAccountKey.private_key) {
+      throw new Error('La clave de servicio no contiene los campos requeridos (client_email y private_key)');
+    }
+
     const jwtClient = new JWT({
       email: serviceAccountKey.client_email,
       key: serviceAccountKey.private_key,
@@ -21,7 +64,9 @@ const getJWTClient = async (): Promise<JWT> => {
     });
 
     // Autorizar el cliente
+    console.log('Autorizando cliente JWT...');
     await jwtClient.authorize();
+    console.log('Cliente JWT autorizado correctamente');
     return jwtClient;
   } catch (error: any) {
     console.error('Error al autorizar el cliente JWT:', error);
