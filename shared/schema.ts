@@ -274,7 +274,7 @@ export const contractorsRelations = relations(contractors, ({ many }) => ({
   followUps: many(followUps),
   propertyMeasurements: many(propertyMeasurements),
   priceConfigurations: many(priceConfigurations),
-  googleSheetsConfigs: many(googleSheetsConfig)
+  // Referencia a Google Sheets eliminada
 }));
 
 export const clientsRelations = relations(clients, ({ one, many }) => ({
@@ -345,33 +345,7 @@ export const followUpsRelations = relations(followUps, ({ one }) => ({
   client: one(clients, { fields: [followUps.clientId], references: [clients.id] })
 }));
 
-// Google Sheets Integration
-export const googleSheetsConfig = pgTable("google_sheets_config", {
-  id: serial("id").primaryKey(),
-  contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
-  spreadsheetId: text("spreadsheet_id").notNull(),
-  spreadsheetName: text("spreadsheet_name"),
-  lastSync: timestamp("last_sync"),
-  enabled: boolean("enabled").default(true).notNull(),
-  autoSync: boolean("auto_sync").default(false),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull()
-});
-
-// Google Sheets Config schemas
-export const googleSheetsConfigInsertSchema = createInsertSchema(googleSheetsConfig, {
-  spreadsheetId: (schema) => schema.min(10, "ID de hoja de cálculo demasiado corto"),
-  spreadsheetName: (schema) => schema.optional()
-});
-export type GoogleSheetsConfigInsert = z.infer<typeof googleSheetsConfigInsertSchema>;
-
-export const googleSheetsConfigSelectSchema = createSelectSchema(googleSheetsConfig);
-export type GoogleSheetsConfig = z.infer<typeof googleSheetsConfigSelectSchema>;
-
-// Google Sheets Config relations
-export const googleSheetsConfigRelations = relations(googleSheetsConfig, ({ one }) => ({
-  contractor: one(contractors, { fields: [googleSheetsConfig.contractorId], references: [contractors.id] })
-}));
+// Google Sheets Integration - Eliminada
 
 // Property measurements relations
 export const propertyMeasurementsRelations = relations(propertyMeasurements, ({ one }) => ({
