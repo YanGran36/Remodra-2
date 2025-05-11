@@ -761,77 +761,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/protected/invoices/:id/cancel", 
     verifyResourceOwnership('invoice', 'id'),
     async (req, res) => {
-    try {
-      const invoiceId = Number(req.params.id);
-      
-      // Verificar que la factura existe y pertenece al contratista
-      const existingInvoice = await storage.getInvoice(invoiceId, req.user!.id);
-      if (!existingInvoice) {
-        return res.status(404).json({ message: "Invoice not found" });
+      try {
+        const invoiceId = Number(req.params.id);
+        
+        // El middleware ya verificó que la factura existe y pertenece al contratista
+        const existingInvoice = await storage.getInvoice(invoiceId, req.user!.id);
+        
+        // Verificar que la factura existe
+        if (!existingInvoice) {
+          return res.status(404).json({ message: "Invoice not found" });
+        }
+        
+        // Verificar que la factura no esté ya cancelada
+        if (existingInvoice.status === "cancelled") {
+          return res.status(400).json({ message: "Invoice is already cancelled" });
+        }
+        
+        // Si la factura está pagada, no se puede cancelar
+        if (existingInvoice.status === "paid") {
+          return res.status(400).json({ message: "Cannot cancel a paid invoice" });
+        }
+        
+        // Actualizar el estado de la factura a "cancelled"
+        const invoice = await storage.updateInvoice(invoiceId, req.user!.id, { 
+          status: "cancelled",
+          notes: req.body.notes 
+            ? `${existingInvoice.notes ? existingInvoice.notes + '\n\n' : ''}Cancelled: ${req.body.notes}`
+            : `${existingInvoice.notes ? existingInvoice.notes + '\n\n' : ''}Invoice cancelled`
+        });
+        
+        res.json(invoice);
+      } catch (error) {
+        console.error("Error cancelling invoice:", error);
+        res.status(500).json({ message: "Failed to cancel invoice" });
       }
-      
-      // Verificar que la factura no esté ya cancelada
-      if (existingInvoice.status === "cancelled") {
-        return res.status(400).json({ message: "Invoice is already cancelled" });
-      }
-      
-      // Si la factura está pagada, no se puede cancelar
-      if (existingInvoice.status === "paid") {
-        return res.status(400).json({ message: "Cannot cancel a paid invoice" });
-      }
-      
-      // Actualizar el estado de la factura a "cancelled"
-      const invoice = await storage.updateInvoice(invoiceId, req.user!.id, { 
-        status: "cancelled",
-        notes: req.body.notes 
-          ? `${existingInvoice.notes ? existingInvoice.notes + '\n\n' : ''}Cancelled: ${req.body.notes}`
-          : `${existingInvoice.notes ? existingInvoice.notes + '\n\n' : ''}Invoice cancelled`
-      });
-      
-      res.json(invoice);
-    } catch (error) {
-      console.error("Error cancelling invoice:", error);
-      res.status(500).json({ message: "Failed to cancel invoice" });
-    }
   });
 
-  app.delete("/api/protected/invoices/:id", async (req, res) => {
-    try {
-      const invoiceId = Number(req.params.id);
-      const success = await storage.deleteInvoice(invoiceId, req.user!.id);
-      
-      if (!success) {
-        return res.status(404).json({ message: "Invoice not found" });
+  app.delete("/api/protected/invoices/:id", 
+    verifyResourceOwnership('invoice', 'id'),
+    preventCascadeOperations('invoice'),
+    async (req, res) => {
+      try {
+        const invoiceId = Number(req.params.id);
+        const success = await storage.deleteInvoice(invoiceId, req.user!.id);
+        
+        if (!success) {
+          return res.status(404).json({ message: "Invoice not found" });
+        }
+        
+        res.status(204).end();
+      } catch (error) {
+        console.error("Error deleting invoice:", error);
+        res.status(500).json({ message: "Failed to delete invoice" });
       }
-      
-      res.status(204).end();
-    } catch (error) {
-      console.error("Error deleting invoice:", error);
-      res.status(500).json({ message: "Failed to delete invoice" });
-    }
   });
   
   // Record payment for an invoice
-  app.post("/api/protected/invoices/:id/payment", async (req, res) => {
-    try {
-      const invoiceId = Number(req.params.id);
-      const { amount } = req.body;
+  app.post("/api/protected/invoices/:id/payment", 
+    verifyResourceOwnership('invoice', 'id'),
+    async (req, res) => {
+      try {
+        const invoiceId = Number(req.params.id);
+        const { amount } = req.body;
+        
+        if (!amount || isNaN(parseFloat(amount))) {
+          return res.status(400).json({ message: "Valid payment amount is required" });
+        }
+        
+        // El middleware ya verificó que la factura existe y pertenece al contratista
+        const invoice = await storage.getInvoice(invoiceId, req.user!.id);
+        
+        if (!invoice) {
+          return res.status(404).json({ message: "Invoice not found" });
+        }
       
-      if (!amount || isNaN(parseFloat(amount))) {
-        return res.status(400).json({ message: "Valid payment amount is required" });
-      }
-      
-      // First get the invoice to verify ownership and current amount paid
-      const invoice = await storage.getInvoice(invoiceId, req.user!.id);
-      
-      if (!invoice) {
-        return res.status(404).json({ message: "Invoice not found" });
-      }
-      
-      const currentAmountPaid = parseFloat(invoice.amountPaid || "0");
-      const paymentAmount = parseFloat(amount);
-      const totalAmount = parseFloat(invoice.total);
-      const newAmountPaid = currentAmountPaid + paymentAmount;
+        const currentAmountPaid = parseFloat(invoice.amountPaid || "0");
+        const paymentAmount = parseFloat(amount);
+        const totalAmount = parseFloat(invoice.total);
+        const newAmountPaid = currentAmountPaid + paymentAmount;
       
       // Ensure payment doesn't exceed total
       if (newAmountPaid > totalAmount) {
