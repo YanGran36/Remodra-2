@@ -16,7 +16,31 @@ const tryParseServiceAccountKey = (input: string): any => {
 
   console.log('Intentando parsear clave de servicio, longitud:', input.length);
   
-  // 1. Caso más sencillo: la cadena ya es un JSON válido
+  // 1. Caso especial: la entrada parece ser solo la private_key sin el objeto JSON completo
+  if (input.includes('MIIE') && !input.includes('{') && !input.includes('}')) {
+    console.log('Detectada entrada que parece ser únicamente la clave privada. Construyendo objeto JSON...');
+    
+    // Construir un JSON completo con la clave privada
+    const privateKey = input.trim();
+    const formattedKey = `-----BEGIN PRIVATE KEY-----\n${privateKey}\n-----END PRIVATE KEY-----`;
+    
+    // Crear un objeto de cuenta de servicio con la clave privada
+    return {
+      "type": "service_account",
+      "project_id": "contractor-hub",
+      "private_key_id": "private_key_" + Date.now(),
+      "private_key": formattedKey,
+      "client_email": "contractor-hub-service@contractor-hub.iam.gserviceaccount.com",
+      "client_id": "client_id_" + Date.now(),
+      "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+      "token_uri": "https://oauth2.googleapis.com/token",
+      "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+      "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/contractor-hub-service%40contractor-hub.iam.gserviceaccount.com",
+      "universe_domain": "googleapis.com"
+    };
+  }
+  
+  // 2. Caso más sencillo: la cadena ya es un JSON válido
   try {
     return JSON.parse(input);
   } catch (e) {
@@ -24,7 +48,7 @@ const tryParseServiceAccountKey = (input: string): any => {
     console.log('Primer intento de parseo falló, intentando limpiar la cadena...');
   }
 
-  // 2. Limpiar la cadena de caracteres problemáticos
+  // 3. Limpiar la cadena de caracteres problemáticos
   let cleaned = input.trim();
 
   // Eliminar comillas envolventes si existen
@@ -40,7 +64,7 @@ const tryParseServiceAccountKey = (input: string): any => {
     }
   }
 
-  // 3. Probar reemplazando caracteres de escape y comillas problemáticas
+  // 4. Probar reemplazando caracteres de escape y comillas problemáticas
   try {
     // Detectar si hay secuencias de escape problemáticas
     const normalized = cleaned
@@ -55,7 +79,7 @@ const tryParseServiceAccountKey = (input: string): any => {
     console.log('Tercer intento con normalización simple falló...');
   }
 
-  // 4. Intento adicional: considerar que podría estar doblemente escapada
+  // 5. Intento adicional: considerar que podría estar doblemente escapada
   try {
     const doubleUnescaped = cleaned
       .replace(/\\\\/g, '\\')
@@ -68,7 +92,7 @@ const tryParseServiceAccountKey = (input: string): any => {
     console.log('Cuarto intento con doble escape falló...');
   }
 
-  // 5. Intento con búsqueda manual de llaves
+  // 6. Intento con búsqueda manual de llaves
   try {
     // Buscar el primer '{' y el último '}'
     const startBrace = cleaned.indexOf('{');
@@ -82,16 +106,17 @@ const tryParseServiceAccountKey = (input: string): any => {
     console.log('Quinto intento con búsqueda manual falló...');
   }
 
-  // 6. Último recurso: intentar con eval (sólo para claves de servicio en entorno controlado)
-  try {
-    // Nota: eval es generalmente peligroso, pero en este caso específico
-    // estamos usando para parsear una clave de servicio en un entorno controlado
-    const obj = eval('(' + cleaned + ')');
-    if (obj && typeof obj === 'object' && obj.client_email && obj.private_key) {
-      return obj;
+  // 7. Verificar si parece una clave codificada en base64
+  if (/^[A-Za-z0-9+/=]+$/.test(cleaned)) {
+    try {
+      console.log('Intentando decodificar como base64...');
+      const decoded = Buffer.from(cleaned, 'base64').toString('utf-8');
+      if (decoded.includes('{') && decoded.includes('}')) {
+        return JSON.parse(decoded);
+      }
+    } catch (e) {
+      console.log('Intento de decodificación base64 falló...');
     }
-  } catch (e) {
-    console.log('Último intento con eval falló...');
   }
 
   // Mostrar más información para ayudar a depurar
