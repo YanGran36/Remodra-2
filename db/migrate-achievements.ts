@@ -44,9 +44,10 @@ async function migrateAchievementTables() {
       CREATE TABLE IF NOT EXISTS achievement_rewards (
         id SERIAL PRIMARY KEY,
         achievement_id INTEGER NOT NULL REFERENCES achievements(id),
-        name TEXT NOT NULL,
+        type TEXT NOT NULL,
         description TEXT NOT NULL,
-        icon TEXT NOT NULL,
+        value TEXT NOT NULL,
+        duration INTEGER,
         created_at TIMESTAMP DEFAULT NOW() NOT NULL
       );
     `);
@@ -58,8 +59,10 @@ async function migrateAchievementTables() {
         contractor_id INTEGER NOT NULL REFERENCES contractors(id),
         current_streak INTEGER NOT NULL DEFAULT 0,
         longest_streak INTEGER NOT NULL DEFAULT 0,
-        last_login_date DATE,
-        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        last_activity_date DATE,
+        level INTEGER NOT NULL DEFAULT 1,
+        xp INTEGER NOT NULL DEFAULT 0,
+        next_level_xp INTEGER NOT NULL DEFAULT 100,
         updated_at TIMESTAMP DEFAULT NOW() NOT NULL,
         UNIQUE(contractor_id)
       );

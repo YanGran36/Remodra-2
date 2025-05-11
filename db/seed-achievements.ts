@@ -16,13 +16,15 @@ async function seedAchievements() {
       
       if (!existingAchievement) {
         await db.insert(achievements).values({
+          code: achievement.code,
           name: achievement.name,
           description: achievement.description,
           icon: achievement.icon,
           category: achievement.category,
           points: achievement.points,
-          requirementType: achievement.code,
-          requirementCount: achievement.requiredCount,
+          requiredCount: achievement.requiredCount,
+          level: achievement.level,
+          badgeColor: achievement.badgeColor
         });
         
         console.log(`✅ Logro insertado: ${achievement.name}`);
@@ -35,21 +37,22 @@ async function seedAchievements() {
     for (const reward of rewardSeedData) {
       // Obtener el ID del logro relacionado
       const relatedAchievement = await db.query.achievements.findFirst({
-        where: eq(achievements.requirementType, reward.achievementCode)
+        where: eq(achievements.code, reward.achievementCode)
       });
       
       if (relatedAchievement) {
         // Verificar si la recompensa ya existe
         const existingReward = await db.query.achievementRewards.findFirst({
-          where: eq(achievementRewards.name, reward.description)
+          where: eq(achievementRewards.description, reward.description)
         });
         
         if (!existingReward) {
           await db.insert(achievementRewards).values({
             achievementId: relatedAchievement.id,
-            name: reward.description,
-            description: `${reward.type}: ${reward.value}`,
-            icon: 'Gift',
+            type: reward.type,
+            description: reward.description,
+            value: reward.value,
+            duration: reward.duration,
           });
           
           console.log(`✅ Recompensa insertada para: ${relatedAchievement.name}`);
