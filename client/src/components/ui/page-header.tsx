@@ -7,7 +7,7 @@ export interface PageHeaderProps {
   actions?: ReactNode;
 }
 
-export function PageHeader({ title, description, icon, actions }: PageHeaderProps) {
+function PageHeader({ title, description, icon, actions }: PageHeaderProps) {
   return (
     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b">
       <div className="flex items-center gap-3">
@@ -33,3 +33,7 @@ export function PageHeader({ title, description, icon, actions }: PageHeaderProp
     </div>
   );
 }
+
+// Proporcionar ambas exportaciones: por nombre y por defecto
+export { PageHeader };
+export default PageHeader;
