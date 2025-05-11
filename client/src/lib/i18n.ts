@@ -1,4 +1,5 @@
 // Translations for the application
+import { enSettingsTranslations, esSettingsTranslations } from './settings-translations';
 
 // Define types for languages and translations
 export type Language = 'en' | 'es' | 'fr' | 'pt';
@@ -14,6 +15,7 @@ export type TranslationsByLanguage = {
 // Define translations for common components
 export const translations: Partial<TranslationsByLanguage> = {
   en: {
+    ...enSettingsTranslations,
     common: {
       save: 'Save',
       cancel: 'Cancel',
@@ -161,6 +163,7 @@ export const translations: Partial<TranslationsByLanguage> = {
     },
   },
   es: {
+    ...esSettingsTranslations,
     common: {
       save: 'Guardar',
       cancel: 'Cancelar',
