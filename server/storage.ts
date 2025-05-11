@@ -709,9 +709,35 @@ class DatabaseStorage implements IStorage {
       ),
       with: {
         client: true,
-        project: true,
+        project: {
+          columns: {
+            id: true,
+            title: true,
+            status: true,
+            contractorId: true,
+            clientId: true,
+            description: true,
+            budget: true,
+            startDate: true,
+            endDate: true,
+            notes: true,
+            createdAt: true
+          }
+        },
         items: true,
-        estimate: true
+        estimate: {
+          columns: {
+            id: true,
+            number: true,
+            title: true,
+            status: true,
+            contractorId: true,
+            clientId: true,
+            projectId: true,
+            total: true,
+            createdAt: true
+          }
+        }
       }
     });
   }
@@ -723,9 +749,35 @@ class DatabaseStorage implements IStorage {
       with: {
         client: true,
         contractor: true,
-        project: true,
+        project: {
+          columns: {
+            id: true,
+            title: true,
+            status: true,
+            contractorId: true,
+            clientId: true,
+            description: true,
+            budget: true,
+            startDate: true,
+            endDate: true,
+            notes: true,
+            createdAt: true
+          }
+        },
         items: true,
-        estimate: true
+        estimate: {
+          columns: {
+            id: true,
+            number: true,
+            title: true,
+            status: true,
+            contractorId: true,
+            clientId: true,
+            projectId: true,
+            total: true,
+            createdAt: true
+          }
+        }
       }
     });
   }
