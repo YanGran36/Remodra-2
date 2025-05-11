@@ -17,6 +17,42 @@ import {
   priceConfigurationInsertSchema
 } from "@shared/schema";
 
+// Esquema para la creación de contratistas desde el super admin
+const contractorCreateSchema = z.object({
+  // Información de la empresa
+  companyName: z.string().min(2),
+  email: z.string().email(),
+  phone: z.string().min(6),
+  website: z.string().url().optional().or(z.literal('')),
+  address: z.string().min(5),
+  city: z.string().min(2),
+  state: z.string().min(2),
+  zipCode: z.string().min(3),
+  country: z.string().min(2),
+  
+  // Información del usuario principal
+  firstName: z.string().min(2),
+  lastName: z.string().min(2),
+  username: z.string().min(4),
+  password: z.string().min(8),
+  
+  // Información de suscripción
+  plan: z.enum(["basic", "professional", "premium"]),
+  
+  // Servicios ofrecidos
+  serviceTypes: z.array(z.string()).min(1),
+  
+  // Configuración adicional
+  allowClientPortal: z.boolean().default(true),
+  useEstimateTemplates: z.boolean().default(true),
+  enabledAIAssistant: z.boolean().default(true),
+  
+  // Datos de configuración visual
+  primaryColor: z.string().regex(/^#[0-9A-F]{6}$/i).default("#1E40AF"),
+  logoUrl: z.string().url().optional().or(z.literal('')),
+  companyDescription: z.string().max(500).optional(),
+});
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
   setupAuth(app);

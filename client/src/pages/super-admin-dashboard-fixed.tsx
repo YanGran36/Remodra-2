@@ -400,7 +400,10 @@ export default function SuperAdminDashboard() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
             <Input type="text" placeholder="Buscar contratistas..." className="pl-8 border-gradient" />
           </div>
-          <Button className="bg-primary hover:bg-primary/90 transition-all">
+          <Button 
+            className="bg-primary hover:bg-primary/90 transition-all"
+            onClick={() => window.location.href = '/super-admin/add-contractor'}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Nuevo Contratista
           </Button>
