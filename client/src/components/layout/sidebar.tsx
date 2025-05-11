@@ -14,8 +14,7 @@ import {
   SettingsIcon, 
   LogOutIcon,
   ClipboardCheckIcon,
-  Globe,
-  Table
+  Globe
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -95,10 +94,7 @@ export default function Sidebar() {
             <ClipboardCheckIcon className="mr-3 h-5 w-5" />
             <span>{t('navigation.vendorForm')}</span>
           </Link>
-          <Link href="/google-sheets" className={getLinkClass("/google-sheets")}>
-            <Table className="mr-3 h-5 w-5" />
-            <span>{t('navigation.googleSheets') || 'Google Sheets'}</span>
-          </Link>
+          {/* Enlace a Google Sheets eliminado */}
           <Link href="/settings" className={getLinkClass("/settings")}>
             <SettingsIcon className="mr-3 h-5 w-5" />
             <span>{t('navigation.settings')}</span>
