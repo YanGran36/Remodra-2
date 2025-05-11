@@ -203,38 +203,23 @@ export default function PublicInvoiceView() {
       setError(null);
       
       try {
-        // Obtener la factura
+        // Obtener la factura con todos los datos relacionados
         const invoiceRes = await apiRequest("GET", `/api/public/invoices/${id}`);
         if (!invoiceRes.ok) {
           throw new Error(`Error al cargar la factura: ${invoiceRes.status}`);
         }
         const invoiceData = await invoiceRes.json();
-        setInvoice(invoiceData);
         
-        // Obtener el cliente
-        const clientRes = await apiRequest("GET", `/api/public/clients/${invoiceData.clientId}`);
-        if (!clientRes.ok) {
-          throw new Error(`Error al cargar los datos del cliente: ${clientRes.status}`);
-        }
-        const clientData = await clientRes.json();
+        // Extraer los datos de la respuesta
+        const { items: invoiceItems, client: clientData, project: projectData, ...invoiceDetails } = invoiceData;
+        
+        // Actualizar el estado con los datos recibidos
+        setInvoice(invoiceDetails);
         setClient(clientData);
-        
-        // Obtener el proyecto si existe
-        if (invoiceData.projectId) {
-          const projectRes = await apiRequest("GET", `/api/public/projects/${invoiceData.projectId}`);
-          if (projectRes.ok) {
-            const projectData = await projectRes.json();
-            setProject(projectData);
-          }
+        if (projectData) {
+          setProject(projectData);
         }
-        
-        // Obtener los items de la factura
-        const itemsRes = await apiRequest("GET", `/api/public/invoices/${id}/items`);
-        if (!itemsRes.ok) {
-          throw new Error(`Error al cargar los detalles de la factura: ${itemsRes.status}`);
-        }
-        const itemsData = await itemsRes.json();
-        setItems(itemsData);
+        setItems(invoiceItems || []);
         
       } catch (err: any) {
         console.error("Error:", err);
@@ -256,24 +241,35 @@ export default function PublicInvoiceView() {
     try {
       setSignatureDialogOpen(false);
       
-      const response = await apiRequest("PATCH", `/api/public/invoices/${id}`, {
-        status: "signed",
+      const response = await apiRequest("POST", `/api/public/invoices/${id}/client-action`, {
+        action: "sign",
         signature: signatureData,
-        signedAt: new Date().toISOString(),
+        notes: "Firmado por el cliente a través del portal"
       });
       
       if (!response.ok) {
         throw new Error("Error al guardar la firma");
       }
       
-      // Actualizar el estado local
-      setSignatureData(signatureData);
-      setInvoice({
-        ...invoice,
-        status: "signed",
-        signature: signatureData,
-        signedAt: new Date().toISOString(),
-      });
+      // Obtener los datos actualizados de la factura
+      const updatedInvoiceRes = await apiRequest("GET", `/api/public/invoices/${id}`);
+      if (updatedInvoiceRes.ok) {
+        const updatedData = await updatedInvoiceRes.json();
+        const { items: invoiceItems, client: clientData, project: projectData, ...invoiceDetails } = updatedData;
+        
+        // Actualizar el estado local con los datos recibidos
+        setInvoice(invoiceDetails);
+        setItems(invoiceItems || []);
+      } else {
+        // Actualizar solo el estado local si no se pudo obtener la factura actualizada
+        setSignatureData(signatureData);
+        setInvoice({
+          ...invoice,
+          status: "signed",
+          signature: signatureData,
+          signedAt: new Date().toISOString(),
+        });
+      }
       
       toast({
         title: "Factura firmada correctamente",
