@@ -264,26 +264,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Obtener estimados por proyecto
-  app.get("/api/protected/projects/:id/estimates", async (req, res) => {
-    try {
-      const projectId = Number(req.params.id);
-      
-      // Primero verificamos que el proyecto existe y pertenece al contratista
-      const project = await storage.getProject(projectId, req.user!.id);
-      if (!project) {
-        return res.status(404).json({ message: "Project not found" });
+  app.get("/api/protected/projects/:id/estimates", 
+    verifyResourceOwnership('project', 'id'),
+    async (req, res) => {
+      try {
+        const projectId = Number(req.params.id);
+        
+        // Obtener los estimados que corresponden a este proyecto
+        const estimates = await storage.getEstimates(req.user!.id);
+        const projectEstimates = estimates.filter(estimate => estimate.projectId === projectId);
+        
+        res.json(projectEstimates);
+      } catch (error) {
+        console.error("Error fetching project estimates:", error);
+        res.status(500).json({ message: "Failed to fetch project estimates" });
       }
-      
-      // Obtener los estimados que corresponden a este proyecto
-      const estimates = await storage.getEstimates(req.user!.id);
-      const projectEstimates = estimates.filter(estimate => estimate.projectId === projectId);
-      
-      res.json(projectEstimates);
-    } catch (error) {
-      console.error("Error fetching project estimates:", error);
-      res.status(500).json({ message: "Failed to fetch project estimates" });
     }
-  });
+  );
 
   // Estimates routes
   app.get("/api/protected/estimates", async (req, res) => {
@@ -296,8 +293,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/protected/estimates/:id", async (req, res) => {
-    try {
+  app.get("/api/protected/estimates/:id", 
+    verifyResourceOwnership('estimate'),
+    async (req, res) => {
+      try {
       const estimate = await storage.getEstimate(Number(req.params.id), req.user!.id);
       if (!estimate) {
         return res.status(404).json({ message: "Estimate not found" });
@@ -312,6 +311,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/protected/estimates", async (req, res) => {
     console.log("POST /api/protected/estimates - Recibiendo solicitud:", JSON.stringify(req.body, null, 2));
     try {
+      // Verificar que el proyecto pertenezca al contratista si se proporciona uno
+      if (req.body.projectId) {
+        const projectId = Number(req.body.projectId);
+        // Buscar el proyecto directamente con storage
+        const project = await storage.getProject(projectId, req.user!.id);
+        
+        if (!project) {
+          return res.status(403).json({ 
+            message: "No tienes permisos para crear un estimado para este proyecto" 
+          });
+        }
+      }
+      
       // Preparar datos con el ID del contratista
       const dataWithContractorId = {
         ...req.body,
@@ -358,18 +370,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/protected/estimates/:id", async (req, res) => {
-    try {
-      const estimateId = Number(req.params.id);
-      
-      console.log("updateEstimate -> API - Actualizando estimado ID:", estimateId);
-      console.log("updateEstimate -> API - Datos recibidos:", JSON.stringify(req.body, null, 2));
-      
-      // First check if estimate exists and belongs to contractor
-      const existingEstimate = await storage.getEstimate(estimateId, req.user!.id);
-      if (!existingEstimate) {
-        return res.status(404).json({ message: "Estimate not found" });
-      }
+  app.patch("/api/protected/estimates/:id", 
+    verifyResourceOwnership('estimate'),
+    async (req, res) => {
+      try {
+        const estimateId = Number(req.params.id);
+        
+        console.log("updateEstimate -> API - Actualizando estimado ID:", estimateId);
+        console.log("updateEstimate -> API - Datos recibidos:", JSON.stringify(req.body, null, 2));
+        
+        // Obtener el estimado actual para verificar su existencia
+        const existingEstimate = await storage.getEstimate(estimateId, req.user!.id);
+        if (!existingEstimate) {
+          return res.status(404).json({ message: "Estimate not found" });
+        }
       
       // Preparar datos con conversión de fechas
       const dataWithDateObjects = { ...req.body };
@@ -416,28 +430,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/protected/estimates/:id", async (req, res) => {
-    try {
-      const estimateId = Number(req.params.id);
-      const success = await storage.deleteEstimate(estimateId, req.user!.id);
-      
-      if (!success) {
-        return res.status(404).json({ message: "Estimate not found" });
+  app.delete("/api/protected/estimates/:id", 
+    verifyResourceOwnership('estimate'),
+    async (req, res) => {
+      try {
+        const estimateId = Number(req.params.id);
+        const success = await storage.deleteEstimate(estimateId, req.user!.id);
+        
+        if (!success) {
+          return res.status(404).json({ message: "Estimate not found" });
+        }
+        
+        res.status(204).end();
+      } catch (error) {
+        console.error("Error deleting estimate:", error);
+        res.status(500).json({ message: "Failed to delete estimate" });
       }
-      
-      res.status(204).end();
-    } catch (error) {
-      console.error("Error deleting estimate:", error);
-      res.status(500).json({ message: "Failed to delete estimate" });
     }
-  });
+  );
   
   // Accept estimate
-  app.post("/api/protected/estimates/:id/accept", async (req, res) => {
-    try {
-      const estimateId = Number(req.params.id);
-      
-      // First check if estimate exists and belongs to contractor
+  app.post("/api/protected/estimates/:id/accept", 
+    verifyResourceOwnership('estimate'),
+    async (req, res) => {
+      try {
+        const estimateId = Number(req.params.id);
+        
+        // First check if estimate exists and belongs to contractor
       const existingEstimate = await storage.getEstimate(estimateId, req.user!.id);
       if (!existingEstimate) {
         return res.status(404).json({ message: "Estimate not found" });
