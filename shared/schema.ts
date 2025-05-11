@@ -348,6 +348,34 @@ export const contractorInsertSchema = createInsertSchema(contractors, {
   language: (schema) => schema.refine(val => ["en", "es", "fr", "pt"].includes(val), "Language must be one of: en, es, fr, pt")
 });
 
+// Schema for Super Admin to create contractors with extended fields
+export const contractorCreateSchema = z.object({
+  firstName: z.string().min(2, "First name must be at least 2 characters"),
+  lastName: z.string().min(2, "Last name must be at least 2 characters"),
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  email: z.string().email("Must provide a valid email"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  companyName: z.string().min(2, "Company name must be at least 2 characters"),
+  phone: z.string().optional(),
+  website: z.string().optional().nullable(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zipCode: z.string().optional(),
+  country: z.string().default("USA"),
+  plan: z.enum(["free", "basic", "premium", "enterprise"]).default("basic"),
+  // Configuración de servicios y preferencias
+  serviceTypes: z.array(
+    z.enum(["deck", "fence", "roof", "siding", "windows", "gutters"])
+  ).default(["deck"]),
+  allowClientPortal: z.boolean().default(true),
+  useEstimateTemplates: z.boolean().default(true),
+  enabledAIAssistant: z.boolean().default(true),
+  primaryColor: z.string().default("#2563eb"),
+  logoUrl: z.string().optional().nullable(),
+  companyDescription: z.string().optional().nullable()
+});
+
 export const clientInsertSchema = createInsertSchema(clients, {
   firstName: (schema) => schema.min(2, "First name must be at least 2 characters"),
   lastName: (schema) => schema.min(2, "Last name must be at least 2 characters"),

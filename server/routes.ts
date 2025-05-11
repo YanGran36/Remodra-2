@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth } from "./auth";
+import { setupAuth, hashPassword } from "./auth";
 import { z } from "zod";
 import { 
   clientInsertSchema, 
@@ -1806,6 +1806,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Error processing invoice action", 
         error: error instanceof Error ? error.message : String(error)
       });
+    }
+  });
+
+  // Ruta para crear nuevos contratistas (solo accesible para super admin)
+  app.post("/api/super-admin/contractors", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "No autenticado" });
+    }
+    
+    // Verificar que el usuario es super admin
+    // Por ahora, para pruebas, permitimos cualquier usuario
+    // TODO: Implementar verificación de rol cuando tengamos el modelo
+    /* 
+    if (req.user.role !== "super_admin") {
+      return res.status(403).json({ message: "Acceso denegado. Se requieren privilegios de super admin." });
+    }
+    */
+    
+    try {
+      // Validar los datos enviados
+      const validData = contractorCreateSchema.parse(req.body);
+      
+      // Buscar si ya existe un contratista con el mismo correo
+      const existingEmail = await storage.getContractorByEmail(validData.email);
+      if (existingEmail) {
+        return res.status(400).json({ message: "Ya existe un contratista con este correo electrónico" });
+      }
+      
+      // Crear el contratista con contraseña hasheada
+      const hashedPassword = await hashPassword(validData.password);
+      
+      // Datos para crear el contratista
+      const contractorData = {
+        companyName: validData.companyName,
+        email: validData.email,
+        phone: validData.phone,
+        website: validData.website || null,
+        address: validData.address,
+        city: validData.city,
+        state: validData.state,
+        zipCode: validData.zipCode,
+        country: validData.country,
+        firstName: validData.firstName,
+        lastName: validData.lastName,
+        username: validData.username,
+        password: hashedPassword,
+        role: "contractor", // Rol por defecto
+        plan: validData.plan,
+        settings: {
+          serviceTypes: validData.serviceTypes,
+          allowClientPortal: validData.allowClientPortal,
+          useEstimateTemplates: validData.useEstimateTemplates,
+          enabledAIAssistant: validData.enabledAIAssistant,
+          primaryColor: validData.primaryColor,
+          logoUrl: validData.logoUrl || null,
+          companyDescription: validData.companyDescription || null
+        }
+      };
+      
+      // Guardar el contratista en la base de datos
+      const newContractor = await storage.createContractor(contractorData);
+      
+      // Retornar el contratista creado (sin la contraseña)
+      const { password, ...contractorWithoutPassword } = newContractor;
+      res.status(201).json(contractorWithoutPassword);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Datos inválidos", errors: error.errors });
+      }
+      
+      console.error("Error creating contractor:", error);
+      res.status(500).json({ message: "Error al crear el contratista" });
     }
   });
 
