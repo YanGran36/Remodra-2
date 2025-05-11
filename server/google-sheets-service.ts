@@ -154,7 +154,7 @@ export const exportClientsToSheets = async (contractorId: number): Promise<strin
     });
     
     return `${rows.length} clientes exportados a Google Sheets exitosamente`;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error al exportar clientes a Google Sheets:', error);
     throw new Error(`Error al exportar a Google Sheets: ${error.message}`);
   }
@@ -198,10 +198,10 @@ export const importClientsFromSheets = async (contractorId: number): Promise<str
         address: row[6] || null,
         city: row[7] || null,
         state: row[8] || null,
-        zipCode: row[9] || null,
+        zip: row[9] || null,  // Corregido de zipCode a zip
         notes: row[10] || null,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        createdAt: new Date()
+        // No hay updatedAt en el esquema de clientes
       };
       
       // Insertar en la base de datos
@@ -210,7 +210,7 @@ export const importClientsFromSheets = async (contractorId: number): Promise<str
     }
     
     return `${importedClients.length} clientes importados desde Google Sheets`;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error al importar clientes desde Google Sheets:', error);
     throw new Error(`Error al importar desde Google Sheets: ${error.message}`);
   }
@@ -226,7 +226,7 @@ export const syncClientsWithSheets = async (contractorId: number): Promise<strin
     const importResult = await importClientsFromSheets(contractorId);
     
     return `Sincronización completada: ${importResult}`;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error al sincronizar clientes con Google Sheets:', error);
     throw new Error(`Error en la sincronización: ${error.message}`);
   }
