@@ -1,21 +1,47 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, CloudSun, Upload, Download, AlertCircle } from "lucide-react";
+import { Loader2, CloudSun, Upload, Download, AlertCircle, Settings } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
 
 export function GoogleSheetsSyncPanel() {
   const [isInitializing, setIsInitializing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [spreadsheetId, setSpreadsheetId] = useState("");
+  const [spreadsheetName, setSpreadsheetName] = useState("");
   const [status, setStatus] = useState<{ message: string; type: "success" | "error" | "info" | null }>({ 
     message: "", 
     type: null 
   });
   const { toast } = useToast();
+  
+  // Consulta para obtener la configuración actual de Google Sheets
+  const { data: sheetsConfig, isLoading: isLoadingConfig, refetch: refetchConfig } = useQuery({
+    queryKey: ["/api/protected/google-sheets/config"],
+    queryFn: async () => {
+      const response = await fetch("/api/protected/google-sheets/config");
+      if (!response.ok) {
+        throw new Error("Error al obtener la configuración de Google Sheets");
+      }
+      return response.json();
+    }
+  });
+  
+  // Actualizar los campos cuando se carga la configuración
+  useEffect(() => {
+    if (sheetsConfig?.configured && sheetsConfig?.config) {
+      setSpreadsheetId(sheetsConfig.config.spreadsheetId || "");
+      setSpreadsheetName(sheetsConfig.config.spreadsheetName || "");
+    }
+  }, [sheetsConfig]);
 
   const handleInitialize = async () => {
     setIsInitializing(true);

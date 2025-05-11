@@ -1953,13 +1953,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "No autenticado" });
       }
       
-      if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY || !process.env.GOOGLE_SHEETS_ID) {
+      if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
         return res.status(500).json({ 
           message: "Credenciales de Google Sheets no configuradas" 
         });
       }
       
-      await initializeSheets();
+      const { spreadsheetId, spreadsheetName } = req.body;
+      
+      if (!spreadsheetId) {
+        return res.status(400).json({ 
+          message: "Se requiere el ID de la hoja de cálculo" 
+        });
+      }
+      
+      // Inicializar con la hoja de cálculo específica para este contratista
+      await initializeSheets(req.user!.id, spreadsheetId, spreadsheetName);
       
       return res.json({ 
         message: "Google Sheets inicializado correctamente" 
@@ -1978,16 +1987,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "No autenticado" });
       }
       
-      if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY || !process.env.GOOGLE_SHEETS_ID) {
+      if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
         return res.status(500).json({ 
           message: "Credenciales de Google Sheets no configuradas" 
         });
       }
       
-      // Asegurarse de que las hojas estén inicializadas
-      await initializeSheets();
-      
-      // Exportar clientes del contratista actual
+      // Exportar clientes del contratista actual a su hoja configurada
       const result = await exportClientsToSheets(req.user!.id);
       
       return res.json({ 
@@ -2007,7 +2013,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "No autenticado" });
       }
       
-      if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY || !process.env.GOOGLE_SHEETS_ID) {
+      if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
         return res.status(500).json({ 
           message: "Credenciales de Google Sheets no configuradas" 
         });
@@ -2033,7 +2039,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "No autenticado" });
       }
       
-      if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY || !process.env.GOOGLE_SHEETS_ID) {
+      if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
         return res.status(500).json({ 
           message: "Credenciales de Google Sheets no configuradas" 
         });
@@ -2049,6 +2055,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error al sincronizar clientes con Google Sheets:", error);
       return res.status(500).json({ 
         message: `Error al sincronizar clientes: ${error instanceof Error ? error.message : 'Error desconocido'}` 
+      });
+    }
+  });
+  
+  // Obtener la configuración actual de Google Sheets del contratista
+  app.get("/api/protected/google-sheets/config", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "No autenticado" });
+      }
+      
+      // Buscar configuración en la base de datos
+      const [config] = await db
+        .select()
+        .from(googleSheetsConfig)
+        .where(and(
+          eq(googleSheetsConfig.contractorId, req.user!.id),
+          eq(googleSheetsConfig.enabled, true)
+        ));
+      
+      if (!config) {
+        return res.json({ 
+          configured: false,
+          message: "No hay configuración de Google Sheets configurada"
+        });
+      }
+      
+      return res.json({
+        configured: true,
+        config: {
+          id: config.id,
+          spreadsheetId: config.spreadsheetId,
+          spreadsheetName: config.spreadsheetName,
+          lastSync: config.lastSync ? new Date(config.lastSync).toISOString() : null
+        }
+      });
+    } catch (error) {
+      console.error("Error al obtener configuración de Google Sheets:", error);
+      return res.status(500).json({ 
+        message: `Error al obtener configuración: ${error instanceof Error ? error.message : 'Error desconocido'}` 
       });
     }
   });
