@@ -87,6 +87,36 @@ export default function ClientDetail({
         return "bg-gray-100 text-gray-800 hover:bg-gray-100";
     }
   };
+  
+  // Generar la URL del portal del cliente
+  const getClientPortalUrl = () => {
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/client-portal/${client.id}`;
+  };
+  
+  // Función para copiar el enlace al portapapeles
+  const copyPortalLink = () => {
+    navigator.clipboard.writeText(getClientPortalUrl())
+      .then(() => {
+        toast({
+          title: "Enlace copiado",
+          description: "El enlace del portal ha sido copiado al portapapeles.",
+        });
+      })
+      .catch(err => {
+        console.error("Error al copiar:", err);
+        toast({
+          title: "Error al copiar",
+          description: "No se pudo copiar el enlace, inténtelo de nuevo.",
+          variant: "destructive",
+        });
+      });
+  };
+  
+  // Función para abrir el portal del cliente en una nueva pestaña
+  const openClientPortal = () => {
+    window.open(getClientPortalUrl(), '_blank');
+  };
 
   const formatDate = (dateString?: string | Date) => {
     if (!dateString) return "";
@@ -180,6 +210,7 @@ export default function ClientDetail({
           <TabsTrigger value="info">Información de contacto</TabsTrigger>
           <TabsTrigger value="projects">Proyectos</TabsTrigger>
           <TabsTrigger value="notes">Notas</TabsTrigger>
+          <TabsTrigger value="portal">Portal del Cliente</TabsTrigger>
         </TabsList>
         
         <TabsContent value="info">
@@ -345,6 +376,59 @@ export default function ClientDetail({
             ) : (
               <p className="text-gray-500 italic">No hay notas para este cliente.</p>
             )}
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="portal">
+          <div className="space-y-6">
+            <h5 className="font-medium text-gray-900 mb-4">Portal del Cliente</h5>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Share2 className="h-5 w-5 text-primary" />
+                  Compartir acceso con el cliente
+                </CardTitle>
+                <CardDescription>
+                  Proporcione al cliente el siguiente enlace para que pueda acceder a su portal personalizado
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <Input 
+                    ref={portalLinkRef}
+                    value={getClientPortalUrl()}
+                    readOnly
+                    className="bg-gray-50 pr-20"
+                  />
+                  <Button variant="outline" size="sm" onClick={copyPortalLink} className="absolute right-12">
+                    <Copy className="h-4 w-4 mr-1" />
+                    Copiar
+                  </Button>
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-between border-t pt-4">
+                <div className="text-sm text-gray-500">
+                  <p className="flex items-center gap-1">
+                    <ClipboardCheck className="h-4 w-4 text-green-500" />
+                    <span>Acceso a estimados y facturas</span>
+                  </p>
+                  <p className="flex items-center gap-1">
+                    <FileSignature className="h-4 w-4 text-green-500" />
+                    <span>Firma digital de documentos</span>
+                  </p>
+                </div>
+                <Button onClick={openClientPortal} className="flex items-center gap-2">
+                  <ExternalLink className="h-4 w-4" />
+                  Abrir Portal
+                </Button>
+              </CardFooter>
+            </Card>
+            
+            <div className="text-sm text-gray-500 p-3 border border-blue-100 bg-blue-50 rounded-md">
+              <p className="font-medium text-blue-600 mb-1">Consejo:</p>
+              <p>Comparta este enlace con su cliente para que pueda acceder a su información de proyectos, ver y aprobar estimados, firmar facturas y realizar seguimiento de su trabajo en curso.</p>
+            </div>
           </div>
         </TabsContent>
       </Tabs>
