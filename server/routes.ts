@@ -1234,17 +1234,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/protected/materials/:id", async (req, res) => {
-    try {
-      const material = await storage.getMaterial(Number(req.params.id), req.user!.id);
-      if (!material) {
-        return res.status(404).json({ message: "Material not found" });
+  app.get("/api/protected/materials/:id", 
+    verifyResourceOwnership('material', 'id'),
+    async (req, res) => {
+      try {
+        // El middleware ya verificó que el material existe y pertenece al contratista
+        const material = await storage.getMaterial(Number(req.params.id), req.user!.id);
+        if (!material) {
+          return res.status(404).json({ message: "Material not found" });
+        }
+        res.json(material);
+      } catch (error) {
+        console.error("Error fetching material:", error);
+        res.status(500).json({ message: "Failed to fetch material" });
       }
-      res.json(material);
-    } catch (error) {
-      console.error("Error fetching material:", error);
-      res.status(500).json({ message: "Failed to fetch material" });
-    }
   });
 
   app.post("/api/protected/materials", async (req, res) => {
@@ -1265,57 +1268,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/protected/materials/:id", async (req, res) => {
-    try {
-      const materialId = Number(req.params.id);
-      
-      // First check if material exists and belongs to contractor
-      const existingMaterial = await storage.getMaterial(materialId, req.user!.id);
-      if (!existingMaterial) {
-        return res.status(404).json({ message: "Material not found" });
+  app.patch("/api/protected/materials/:id", 
+    verifyResourceOwnership('material', 'id'),
+    async (req, res) => {
+      try {
+        const materialId = Number(req.params.id);
+        
+        // El middleware ya verificó que el material existe y pertenece al contratista
+        const existingMaterial = await storage.getMaterial(materialId, req.user!.id);
+        if (!existingMaterial) {
+          return res.status(404).json({ message: "Material not found" });
+        }
+        
+        const validatedData = materialInsertSchema.partial().parse(req.body);
+        
+        const material = await storage.updateMaterial(materialId, req.user!.id, validatedData);
+        res.json(material);
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return res.status(400).json({ errors: error.errors });
+        }
+        console.error("Error updating material:", error);
+        res.status(500).json({ message: "Failed to update material" });
       }
-      
-      const validatedData = materialInsertSchema.partial().parse(req.body);
-      
-      const material = await storage.updateMaterial(materialId, req.user!.id, validatedData);
-      res.json(material);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
-      }
-      console.error("Error updating material:", error);
-      res.status(500).json({ message: "Failed to update material" });
-    }
   });
 
-  app.delete("/api/protected/materials/:id", async (req, res) => {
-    try {
-      const materialId = Number(req.params.id);
-      const success = await storage.deleteMaterial(materialId, req.user!.id);
-      
-      if (!success) {
-        return res.status(404).json({ message: "Material not found" });
+  app.delete("/api/protected/materials/:id", 
+    verifyResourceOwnership('material', 'id'),
+    preventCascadeOperations('material'),
+    async (req, res) => {
+      try {
+        const materialId = Number(req.params.id);
+        const success = await storage.deleteMaterial(materialId, req.user!.id);
+        
+        if (!success) {
+          return res.status(404).json({ message: "Material not found" });
+        }
+        
+        res.status(204).end();
+      } catch (error) {
+        console.error("Error deleting material:", error);
+        res.status(500).json({ message: "Failed to delete material" });
       }
-      
-      res.status(204).end();
-    } catch (error) {
-      console.error("Error deleting material:", error);
-      res.status(500).json({ message: "Failed to delete material" });
-    }
   });
 
   // Attachments routes
-  app.get("/api/protected/attachments/:entityType/:entityId", async (req, res) => {
-    try {
+  app.get("/api/protected/attachments/:entityType/:entityId", 
+    (req, res, next) => {
+      // Verificar que el tipo de entidad y el ID son válidos y pertenecen al contratista
       const entityType = req.params.entityType;
       const entityId = Number(req.params.entityId);
       
-      const attachments = await storage.getAttachments(req.user!.id, entityType, entityId);
-      res.json(attachments);
-    } catch (error) {
-      console.error("Error fetching attachments:", error);
-      res.status(500).json({ message: "Failed to fetch attachments" });
-    }
+      if (!entityType || !entityId) {
+        return res.status(400).json({ message: "Entity type and ID are required" });
+      }
+      
+      // Usamos un middleware dinámico basado en el tipo de entidad
+      return verifyResourceOwnership(entityType as EntityType, 'entityId')(req, res, next);
+    },
+    async (req, res) => {
+      try {
+        const entityType = req.params.entityType;
+        const entityId = Number(req.params.entityId);
+        
+        // El middleware ya verificó que la entidad existe y pertenece al contratista
+        const attachments = await storage.getAttachments(req.user!.id, entityType, entityId);
+        res.json(attachments);
+      } catch (error) {
+        console.error("Error fetching attachments:", error);
+        res.status(500).json({ message: "Failed to fetch attachments" });
+      }
   });
 
   app.post("/api/protected/attachments", async (req, res) => {
