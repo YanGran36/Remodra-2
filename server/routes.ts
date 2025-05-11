@@ -1416,28 +1416,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/protected/follow-ups/:id", async (req, res) => {
-    try {
-      const followUpId = Number(req.params.id);
-      const validatedData = followUpInsertSchema.partial().parse(req.body);
-      
-      const followUp = await storage.updateFollowUp(followUpId, req.user!.id, validatedData);
-      
-      if (!followUp) {
-        return res.status(404).json({ message: "Follow-up not found" });
+  app.patch("/api/protected/follow-ups/:id", 
+    verifyResourceOwnership('follow-up'),
+    async (req, res) => {
+      try {
+        const followUpId = Number(req.params.id);
+        const validatedData = followUpInsertSchema.partial().parse(req.body);
+        
+        // El middleware ya verificó que el follow-up existe y pertenece al contratista
+        const followUp = await storage.updateFollowUp(followUpId, req.user!.id, validatedData);
+        
+        if (!followUp) {
+          return res.status(404).json({ message: "Follow-up not found" });
+        }
+        
+        res.json(followUp);
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return res.status(400).json({ errors: error.errors });
+        }
+        console.error("Error updating follow-up:", error);
+        res.status(500).json({ message: "Failed to update follow-up" });
       }
-      
-      res.json(followUp);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
-      }
-      console.error("Error updating follow-up:", error);
-      res.status(500).json({ message: "Failed to update follow-up" });
-    }
   });
 
-  app.delete("/api/protected/follow-ups/:id", async (req, res) => {
+  app.delete("/api/protected/follow-ups/:id", 
+    verifyResourceOwnership('follow-up'),
+    async (req, res) => {
     try {
       const followUpId = Number(req.params.id);
       const success = await storage.deleteFollowUp(followUpId, req.user!.id);

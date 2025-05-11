@@ -97,6 +97,26 @@ export const verifyResourceOwnership = (entityType: EntityType, idParamName = 'i
           });
           belongsToContractor = !!measurement;
           break;
+          
+        case 'attachment':
+          const attachment = await db.query.attachments.findFirst({
+            where: and(
+              eq(attachments.id, entityId),
+              eq(attachments.contractorId, contractorId)
+            )
+          });
+          belongsToContractor = !!attachment;
+          break;
+          
+        case 'follow-up':
+          const followUp = await db.query.followUps.findFirst({
+            where: and(
+              eq(followUps.id, entityId),
+              eq(followUps.contractorId, contractorId)
+            )
+          });
+          belongsToContractor = !!followUp;
+          break;
 
         default:
           return res.status(500).json({ message: "Tipo de entidad no soportado" });
@@ -168,8 +188,55 @@ export const verifyRelationship = (
           });
           validRelationship = !!estimate;
           break;
-
-        // Agregar más casos según sea necesario
+          
+        // Relaciones para archivos adjuntos
+        case 'client-attachment':
+          const clientAttachment = await db.query.attachments.findFirst({
+            where: and(
+              eq(attachments.id, childId),
+              eq(attachments.entityType, 'client'),
+              eq(attachments.entityId, parentId),
+              eq(attachments.contractorId, contractorId)
+            )
+          });
+          validRelationship = !!clientAttachment;
+          break;
+          
+        case 'project-attachment':
+          const projectAttachment = await db.query.attachments.findFirst({
+            where: and(
+              eq(attachments.id, childId),
+              eq(attachments.entityType, 'project'),
+              eq(attachments.entityId, parentId),
+              eq(attachments.contractorId, contractorId)
+            )
+          });
+          validRelationship = !!projectAttachment;
+          break;
+          
+        case 'estimate-attachment':
+          const estimateAttachment = await db.query.attachments.findFirst({
+            where: and(
+              eq(attachments.id, childId),
+              eq(attachments.entityType, 'estimate'),
+              eq(attachments.entityId, parentId),
+              eq(attachments.contractorId, contractorId)
+            )
+          });
+          validRelationship = !!estimateAttachment;
+          break;
+          
+        case 'invoice-attachment':
+          const invoiceAttachment = await db.query.attachments.findFirst({
+            where: and(
+              eq(attachments.id, childId),
+              eq(attachments.entityType, 'invoice'),
+              eq(attachments.entityId, parentId),
+              eq(attachments.contractorId, contractorId)
+            )
+          });
+          validRelationship = !!invoiceAttachment;
+          break;
 
         default:
           return res.status(500).json({ message: "Relación no soportada" });
