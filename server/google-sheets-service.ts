@@ -1,12 +1,12 @@
 import { JWT } from 'google-auth-library';
 import { google, sheets_v4 } from 'googleapis';
 import { db } from "@db";
-import { clients, Client } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { clients, Client, googleSheetsConfig, GoogleSheetsConfig } from "@shared/schema";
+import { eq, and } from "drizzle-orm";
 
 // Definir credenciales y configuración
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
-const GOOGLE_SHEETS_ID = process.env.GOOGLE_SHEETS_ID;
+// Ya no usamos un ID de hoja fijo, ahora se busca por contratista
 
 // Función para intentar limpiar y parsear una clave JSON
 const tryParseServiceAccountKey = (input: string): any => {
@@ -109,14 +109,76 @@ const getSheetsAPI = async (): Promise<sheets_v4.Sheets> => {
   return google.sheets({ version: 'v4', auth });
 };
 
+// Obtener la configuración de Google Sheets de un contratista
+const getGoogleSheetsConfig = async (contractorId: number): Promise<GoogleSheetsConfig | null> => {
+  try {
+    const [config] = await db
+      .select()
+      .from(googleSheetsConfig)
+      .where(and(
+        eq(googleSheetsConfig.contractorId, contractorId),
+        eq(googleSheetsConfig.enabled, true)
+      ));
+    
+    return config || null;
+  } catch (error: any) {
+    console.error('Error al obtener configuración de Google Sheets:', error);
+    return null;
+  }
+};
+
+// Registrar o actualizar la configuración de Google Sheets para un contratista
+export const registerSheetsConfig = async (contractorId: number, spreadsheetId: string, spreadsheetName?: string): Promise<GoogleSheetsConfig> => {
+  try {
+    // Verificar si ya existe una configuración para este contratista
+    const existingConfig = await getGoogleSheetsConfig(contractorId);
+    
+    if (existingConfig) {
+      // Actualizar configuración existente
+      const [updatedConfig] = await db.update(googleSheetsConfig)
+        .set({
+          spreadsheetId,
+          spreadsheetName: spreadsheetName || `Hoja de ${contractorId}`,
+          enabled: true,
+          updatedAt: new Date()
+        })
+        .where(eq(googleSheetsConfig.id, existingConfig.id))
+        .returning();
+      
+      return updatedConfig;
+    } else {
+      // Crear nueva configuración
+      const [newConfig] = await db.insert(googleSheetsConfig)
+        .values({
+          contractorId,
+          spreadsheetId,
+          spreadsheetName: spreadsheetName || `Hoja de ${contractorId}`,
+          enabled: true,
+          autoSync: false,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+      
+      return newConfig;
+    }
+  } catch (error: any) {
+    console.error('Error al registrar configuración de Google Sheets:', error);
+    throw new Error(`Error al registrar configuración: ${error.message}`);
+  }
+};
+
 // Verificar y crear hojas necesarias si no existen
-export const initializeSheets = async (): Promise<void> => {
+export const initializeSheets = async (contractorId: number, spreadsheetId: string, spreadsheetName?: string): Promise<void> => {
   try {
     const sheets = await getSheetsAPI();
     
+    // Registrar la hoja en la configuración del contratista
+    await registerSheetsConfig(contractorId, spreadsheetId, spreadsheetName);
+    
     // Verificar si ya existe la hoja de clientes
     const response = await sheets.spreadsheets.get({
-      spreadsheetId: GOOGLE_SHEETS_ID,
+      spreadsheetId: spreadsheetId,
     });
     
     const existingSheets = response.data.sheets?.map(sheet => sheet.properties?.title);
@@ -138,7 +200,7 @@ export const initializeSheets = async (): Promise<void> => {
     
     if (requests.length > 0) {
       await sheets.spreadsheets.batchUpdate({
-        spreadsheetId: GOOGLE_SHEETS_ID,
+        spreadsheetId: spreadsheetId,
         requestBody: {
           requests,
         },
@@ -155,7 +217,7 @@ export const initializeSheets = async (): Promise<void> => {
       ];
       
       await sheets.spreadsheets.values.update({
-        spreadsheetId: GOOGLE_SHEETS_ID,
+        spreadsheetId: spreadsheetId,
         range: 'Clients!A1:M1',
         valueInputOption: 'RAW',
         requestBody: {
@@ -164,6 +226,18 @@ export const initializeSheets = async (): Promise<void> => {
       });
       console.log('Encabezados de Clients configurados');
     }
+    
+    // Actualizar la fecha de última sincronización
+    await db.update(googleSheetsConfig)
+      .set({ 
+        lastSync: new Date()
+      })
+      .where(and(
+        eq(googleSheetsConfig.contractorId, contractorId),
+        eq(googleSheetsConfig.spreadsheetId, spreadsheetId)
+      ));
+      
+    console.log(`Hoja de cálculo inicializada para el contratista ${contractorId}`);
   } catch (error: any) {
     console.error('Error al inicializar las hojas de cálculo:', error);
     throw new Error(`Error al inicializar Google Sheets: ${error.message}`);
@@ -173,6 +247,12 @@ export const initializeSheets = async (): Promise<void> => {
 // Exportar clientes a Google Sheets
 export const exportClientsToSheets = async (contractorId: number): Promise<string> => {
   try {
+    // Obtener la configuración de Google Sheets para el contratista
+    const config = await getGoogleSheetsConfig(contractorId);
+    if (!config) {
+      throw new Error('No hay configuración de Google Sheets para este contratista. Por favor, inicialice primero.');
+    }
+    
     const sheets = await getSheetsAPI();
     
     // Obtener clientes del contratista desde la base de datos
@@ -203,7 +283,7 @@ export const exportClientsToSheets = async (contractorId: number): Promise<strin
     
     // Obtener el número de filas existentes (para no sobrescribir encabezados)
     const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: GOOGLE_SHEETS_ID,
+      spreadsheetId: config.spreadsheetId,
       range: 'Clients!A:A',
     });
     
@@ -212,20 +292,25 @@ export const exportClientsToSheets = async (contractorId: number): Promise<strin
     // Limpiar datos existentes (excepto encabezados)
     if (response.data.values && response.data.values.length > 1) {
       await sheets.spreadsheets.values.clear({
-        spreadsheetId: GOOGLE_SHEETS_ID,
+        spreadsheetId: config.spreadsheetId,
         range: `Clients!A${startRow}:M1000`, // Limpiar desde la fila 2 hasta la 1000
       });
     }
     
     // Escribir nuevos datos
     await sheets.spreadsheets.values.update({
-      spreadsheetId: GOOGLE_SHEETS_ID,
+      spreadsheetId: config.spreadsheetId,
       range: `Clients!A${startRow}:M${startRow + rows.length - 1}`,
       valueInputOption: 'RAW',
       requestBody: {
         values: rows,
       },
     });
+    
+    // Actualizar la fecha de última sincronización
+    await db.update(googleSheetsConfig)
+      .set({ lastSync: new Date() })
+      .where(eq(googleSheetsConfig.id, config.id));
     
     return `${rows.length} clientes exportados a Google Sheets exitosamente`;
   } catch (error: any) {
@@ -237,11 +322,17 @@ export const exportClientsToSheets = async (contractorId: number): Promise<strin
 // Importar clientes desde Google Sheets a la base de datos
 export const importClientsFromSheets = async (contractorId: number): Promise<string> => {
   try {
+    // Obtener la configuración de Google Sheets para el contratista
+    const config = await getGoogleSheetsConfig(contractorId);
+    if (!config) {
+      throw new Error('No hay configuración de Google Sheets para este contratista. Por favor, inicialice primero.');
+    }
+    
     const sheets = await getSheetsAPI();
     
     // Obtener datos de la hoja de clientes
     const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: GOOGLE_SHEETS_ID,
+      spreadsheetId: config.spreadsheetId,
       range: 'Clients!A2:M1000', // Desde la fila 2 (sin encabezados) hasta la 1000
     });
     
@@ -283,6 +374,11 @@ export const importClientsFromSheets = async (contractorId: number): Promise<str
       importedClients.push(newClient);
     }
     
+    // Actualizar la fecha de última sincronización
+    await db.update(googleSheetsConfig)
+      .set({ lastSync: new Date() })
+      .where(eq(googleSheetsConfig.id, config.id));
+    
     return `${importedClients.length} clientes importados desde Google Sheets`;
   } catch (error: any) {
     console.error('Error al importar clientes desde Google Sheets:', error);
@@ -293,11 +389,22 @@ export const importClientsFromSheets = async (contractorId: number): Promise<str
 // Sincronizar cambios bidireccionales entre la base de datos y Google Sheets
 export const syncClientsWithSheets = async (contractorId: number): Promise<string> => {
   try {
+    // Verificar si hay una configuración activa para el contratista
+    const config = await getGoogleSheetsConfig(contractorId);
+    if (!config) {
+      throw new Error('No hay configuración de Google Sheets para este contratista. Por favor, inicialice primero.');
+    }
+    
     // Primero exportamos a Sheets para asegurarnos que está actualizado
     await exportClientsToSheets(contractorId);
     
     // Luego importamos cambios de Sheets (nuevos clientes)
     const importResult = await importClientsFromSheets(contractorId);
+    
+    // Actualizar la fecha de última sincronización
+    await db.update(googleSheetsConfig)
+      .set({ lastSync: new Date() })
+      .where(eq(googleSheetsConfig.id, config.id));
     
     return `Sincronización completada: ${importResult}`;
   } catch (error: any) {

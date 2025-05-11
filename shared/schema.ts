@@ -358,6 +358,16 @@ export const googleSheetsConfig = pgTable("google_sheets_config", {
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
 
+// Google Sheets Config schemas
+export const googleSheetsConfigInsertSchema = createInsertSchema(googleSheetsConfig, {
+  spreadsheetId: (schema) => schema.min(10, "ID de hoja de cálculo demasiado corto"),
+  spreadsheetName: (schema) => schema.optional()
+});
+export type GoogleSheetsConfigInsert = z.infer<typeof googleSheetsConfigInsertSchema>;
+
+export const googleSheetsConfigSelectSchema = createSelectSchema(googleSheetsConfig);
+export type GoogleSheetsConfig = z.infer<typeof googleSheetsConfigSelectSchema>;
+
 // Google Sheets Config relations
 export const googleSheetsConfigRelations = relations(googleSheetsConfig, ({ one }) => ({
   contractor: one(contractors, { fields: [googleSheetsConfig.contractorId], references: [contractors.id] })
