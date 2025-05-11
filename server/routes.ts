@@ -1443,19 +1443,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/protected/follow-ups/:id", 
     verifyResourceOwnership('follow-up'),
     async (req, res) => {
-    try {
-      const followUpId = Number(req.params.id);
-      const success = await storage.deleteFollowUp(followUpId, req.user!.id);
-      
-      if (!success) {
-        return res.status(404).json({ message: "Follow-up not found" });
+      try {
+        const followUpId = Number(req.params.id);
+        // El middleware ya verificó que el follow-up existe y pertenece al contratista
+        const success = await storage.deleteFollowUp(followUpId, req.user!.id);
+        
+        if (!success) {
+          return res.status(404).json({ message: "Follow-up not found" });
+        }
+        
+        res.status(204).end();
+      } catch (error) {
+        console.error("Error deleting follow-up:", error);
+        res.status(500).json({ message: "Failed to delete follow-up" });
       }
-      
-      res.status(204).end();
-    } catch (error) {
-      console.error("Error deleting follow-up:", error);
-      res.status(500).json({ message: "Failed to delete follow-up" });
-    }
   });
 
   // Property Measurements routes
@@ -1469,17 +1470,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/protected/property-measurements/:id", async (req, res) => {
-    try {
-      const measurement = await storage.getPropertyMeasurement(Number(req.params.id), req.user!.id);
-      if (!measurement) {
-        return res.status(404).json({ message: "Property measurement not found" });
+  app.get("/api/protected/property-measurements/:id", 
+    verifyResourceOwnership('property-measurement'),
+    async (req, res) => {
+      try {
+        // El middleware ya verificó que la medición existe y pertenece al contratista
+        const measurement = await storage.getPropertyMeasurement(Number(req.params.id), req.user!.id);
+        if (!measurement) {
+          return res.status(404).json({ message: "Property measurement not found" });
+        }
+        res.json(measurement);
+      } catch (error) {
+        console.error("Error fetching property measurement:", error);
+        res.status(500).json({ message: "Failed to fetch property measurement" });
       }
-      res.json(measurement);
-    } catch (error) {
-      console.error("Error fetching property measurement:", error);
-      res.status(500).json({ message: "Failed to fetch property measurement" });
-    }
   });
 
   app.post("/api/protected/property-measurements", async (req, res) => {
@@ -1501,43 +1505,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/protected/property-measurements/:id", async (req, res) => {
-    try {
-      const measurementId = Number(req.params.id);
-      
-      // First check if measurement exists and belongs to contractor
-      const existingMeasurement = await storage.getPropertyMeasurement(measurementId, req.user!.id);
-      if (!existingMeasurement) {
-        return res.status(404).json({ message: "Property measurement not found" });
+  app.patch("/api/protected/property-measurements/:id", 
+    verifyResourceOwnership('property-measurement'),
+    async (req, res) => {
+      try {
+        const measurementId = Number(req.params.id);
+        
+        // El middleware ya verificó que la medición existe y pertenece al contratista
+        // No necesitamos la siguiente verificación
+        // const existingMeasurement = await storage.getPropertyMeasurement(measurementId, req.user!.id);
+        // if (!existingMeasurement) {
+        //   return res.status(404).json({ message: "Property measurement not found" });
+        // }
+        
+        const validatedData = propertyMeasurementInsertSchema.partial().parse(req.body);
+        
+        const measurement = await storage.updatePropertyMeasurement(measurementId, req.user!.id, validatedData);
+        res.json(measurement);
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return res.status(400).json({ errors: error.errors });
+        }
+        console.error("Error updating property measurement:", error);
+        res.status(500).json({ message: "Failed to update property measurement" });
       }
-      
-      const validatedData = propertyMeasurementInsertSchema.partial().parse(req.body);
-      
-      const measurement = await storage.updatePropertyMeasurement(measurementId, req.user!.id, validatedData);
-      res.json(measurement);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
-      }
-      console.error("Error updating property measurement:", error);
-      res.status(500).json({ message: "Failed to update property measurement" });
-    }
   });
 
-  app.delete("/api/protected/property-measurements/:id", async (req, res) => {
-    try {
-      const measurementId = Number(req.params.id);
-      const success = await storage.deletePropertyMeasurement(measurementId, req.user!.id);
-      
-      if (!success) {
-        return res.status(404).json({ message: "Property measurement not found" });
+  app.delete("/api/protected/property-measurements/:id", 
+    verifyResourceOwnership('property-measurement'),
+    async (req, res) => {
+      try {
+        const measurementId = Number(req.params.id);
+        // El middleware ya verificó que la medición existe y pertenece al contratista
+        const success = await storage.deletePropertyMeasurement(measurementId, req.user!.id);
+        
+        if (!success) {
+          return res.status(404).json({ message: "Property measurement not found" });
+        }
+        
+        res.status(204).end();
+      } catch (error) {
+        console.error("Error deleting property measurement:", error);
+        res.status(500).json({ message: "Failed to delete property measurement" });
       }
-      
-      res.status(204).end();
-    } catch (error) {
-      console.error("Error deleting property measurement:", error);
-      res.status(500).json({ message: "Failed to delete property measurement" });
-    }
   });
 
   // AI routes for job cost analysis

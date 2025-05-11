@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, jsonb, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, jsonb, uuid, date } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -274,6 +274,8 @@ export const contractorsRelations = relations(contractors, ({ many }) => ({
   followUps: many(followUps),
   propertyMeasurements: many(propertyMeasurements),
   priceConfigurations: many(priceConfigurations),
+  achievementProgress: many(contractorAchievements),
+  streaks: many(contractorStreaks),
   // Referencia a Google Sheets eliminada
 }));
 
@@ -346,6 +348,75 @@ export const followUpsRelations = relations(followUps, ({ one }) => ({
 }));
 
 // Google Sheets Integration - Eliminada
+
+// Tablas para el sistema de logros (Achievements)
+export const achievements = pgTable("achievements", {
+  id: serial("id").primaryKey(),
+  code: text("code").notNull().unique(), // Código único para identificar el logro
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  category: text("category").notNull(), // cliente, proyecto, estimación, factura, etc.
+  points: integer("points").notNull().default(10),
+  icon: text("icon").notNull(), // Nombre del icono de lucide-react o URL a un SVG personalizado
+  requiredCount: integer("required_count").notNull().default(1), // Cantidad requerida para completar este logro
+  level: text("level").notNull().default("bronze"), // bronze, silver, gold, platinum
+  badgeColor: text("badge_color").notNull().default("#CD7F32"), // Color hexadecimal para la insignia
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+
+export const contractorAchievements = pgTable("contractor_achievements", {
+  id: serial("id").primaryKey(),
+  contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
+  achievementId: integer("achievement_id").references(() => achievements.id).notNull(),
+  progress: integer("progress").notNull().default(0), // Progreso actual hacia el logro
+  isCompleted: boolean("is_completed").notNull().default(false),
+  completedAt: timestamp("completed_at"),
+  notified: boolean("notified").notNull().default(false), // Si se ha mostrado la notificación
+  unlockedReward: boolean("unlocked_reward").notNull().default(false), // Si se ha reclamado la recompensa
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+export const achievementRewards = pgTable("achievement_rewards", {
+  id: serial("id").primaryKey(),
+  achievementId: integer("achievement_id").references(() => achievements.id).notNull(),
+  type: text("type").notNull(), // discount, feature, credit, badge
+  description: text("description").notNull(),
+  value: text("value").notNull(), // Puede ser un porcentaje, créditos, o nombre de característica
+  duration: integer("duration"), // Duración en días (para descuentos temporales)
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+
+export const contractorStreaks = pgTable("contractor_streaks", {
+  id: serial("id").primaryKey(),
+  contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
+  currentStreak: integer("current_streak").notNull().default(0),
+  longestStreak: integer("longest_streak").notNull().default(0),
+  lastActivityDate: date("last_activity_date"),
+  level: integer("level").notNull().default(1),
+  xp: integer("xp").notNull().default(0),
+  nextLevelXp: integer("next_level_xp").notNull().default(100),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+// Achievement relations
+export const achievementsRelations = relations(achievements, ({ many }) => ({
+  contractorAchievements: many(contractorAchievements),
+  rewards: many(achievementRewards)
+}));
+
+export const contractorAchievementsRelations = relations(contractorAchievements, ({ one }) => ({
+  contractor: one(contractors, { fields: [contractorAchievements.contractorId], references: [contractors.id] }),
+  achievement: one(achievements, { fields: [contractorAchievements.achievementId], references: [achievements.id] })
+}));
+
+export const achievementRewardsRelations = relations(achievementRewards, ({ one }) => ({
+  achievement: one(achievements, { fields: [achievementRewards.achievementId], references: [achievements.id] })
+}));
+
+export const contractorStreaksRelations = relations(contractorStreaks, ({ one }) => ({
+  contractor: one(contractors, { fields: [contractorStreaks.contractorId], references: [contractors.id] })
+}));
 
 // Property measurements relations
 export const propertyMeasurementsRelations = relations(propertyMeasurements, ({ one }) => ({
