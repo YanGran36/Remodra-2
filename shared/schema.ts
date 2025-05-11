@@ -62,6 +62,17 @@ export const projects = pgTable("projects", {
   endDate: timestamp("end_date"),
   budget: decimal("budget", { precision: 10, scale: 2 }),
   notes: text("notes"),
+  // Campos nuevos para la sección de trabajadores
+  workerInstructions: text("worker_instructions"),
+  workerNotes: text("worker_notes"),
+  materialsNeeded: jsonb("materials_needed").default('[]'),
+  safetyRequirements: text("safety_requirements"),
+  // Campos nuevos para la sección de IA
+  aiProjectSummary: text("ai_project_summary"),
+  aiAnalysis: jsonb("ai_analysis").default('{}'),
+  aiGeneratedDescription: text("ai_generated_description"),
+  aiSharingSettings: jsonb("ai_sharing_settings").default('{"installers": false, "clients": true, "estimators": true}'),
+  lastAiUpdate: timestamp("last_ai_update"),
   createdAt: timestamp("created_at").defaultNow().notNull()
 });
 
