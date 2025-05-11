@@ -32,7 +32,7 @@ import PublicEstimateView from "@/pages/public-estimate-view";
 import PublicInvoiceView from "@/pages/public-invoice-view";
 import ClientPortal from "@/pages/client-portal";
 import AdminDashboard from "@/pages/admin-dashboard";
-import SuperAdminDashboard from "@/pages/super-admin-dashboard";
+import SuperAdminDashboard from "@/pages/super-admin-dashboard-fixed";
 
 function Router() {
   return (

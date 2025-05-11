@@ -117,7 +117,7 @@ export default function SuperAdminDashboard() {
     }
   ];
   
-  // Componente para la tarjeta de resumen
+  // Componente para la tarjeta de resumen con estilo de lujo
   const SummaryCard = ({ title, value, icon, trend, percentage }: { 
     title: string; 
     value: string | number; 
@@ -125,7 +125,7 @@ export default function SuperAdminDashboard() {
     trend?: 'up' | 'down'; 
     percentage?: number;
   }) => (
-    <Card>
+    <Card className="card-luxury border-gradient overflow-hidden">
       <CardContent className="p-6">
         <div className="flex justify-between items-start">
           <div>
@@ -157,7 +157,7 @@ export default function SuperAdminDashboard() {
     </Card>
   );
   
-  // Componente para la actividad reciente
+  // Componente para la actividad reciente con animación
   const ActivityItem = ({ activity }: { activity: any }) => {
     let icon;
     let title;
@@ -203,15 +203,15 @@ export default function SuperAdminDashboard() {
     }
     
     return (
-      <div className="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-md transition-colors">
-        <div className="bg-white p-2 rounded-full shadow-sm border">
+      <div className="flex items-start gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md transition-colors">
+        <div className="bg-white dark:bg-gray-800 p-2 rounded-full shadow-sm border animate-pulse-slow">
           {icon}
         </div>
         <div className="flex-1">
           <div className="flex justify-between items-start">
             <div>
               <p className="font-medium">{title}</p>
-              <p className="text-sm text-gray-600">{description}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{description}</p>
             </div>
             <Badge className={`${badgeColor} ml-2`}>{activity.plan}</Badge>
           </div>
@@ -256,9 +256,9 @@ export default function SuperAdminDashboard() {
       </div>
       
       {/* Actividad reciente */}
-      <Card className="col-span-1">
+      <Card className="card-luxury animate-float">
         <CardHeader>
-          <CardTitle>Actividad Reciente</CardTitle>
+          <CardTitle className="text-blue-gradient">Actividad Reciente</CardTitle>
           <CardDescription>Últimas actualizaciones en la plataforma</CardDescription>
         </CardHeader>
         <CardContent>
@@ -271,7 +271,7 @@ export default function SuperAdminDashboard() {
           </ScrollArea>
         </CardContent>
         <CardFooter>
-          <Button variant="outline" size="sm" className="w-full">
+          <Button variant="outline" size="sm" className="w-full border-gradient">
             <Activity className="mr-2 h-4 w-4" />
             Ver Todas las Actividades
           </Button>
@@ -279,11 +279,11 @@ export default function SuperAdminDashboard() {
       </Card>
       
       {/* Próximos vencimientos de suscripción */}
-      <Card>
+      <Card className="card-luxury">
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle>Próximos Vencimientos de Suscripción</CardTitle>
+              <CardTitle className="text-blue-gradient">Próximos Vencimientos de Suscripción</CardTitle>
               <CardDescription>Contratistas con suscripciones a vencer en los próximos 15 días</CardDescription>
             </div>
           </div>
@@ -303,9 +303,9 @@ export default function SuperAdminDashboard() {
             <TableBody>
               <TableRow>
                 <TableCell className="font-medium">Lopez Contractors Inc.</TableCell>
-                <TableCell>Premium</TableCell>
+                <TableCell><Badge className="bg-amber-500">Premium</Badge></TableCell>
                 <TableCell>{format(new Date(2023, 6, 22), "dd/MM/yyyy")}</TableCell>
-                <TableCell><Badge className="bg-amber-500">Por vencer</Badge></TableCell>
+                <TableCell><Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200">Por vencer</Badge></TableCell>
                 <TableCell>$99.99/mes</TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
@@ -314,7 +314,7 @@ export default function SuperAdminDashboard() {
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="glass-overlay">
                       <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                       <DropdownMenuItem>Ver Detalles</DropdownMenuItem>
                       <DropdownMenuItem>Enviar Recordatorio</DropdownMenuItem>
@@ -328,9 +328,9 @@ export default function SuperAdminDashboard() {
               
               <TableRow>
                 <TableCell className="font-medium">Martinez Home Services</TableCell>
-                <TableCell>Professional</TableCell>
+                <TableCell><Badge className="bg-blue-500">Professional</Badge></TableCell>
                 <TableCell>{format(new Date(2023, 6, 24), "dd/MM/yyyy")}</TableCell>
-                <TableCell><Badge className="bg-amber-500">Por vencer</Badge></TableCell>
+                <TableCell><Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200">Por vencer</Badge></TableCell>
                 <TableCell>$49.99/mes</TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
@@ -339,7 +339,7 @@ export default function SuperAdminDashboard() {
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="glass-overlay">
                       <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                       <DropdownMenuItem>Ver Detalles</DropdownMenuItem>
                       <DropdownMenuItem>Enviar Recordatorio</DropdownMenuItem>
@@ -353,9 +353,9 @@ export default function SuperAdminDashboard() {
               
               <TableRow>
                 <TableCell className="font-medium">Premium Construction Co.</TableCell>
-                <TableCell>Basic</TableCell>
+                <TableCell><Badge className="bg-gray-500">Basic</Badge></TableCell>
                 <TableCell>{format(new Date(2023, 6, 28), "dd/MM/yyyy")}</TableCell>
-                <TableCell><Badge className="bg-amber-500">Por vencer</Badge></TableCell>
+                <TableCell><Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200">Por vencer</Badge></TableCell>
                 <TableCell>$24.99/mes</TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
@@ -364,7 +364,7 @@ export default function SuperAdminDashboard() {
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="glass-overlay">
                       <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                       <DropdownMenuItem>Ver Detalles</DropdownMenuItem>
                       <DropdownMenuItem>Enviar Recordatorio</DropdownMenuItem>
@@ -383,7 +383,7 @@ export default function SuperAdminDashboard() {
             Mostrando 3 de 12 vencimientos próximos
           </div>
           <div className="flex gap-1">
-            <Button variant="outline" size="sm">Ver Todos</Button>
+            <Button variant="outline" size="sm" className="border-gradient">Ver Todos</Button>
           </div>
         </CardFooter>
       </Card>
@@ -394,20 +394,20 @@ export default function SuperAdminDashboard() {
   const ContractorsTab = () => (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <h2 className="text-2xl font-semibold">Gestión de Contratistas</h2>
+        <h2 className="text-2xl font-semibold text-blue-gradient">Gestión de Contratistas</h2>
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-            <Input type="text" placeholder="Buscar contratistas..." className="pl-8" />
+            <Input type="text" placeholder="Buscar contratistas..." className="pl-8 border-gradient" />
           </div>
-          <Button>
+          <Button className="bg-primary hover:bg-primary/90 transition-all">
             <Plus className="mr-2 h-4 w-4" />
             Nuevo Contratista
           </Button>
         </div>
       </div>
 
-      <Card>
+      <Card className="card-luxury">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -438,7 +438,7 @@ export default function SuperAdminDashboard() {
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="glass-overlay">
                       <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                       <DropdownMenuItem>Ver Detalles</DropdownMenuItem>
                       <DropdownMenuItem>Editar Plan</DropdownMenuItem>
@@ -466,7 +466,7 @@ export default function SuperAdminDashboard() {
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="glass-overlay">
                       <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                       <DropdownMenuItem>Ver Detalles</DropdownMenuItem>
                       <DropdownMenuItem>Editar Plan</DropdownMenuItem>
@@ -494,7 +494,7 @@ export default function SuperAdminDashboard() {
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="glass-overlay">
                       <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                       <DropdownMenuItem>Ver Detalles</DropdownMenuItem>
                       <DropdownMenuItem>Editar Plan</DropdownMenuItem>
@@ -522,7 +522,7 @@ export default function SuperAdminDashboard() {
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="glass-overlay">
                       <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                       <DropdownMenuItem>Ver Detalles</DropdownMenuItem>
                       <DropdownMenuItem>Editar Plan</DropdownMenuItem>
@@ -553,9 +553,9 @@ export default function SuperAdminDashboard() {
   const SubscriptionsTab = () => (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <h2 className="text-2xl font-semibold">Planes y Suscripciones</h2>
+        <h2 className="text-2xl font-semibold text-blue-gradient">Planes y Suscripciones</h2>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="border-gradient">
             <Filter className="mr-2 h-4 w-4" />
             Filtrar
           </Button>
@@ -567,7 +567,7 @@ export default function SuperAdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="card-luxury animate-float">
           <CardHeader>
             <CardTitle>Plan Básico</CardTitle>
             <CardDescription>Para contratistas individuales o que recién comienzan</CardDescription>
@@ -599,13 +599,13 @@ export default function SuperAdminDashboard() {
           </CardContent>
           <CardFooter className="flex justify-between border-t pt-4">
             <div className="text-sm text-gray-500">18 contratistas activos</div>
-            <Button variant="outline" size="sm">Editar</Button>
+            <Button variant="outline" size="sm" className="border-gradient">Editar</Button>
           </CardFooter>
         </Card>
         
-        <Card className="border-primary bg-primary/5">
+        <Card className="border-primary bg-primary/5 animate-float" style={{animationDelay: "0.4s"}}>
           <CardHeader>
-            <Badge className="bg-primary mb-2 self-start">Popular</Badge>
+            <Badge className="bg-secondary mb-2 self-start text-black">Popular</Badge>
             <CardTitle>Plan Profesional</CardTitle>
             <CardDescription>Para contratistas con volumen medio de clientes</CardDescription>
           </CardHeader>
@@ -636,11 +636,11 @@ export default function SuperAdminDashboard() {
           </CardContent>
           <CardFooter className="flex justify-between border-t pt-4">
             <div className="text-sm text-gray-500">26 contratistas activos</div>
-            <Button variant="outline" size="sm">Editar</Button>
+            <Button variant="outline" size="sm" className="border-gradient">Editar</Button>
           </CardFooter>
         </Card>
         
-        <Card>
+        <Card className="card-luxury animate-float" style={{animationDelay: "0.8s"}}>
           <CardHeader>
             <CardTitle>Plan Premium</CardTitle>
             <CardDescription>Para negocios establecidos con gran volumen de clientes</CardDescription>
@@ -672,7 +672,7 @@ export default function SuperAdminDashboard() {
           </CardContent>
           <CardFooter className="flex justify-between border-t pt-4">
             <div className="text-sm text-gray-500">12 contratistas activos</div>
-            <Button variant="outline" size="sm">Editar</Button>
+            <Button variant="outline" size="sm" className="border-gradient">Editar</Button>
           </CardFooter>
         </Card>
       </div>
@@ -716,28 +716,29 @@ export default function SuperAdminDashboard() {
               <span className="hidden md:inline">Configuración</span>
             </TabsTrigger>
           </TabsList>
-        <TabsContent value="overview">
-          <OverviewTab />
-        </TabsContent>
-        <TabsContent value="contractors">
-          <ContractorsTab />
-        </TabsContent>
-        <TabsContent value="subscriptions">
-          <SubscriptionsTab />
-        </TabsContent>
-        <TabsContent value="reporting">
-          <div className="text-center py-8">
-            <h3 className="text-lg font-medium">Informes y Analíticas</h3>
-            <p className="text-gray-500 mt-2">Visualización de datos de rendimiento y uso de la plataforma</p>
-          </div>
-        </TabsContent>
-        <TabsContent value="settings">
-          <div className="text-center py-8">
-            <h3 className="text-lg font-medium">Configuración de la Plataforma</h3>
-            <p className="text-gray-500 mt-2">Ajustes generales, personalización y opciones avanzadas</p>
-          </div>
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="overview">
+            <OverviewTab />
+          </TabsContent>
+          <TabsContent value="contractors">
+            <ContractorsTab />
+          </TabsContent>
+          <TabsContent value="subscriptions">
+            <SubscriptionsTab />
+          </TabsContent>
+          <TabsContent value="reporting">
+            <div className="text-center py-8">
+              <h3 className="text-lg font-medium text-blue-gradient">Informes y Analíticas</h3>
+              <p className="text-gray-500 mt-2">Visualización de datos de rendimiento y uso de la plataforma</p>
+            </div>
+          </TabsContent>
+          <TabsContent value="settings">
+            <div className="text-center py-8">
+              <h3 className="text-lg font-medium text-blue-gradient">Configuración de la Plataforma</h3>
+              <p className="text-gray-500 mt-2">Ajustes generales, personalización y opciones avanzadas</p>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

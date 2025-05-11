@@ -4,48 +4,75 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Paleta de colores de lujo - azules profundos, dorado y plata */
+    --background: 220 30% 98%;
+    --foreground: 224 71% 4%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 224 71% 4%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    --popover-foreground: 224 71% 4%;
+    
+    /* Azul profundo como color primario */
+    --primary: 225 90% 30%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Dorado como color secundario */
+    --secondary: 43 74% 56%;
+    --secondary-foreground: 0 0% 100%;
+    
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 14% 46%;
+    
+    /* Acentos plateados */
+    --accent: 228 6% 90%;
+    --accent-foreground: 225 25% 20%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 225 90% 30%;
+    --radius: 0.75rem;
   }
  
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    /* Fondo oscuro moderno */
+    --background: 224 71% 4%;
+    --foreground: 220 30% 98%;
+    
+    /* Tarjetas con azul profundo */
+    --card: 225 50% 8%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    
+    /* Popovers con azul profundo */
+    --popover: 225 50% 8%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
+    
+    /* Azul brillante como primario */
+    --primary: 216 100% 60%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Dorado como secundario */
+    --secondary: 43 80% 56%;
+    --secondary-foreground: 0 0% 0%;
+    
+    /* Fondos atenuados */
+    --muted: 223 47% 14%;
+    --muted-foreground: 215 20% 75%;
+    
+    /* Acentos elegantes */
+    --accent: 216 34% 25%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
+    
+    /* Destructivo más sutil */
+    --destructive: 0 75% 50%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    
+    /* Otros elementos de la interfaz */
+    --border: 223 47% 14%;
+    --input: 223 47% 14%;
+    --ring: 216 100% 60%;
   }
 }
 
@@ -61,6 +88,125 @@
   src: url('https://fonts.googleapis.com/css2?family=Homemade+Apple&display=swap');
   font-weight: normal;
   font-style: normal;
+}
+
+/* Elementos de diseño lujosos y futuristas */
+@layer utilities {
+  /* Fondos con gradientes modernos */
+  .bg-luxury-gradient {
+    @apply bg-gradient-to-br from-blue-900 via-blue-800 to-blue-950;
+  }
+  
+  .bg-gold-gradient {
+    @apply bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600;
+  }
+  
+  .bg-silver-gradient {
+    @apply bg-gradient-to-r from-slate-300 via-slate-200 to-slate-400;
+  }
+  
+  .bg-dark-luxury {
+    @apply bg-gradient-to-b from-slate-900 via-blue-950 to-slate-900;
+  }
+  
+  /* Texto con degradados */
+  .text-gold-gradient {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600;
+  }
+  
+  .text-blue-gradient {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-blue-700 via-blue-500 to-blue-800;
+  }
+  
+  /* Efectos de tarjeta de lujo */
+  .card-luxury {
+    @apply shadow-lg relative overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 transition-all duration-300;
+    background-color: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+  }
+  
+  .card-luxury:hover {
+    @apply shadow-xl transform-gpu -translate-y-1;
+    border-color: hsl(var(--primary));
+  }
+  
+  .card-luxury::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    width: calc(100% + 4px);
+    height: calc(100% + 4px);
+    z-index: -1;
+    @apply bg-gradient-to-br from-primary/50 via-transparent to-secondary/50 rounded-xl;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .card-luxury:hover::before {
+    opacity: 1;
+  }
+  
+  /* Animaciones sutiles */
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  /* Fondo futurista con patrón */
+  .bg-pattern-grid {
+    background-color: hsl(var(--background));
+    background-image: 
+      linear-gradient(to right, hsl(var(--primary) / 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--primary) / 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  
+  /* Futurista borde de gradiente */
+  .border-gradient {
+    position: relative;
+    border-radius: var(--radius);
+  }
+  
+  .border-gradient::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: calc(var(--radius) + 2px);
+    background: linear-gradient(45deg, hsl(var(--primary)), hsl(var(--secondary)));
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .border-gradient:hover::before {
+    opacity: 1;
+  }
+  
+  /* Superposición de vidrio (glass morphism) */
+  .glass-overlay {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius);
+  }
+  
+  .dark .glass-overlay {
+    background: rgba(30, 30, 60, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
 }
 
 .font-handwriting {
