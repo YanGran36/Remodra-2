@@ -10,6 +10,12 @@ const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 
 // Función para intentar limpiar y parsear una clave JSON
 const tryParseServiceAccountKey = (input: string): any => {
+  if (!input) {
+    throw new Error('La clave de servicio está vacía');
+  }
+
+  console.log('Intentando parsear clave de servicio, longitud:', input.length);
+  
   // 1. Caso más sencillo: la cadena ya es un JSON válido
   try {
     return JSON.parse(input);
@@ -34,34 +40,66 @@ const tryParseServiceAccountKey = (input: string): any => {
     }
   }
 
-  // 3. Verificar si la cadena está escapada (comillas dentro del JSON escapadas con \)
+  // 3. Probar reemplazando caracteres de escape y comillas problemáticas
   try {
-    // A veces la cadena está doblemente escapada
-    if (cleaned.includes('\\\\')) {
-      const unescaped = cleaned.replace(/\\\\/g, '\\');
-      return JSON.parse(unescaped);
-    }
+    // Detectar si hay secuencias de escape problemáticas
+    const normalized = cleaned
+      .replace(/\\"/g, '"')        // Reemplazar \" por "
+      .replace(/\\n/g, '\n')       // Reemplazar \n literal por salto de línea
+      .replace(/\\r/g, '\r')       // Reemplazar \r literal por retorno de carro
+      .replace(/\\\\/g, '\\')      // Reemplazar \\ por \
+      .replace(/\\t/g, '\t');      // Reemplazar \t literal por tabulación
+    
+    return JSON.parse(normalized);
   } catch (e) {
-    console.log('Tercer intento con caracteres de escape falló...');
+    console.log('Tercer intento con normalización simple falló...');
   }
 
-  // 4. Último intento: considerar que podría ser una versión con caracteres de escape
+  // 4. Intento adicional: considerar que podría estar doblemente escapada
   try {
-    // Si tiene secuencias de escape como \n o \" convertidas en texto literal
-    if (cleaned.includes('\\n') || cleaned.includes('\\"')) {
-      // Ejemplo: convertir "{\\"type\\":" a '{"type":'
-      const normalized = cleaned
-        .replace(/\\"/g, '"')       // Reemplazar \" por "
-        .replace(/\\\\/g, '\\');    // Reemplazar \\ por \
-      
-      return JSON.parse(normalized);
-    }
+    const doubleUnescaped = cleaned
+      .replace(/\\\\/g, '\\')
+      .replace(/\\"/g, '"')
+      .replace(/\\n/g, '\n')
+      .replace(/\\r/g, '\r');
+    
+    return JSON.parse(doubleUnescaped);
   } catch (e) {
-    console.log('Último intento de normalización falló...');
+    console.log('Cuarto intento con doble escape falló...');
   }
 
+  // 5. Intento con búsqueda manual de llaves
+  try {
+    // Buscar el primer '{' y el último '}'
+    const startBrace = cleaned.indexOf('{');
+    const endBrace = cleaned.lastIndexOf('}');
+    
+    if (startBrace !== -1 && endBrace !== -1 && startBrace < endBrace) {
+      const jsonSubstring = cleaned.substring(startBrace, endBrace + 1);
+      return JSON.parse(jsonSubstring);
+    }
+  } catch (e) {
+    console.log('Quinto intento con búsqueda manual falló...');
+  }
+
+  // 6. Último recurso: intentar con eval (sólo para claves de servicio en entorno controlado)
+  try {
+    // Nota: eval es generalmente peligroso, pero en este caso específico
+    // estamos usando para parsear una clave de servicio en un entorno controlado
+    const obj = eval('(' + cleaned + ')');
+    if (obj && typeof obj === 'object' && obj.client_email && obj.private_key) {
+      return obj;
+    }
+  } catch (e) {
+    console.log('Último intento con eval falló...');
+  }
+
+  // Mostrar más información para ayudar a depurar
+  console.error('No se pudo parsear la clave. Primeros 50 caracteres:', input.substring(0, 50));
+  console.error('Últimos 50 caracteres:', input.substring(input.length - 50));
+  
   // Si llegamos aquí, todos los intentos fallaron
-  throw new Error('No se pudo parsear la clave de servicio después de múltiples intentos');
+  throw new Error('No se pudo parsear la clave de servicio después de múltiples intentos. Por favor, verifica el formato de la clave JSON.');
 };
 
 // Crear y autorizar un cliente JWT para la API de Google
@@ -81,10 +119,13 @@ const getJWTClient = async (): Promise<JWT> => {
     
     // Verificar que la clave tenga los campos necesarios
     if (!serviceAccountKey.client_email || !serviceAccountKey.private_key) {
+      console.error('Campos encontrados en la clave:', Object.keys(serviceAccountKey).join(', '));
       throw new Error('La clave de servicio no contiene los campos requeridos (client_email y private_key)');
     }
 
     console.log('Clave de servicio procesada correctamente, configurando cliente JWT...');
+    console.log('Email de cliente encontrado:', serviceAccountKey.client_email);
+    console.log('Longitud de la private_key:', serviceAccountKey.private_key.length);
     
     const jwtClient = new JWT({
       email: serviceAccountKey.client_email,
@@ -99,6 +140,16 @@ const getJWTClient = async (): Promise<JWT> => {
     return jwtClient;
   } catch (error: any) {
     console.error('Error al autorizar el cliente JWT:', error);
+    
+    // Agregar más información para depuración
+    if (error.message.includes('private_key')) {
+      console.error('Problema detectado con la clave privada. Por favor asegúrate de que la clave privada incluye los saltos de línea (\\n)');
+    }
+    
+    if (error.message.includes('invalid_grant') || error.message.includes('unauthorized_client')) {
+      console.error('Problema de autorización. Verifica que la cuenta de servicio tenga los permisos correctos y esté activa');
+    }
+    
     throw new Error(`Error de autenticación con Google: ${error.message}`);
   }
 };
