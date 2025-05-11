@@ -51,7 +51,7 @@ export interface IStorage {
   // Projects
   getProjects: (contractorId: number) => Promise<any[]>;
   getProject: (id: number, contractorId: number) => Promise<any>;
-  getProjectById: (id: number) => Promise<any>; // Método público para projects
+  getProjectById: (id: number, contractorId: number) => Promise<any>; // Método público para projects con seguridad
   createProject: (data: Omit<ProjectInsert, "id">) => Promise<any>;
   updateProject: (id: number, contractorId: number, data: Partial<ProjectInsert>) => Promise<any>;
   deleteProject: (id: number, contractorId: number) => Promise<boolean>;
@@ -247,10 +247,13 @@ class DatabaseStorage implements IStorage {
     });
   }
   
-  // Método público para obtener un cliente por ID sin verificar el contratista
-  async getClientById(id: number) {
+  // Método para obtener un cliente por ID - ahora con verificación del contratista
+  async getClientById(id: number, contractorId: number) {
     return await db.query.clients.findFirst({
-      where: eq(clients.id, id)
+      where: and(
+        eq(clients.id, id),
+        eq(clients.contractorId, contractorId)
+      )
     });
   }
 
@@ -334,10 +337,13 @@ class DatabaseStorage implements IStorage {
     });
   }
   
-  // Método público para obtener un proyecto por ID sin verificar el contratista
-  async getProjectById(id: number) {
+  // Método para obtener un proyecto por ID - ahora con verificación de contratista
+  async getProjectById(id: number, contractorId: number) {
     return await db.query.projects.findFirst({
-      where: eq(projects.id, id),
+      where: and(
+        eq(projects.id, id),
+        eq(projects.contractorId, contractorId)
+      ),
       columns: {
         id: true,
         contractorId: true,

@@ -1699,7 +1699,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get project info if available
       let project = null;
       if (invoice.projectId) {
-        project = await storage.getProjectById(invoice.projectId);
+        // Usamos el ID del contratista de la factura para garantizar que solo se acceda a proyectos propios
+        project = await storage.getProjectById(invoice.projectId, invoice.contractorId);
       }
       
       // Return combined data
