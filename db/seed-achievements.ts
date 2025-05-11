@@ -1,6 +1,6 @@
 import { db } from '.';
 import { achievementSeedData, rewardSeedData } from './achievement-seeds';
-import { achievements, achievementRewards } from '@shared/schema';
+import { achievements, achievementRewards, contractors, contractorAchievements } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 
 async function seedAchievements() {
@@ -61,6 +61,40 @@ async function seedAchievements() {
         }
       } else {
         console.log(`❌ No se encontró el logro relacionado para la recompensa: ${reward.achievementCode}`);
+      }
+    }
+    
+    // Inicializar logros para contratistas existentes
+    console.log('Inicializando logros para contratistas existentes...');
+    
+    const allContractors = await db.query.contractors.findMany();
+    const allAchievements = await db.query.achievements.findMany();
+    
+    for (const contractor of allContractors) {
+      console.log(`Inicializando logros para contratista: ${contractor.firstName} ${contractor.lastName}`);
+      
+      for (const achievement of allAchievements) {
+        // Verificar si el contratista ya tiene este logro inicializado
+        const existingProgress = await db.query.contractorAchievements.findFirst({
+          where: (ca) => 
+            eq(ca.contractorId, contractor.id) && 
+            eq(ca.achievementId, achievement.id)
+        });
+        
+        if (!existingProgress) {
+          await db.insert(contractorAchievements).values({
+            contractorId: contractor.id,
+            achievementId: achievement.id,
+            progress: 0,
+            isCompleted: false,
+            notified: false,
+            unlockedReward: false
+          });
+          
+          console.log(`  ✅ Logro inicializado: ${achievement.name}`);
+        } else {
+          console.log(`  ⚠️ Logro ya inicializado: ${achievement.name}`);
+        }
       }
     }
     
