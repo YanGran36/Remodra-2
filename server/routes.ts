@@ -4,6 +4,12 @@ import { storage } from "./storage";
 import { setupAuth, hashPassword } from "./auth";
 import { z } from "zod";
 import { 
+  initializeSheets, 
+  exportClientsToSheets, 
+  importClientsFromSheets, 
+  syncClientsWithSheets 
+} from "./google-sheets-service";
+import { 
   clientInsertSchema, 
   projectInsertSchema, 
   estimateInsertSchema, 
