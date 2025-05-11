@@ -29,6 +29,9 @@ import AIAssistantPage from "@/pages/ai-assistant-page";
 import SettingsPage from "@/pages/settings-page";
 import PriceConfigurationsPage from "@/pages/price-configurations-page";
 import PublicEstimateView from "@/pages/public-estimate-view";
+import PublicInvoiceView from "@/pages/public-invoice-view";
+import ClientPortal from "@/pages/client-portal";
+import AdminDashboard from "@/pages/admin-dashboard";
 
 function Router() {
   return (
@@ -52,8 +55,11 @@ function Router() {
       <ProtectedRoute path="/ai-assistant" component={AIAssistantPage} />
       <ProtectedRoute path="/price-configurations" component={PriceConfigurationsPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
+      <ProtectedRoute path="/admin-dashboard" component={AdminDashboard} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/public/estimates/:id" component={PublicEstimateView} />
+      <Route path="/public/invoices/:id" component={PublicInvoiceView} />
+      <Route path="/client-portal/:clientId" component={ClientPortal} />
       <Route component={NotFound} />
     </Switch>
   );

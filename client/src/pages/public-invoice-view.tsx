@@ -1,731 +1,584 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "wouter";
-import { CheckCircle, XCircle, AlertCircle, Send, Edit3, FileText } from "lucide-react";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
-
-// UI Components
-import {
-  Card,
+import { useToast } from "@/hooks/use-toast";
+import { 
+  Card, 
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
+  CardDescription 
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { 
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose
+} from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { 
+  Download, 
+  FileSignature, 
+  Building, 
+  Check, 
+  X, 
+  Info, 
+  Phone,
+  Mail,
+  FileText,
+  MapPin
+} from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
 
-// Helper function to format currency
-const formatCurrency = (amount: number | string) => {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
-    .format(typeof amount === 'string' ? parseFloat(amount) : amount);
-};
-
-// Define invoice status colors
-const statusColors: Record<string, string> = {
-  draft: "bg-gray-100 text-gray-800",
-  pending: "bg-blue-100 text-blue-800",
-  overdue: "bg-red-100 text-red-800",
-  partially_paid: "bg-yellow-100 text-yellow-800",
-  paid: "bg-green-100 text-green-800",
-  cancelled: "bg-gray-100 text-gray-800",
-  signed: "bg-purple-100 text-purple-800"
-};
-
-const statusIcons: Record<string, React.ReactNode> = {
-  draft: <AlertCircle className="h-4 w-4" />,
-  pending: <Send className="h-4 w-4" />,
-  signed: <CheckCircle className="h-4 w-4" />,
-  paid: <CheckCircle className="h-4 w-4" />,
-  cancelled: <XCircle className="h-4 w-4" />
-};
-
-// Signature Pad Component
-function SignaturePad({
-  onChange,
-  value,
-  width = 350,
-  height = 200,
-  lineWidth = 2.5,
-  lineColor = "#000000",
-  clearLabel = "Clear",
-  confirmLabel = "Confirm Signature"
-}: {
-  onChange: (value: string) => void;
-  value?: string;
-  width?: number;
-  height?: number;
-  lineWidth?: number;
-  lineColor?: string;
-  clearLabel?: string;
-  confirmLabel?: string;
-}) {
+// Componente para el pad de firma
+const SignaturePad = ({ onSave, onCancel }: { onSave: (signatureData: string) => void, onCancel: () => void }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [drawing, setDrawing] = useState(false);
-  const [hasDrawn, setHasDrawn] = useState(false);
-  const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
-  const isFirstRender = useRef(true);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [isEmpty, setIsEmpty] = useState(true);
   
-  // Detect if mobile device
-  useEffect(() => {
-    setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
-  }, []);
-  
-  // Initialize canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
-    // Setup canvas context
-    const context = canvas.getContext('2d');
-    if (!context) return;
-    
-    // Set exact canvas dimensions
-    canvas.width = width;
-    canvas.height = height;
-    
-    // Configure drawing context
-    context.lineWidth = lineWidth;
-    context.strokeStyle = lineColor;
-    context.lineJoin = 'round';
-    context.lineCap = 'round';
-    
-    setCtx(context);
-    
-    // Clear canvas on first render
-    if (isFirstRender.current) {
-      clearCanvas();
-      isFirstRender.current = false;
-    }
-  }, [width, height, lineWidth, lineColor]);
-  
-  // Drawing functions
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    const ctx = canvas.getContext('2d');
     if (!ctx) return;
     
-    setDrawing(true);
-    setHasDrawn(true);
+    // Configurar el canvas
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#000';
     
-    // Get position
+    // Limpiar canvas
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+  }, []);
+  
+  const getCoordinates = (event: MouseEvent | TouchEvent): { x: number; y: number } | null => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) return null;
     
-    const rect = canvas.getBoundingClientRect();
-    let clientX, clientY;
+    let clientX: number, clientY: number;
     
-    if ('touches' in e) {
-      // Touch event
-      e.preventDefault(); // Prevent scrolling
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
+    if ('touches' in event) {
+      // Es un evento táctil
+      clientX = event.touches[0].clientX;
+      clientY = event.touches[0].clientY;
     } else {
-      // Mouse event
-      clientX = e.clientX;
-      clientY = e.clientY;
+      // Es un evento de ratón
+      clientX = event.clientX;
+      clientY = event.clientY;
     }
     
-    ctx.beginPath();
-    ctx.moveTo(clientX - rect.left, clientY - rect.top);
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top
+    };
   };
   
-  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    if (!drawing || !ctx) return;
+  const startDrawing = (event: React.MouseEvent | React.TouchEvent) => {
+    const ctx = canvasRef.current?.getContext('2d');
+    if (!ctx) return;
     
-    // Get position
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const coords = getCoordinates(event.nativeEvent);
+    if (!coords) return;
     
-    const rect = canvas.getBoundingClientRect();
-    let clientX, clientY;
+    ctx.beginPath();
+    ctx.moveTo(coords.x, coords.y);
+    setIsDrawing(true);
+  };
+  
+  const draw = (event: React.MouseEvent | React.TouchEvent) => {
+    if (!isDrawing) return;
     
-    if ('touches' in e) {
-      // Touch event
-      e.preventDefault(); // Prevent scrolling
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else {
-      // Mouse event
-      clientX = e.clientX;
-      clientY = e.clientY;
-    }
+    const ctx = canvasRef.current?.getContext('2d');
+    if (!ctx) return;
     
-    ctx.lineTo(clientX - rect.left, clientY - rect.top);
+    const coords = getCoordinates(event.nativeEvent);
+    if (!coords) return;
+    
+    ctx.lineTo(coords.x, coords.y);
     ctx.stroke();
+    setIsEmpty(false);
   };
   
-  const finishDrawing = () => {
-    if (!drawing) return;
+  const stopDrawing = () => {
+    const ctx = canvasRef.current?.getContext('2d');
+    if (!ctx) return;
     
-    if (ctx) {
-      ctx.closePath();
-    }
-    
-    setDrawing(false);
+    ctx.closePath();
+    setIsDrawing(false);
   };
   
-  // Function to clear canvas
   const clearCanvas = () => {
-    if (!ctx || !canvasRef.current) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
     
-    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-    ctx.beginPath();
-    setHasDrawn(false);
-    onChange('');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    setIsEmpty(true);
   };
   
-  // Function to save signature
   const saveSignature = () => {
-    if (!canvasRef.current || !hasDrawn) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
     
-    try {
-      const dataURL = canvasRef.current.toDataURL('image/png');
-      onChange(dataURL);
-    } catch (e) {
-      console.error('Error saving signature:', e);
-    }
+    const signatureData = canvas.toDataURL('image/png');
+    onSave(signatureData);
   };
   
   return (
-    <div className="flex flex-col items-center w-full">
-      <div 
-        className="border-2 border-blue-300 rounded-lg overflow-hidden bg-white mb-3 relative"
-        style={{ width: `${width}px`, height: `${height}px`, touchAction: 'none' }}
-      >
+    <div className="flex flex-col gap-4">
+      <p className="text-sm text-gray-500">Dibuje su firma a continuación:</p>
+      <div className="border rounded-lg p-1 bg-white">
         <canvas
           ref={canvasRef}
-          className="cursor-crosshair"
-          width={width}
-          height={height}
+          width={500}
+          height={200}
+          className="w-full h-[200px] cursor-crosshair border border-dashed border-gray-300 rounded touch-none"
           onMouseDown={startDrawing}
           onMouseMove={draw}
-          onMouseUp={finishDrawing}
-          onMouseLeave={finishDrawing}
+          onMouseUp={stopDrawing}
+          onMouseLeave={stopDrawing}
           onTouchStart={startDrawing}
           onTouchMove={draw}
-          onTouchEnd={finishDrawing}
+          onTouchEnd={stopDrawing}
         />
-        
-        {!hasDrawn && (
-          <div className="absolute inset-0 flex items-center justify-center text-gray-400 pointer-events-none">
-            <div className="text-center p-4">
-              <Edit3 className="h-6 w-6 mx-auto mb-2 opacity-50" />
-              <p>Draw your signature here</p>
-              {isMobile && <p className="text-xs mt-1">Use your finger to sign</p>}
-            </div>
-          </div>
-        )}
       </div>
-      
-      <div className="flex gap-3 w-full justify-center">
-        <Button 
-          variant="outline"
-          onClick={clearCanvas}
-          disabled={!hasDrawn}
-        >
-          {clearLabel}
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={clearCanvas}>
+          Borrar
         </Button>
-        
-        <Button
-          onClick={saveSignature}
-          disabled={!hasDrawn}
-        >
-          {confirmLabel}
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={onCancel}>
+            Cancelar
+          </Button>
+          <Button onClick={saveSignature} disabled={isEmpty}>
+            Firmar
+          </Button>
+        </div>
       </div>
     </div>
   );
-}
+};
 
-// Definición de tipo para la factura
-interface Invoice {
-  id: number;
-  invoiceNumber?: string;
-  status: string;
-  issueDate?: string | Date;
-  dueDate?: string | Date;
-  subtotal?: number | string;
-  tax?: number | string;
-  discount?: number | string;
-  total?: number | string;
-  notes?: string;
-  terms?: string;
-  clientSignature?: string;
-  contractorSignature?: string;
-  updatedAt?: string | Date;
-  estimateId?: number;
-  items?: Array<{
-    id: number;
-    description: string;
-    quantity: number | string;
-    unitPrice: number | string;
-    amount: number | string;
-    notes?: string;
-  }>;
-  contractor?: any;
-  client?: any;
-  project?: any;
-  estimate?: any;
-}
-
+// Componente principal
 export default function PublicInvoiceView() {
   const { id } = useParams<{ id: string }>();
-  const [invoice, setInvoice] = useState<Invoice | null>(null);
-  const [contractor, setContractor] = useState<any>(null);
-  const [client, setClient] = useState<any>(null);
-  const [signature, setSignature] = useState<string>("");
-  const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(true);
+  const [invoice, setInvoice] = useState<any>(null);
+  const [client, setClient] = useState<any>(null);
+  const [project, setProject] = useState<any>(null);
+  const [items, setItems] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [actionInProgress, setActionInProgress] = useState(false);
-  const [actionComplete, setActionComplete] = useState(false);
-  const [actionResult, setActionResult] = useState<{
-    success: boolean;
-    message: string;
-    redirectTo?: string;
-  } | null>(null);
-  const [showSignatureDialog, setShowSignatureDialog] = useState(false);
+  const [signatureDialogOpen, setSignatureDialogOpen] = useState(false);
+  const [signatureData, setSignatureData] = useState<string | null>(null);
+  const { toast } = useToast();
 
+  // Cargar los datos de la factura
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchInvoiceData = async () => {
       setLoading(true);
+      setError(null);
+      
       try {
-        // Fetch invoice data
-        const response = await fetch(`/api/public/invoices/${id}`);
+        // Obtener la factura
+        const invoiceRes = await apiRequest("GET", `/api/public/invoices/${id}`);
+        if (!invoiceRes.ok) {
+          throw new Error(`Error al cargar la factura: ${invoiceRes.status}`);
+        }
+        const invoiceData = await invoiceRes.json();
+        setInvoice(invoiceData);
         
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "Couldn't load invoice");
+        // Obtener el cliente
+        const clientRes = await apiRequest("GET", `/api/public/clients/${invoiceData.clientId}`);
+        if (!clientRes.ok) {
+          throw new Error(`Error al cargar los datos del cliente: ${clientRes.status}`);
+        }
+        const clientData = await clientRes.json();
+        setClient(clientData);
+        
+        // Obtener el proyecto si existe
+        if (invoiceData.projectId) {
+          const projectRes = await apiRequest("GET", `/api/public/projects/${invoiceData.projectId}`);
+          if (projectRes.ok) {
+            const projectData = await projectRes.json();
+            setProject(projectData);
+          }
         }
         
-        const data = await response.json();
-        setInvoice(data);
-        setContractor(data.contractor);
-        setClient(data.client);
+        // Obtener los items de la factura
+        const itemsRes = await apiRequest("GET", `/api/public/invoices/${id}/items`);
+        if (!itemsRes.ok) {
+          throw new Error(`Error al cargar los detalles de la factura: ${itemsRes.status}`);
+        }
+        const itemsData = await itemsRes.json();
+        setItems(itemsData);
+        
       } catch (err: any) {
-        setError(err.message || "An error occurred while loading the invoice");
-        console.error("Error fetching invoice:", err);
+        console.error("Error:", err);
+        setError(err.message || "Error al cargar los datos de la factura");
       } finally {
         setLoading(false);
       }
     };
     
     if (id) {
-      fetchData();
+      fetchInvoiceData();
     }
   }, [id]);
 
-  const handleSignInvoice = async () => {
-    if (!signature) {
-      alert("Please provide your signature first.");
-      return;
-    }
-    
-    setActionInProgress(true);
+  // Función para manejar la firma de la factura
+  const handleSignatureSubmit = async (signatureData: string) => {
+    if (!invoice || !id) return;
     
     try {
-      const response = await fetch(`/api/public/invoices/${id}/client-action`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'sign',
-          signature,
-          notes
-        }),
-      });
+      setSignatureDialogOpen(false);
       
-      const result = await response.json();
+      const response = await apiRequest("PATCH", `/api/public/invoices/${id}`, {
+        status: "signed",
+        signature: signatureData,
+        signedAt: new Date().toISOString(),
+      });
       
       if (!response.ok) {
-        throw new Error(result.message || "Failed to sign invoice");
+        throw new Error("Error al guardar la firma");
       }
       
-      setActionComplete(true);
-      setActionResult({
-        success: true,
-        message: result.message || "Invoice has been signed successfully",
-        redirectTo: result.redirectTo
+      // Actualizar el estado local
+      setSignatureData(signatureData);
+      setInvoice({
+        ...invoice,
+        status: "signed",
+        signature: signatureData,
+        signedAt: new Date().toISOString(),
       });
       
-      // Update local state
-      setInvoice((prevInvoice: any) => {
-        if (!prevInvoice) return null;
-        return {
-          ...prevInvoice,
-          status: 'signed',
-          clientSignature: signature
-        };
+      toast({
+        title: "Factura firmada correctamente",
+        description: "Gracias por su firma.",
       });
       
-    } catch (err: any) {
-      setActionResult({
-        success: false,
-        message: err.message || "An error occurred while signing the invoice"
+    } catch (error: any) {
+      console.error("Error al firmar la factura:", error);
+      toast({
+        title: "Error al firmar la factura",
+        description: error.message || "Por favor, inténtelo de nuevo.",
+        variant: "destructive",
       });
-    } finally {
-      setActionInProgress(false);
-      setShowSignatureDialog(false);
     }
   };
 
-  // Helper function to format dates
-  const formatDate = (dateString?: string | Date | null) => {
-    if (!dateString) return "Not specified";
-    return format(new Date(dateString), "MMMM d, yyyy", { locale: es });
+  // Función para descargar la factura como PDF
+  const handleDownloadInvoice = () => {
+    // Esta función sería implementada para generar y descargar un PDF
+    // En una implementación real, se llamaría a un endpoint para generar el PDF
+    toast({
+      title: "Descarga de factura",
+      description: "La descarga comenzará en unos momentos...",
+    });
   };
 
+  // Renderizar pantalla de carga
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-gray-50">
-        <div className="loading-spinner mb-4"></div>
-        <h2 className="text-lg font-medium mb-1">Loading invoice...</h2>
-        <p className="text-gray-500">Please wait while we retrieve the invoice details</p>
+      <div className="container mx-auto p-4 flex flex-col items-center justify-center min-h-[80vh]">
+        <div className="animate-spin h-12 w-12 border-4 border-primary border-t-transparent rounded-full mb-4"></div>
+        <p className="text-gray-500">Cargando factura...</p>
       </div>
     );
   }
 
+  // Renderizar mensaje de error
   if (error) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-gray-50">
-        <Card className="w-full max-w-3xl shadow-lg">
+      <div className="container mx-auto p-4">
+        <Card className="border-red-200">
           <CardHeader>
-            <CardTitle>Error Loading Invoice</CardTitle>
-            <CardDescription>We encountered a problem while trying to load the invoice</CardDescription>
+            <CardTitle className="text-red-600">Error</CardTitle>
+            <CardDescription>
+              No se pudo cargar la factura solicitada
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-red-500">{error}</p>
+            <p>{error}</p>
           </CardContent>
           <CardFooter>
-            <p className="text-sm text-gray-500">
-              If this problem persists, please contact support.
-            </p>
+            <Button variant="secondary" onClick={() => window.history.back()}>
+              Volver
+            </Button>
           </CardFooter>
         </Card>
       </div>
     );
   }
 
-  if (!invoice) {
+  // Renderizar mensaje si no hay factura
+  if (!invoice || !client) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-gray-50">
-        <Card className="w-full max-w-3xl shadow-lg">
+      <div className="container mx-auto p-4">
+        <Card>
           <CardHeader>
-            <CardTitle>Invoice Not Found</CardTitle>
-            <CardDescription>We couldn't find the requested invoice</CardDescription>
+            <CardTitle>Factura no encontrada</CardTitle>
+            <CardDescription>
+              No se pudo encontrar la factura solicitada
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <p>The invoice you're looking for doesn't exist or has been deleted.</p>
+            <p>La factura solicitada no existe o ha sido eliminada.</p>
           </CardContent>
+          <CardFooter>
+            <Button variant="secondary" onClick={() => window.history.back()}>
+              Volver
+            </Button>
+          </CardFooter>
         </Card>
       </div>
     );
   }
 
-  // Determine if action buttons should be shown
-  const shouldShowActionButtons = invoice.status === 'pending';
+  // Calcular el total
+  const subtotal = items.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
+  const taxRate = invoice.taxRate || 0;
+  const taxAmount = subtotal * (taxRate / 100);
+  const total = subtotal + taxAmount;
 
-  // Result dialog after an action is taken
-  const ResultDialog = () => (
-    <AlertDialog open={actionComplete}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>
-            {actionResult?.success ? "Success!" : "Error"}
-          </AlertDialogTitle>
-          <AlertDialogDescription>
-            {actionResult?.message}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogAction onClick={() => setActionComplete(false)}>
-            OK
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-
-  // Signature dialog
-  const SignatureDialog = () => (
-    <AlertDialog open={showSignatureDialog} onOpenChange={setShowSignatureDialog}>
-      <AlertDialogContent className="sm:max-w-md">
-        <AlertDialogHeader>
-          <AlertDialogTitle>Sign Invoice</AlertDialogTitle>
-          <AlertDialogDescription>
-            Please provide your signature to approve this invoice.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        
-        <div className="py-4">
-          <SignaturePad
-            onChange={setSignature}
-            value={signature}
-          />
-          
-          <div className="mt-4">
-            <Textarea
-              placeholder="Optional notes or comments..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="w-full min-h-[80px]"
-            />
-          </div>
-        </div>
-        
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleSignInvoice}
-            disabled={actionInProgress || !signature}
-          >
-            {actionInProgress ? (
-              <>
-                <span className="loading-spinner mr-2"></span>
-                Processing...
-              </>
-            ) : (
-              "Sign Invoice"
-            )}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-
+  // Renderizar la vista de la factura
   return (
-    <div className="flex min-h-screen flex-col items-center p-6 bg-gray-50">
-      <Card className="w-full max-w-4xl shadow-lg">
-        <CardHeader className="bg-gray-100/60 pb-4">
-          <div className="flex justify-between items-start">
+    <div className="container mx-auto p-4 md:p-6 max-w-5xl">
+      <Card className="border-0 shadow-lg">
+        <CardHeader className="pb-4">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
             <div>
-              <CardTitle>Invoice {invoice.invoiceNumber || `#${invoice.id}`}</CardTitle>
-              <CardDescription>
-                {contractor?.companyName || `${contractor?.firstName} ${contractor?.lastName}`}
-              </CardDescription>
+              <div className="flex items-center gap-2 mb-2">
+                <Building className="h-5 w-5 text-primary" />
+                <span className="text-lg font-medium text-primary">
+                  {invoice.contractorName || "ContractorHub"}
+                </span>
+              </div>
+              <CardTitle className="text-2xl md:text-3xl font-bold">
+                Factura #{invoice.invoiceNumber || invoice.id}
+              </CardTitle>
             </div>
-            <Badge className={statusColors[invoice.status] || statusColors.draft}>
-              {invoice.status === 'signed' ? 'Signed' : 
-               invoice.status === 'pending' ? 'Pending Signature' : 
-               invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-            </Badge>
+            <div className="flex flex-col items-start md:items-end mt-4 md:mt-0">
+              <StatusBadge status={invoice.status} />
+              <p className="text-sm text-gray-500 mt-2">
+                Fecha de emisión: {format(new Date(invoice.createdAt), "PP", { locale: es })}
+              </p>
+              {invoice.dueDate && (
+                <p className="text-sm text-gray-500">
+                  Fecha de vencimiento: {format(new Date(invoice.dueDate), "PP", { locale: es })}
+                </p>
+              )}
+            </div>
           </div>
         </CardHeader>
         
-        <CardContent className="pt-6 pb-2">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-2">From</h3>
-              <p className="font-medium">
-                {contractor?.companyName || `${contractor?.firstName} ${contractor?.lastName}`}
-              </p>
-              <p className="text-sm text-gray-600">{contractor?.email}</p>
-              <p className="text-sm text-gray-600">{contractor?.phone}</p>
-              {contractor?.address && (
-                <p className="text-sm text-gray-600 mt-1">{contractor?.address}</p>
-              )}
-            </div>
-            
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-2">To</h3>
-              <p className="font-medium">{client?.firstName} {client?.lastName}</p>
-              <p className="text-sm text-gray-600">{client?.email}</p>
-              <p className="text-sm text-gray-600">{client?.phone}</p>
-              {client?.address && (
-                <p className="text-sm text-gray-600 mt-1">{client?.address}</p>
-              )}
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Invoice Date</h3>
-              <p>{formatDate(invoice.issueDate)}</p>
-            </div>
-            
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Due Date</h3>
-              <p>{formatDate(invoice.dueDate)}</p>
-            </div>
-            
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Amount Due</h3>
-              <p className="font-semibold text-lg">
-                {formatCurrency(Number(invoice.total) || 0)}
-              </p>
-            </div>
-          </div>
-          
-          <Tabs defaultValue="items" className="mt-6">
-            <TabsList>
-              <TabsTrigger value="items">Invoice Items</TabsTrigger>
-              <TabsTrigger value="terms">Terms & Notes</TabsTrigger>
-              {invoice.clientSignature && <TabsTrigger value="signatures">Signatures</TabsTrigger>}
-            </TabsList>
-            
-            <TabsContent value="items" className="mt-4">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[50%]">Description</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead>Unit Price</TableHead>
-                    <TableHead>Amount</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {invoice.items && invoice.items.length > 0 ? (
-                    invoice.items.map((item: any) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-medium">
-                          {item.description}
-                          {item.notes && <p className="text-sm text-gray-500 mt-1">{item.notes}</p>}
-                        </TableCell>
-                        <TableCell>{item.quantity}</TableCell>
-                        <TableCell>{formatCurrency(Number(item.unitPrice))}</TableCell>
-                        <TableCell>{formatCurrency(Number(item.amount))}</TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center py-4 text-gray-500">
-                        No items in this invoice
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-                <TableFooter>
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-right">Subtotal</TableCell>
-                    <TableCell>{formatCurrency(Number(invoice.subtotal) || 0)}</TableCell>
-                  </TableRow>
-                  {Number(invoice.tax) > 0 && (
-                    <TableRow>
-                      <TableCell colSpan={3} className="text-right">Tax ({invoice.tax}%)</TableCell>
-                      <TableCell>{formatCurrency((Number(invoice.subtotal) * Number(invoice.tax)) / 100)}</TableCell>
-                    </TableRow>
-                  )}
-                  {Number(invoice.discount) > 0 && (
-                    <TableRow>
-                      <TableCell colSpan={3} className="text-right">Discount ({invoice.discount}%)</TableCell>
-                      <TableCell>-{formatCurrency((Number(invoice.subtotal) * Number(invoice.discount)) / 100)}</TableCell>
-                    </TableRow>
-                  )}
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-right font-bold">Total</TableCell>
-                    <TableCell className="font-bold">{formatCurrency(Number(invoice.total) || 0)}</TableCell>
-                  </TableRow>
-                </TableFooter>
-              </Table>
-            </TabsContent>
-            
-            <TabsContent value="terms" className="mt-4">
-              <div className="space-y-6">
-                {invoice.terms && (
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">Terms & Conditions</h3>
-                    <div className="bg-gray-50 p-4 rounded-md whitespace-pre-wrap">
-                      {invoice.terms}
-                    </div>
-                  </div>
-                )}
-
-                {invoice.notes && (
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">Notes</h3>
-                    <div className="bg-gray-50 p-4 rounded-md whitespace-pre-wrap">
-                      {invoice.notes}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-            
-            {invoice.clientSignature && (
-              <TabsContent value="signatures" className="mt-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {invoice.clientSignature && (
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">Client Signature</h3>
-                      <div className="bg-gray-50 p-4 rounded-md">
-                        <img 
-                          src={invoice.clientSignature} 
-                          alt="Client Signature" 
-                          className="max-h-32"
-                        />
-                        {invoice.updatedAt && (
-                          <p className="text-sm text-gray-500 mt-2">
-                            Signed on {formatDate(invoice.updatedAt)}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {invoice.contractorSignature && (
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">Contractor Signature</h3>
-                      <div className="bg-gray-50 p-4 rounded-md">
-                        <img 
-                          src={invoice.contractorSignature} 
-                          alt="Contractor Signature" 
-                          className="max-h-32"
-                        />
-                      </div>
-                    </div>
-                  )}
+        <CardContent className="space-y-6">
+          {/* Información de cliente y contratista */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <h3 className="font-semibold text-gray-700">Facturar a:</h3>
+              <p className="font-medium">{client.firstName} {client.lastName}</p>
+              <div className="text-sm text-gray-600 space-y-1">
+                <div className="flex items-center gap-1">
+                  <MapPin className="h-4 w-4 text-gray-400" />
+                  <span>{client.address}</span>
                 </div>
-              </TabsContent>
-            )}
-          </Tabs>
-        </CardContent>
-        
-        <CardFooter className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t mt-4 pt-6">
-          {shouldShowActionButtons ? (
-            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-              <Button
-                className="w-full sm:w-auto"
-                onClick={() => setShowSignatureDialog(true)}
-              >
-                Sign Invoice
-              </Button>
+                <div className="flex items-center gap-1">
+                  <Mail className="h-4 w-4 text-gray-400" />
+                  <span>{client.email}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Phone className="h-4 w-4 text-gray-400" />
+                  <span>{client.phone}</span>
+                </div>
+              </div>
             </div>
-          ) : (
-            <p className="text-sm text-gray-600">
-              {invoice.status === 'signed' && "This invoice has been signed."}
-              {invoice.status === 'paid' && "This invoice has been paid."}
-              {invoice.status === 'cancelled' && "This invoice has been cancelled."}
-            </p>
+            
+            <div className="space-y-2">
+              <h3 className="font-semibold text-gray-700">Contratista:</h3>
+              <p className="font-medium">{invoice.contractorName || "ContractorHub"}</p>
+              <div className="text-sm text-gray-600 space-y-1">
+                <div className="flex items-center gap-1">
+                  <MapPin className="h-4 w-4 text-gray-400" />
+                  <span>{invoice.contractorAddress || "Dirección del contratista"}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Mail className="h-4 w-4 text-gray-400" />
+                  <span>{invoice.contractorEmail || "email@contratista.com"}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Phone className="h-4 w-4 text-gray-400" />
+                  <span>{invoice.contractorPhone || "(555) 123-4567"}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Detalles del proyecto */}
+          {project && (
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <FileText className="h-4 w-4 text-gray-500" />
+                <h3 className="font-semibold">Detalles del Proyecto:</h3>
+              </div>
+              <p className="font-medium">{project.title}</p>
+              <p className="text-sm text-gray-600 mt-1">{project.description}</p>
+            </div>
           )}
           
-          <p className="text-xs text-gray-500 text-center sm:text-right">
-            {invoice.project?.title && `Project: ${invoice.project.title}`}
-            <br />
-            Invoice generated from Estimate #{invoice.estimateId}
-          </p>
+          {/* Tabla de conceptos */}
+          <div>
+            <h3 className="font-semibold text-gray-700 mb-3">Detalles:</h3>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[50%]">Descripción</TableHead>
+                  <TableHead className="text-right">Cantidad</TableHead>
+                  <TableHead className="text-right">Precio unitario</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map((item, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">
+                      {item.description}
+                      {item.notes && (
+                        <p className="text-sm text-gray-500 mt-1">{item.notes}</p>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">{item.quantity}</TableCell>
+                    <TableCell className="text-right">${item.unitPrice.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">${(item.quantity * item.unitPrice).toFixed(2)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          
+          {/* Totales */}
+          <div className="flex flex-col items-end space-y-2 pt-2">
+            <div className="w-full max-w-xs">
+              <div className="flex justify-between py-2">
+                <span className="text-gray-600">Subtotal:</span>
+                <span className="font-medium">${subtotal.toFixed(2)}</span>
+              </div>
+              {taxRate > 0 && (
+                <div className="flex justify-between py-2">
+                  <span className="text-gray-600">Impuestos ({taxRate}%):</span>
+                  <span className="font-medium">${taxAmount.toFixed(2)}</span>
+                </div>
+              )}
+              <Separator className="my-2" />
+              <div className="flex justify-between py-2">
+                <span className="font-bold">Total:</span>
+                <span className="font-bold text-lg">${total.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Términos y condiciones */}
+          <div className="text-sm text-gray-600 border-t pt-4">
+            <h3 className="font-semibold text-gray-700 mb-2">Términos y condiciones:</h3>
+            <p>{invoice.terms || "El pago debe realizarse dentro del plazo establecido. Por favor, incluya el número de factura en su pago."}</p>
+          </div>
+          
+          {/* Firma */}
+          {invoice.status === 'signed' && invoice.signature && (
+            <div className="border rounded-lg p-4 space-y-2">
+              <h3 className="font-semibold text-gray-700">Firmado por el cliente:</h3>
+              <div className="p-2 bg-white border rounded-lg">
+                <img 
+                  src={invoice.signature} 
+                  alt="Firma del cliente" 
+                  className="max-h-24 mx-auto" 
+                />
+              </div>
+              <p className="text-sm text-gray-500 text-center">
+                Firmado el {format(new Date(invoice.signedAt), "PPpp", { locale: es })}
+              </p>
+            </div>
+          )}
+        </CardContent>
+        
+        <CardFooter className="flex flex-col sm:flex-row justify-between gap-4 pt-6 border-t">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button variant="outline" onClick={handleDownloadInvoice}>
+              <Download className="mr-2 h-4 w-4" />
+              Descargar PDF
+            </Button>
+          </div>
+          
+          {invoice.status === 'pending' && (
+            <div className="flex gap-3">
+              <Dialog open={signatureDialogOpen} onOpenChange={setSignatureDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <FileSignature className="mr-2 h-4 w-4" />
+                    Firmar Factura
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[600px]">
+                  <DialogHeader>
+                    <DialogTitle>Firmar Factura</DialogTitle>
+                    <DialogDescription>
+                      Al firmar esta factura, usted confirma haber recibido los bienes o servicios descritos.
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <SignaturePad 
+                    onSave={handleSignatureSubmit}
+                    onCancel={() => setSignatureDialogOpen(false)}
+                  />
+                </DialogContent>
+              </Dialog>
+            </div>
+          )}
         </CardFooter>
       </Card>
-      
-      {/* Result Dialog */}
-      <ResultDialog />
-      
-      {/* Signature Dialog */}
-      <SignatureDialog />
     </div>
   );
+}
+
+// Componente para mostrar el estado de la factura
+function StatusBadge({ status }: { status: string }) {
+  switch (status) {
+    case 'draft':
+      return <Badge variant="outline">Borrador</Badge>;
+    case 'pending':
+      return <Badge className="bg-amber-500">Pendiente de firma</Badge>;
+    case 'signed':
+      return <Badge className="bg-blue-600">Firmada</Badge>;
+    case 'paid':
+      return <Badge className="bg-green-600">Pagada</Badge>;
+    case 'overdue':
+      return <Badge variant="destructive">Vencida</Badge>;
+    case 'cancelled':
+      return <Badge variant="outline" className="text-red-600 border-red-300">Cancelada</Badge>;
+    default:
+      return <Badge variant="outline">{status}</Badge>;
+  }
 }
