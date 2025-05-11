@@ -290,6 +290,19 @@ class DatabaseStorage implements IStorage {
     return await db.query.projects.findMany({
       where: eq(projects.contractorId, contractorId),
       orderBy: desc(projects.createdAt),
+      columns: {
+        id: true,
+        contractorId: true,
+        clientId: true,
+        title: true,
+        description: true,
+        status: true,
+        startDate: true,
+        endDate: true,
+        budget: true,
+        notes: true,
+        createdAt: true
+      },
       with: {
         client: true
       }
@@ -302,6 +315,19 @@ class DatabaseStorage implements IStorage {
         eq(projects.id, id),
         eq(projects.contractorId, contractorId)
       ),
+      columns: {
+        id: true,
+        contractorId: true,
+        clientId: true,
+        title: true,
+        description: true,
+        status: true,
+        startDate: true,
+        endDate: true,
+        budget: true,
+        notes: true,
+        createdAt: true
+      },
       with: {
         client: true
       }
@@ -312,6 +338,19 @@ class DatabaseStorage implements IStorage {
   async getProjectById(id: number) {
     return await db.query.projects.findFirst({
       where: eq(projects.id, id),
+      columns: {
+        id: true,
+        contractorId: true,
+        clientId: true,
+        title: true,
+        description: true,
+        status: true,
+        startDate: true,
+        endDate: true,
+        budget: true,
+        notes: true,
+        createdAt: true
+      },
       with: {
         client: true
       }
@@ -1062,7 +1101,21 @@ class DatabaseStorage implements IStorage {
         eq(materials.contractorId, contractorId)
       ),
       with: {
-        project: true
+        project: {
+          columns: {
+            id: true,
+            title: true,
+            status: true,
+            contractorId: true,
+            clientId: true,
+            description: true,
+            budget: true,
+            startDate: true,
+            endDate: true,
+            notes: true,
+            createdAt: true
+          }
+        }
       }
     });
   }
