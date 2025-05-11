@@ -59,7 +59,7 @@ export interface IStorage {
   // Estimates
   getEstimates: (contractorId: number) => Promise<any[]>;
   getEstimate: (id: number, contractorId: number) => Promise<any>;
-  getEstimateById: (id: number, contractorId: number) => Promise<any>; // Método público para clientes con seguridad
+  getEstimateById: (id: number, contractorId?: number) => Promise<any>; // Método público para clientes con seguridad
   createEstimate: (data: Omit<EstimateInsert, "id">) => Promise<any>;
   updateEstimate: (id: number, contractorId: number, data: Partial<EstimateInsert>) => Promise<any>;
   updateEstimateById: (id: number, data: Partial<EstimateInsert>) => Promise<any>; // Método público para clientes
@@ -84,7 +84,7 @@ export interface IStorage {
   // Invoices
   getInvoices: (contractorId: number) => Promise<any[]>;
   getInvoice: (id: number, contractorId: number) => Promise<any>;
-  getInvoiceById: (id: number, contractorId: number) => Promise<any>; // Método público para clientes con seguridad
+  getInvoiceById: (id: number, contractorId?: number) => Promise<any>; // Método público para clientes con seguridad
   createInvoice: (data: Omit<InvoiceInsert, "id">) => Promise<any>;
   updateInvoice: (id: number, contractorId: number, data: Partial<InvoiceInsert>) => Promise<any>;
   updateInvoiceById: (id: number, data: Partial<InvoiceInsert>) => Promise<any>; // Método público para clientes
@@ -1009,24 +1009,28 @@ class DatabaseStorage implements IStorage {
   }
   
   // Método para obtener items de factura por ID verificando primero que la factura pertenece al contratista
-  async getInvoiceItemsById(invoiceId: number, contractorId: number) {
-    // Primero verificamos que la factura pertenece al contratista
-    const invoice = await db.query.invoices.findFirst({
-      where: and(
-        eq(invoices.id, invoiceId),
-        eq(invoices.contractorId, contractorId)
-      ),
-      columns: {
-        id: true
+  async getInvoiceItemsById(invoiceId: number, contractorId?: number) {
+    // Si se proporciona ID de contratista, verificamos que la factura le pertenezca
+    if (contractorId) {
+      // Primero verificamos que la factura pertenece al contratista
+      const invoice = await db.query.invoices.findFirst({
+        where: and(
+          eq(invoices.id, invoiceId),
+          eq(invoices.contractorId, contractorId)
+        ),
+        columns: {
+          id: true
+        }
+      });
+      
+      // Si no encontramos la factura o no pertenece al contratista, devolvemos un arreglo vacío
+      if (!invoice) {
+        return [];
       }
-    });
-    
-    // Si no encontramos la factura o no pertenece al contratista, devolvemos un arreglo vacío
-    if (!invoice) {
-      return [];
     }
     
-    // Si la factura existe y pertenece al contratista, entonces devolvemos los items
+    // Si la factura existe y pertenece al contratista, o no se proporcionó ID de contratista,
+    // entonces devolvemos los items (para uso en rutas públicas)
     return await db.query.invoiceItems.findMany({
       where: eq(invoiceItems.invoiceId, invoiceId)
     });

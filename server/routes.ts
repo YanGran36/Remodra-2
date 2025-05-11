@@ -1689,7 +1689,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get invoice items
-      const items = await storage.getInvoiceItemsById(invoiceId);
+      const items = await storage.getInvoiceItemsById(invoiceId, undefined);
       
       // Get contractor info
       const contractor = await storage.getContractor(invoice.contractorId);
