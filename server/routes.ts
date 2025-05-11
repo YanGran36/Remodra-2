@@ -704,17 +704,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/protected/invoices/:id", async (req, res) => {
-    try {
-      const invoice = await storage.getInvoice(Number(req.params.id), req.user!.id);
-      if (!invoice) {
-        return res.status(404).json({ message: "Invoice not found" });
+  app.get("/api/protected/invoices/:id", 
+    verifyResourceOwnership('invoice', 'id'),
+    async (req, res) => {
+      try {
+        const invoice = await storage.getInvoice(Number(req.params.id), req.user!.id);
+        if (!invoice) {
+          return res.status(404).json({ message: "Invoice not found" });
+        }
+        res.json(invoice);
+      } catch (error) {
+        console.error("Error fetching invoice:", error);
+        res.status(500).json({ message: "Failed to fetch invoice" });
       }
-      res.json(invoice);
-    } catch (error) {
-      console.error("Error fetching invoice:", error);
-      res.status(500).json({ message: "Failed to fetch invoice" });
-    }
   });
 
   app.post("/api/protected/invoices", async (req, res) => {
@@ -735,31 +737,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/protected/invoices/:id", async (req, res) => {
-    try {
-      const invoiceId = Number(req.params.id);
-      
-      // First check if invoice exists and belongs to contractor
-      const existingInvoice = await storage.getInvoice(invoiceId, req.user!.id);
-      if (!existingInvoice) {
-        return res.status(404).json({ message: "Invoice not found" });
+  app.patch("/api/protected/invoices/:id", 
+    verifyResourceOwnership('invoice', 'id'),
+    async (req, res) => {
+      try {
+        const invoiceId = Number(req.params.id);
+        
+        // El middleware ya verificó que la factura existe y pertenece al contratista
+        const validatedData = invoiceInsertSchema.partial().parse(req.body);
+        
+        const invoice = await storage.updateInvoice(invoiceId, req.user!.id, validatedData);
+        res.json(invoice);
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return res.status(400).json({ errors: error.errors });
+        }
+        console.error("Error updating invoice:", error);
+        res.status(500).json({ message: "Failed to update invoice" });
       }
-      
-      const validatedData = invoiceInsertSchema.partial().parse(req.body);
-      
-      const invoice = await storage.updateInvoice(invoiceId, req.user!.id, validatedData);
-      res.json(invoice);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
-      }
-      console.error("Error updating invoice:", error);
-      res.status(500).json({ message: "Failed to update invoice" });
-    }
   });
   
   // Cancelar factura
-  app.post("/api/protected/invoices/:id/cancel", async (req, res) => {
+  app.post("/api/protected/invoices/:id/cancel", 
+    verifyResourceOwnership('invoice', 'id'),
+    async (req, res) => {
     try {
       const invoiceId = Number(req.params.id);
       
