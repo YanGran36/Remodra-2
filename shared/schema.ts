@@ -15,16 +15,23 @@ export const contractors = pgTable("contractors", {
   id: serial("id").primaryKey(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
+  username: text("username").notNull().unique(),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   companyName: text("company_name").notNull(),
   phone: text("phone"),
+  website: text("website"),
   address: text("address"),
   city: text("city"),
   state: text("state"),
   zip: text("zip"),
+  country: text("country").default("USA"),
+  role: text("role").default("contractor").notNull(),
+  plan: text("plan").default("basic").notNull(),
+  settings: jsonb("settings").default('{}'),
   language: text("language").default("en").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
 
 // Clients (belonging to contractors)

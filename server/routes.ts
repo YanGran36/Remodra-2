@@ -14,44 +14,10 @@ import {
   materialInsertSchema,
   followUpInsertSchema,
   propertyMeasurementInsertSchema,
-  priceConfigurationInsertSchema
+  priceConfigurationInsertSchema,
+  contractorCreateSchema,
+  contractorInsertSchema
 } from "@shared/schema";
-
-// Esquema para la creación de contratistas desde el super admin
-const contractorCreateSchema = z.object({
-  // Información de la empresa
-  companyName: z.string().min(2),
-  email: z.string().email(),
-  phone: z.string().min(6),
-  website: z.string().url().optional().or(z.literal('')),
-  address: z.string().min(5),
-  city: z.string().min(2),
-  state: z.string().min(2),
-  zipCode: z.string().min(3),
-  country: z.string().min(2),
-  
-  // Información del usuario principal
-  firstName: z.string().min(2),
-  lastName: z.string().min(2),
-  username: z.string().min(4),
-  password: z.string().min(8),
-  
-  // Información de suscripción
-  plan: z.enum(["basic", "professional", "premium"]),
-  
-  // Servicios ofrecidos
-  serviceTypes: z.array(z.string()).min(1),
-  
-  // Configuración adicional
-  allowClientPortal: z.boolean().default(true),
-  useEstimateTemplates: z.boolean().default(true),
-  enabledAIAssistant: z.boolean().default(true),
-  
-  // Datos de configuración visual
-  primaryColor: z.string().regex(/^#[0-9A-F]{6}$/i).default("#1E40AF"),
-  logoUrl: z.string().url().optional().or(z.literal('')),
-  companyDescription: z.string().max(500).optional(),
-});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
@@ -1846,7 +1812,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         address: validData.address,
         city: validData.city,
         state: validData.state,
-        zipCode: validData.zipCode,
+        zip: validData.zipCode, // Ajustamos el nombre a 'zip' según el esquema
         country: validData.country,
         firstName: validData.firstName,
         lastName: validData.lastName,
@@ -1854,7 +1820,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         password: hashedPassword,
         role: "contractor", // Rol por defecto
         plan: validData.plan,
-        settings: {
+        language: "en", // Añadimos el campo obligatorio
+        settings: JSON.stringify({
           serviceTypes: validData.serviceTypes,
           allowClientPortal: validData.allowClientPortal,
           useEstimateTemplates: validData.useEstimateTemplates,
@@ -1862,15 +1829,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           primaryColor: validData.primaryColor,
           logoUrl: validData.logoUrl || null,
           companyDescription: validData.companyDescription || null
-        }
+        })
       };
       
       // Guardar el contratista en la base de datos
       const newContractor = await storage.createContractor(contractorData);
       
-      // Retornar el contratista creado (sin la contraseña)
-      const { password, ...contractorWithoutPassword } = newContractor;
-      res.status(201).json(contractorWithoutPassword);
+      // Retornar el contratista creado (pero omitimos datos sensibles)
+      res.status(201).json({
+        id: newContractor.id,
+        email: newContractor.email,
+        username: newContractor.username,
+        companyName: newContractor.companyName,
+        firstName: newContractor.firstName,
+        lastName: newContractor.lastName,
+        message: "Contratista creado exitosamente"
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Datos inválidos", errors: error.errors });
