@@ -43,7 +43,7 @@ export interface IStorage {
   // Clients
   getClients: (contractorId: number) => Promise<any[]>;
   getClient: (id: number, contractorId: number) => Promise<any>;
-  getClientById: (id: number) => Promise<any>; // Método público para client
+  getClientById: (id: number, contractorId: number) => Promise<any>; // Método público para client con seguridad
   createClient: (data: Omit<ClientInsert, "id">) => Promise<any>;
   updateClient: (id: number, contractorId: number, data: Partial<ClientInsert>) => Promise<any>;
   deleteClient: (id: number, contractorId: number) => Promise<boolean>;
