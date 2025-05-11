@@ -5,7 +5,8 @@ import { setupAuth, hashPassword } from "./auth";
 import { z } from "zod";
 import { db } from "@db";
 import { eq, and } from "drizzle-orm";
-// Eliminamos importaciones de servicios de Google Sheets
+// Importar middleware de autorización
+import { verifyResourceOwnership, verifyRelationship, preventCascadeOperations } from "./middleware/authorization";
 import { 
   clientInsertSchema, 
   projectInsertSchema, 
@@ -58,18 +59,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/protected/clients/:id", async (req, res) => {
-    try {
-      const client = await storage.getClient(Number(req.params.id), req.user!.id);
-      if (!client) {
-        return res.status(404).json({ message: "Client not found" });
+  app.get("/api/protected/clients/:id", 
+    verifyResourceOwnership('client'),
+    async (req, res) => {
+      try {
+        const client = await storage.getClient(Number(req.params.id), req.user!.id);
+        if (!client) {
+          return res.status(404).json({ message: "Client not found" });
+        }
+        res.json(client);
+      } catch (error) {
+        console.error("Error fetching client:", error);
+        res.status(500).json({ message: "Failed to fetch client" });
       }
-      res.json(client);
-    } catch (error) {
-      console.error("Error fetching client:", error);
-      res.status(500).json({ message: "Failed to fetch client" });
     }
-  });
+  );
 
   app.post("/api/protected/clients", async (req, res) => {
     try {
@@ -89,44 +93,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/protected/clients/:id", async (req, res) => {
-    try {
-      const clientId = Number(req.params.id);
-      
-      // First check if client exists and belongs to contractor
-      const existingClient = await storage.getClient(clientId, req.user!.id);
-      if (!existingClient) {
-        return res.status(404).json({ message: "Client not found" });
+  app.patch("/api/protected/clients/:id", 
+    verifyResourceOwnership('client'),
+    async (req, res) => {
+      try {
+        const clientId = Number(req.params.id);
+        
+        const validatedData = clientInsertSchema.partial().parse(req.body);
+        
+        const client = await storage.updateClient(clientId, req.user!.id, validatedData);
+        res.json(client);
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return res.status(400).json({ errors: error.errors });
+        }
+        console.error("Error updating client:", error);
+        res.status(500).json({ message: "Failed to update client" });
       }
-      
-      const validatedData = clientInsertSchema.partial().parse(req.body);
-      
-      const client = await storage.updateClient(clientId, req.user!.id, validatedData);
-      res.json(client);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
-      }
-      console.error("Error updating client:", error);
-      res.status(500).json({ message: "Failed to update client" });
     }
-  });
+  );
 
-  app.delete("/api/protected/clients/:id", async (req, res) => {
-    try {
-      const clientId = Number(req.params.id);
-      const success = await storage.deleteClient(clientId, req.user!.id);
-      
-      if (!success) {
-        return res.status(404).json({ message: "Client not found" });
+  app.delete("/api/protected/clients/:id", 
+    verifyResourceOwnership('client'),
+    preventCascadeOperations('client'),
+    async (req, res) => {
+      try {
+        const clientId = Number(req.params.id);
+        const success = await storage.deleteClient(clientId, req.user!.id);
+        
+        if (!success) {
+          return res.status(404).json({ message: "Client not found" });
+        }
+        
+        res.status(204).end();
+      } catch (error) {
+        console.error("Error deleting client:", error);
+        res.status(500).json({ message: "Failed to delete client" });
       }
-      
-      res.status(204).end();
-    } catch (error) {
-      console.error("Error deleting client:", error);
-      res.status(500).json({ message: "Failed to delete client" });
     }
-  });
+  );
 
   // Projects routes
   app.get("/api/protected/projects", async (req, res) => {
@@ -139,18 +144,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/protected/projects/:id", async (req, res) => {
-    try {
-      const project = await storage.getProject(Number(req.params.id), req.user!.id);
-      if (!project) {
-        return res.status(404).json({ message: "Project not found" });
+  app.get("/api/protected/projects/:id", 
+    verifyResourceOwnership('project'),
+    async (req, res) => {
+      try {
+        const project = await storage.getProject(Number(req.params.id), req.user!.id);
+        if (!project) {
+          return res.status(404).json({ message: "Project not found" });
+        }
+        res.json(project);
+      } catch (error) {
+        console.error("Error fetching project:", error);
+        res.status(500).json({ message: "Failed to fetch project" });
       }
-      res.json(project);
-    } catch (error) {
-      console.error("Error fetching project:", error);
-      res.status(500).json({ message: "Failed to fetch project" });
     }
-  });
+  );
 
   app.post("/api/protected/projects", async (req, res) => {
     try {
@@ -175,72 +183,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/protected/projects/:id", async (req, res) => {
-    try {
-      const projectId = Number(req.params.id);
-      
-      // First check if project exists and belongs to contractor
-      const existingProject = await storage.getProject(projectId, req.user!.id);
-      if (!existingProject) {
-        return res.status(404).json({ message: "Project not found" });
+  app.patch("/api/protected/projects/:id", 
+    verifyResourceOwnership('project'),
+    async (req, res) => {
+      try {
+        const projectId = Number(req.params.id);
+        
+        // Procesar las fechas del string ISO a objetos Date si están presentes
+        const data = {
+          ...req.body,
+          startDate: req.body.startDate ? new Date(req.body.startDate) : undefined,
+          endDate: req.body.endDate ? new Date(req.body.endDate) : undefined,
+          lastAiUpdate: req.body.lastAiUpdate ? new Date(req.body.lastAiUpdate) : (req.body.aiGeneratedDescription ? new Date() : undefined)
+        };
+        
+        const validatedData = projectInsertSchema.partial().parse(data);
+        
+        const project = await storage.updateProject(projectId, req.user!.id, validatedData);
+        res.json(project);
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return res.status(400).json({ errors: error.errors });
+        }
+        console.error("Error updating project:", error);
+        res.status(500).json({ message: "Failed to update project" });
       }
-      
-      // Procesar las fechas del string ISO a objetos Date si están presentes
-      const data = {
-        ...req.body,
-        startDate: req.body.startDate ? new Date(req.body.startDate) : undefined,
-        endDate: req.body.endDate ? new Date(req.body.endDate) : undefined,
-        lastAiUpdate: req.body.lastAiUpdate ? new Date(req.body.lastAiUpdate) : (req.body.aiGeneratedDescription ? new Date() : undefined)
-      };
-      
-      const validatedData = projectInsertSchema.partial().parse(data);
-      
-      const project = await storage.updateProject(projectId, req.user!.id, validatedData);
-      res.json(project);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
-      }
-      console.error("Error updating project:", error);
-      res.status(500).json({ message: "Failed to update project" });
     }
-  });
+  );
   
   // Cancelar proyecto
-  app.post("/api/protected/projects/:id/cancel", async (req, res) => {
-    try {
-      const projectId = Number(req.params.id);
+  app.post("/api/protected/projects/:id/cancel", 
+    verifyResourceOwnership('project'),
+    async (req, res) => {
+      try {
+        const projectId = Number(req.params.id);
       
-      // Verificar que el proyecto existe y pertenece al contratista
-      const existingProject = await storage.getProject(projectId, req.user!.id);
-      if (!existingProject) {
-        return res.status(404).json({ message: "Project not found" });
+        // Obtenemos el proyecto
+        const existingProject = await storage.getProject(projectId, req.user!.id);
+        if (!existingProject) {
+          return res.status(404).json({ message: "Project not found" });
+        }
+        
+        // Verificar que el proyecto no esté ya cancelado
+        if (existingProject.status === "cancelled") {
+          return res.status(400).json({ message: "Project is already cancelled" });
+        }
+        
+        // Actualizar el estado del proyecto a "cancelled"
+        const project = await storage.updateProject(projectId, req.user!.id, { 
+          status: "cancelled",
+          notes: req.body.notes 
+            ? `${existingProject.notes ? existingProject.notes + '\n\n' : ''}Cancelled: ${req.body.notes}`
+            : `${existingProject.notes ? existingProject.notes + '\n\n' : ''}Project cancelled`
+        });
+        
+        res.json(project);
+      } catch (error) {
+        console.error("Error cancelling project:", error);
+        res.status(500).json({ message: "Failed to cancel project" });
       }
-      
-      // Verificar que el proyecto no esté ya cancelado
-      if (existingProject.status === "cancelled") {
-        return res.status(400).json({ message: "Project is already cancelled" });
-      }
-      
-      // Actualizar el estado del proyecto a "cancelled"
-      const project = await storage.updateProject(projectId, req.user!.id, { 
-        status: "cancelled",
-        notes: req.body.notes 
-          ? `${existingProject.notes ? existingProject.notes + '\n\n' : ''}Cancelled: ${req.body.notes}`
-          : `${existingProject.notes ? existingProject.notes + '\n\n' : ''}Project cancelled`
-      });
-      
-      res.json(project);
-    } catch (error) {
-      console.error("Error cancelling project:", error);
-      res.status(500).json({ message: "Failed to cancel project" });
     }
-  });
+  );
 
-  app.delete("/api/protected/projects/:id", async (req, res) => {
-    try {
-      const projectId = Number(req.params.id);
-      const success = await storage.deleteProject(projectId, req.user!.id);
+  app.delete("/api/protected/projects/:id", 
+    verifyResourceOwnership('project'),
+    async (req, res) => {
+      try {
+        const projectId = Number(req.params.id);
+        const success = await storage.deleteProject(projectId, req.user!.id);
       
       if (!success) {
         return res.status(404).json({ message: "Project not found" });
