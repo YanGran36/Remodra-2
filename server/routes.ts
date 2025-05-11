@@ -6,7 +6,7 @@ import { z } from "zod";
 import { db } from "@db";
 import { eq, and } from "drizzle-orm";
 // Importar middleware de autorización
-import { verifyResourceOwnership, verifyRelationship, preventCascadeOperations } from "./middleware/authorization";
+import { verifyResourceOwnership, verifyRelationship, preventCascadeOperations, EntityType } from "./middleware/authorization";
 import { 
   clientInsertSchema, 
   projectInsertSchema, 
@@ -1340,35 +1340,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
   });
 
-  app.post("/api/protected/attachments", async (req, res) => {
-    try {
-      const validatedData = {
-        ...req.body,
-        contractorId: req.user!.id
-      };
+  app.post("/api/protected/attachments", 
+    // Verificamos que la entidad a la que se adjunta el archivo pertenece al contratista
+    (req, res, next) => {
+      const { entityType, entityId } = req.body;
       
-      const attachment = await storage.createAttachment(validatedData);
-      res.status(201).json(attachment);
-    } catch (error) {
-      console.error("Error creating attachment:", error);
-      res.status(500).json({ message: "Failed to create attachment" });
-    }
-  });
-
-  app.delete("/api/protected/attachments/:id", async (req, res) => {
-    try {
-      const attachmentId = Number(req.params.id);
-      const success = await storage.deleteAttachment(attachmentId, req.user!.id);
-      
-      if (!success) {
-        return res.status(404).json({ message: "Attachment not found" });
+      if (!entityType || !entityId) {
+        return res.status(400).json({ message: "Entity type and ID are required" });
       }
       
-      res.status(204).end();
-    } catch (error) {
-      console.error("Error deleting attachment:", error);
-      res.status(500).json({ message: "Failed to delete attachment" });
-    }
+      // Usamos un middleware dinámico basado en el tipo de entidad
+      return verifyResourceOwnership(entityType as EntityType, 'entityId')(req, res, next);
+    },
+    async (req, res) => {
+      try {
+        // El middleware ya verificó que la entidad existe y pertenece al contratista
+        const validatedData = {
+          ...req.body,
+          contractorId: req.user!.id
+        };
+        
+        const attachment = await storage.createAttachment(validatedData);
+        res.status(201).json(attachment);
+      } catch (error) {
+        console.error("Error creating attachment:", error);
+        res.status(500).json({ message: "Failed to create attachment" });
+      }
+  });
+
+  app.delete("/api/protected/attachments/:id", 
+    verifyResourceOwnership('attachment', 'id'),
+    async (req, res) => {
+      try {
+        const attachmentId = Number(req.params.id);
+        // El middleware ya verificó que el adjunto existe y pertenece al contratista
+        const success = await storage.deleteAttachment(attachmentId, req.user!.id);
+        
+        if (!success) {
+          return res.status(404).json({ message: "Attachment not found" });
+        }
+        
+        res.status(204).end();
+      } catch (error) {
+        console.error("Error deleting attachment:", error);
+        res.status(500).json({ message: "Failed to delete attachment" });
+      }
   });
 
   // Follow-ups routes

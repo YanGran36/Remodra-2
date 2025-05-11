@@ -2,10 +2,10 @@ import { Request, Response, NextFunction } from "express";
 import { storage } from "../storage";
 import { db } from "../../db";
 import { and, eq } from "drizzle-orm";
-import { clients, projects, estimates, invoices, events, materials, propertyMeasurements } from "../../shared/schema";
+import { clients, projects, estimates, invoices, events, materials, propertyMeasurements, attachments, followUps } from "../../shared/schema";
 
 // Tipos de entidades que protegeremos
-export type EntityType = 'client' | 'project' | 'estimate' | 'invoice' | 'event' | 'material' | 'property-measurement';
+export type EntityType = 'client' | 'project' | 'estimate' | 'invoice' | 'event' | 'material' | 'property-measurement' | 'attachment' | 'follow-up';
 
 // Middleware para verificar que la entidad pertenezca al contratista autenticado
 export const verifyResourceOwnership = (entityType: EntityType, idParamName = 'id') => {
