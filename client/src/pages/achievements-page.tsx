@@ -1,6 +1,6 @@
-import { PageHeader } from "@/components/shared/page-header";
+import PageHeader from "@/components/shared/page-header";
 import { AchievementCollection } from "@/components/achievements/AchievementCollection";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 
 export default function AchievementsPage() {
   return (

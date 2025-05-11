@@ -7,6 +7,8 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { LanguageProvider } from "@/hooks/use-language";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { SessionRecoveryAlert } from "@/components/session-recovery-alert";
+import { HelmetProvider } from "react-helmet-async";
+import { AchievementManager } from "@/components/achievements/AchievementManager";
 
 import AuthPage from "@/pages/auth-page";
 import Dashboard from "@/pages/dashboard";
