@@ -273,7 +273,8 @@ export const contractorsRelations = relations(contractors, ({ many }) => ({
   attachments: many(attachments),
   followUps: many(followUps),
   propertyMeasurements: many(propertyMeasurements),
-  priceConfigurations: many(priceConfigurations)
+  priceConfigurations: many(priceConfigurations),
+  googleSheetsConfigs: many(googleSheetsConfig)
 }));
 
 export const clientsRelations = relations(clients, ({ one, many }) => ({
@@ -342,6 +343,24 @@ export const attachmentsRelations = relations(attachments, ({ one }) => ({
 export const followUpsRelations = relations(followUps, ({ one }) => ({
   contractor: one(contractors, { fields: [followUps.contractorId], references: [contractors.id] }),
   client: one(clients, { fields: [followUps.clientId], references: [clients.id] })
+}));
+
+// Google Sheets Integration
+export const googleSheetsConfig = pgTable("google_sheets_config", {
+  id: serial("id").primaryKey(),
+  contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
+  spreadsheetId: text("spreadsheet_id").notNull(),
+  spreadsheetName: text("spreadsheet_name"),
+  lastSync: timestamp("last_sync"),
+  enabled: boolean("enabled").default(true).notNull(),
+  autoSync: boolean("auto_sync").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+// Google Sheets Config relations
+export const googleSheetsConfigRelations = relations(googleSheetsConfig, ({ one }) => ({
+  contractor: one(contractors, { fields: [googleSheetsConfig.contractorId], references: [contractors.id] })
 }));
 
 // Property measurements relations
