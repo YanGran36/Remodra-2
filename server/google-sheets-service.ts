@@ -23,7 +23,7 @@ const getJWTClient = async (): Promise<JWT> => {
     // Autorizar el cliente
     await jwtClient.authorize();
     return jwtClient;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error al autorizar el cliente JWT:', error);
     throw new Error(`Error de autenticación con Google: ${error.message}`);
   }
@@ -90,7 +90,7 @@ export const initializeSheets = async (): Promise<void> => {
       });
       console.log('Encabezados de Clients configurados');
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error al inicializar las hojas de cálculo:', error);
     throw new Error(`Error al inicializar Google Sheets: ${error.message}`);
   }
@@ -121,10 +121,10 @@ export const exportClientsToSheets = async (contractorId: number): Promise<strin
       client.address || '',
       client.city || '',
       client.state || '',
-      client.zipCode || '',
+      client.zip || '',
       client.notes || '',
       client.createdAt ? new Date(client.createdAt).toISOString() : '',
-      client.updatedAt ? new Date(client.updatedAt).toISOString() : ''
+      '' // No hay updatedAt en el esquema de clientes
     ]);
     
     // Obtener el número de filas existentes (para no sobrescribir encabezados)

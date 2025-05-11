@@ -1946,6 +1946,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rutas de integración con Google Sheets
+  app.post("/api/protected/google-sheets/initialize", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "No autenticado" });
+      }
+      
+      if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY || !process.env.GOOGLE_SHEETS_ID) {
+        return res.status(500).json({ 
+          message: "Credenciales de Google Sheets no configuradas" 
+        });
+      }
+      
+      await initializeSheets();
+      
+      return res.json({ 
+        message: "Google Sheets inicializado correctamente" 
+      });
+    } catch (error) {
+      console.error("Error al inicializar Google Sheets:", error);
+      return res.status(500).json({ 
+        message: `Error al inicializar Google Sheets: ${error instanceof Error ? error.message : 'Error desconocido'}` 
+      });
+    }
+  });
+
+  app.post("/api/protected/google-sheets/export-clients", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "No autenticado" });
+      }
+      
+      if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY || !process.env.GOOGLE_SHEETS_ID) {
+        return res.status(500).json({ 
+          message: "Credenciales de Google Sheets no configuradas" 
+        });
+      }
+      
+      // Asegurarse de que las hojas estén inicializadas
+      await initializeSheets();
+      
+      // Exportar clientes del contratista actual
+      const result = await exportClientsToSheets(req.user!.id);
+      
+      return res.json({ 
+        message: result 
+      });
+    } catch (error) {
+      console.error("Error al exportar clientes a Google Sheets:", error);
+      return res.status(500).json({ 
+        message: `Error al exportar clientes: ${error instanceof Error ? error.message : 'Error desconocido'}` 
+      });
+    }
+  });
+
+  app.post("/api/protected/google-sheets/import-clients", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "No autenticado" });
+      }
+      
+      if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY || !process.env.GOOGLE_SHEETS_ID) {
+        return res.status(500).json({ 
+          message: "Credenciales de Google Sheets no configuradas" 
+        });
+      }
+      
+      // Importar clientes desde Google Sheets para el contratista actual
+      const result = await importClientsFromSheets(req.user!.id);
+      
+      return res.json({ 
+        message: result 
+      });
+    } catch (error) {
+      console.error("Error al importar clientes desde Google Sheets:", error);
+      return res.status(500).json({ 
+        message: `Error al importar clientes: ${error instanceof Error ? error.message : 'Error desconocido'}` 
+      });
+    }
+  });
+
+  app.post("/api/protected/google-sheets/sync-clients", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "No autenticado" });
+      }
+      
+      if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY || !process.env.GOOGLE_SHEETS_ID) {
+        return res.status(500).json({ 
+          message: "Credenciales de Google Sheets no configuradas" 
+        });
+      }
+      
+      // Sincronizar clientes entre la base de datos y Google Sheets
+      const result = await syncClientsWithSheets(req.user!.id);
+      
+      return res.json({ 
+        message: result 
+      });
+    } catch (error) {
+      console.error("Error al sincronizar clientes con Google Sheets:", error);
+      return res.status(500).json({ 
+        message: `Error al sincronizar clientes: ${error instanceof Error ? error.message : 'Error desconocido'}` 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
