@@ -49,16 +49,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const t = (key: string): string => {
     // Make sure the language exists in translations
     if (translations[language]) {
-      const result = getTranslation(translations[language] as Translation, key);
+      const result = getTranslation(translations[language] as Translation, key, language);
       // If translation is missing, fallback to English
       if (result === key && language !== 'en') {
-        console.warn(`Missing translation for key "${key}" in language "${language}"`);
-        return getTranslation(translations.en as Translation, key);
+        return getTranslation(translations.en as Translation, key, 'en');
       }
       return result;
     }
     // Fallback to English if the selected language is not available
-    return getTranslation(translations.en as Translation, key);
+    return getTranslation(translations.en as Translation, key, 'en');
   };
 
   // Function to change the language

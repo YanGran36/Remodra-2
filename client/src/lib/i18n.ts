@@ -686,18 +686,51 @@ export const translations: Partial<TranslationsByLanguage> = {
 // Note: The main structure is already present in the translations object above
 
 // Helper function to get nested translations from a path (e.g., "common.save")
-export function getTranslation(obj: Translation, path: string): string {
+// Keep track of missing translations to avoid repeated console logs
+const missingTranslations = new Set<string>();
+
+export function getTranslation(obj: Translation, path: string, lang: Language = 'en'): string {
   const parts = path.split('.');
   let result: any = obj;
   
   for (const part of parts) {
     if (result[part] === undefined) {
       // If translation not found, return the key and log it to help identify missing translations
-      console.debug(`Translation missing: ${path}`);
+      const missingKey = `${lang}:${path}`;
+      if (!missingTranslations.has(missingKey)) {
+        console.warn(`Translation missing: ${missingKey}`);
+        missingTranslations.add(missingKey);
+        
+        // Add to local storage for debugging
+        try {
+          const missingKeys = JSON.parse(localStorage.getItem('missingTranslations') || '[]');
+          if (!missingKeys.includes(missingKey)) {
+            missingKeys.push(missingKey);
+            localStorage.setItem('missingTranslations', JSON.stringify(missingKeys));
+          }
+        } catch (e) {
+          // Ignore storage errors
+        }
+      }
       return path;
     }
     result = result[part];
   }
   
   return typeof result === 'string' ? result : path;
+}
+
+// Function to get missing translations for development
+export function getMissingTranslations(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem('missingTranslations') || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
+// Function to clear missing translations tracking
+export function clearMissingTranslations(): void {
+  missingTranslations.clear();
+  localStorage.removeItem('missingTranslations');
 }
