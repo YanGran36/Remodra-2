@@ -13,7 +13,8 @@ import {
   CheckCircle,
   Phone,
   MessageSquare,
-  MapPin
+  MapPin,
+  Trophy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,6 +31,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
+import { AchievementSummary } from "@/components/achievements/AchievementSummary";
 
 export default function Dashboard() {
   const { user } = useAuth();

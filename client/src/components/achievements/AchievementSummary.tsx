@@ -3,17 +3,47 @@ import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy, Star, Zap, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Achievement, ContractorAchievement } from '@shared/schema';
 
 /**
  * Componente que muestra un resumen de los logros en el dashboard
  */
+// Tipos para las respuestas de API
+interface StatsResponse {
+  streak?: {
+    id: number;
+    contractorId: number;
+    currentStreak: number;
+    longestStreak: number;
+    lastActive: string;
+    level: number;
+    xp: number;
+    nextLevelXp: number;
+    createdAt: string;
+    updatedAt: string;
+  };
+  stats?: {
+    completedAchievements: number;
+    totalAchievements: number;
+    bronzeCount: number;
+    silverCount: number;
+    goldCount: number;
+  };
+}
+
+interface ContractorAchievementWithDetails extends ContractorAchievement {
+  achievement: Achievement;
+  progress: number;
+  isCompleted: boolean;
+}
+
 export function AchievementSummary() {
   // Obtener estadísticas y logros
-  const { data: stats, isLoading: loadingStats } = useQuery({
+  const { data: stats, isLoading: loadingStats } = useQuery<StatsResponse>({
     queryKey: ['/api/contractor/stats'],
   });
   
-  const { data: achievements, isLoading: loadingAchievements } = useQuery({
+  const { data: achievements, isLoading: loadingAchievements } = useQuery<ContractorAchievementWithDetails[]>({
     queryKey: ['/api/contractor/achievements'],
   });
 
@@ -39,15 +69,15 @@ export function AchievementSummary() {
 
   // Calcular estadísticas
   const totalAchievements = achievements?.length || 0;
-  const completedAchievements = stats.stats?.completedAchievements || 0;
+  const completedAchievements = stats?.stats?.completedAchievements || 0;
   const completionPercentage = totalAchievements > 0 
     ? Math.round((completedAchievements / totalAchievements) * 100) 
     : 0;
   
   // Buscar próximos logros cercanos (con progreso > 0 pero no completados)
   const upcomingAchievements = achievements
-    ?.filter(a => a.progress > 0 && !a.isCompleted)
-    ?.sort((a, b) => {
+    ?.filter((a: ContractorAchievementWithDetails) => a.progress > 0 && !a.isCompleted)
+    ?.sort((a: ContractorAchievementWithDetails, b: ContractorAchievementWithDetails) => {
       const aProgress = a.progress / a.achievement.requiredCount;
       const bProgress = b.progress / b.achievement.requiredCount;
       return bProgress - aProgress; // Ordenar por mayor progreso primero
@@ -77,16 +107,16 @@ export function AchievementSummary() {
               <div className="flex justify-between mb-1">
                 <span className="text-sm text-muted-foreground">Nivel</span>
                 <span className="text-sm font-medium">
-                  {stats.streak?.xp || 0}/{stats.streak?.nextLevelXp || 100} XP
+                  {stats?.streak?.xp || 0}/{stats?.streak?.nextLevelXp || 100} XP
                 </span>
               </div>
               <Progress 
-                value={Math.round(((stats.streak?.xp || 0) / (stats.streak?.nextLevelXp || 100)) * 100)} 
+                value={Math.round(((stats?.streak?.xp || 0) / (stats?.streak?.nextLevelXp || 100)) * 100)} 
                 className="h-2 mb-1" 
               />
               <div className="flex justify-between text-xs">
                 <span className="text-muted-foreground">Nivel actual</span>
-                <span className="font-medium text-primary">{stats.streak?.level || 1}</span>
+                <span className="font-medium text-primary">{stats?.streak?.level || 1}</span>
               </div>
             </div>
           </div>
@@ -103,15 +133,15 @@ export function AchievementSummary() {
             <div className="flex-1">
               <div className="flex justify-between mb-1">
                 <span className="text-sm text-muted-foreground">Racha actual</span>
-                <span className="text-sm font-medium">{stats.streak?.currentStreak || 0} días</span>
+                <span className="text-sm font-medium">{stats?.streak?.currentStreak || 0} días</span>
               </div>
               <Progress 
-                value={Math.min(100, (stats.streak?.currentStreak || 0) * 10)} 
+                value={Math.min(100, (stats?.streak?.currentStreak || 0) * 10)} 
                 className="h-2 bg-amber-500/10" 
               />
               <div className="flex justify-between text-xs mt-1">
                 <span className="text-muted-foreground">Mejor racha</span>
-                <span className="font-medium text-amber-500">{stats.streak?.longestStreak || 0} días</span>
+                <span className="font-medium text-amber-500">{stats?.streak?.longestStreak || 0} días</span>
               </div>
             </div>
           </div>
@@ -137,15 +167,15 @@ export function AchievementSummary() {
               <div className="flex justify-between text-xs mt-1">
                 <div className="flex items-center gap-1">
                   <span className="inline-block w-2 h-2 rounded-full bg-amber-700"></span>
-                  <span className="text-muted-foreground">Bronce: {stats.stats?.bronzeCount || 0}</span>
+                  <span className="text-muted-foreground">Bronce: {stats?.stats?.bronzeCount || 0}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="inline-block w-2 h-2 rounded-full bg-slate-400"></span>
-                  <span className="text-muted-foreground">Plata: {stats.stats?.silverCount || 0}</span>
+                  <span className="text-muted-foreground">Plata: {stats?.stats?.silverCount || 0}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="inline-block w-2 h-2 rounded-full bg-amber-500"></span>
-                  <span className="text-muted-foreground">Oro: {stats.stats?.goldCount || 0}</span>
+                  <span className="text-muted-foreground">Oro: {stats?.stats?.goldCount || 0}</span>
                 </div>
               </div>
             </div>
