@@ -17,7 +17,8 @@ import {
   MenuIcon,
   X,
   ClipboardCheckIcon,
-  BarChart
+  BarChart,
+  Building
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -177,6 +178,10 @@ export default function MobileSidebar() {
             <Link href="/admin-dashboard" className={getLinkClass("/admin-dashboard")}>
               <BarChart className="mr-3 h-5 w-5" />
               <span>Panel Administrador</span>
+            </Link>
+            <Link href="/super-admin" className={getLinkClass("/super-admin")}>
+              <Building className="mr-3 h-5 w-5" />
+              <span>Panel Super Admin</span>
             </Link>
             <Link href="/settings" className={getLinkClass("/settings")}>
               <SettingsIcon className="mr-3 h-5 w-5" />
