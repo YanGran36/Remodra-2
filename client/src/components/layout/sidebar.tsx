@@ -14,7 +14,8 @@ import {
   SettingsIcon, 
   LogOutIcon,
   ClipboardCheckIcon,
-  Globe
+  Globe,
+  TrophyIcon
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -89,6 +90,10 @@ export default function Sidebar() {
           <Link href="/ai-assistant" className={getLinkClass("/ai-assistant")}>
             <BotIcon className="mr-3 h-5 w-5" />
             <span>{t('navigation.aiAssistant')}</span>
+          </Link>
+          <Link href="/achievements" className={getLinkClass("/achievements")}>
+            <TrophyIcon className="mr-3 h-5 w-5" />
+            <span>Logros</span>
           </Link>
           <Link href="/vendor-estimate-form-new" className={getLinkClass("/vendor-estimate-form-new")}>
             <ClipboardCheckIcon className="mr-3 h-5 w-5" />

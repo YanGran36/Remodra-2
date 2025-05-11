@@ -13,8 +13,7 @@ export default function AchievementsPage() {
       <div className="container mx-auto px-4 py-6">
         <PageHeader
           title="Logros y Recompensas"
-          subtitle="Desbloquea logros, gana XP y obtén recompensas mientras administras tu negocio"
-          icon="trophy"
+          description="Desbloquea logros, gana XP y obtén recompensas mientras administras tu negocio"
         />
         
         <AchievementCollection />

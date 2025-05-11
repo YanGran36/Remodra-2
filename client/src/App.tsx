@@ -81,11 +81,14 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <LanguageProvider>
-          <Router />
-          <SessionRecoveryAlert />
-          <Toaster />
-        </LanguageProvider>
+        <HelmetProvider>
+          <LanguageProvider>
+            <Router />
+            <SessionRecoveryAlert />
+            <AchievementManager />
+            <Toaster />
+          </LanguageProvider>
+        </HelmetProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
