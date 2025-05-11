@@ -224,16 +224,16 @@ export function GoogleSheetsSyncPanel() {
               <div className="space-y-4 mb-4">
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="spreadsheetId">ID de Google Sheets</Label>
+                    <Label htmlFor="spreadsheetId">ID o URL de Google Sheets</Label>
                     <Input
                       id="spreadsheetId"
-                      placeholder="Ej: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
+                      placeholder="ID o URL completa de tu hoja de Google Sheets"
                       value={spreadsheetId}
                       onChange={(e) => setSpreadsheetId(e.target.value)}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Puedes encontrar el ID en la URL de tu hoja de cálculo: 
-                      https://docs.google.com/spreadsheets/d/<strong>ID-DE-TU-HOJA</strong>/edit
+                      Puedes pegar la URL completa de tu hoja de cálculo (ejemplo: https://docs.google.com/spreadsheets/d/10Du8nbzTrjVP6xwilgm6WwAmcE00mNsnE8MYIvk1IDI/edit) 
+                      o solo el ID. El sistema extraerá automáticamente el ID correcto de la URL.
                     </p>
                   </div>
                   
@@ -245,6 +245,10 @@ export function GoogleSheetsSyncPanel() {
                       value={spreadsheetName}
                       onChange={(e) => setSpreadsheetName(e.target.value)}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Este nombre se usará para identificar la hoja en el sistema. 
+                      Si no lo especificas, se usará un nombre generado automáticamente.
+                    </p>
                   </div>
                 </div>
               </div>

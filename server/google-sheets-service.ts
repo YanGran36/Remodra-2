@@ -242,17 +242,42 @@ export const registerSheetsConfig = async (contractorId: number, spreadsheetId: 
   }
 };
 
+// Función auxiliar para extraer el ID de la hoja de una URL de Google Sheets
+const extractSpreadsheetId = (input: string): string => {
+  // Si es solo un ID (formato típico: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms)
+  if (/^[a-zA-Z0-9_-]{20,}$/.test(input.trim())) {
+    return input.trim();
+  }
+  
+  // Si es una URL, extraer el ID
+  const urlPattern = /\/spreadsheets\/d\/([a-zA-Z0-9_-]{20,})(?:\/|$|\?|#)/;
+  const match = input.match(urlPattern);
+  
+  if (match && match[1]) {
+    console.log('ID de hoja extraído correctamente de URL:', match[1]);
+    return match[1];
+  }
+  
+  // Si no coincide con los patrones, devolver el input original
+  console.log('No se pudo extraer ID de hoja, usando valor original:', input);
+  return input;
+};
+
 // Verificar y crear hojas necesarias si no existen
 export const initializeSheets = async (contractorId: number, spreadsheetId: string, spreadsheetName?: string): Promise<void> => {
   try {
     const sheets = await getSheetsAPI();
     
+    // Extraer el ID correcto de la hoja de la URL o el string proporcionado
+    const cleanedSpreadsheetId = extractSpreadsheetId(spreadsheetId);
+    console.log('Usando ID de hoja de cálculo:', cleanedSpreadsheetId);
+    
     // Registrar la hoja en la configuración del contratista
-    await registerSheetsConfig(contractorId, spreadsheetId, spreadsheetName);
+    await registerSheetsConfig(contractorId, cleanedSpreadsheetId, spreadsheetName);
     
     // Verificar si ya existe la hoja de clientes
     const response = await sheets.spreadsheets.get({
-      spreadsheetId: spreadsheetId,
+      spreadsheetId: cleanedSpreadsheetId,
     });
     
     const existingSheets = response.data.sheets?.map(sheet => sheet.properties?.title);
@@ -329,6 +354,10 @@ export const exportClientsToSheets = async (contractorId: number): Promise<strin
     
     const sheets = await getSheetsAPI();
     
+    // Extraer el ID correcto de la hoja de la URL o el string almacenado
+    const cleanedSpreadsheetId = extractSpreadsheetId(config.spreadsheetId);
+    console.log('Exportando a hoja de cálculo con ID:', cleanedSpreadsheetId);
+    
     // Obtener clientes del contratista desde la base de datos
     const clientsData = await db.query.clients.findMany({
       where: eq(clients.contractorId, contractorId)
@@ -357,7 +386,7 @@ export const exportClientsToSheets = async (contractorId: number): Promise<strin
     
     // Obtener el número de filas existentes (para no sobrescribir encabezados)
     const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: config.spreadsheetId,
+      spreadsheetId: cleanedSpreadsheetId,
       range: 'Clients!A:A',
     });
     
@@ -366,14 +395,14 @@ export const exportClientsToSheets = async (contractorId: number): Promise<strin
     // Limpiar datos existentes (excepto encabezados)
     if (response.data.values && response.data.values.length > 1) {
       await sheets.spreadsheets.values.clear({
-        spreadsheetId: config.spreadsheetId,
+        spreadsheetId: cleanedSpreadsheetId,
         range: `Clients!A${startRow}:M1000`, // Limpiar desde la fila 2 hasta la 1000
       });
     }
     
     // Escribir nuevos datos
     await sheets.spreadsheets.values.update({
-      spreadsheetId: config.spreadsheetId,
+      spreadsheetId: cleanedSpreadsheetId,
       range: `Clients!A${startRow}:M${startRow + rows.length - 1}`,
       valueInputOption: 'RAW',
       requestBody: {
@@ -404,9 +433,13 @@ export const importClientsFromSheets = async (contractorId: number): Promise<str
     
     const sheets = await getSheetsAPI();
     
+    // Extraer el ID correcto de la hoja de la URL o el string almacenado
+    const cleanedSpreadsheetId = extractSpreadsheetId(config.spreadsheetId);
+    console.log('Importando desde hoja de cálculo con ID:', cleanedSpreadsheetId);
+    
     // Obtener datos de la hoja de clientes
     const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: config.spreadsheetId,
+      spreadsheetId: cleanedSpreadsheetId,
       range: 'Clients!A2:M1000', // Desde la fila 2 (sin encabezados) hasta la 1000
     });
     
