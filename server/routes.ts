@@ -3,6 +3,9 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, hashPassword } from "./auth";
 import { z } from "zod";
+import { db } from "@db";
+import { eq, and } from "drizzle-orm";
+import { googleSheetsConfig } from "@shared/schema";
 import { 
   initializeSheets, 
   exportClientsToSheets, 
@@ -2095,6 +2098,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error al obtener configuración de Google Sheets:", error);
       return res.status(500).json({ 
         message: `Error al obtener configuración: ${error instanceof Error ? error.message : 'Error desconocido'}` 
+      });
+    }
+  });
+  
+  // Deshabilitar una configuración de Google Sheets
+  app.delete("/api/protected/google-sheets/config/:id", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "No autenticado" });
+      }
+      
+      const configId = parseInt(req.params.id);
+      if (isNaN(configId)) {
+        return res.status(400).json({ message: "ID de configuración inválido" });
+      }
+      
+      // Verificar que la configuración pertenezca al contratista autenticado
+      const [config] = await db
+        .select()
+        .from(googleSheetsConfig)
+        .where(and(
+          eq(googleSheetsConfig.id, configId),
+          eq(googleSheetsConfig.contractorId, req.user!.id)
+        ));
+      
+      if (!config) {
+        return res.status(404).json({ message: "Configuración no encontrada" });
+      }
+      
+      // Marcar como deshabilitada en lugar de eliminar
+      await db.update(googleSheetsConfig)
+        .set({
+          enabled: false,
+          updatedAt: new Date()
+        })
+        .where(eq(googleSheetsConfig.id, configId));
+      
+      return res.json({
+        message: "Configuración de Google Sheets deshabilitada correctamente"
+      });
+    } catch (error) {
+      console.error("Error al deshabilitar configuración de Google Sheets:", error);
+      return res.status(500).json({ 
+        message: `Error al deshabilitar configuración: ${error instanceof Error ? error.message : 'Error desconocido'}` 
       });
     }
   });

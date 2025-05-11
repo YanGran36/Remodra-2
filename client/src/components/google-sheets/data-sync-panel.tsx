@@ -44,11 +44,24 @@ export function GoogleSheetsSyncPanel() {
   }, [sheetsConfig]);
 
   const handleInitialize = async () => {
+    // Validación básica
+    if (!spreadsheetId) {
+      toast({
+        title: "Error de validación",
+        description: "El ID de la hoja de cálculo es obligatorio",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsInitializing(true);
     setStatus({ message: "Inicializando Google Sheets...", type: "info" });
     
     try {
-      const response = await apiRequest("POST", "/api/protected/google-sheets/initialize");
+      const response = await apiRequest("POST", "/api/protected/google-sheets/initialize", {
+        spreadsheetId,
+        spreadsheetName: spreadsheetName || undefined
+      });
       const data = await response.json();
       
       setStatus({ message: data.message, type: "success" });
@@ -56,6 +69,9 @@ export function GoogleSheetsSyncPanel() {
         title: "Inicialización exitosa",
         description: data.message,
       });
+      
+      // Recargar la configuración después de inicializar
+      refetchConfig();
     } catch (error: any) {
       setStatus({ 
         message: `Error al inicializar: ${error.message || "Error desconocido"}`, 
@@ -181,86 +197,161 @@ export function GoogleSheetsSyncPanel() {
           </Alert>
         )}
         
-        <div className="flex flex-col gap-2">
-          <p className="text-sm text-muted-foreground">
-            Antes de comenzar a exportar o importar datos, debes inicializar la conexión con Google Sheets.
-            Esto creará las hojas necesarias para almacenar los datos de tus clientes, proyectos y más.
-          </p>
+        <div className="flex flex-col gap-4">
+          <div>
+            <h3 className="text-lg font-medium mb-2">Configuración de Google Sheets</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Antes de comenzar a exportar o importar datos, debes inicializar la conexión con Google Sheets.
+              Esto creará las hojas necesarias para almacenar los datos de tus clientes, proyectos y más.
+            </p>
+            
+            {sheetsConfig?.configured ? (
+              <div className="bg-muted/50 p-4 rounded-md mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-medium">Hoja de cálculo configurada</h4>
+                  <Badge variant="outline" className="ml-2">
+                    {sheetsConfig.config.lastSync ? 
+                      `Última sincronización: ${new Date(sheetsConfig.config.lastSync).toLocaleString()}` : 
+                      'No sincronizado aún'}
+                  </Badge>
+                </div>
+                <p className="text-sm"><strong>ID:</strong> {sheetsConfig.config.spreadsheetId}</p>
+                {sheetsConfig.config.spreadsheetName && (
+                  <p className="text-sm"><strong>Nombre:</strong> {sheetsConfig.config.spreadsheetName}</p>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4 mb-4">
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="spreadsheetId">ID de Google Sheets</Label>
+                    <Input
+                      id="spreadsheetId"
+                      placeholder="Ej: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
+                      value={spreadsheetId}
+                      onChange={(e) => setSpreadsheetId(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Puedes encontrar el ID en la URL de tu hoja de cálculo: 
+                      https://docs.google.com/spreadsheets/d/<strong>ID-DE-TU-HOJA</strong>/edit
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="spreadsheetName">Nombre (opcional)</Label>
+                    <Input
+                      id="spreadsheetName"
+                      placeholder="Ej: Datos de Clientes"
+                      value={spreadsheetName}
+                      onChange={(e) => setSpreadsheetName(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </CardContent>
       <CardFooter className="flex flex-wrap justify-between gap-2">
-        <Button 
-          onClick={handleInitialize} 
-          disabled={isInitializing || isExporting || isImporting || isSyncing}
-          className="min-w-[120px]"
-        >
-          {isInitializing ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Inicializando...
-            </>
-          ) : (
-            "Inicializar"
-          )}
-        </Button>
-        
-        <div className="flex gap-2">
+        {isLoadingConfig ? (
+          <div className="w-full flex justify-center">
+            <Loader2 className="h-6 w-6 animate-spin" />
+          </div>
+        ) : sheetsConfig?.configured ? (
+          <>
+            <Button 
+              onClick={handleInitialize} 
+              disabled={isInitializing || isExporting || isImporting || isSyncing}
+              variant="outline"
+              className="min-w-[120px]"
+            >
+              {isInitializing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Actualizando...
+                </>
+              ) : (
+                <>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Reconfigurar
+                </>
+              )}
+            </Button>
+            
+            <div className="flex gap-2">
+              <Button 
+                onClick={handleExport} 
+                disabled={isInitializing || isExporting || isImporting || isSyncing}
+                variant="outline"
+                className="min-w-[120px]"
+              >
+                {isExporting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Exportando...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Exportar
+                  </>
+                )}
+              </Button>
+              
+              <Button 
+                onClick={handleImport} 
+                disabled={isInitializing || isExporting || isImporting || isSyncing}
+                variant="outline"
+                className="min-w-[120px]"
+              >
+                {isImporting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Importando...
+                  </>
+                ) : (
+                  <>
+                    <Download className="mr-2 h-4 w-4" />
+                    Importar
+                  </>
+                )}
+              </Button>
+              
+              <Button 
+                onClick={handleSync} 
+                disabled={isInitializing || isExporting || isImporting || isSyncing}
+                className="min-w-[120px]"
+              >
+                {isSyncing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sincronizando...
+                  </>
+                ) : (
+                  <>
+                    <CloudSun className="mr-2 h-4 w-4" />
+                    Sincronizar
+                  </>
+                )}
+              </Button>
+            </div>
+          </>
+        ) : (
           <Button 
-            onClick={handleExport} 
-            disabled={isInitializing || isExporting || isImporting || isSyncing}
-            variant="outline"
-            className="min-w-[120px]"
+            onClick={handleInitialize} 
+            disabled={isInitializing || !spreadsheetId}
+            className="mx-auto min-w-[140px]"
           >
-            {isExporting ? (
+            {isInitializing ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Exportando...
+                Inicializando...
               </>
             ) : (
-              <>
-                <Upload className="mr-2 h-4 w-4" />
-                Exportar
-              </>
+              "Inicializar"
             )}
           </Button>
-          
-          <Button 
-            onClick={handleImport} 
-            disabled={isInitializing || isExporting || isImporting || isSyncing}
-            variant="outline"
-            className="min-w-[120px]"
-          >
-            {isImporting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Importando...
-              </>
-            ) : (
-              <>
-                <Download className="mr-2 h-4 w-4" />
-                Importar
-              </>
-            )}
-          </Button>
-          
-          <Button 
-            onClick={handleSync} 
-            disabled={isInitializing || isExporting || isImporting || isSyncing}
-            className="min-w-[120px]"
-          >
-            {isSyncing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Sincronizando...
-              </>
-            ) : (
-              <>
-                <CloudSun className="mr-2 h-4 w-4" />
-                Sincronizar
-              </>
-            )}
-          </Button>
-        </div>
+        )}
       </CardFooter>
     </Card>
   );
