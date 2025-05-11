@@ -1,10 +1,14 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { auditMiddleware } from "./middleware/audit-middleware";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Añadimos el middleware de auditoría global
+app.use(auditMiddleware);
 
 app.use((req, res, next) => {
   const start = Date.now();
