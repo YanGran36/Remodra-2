@@ -648,45 +648,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
   });
 
-  app.patch("/api/protected/estimates/:estimateId/items/:id", async (req, res) => {
-    try {
-      const estimateId = Number(req.params.estimateId);
-      const itemId = Number(req.params.id);
+  app.patch("/api/protected/estimates/:estimateId/items/:id", 
+    verifyResourceOwnership('estimate', 'estimateId'),
+    async (req, res) => {
+      try {
+        const estimateId = Number(req.params.estimateId);
+        const itemId = Number(req.params.id);
       
-      const validatedData = estimateItemInsertSchema.partial().parse(req.body);
-      
-      const item = await storage.updateEstimateItem(itemId, estimateId, req.user!.id, validatedData);
-      
-      if (!item) {
-        return res.status(404).json({ message: "Estimate item not found" });
+        const validatedData = estimateItemInsertSchema.partial().parse(req.body);
+        
+        const item = await storage.updateEstimateItem(itemId, estimateId, req.user!.id, validatedData);
+        
+        if (!item) {
+          return res.status(404).json({ message: "Estimate item not found" });
+        }
+        
+        res.json(item);
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return res.status(400).json({ errors: error.errors });
+        }
+        console.error("Error updating estimate item:", error);
+        res.status(500).json({ message: "Failed to update estimate item" });
       }
-      
-      res.json(item);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
-      }
-      console.error("Error updating estimate item:", error);
-      res.status(500).json({ message: "Failed to update estimate item" });
-    }
   });
 
-  app.delete("/api/protected/estimates/:estimateId/items/:id", async (req, res) => {
-    try {
-      const estimateId = Number(req.params.estimateId);
-      const itemId = Number(req.params.id);
+  app.delete("/api/protected/estimates/:estimateId/items/:id", 
+    verifyResourceOwnership('estimate', 'estimateId'),
+    async (req, res) => {
+      try {
+        const estimateId = Number(req.params.estimateId);
+        const itemId = Number(req.params.id);
       
-      const success = await storage.deleteEstimateItem(itemId, estimateId, req.user!.id);
-      
-      if (!success) {
-        return res.status(404).json({ message: "Estimate item not found" });
+        const success = await storage.deleteEstimateItem(itemId, estimateId, req.user!.id);
+        
+        if (!success) {
+          return res.status(404).json({ message: "Estimate item not found" });
+        }
+        
+        res.status(204).end();
+      } catch (error) {
+        console.error("Error deleting estimate item:", error);
+        res.status(500).json({ message: "Failed to delete estimate item" });
       }
-      
-      res.status(204).end();
-    } catch (error) {
-      console.error("Error deleting estimate item:", error);
-      res.status(500).json({ message: "Failed to delete estimate item" });
-    }
   });
 
   // Invoices routes
