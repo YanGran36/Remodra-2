@@ -10,7 +10,7 @@ interface ProjectAnalysisRequest {
   status?: string;
   startDate?: string | Date;
   endDate?: string | Date;
-  notes?: string;
+  notes?: string | null;
   // Otros datos relevantes que puedan ser útiles para el análisis
 }
 

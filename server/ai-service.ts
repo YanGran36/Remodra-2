@@ -13,7 +13,7 @@ interface ProjectAnalysisRequest {
   status?: string;
   startDate?: string | Date;
   endDate?: string | Date;
-  notes?: string;
+  notes?: string | null;
 }
 
 interface ProjectAnalysisResponse {

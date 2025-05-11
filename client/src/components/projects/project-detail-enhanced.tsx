@@ -1,18 +1,12 @@
-import { useState, useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { useState } from "react";
 import { format } from "date-fns";
 import { 
-  Check, Edit, FileText, Loader2, MapPin, Phone, Mail, User, 
-  Trash2, Building, Calendar, FilePlus, BanknoteIcon, 
-  BarChart3, X, Plus, Clock, Ban, HardHat, Brain, Share2, Shield, FileWarning
+  Edit, MapPin, Phone, Mail, User, Calendar, HardHat, Brain, Share2
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { ProjectDetail, ProjectWithClient } from "@/hooks/use-projects";
+import { ProjectWithClient } from "@/hooks/use-projects";
 import { formatCurrency } from "@/lib/utils";
-import { useLocation } from "wouter";
-import { useOpenAI } from "@/hooks/use-openai";
+import ProjectWorkerSection from "./project-worker-section";
+import ProjectAISection from "./project-ai-section";
 
 import {
   Dialog,
@@ -26,8 +20,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -38,37 +30,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 
 interface ProjectDetailEnhancedProps {
   project: ProjectWithClient;
@@ -77,228 +39,8 @@ interface ProjectDetailEnhancedProps {
   onEdit: (project: ProjectWithClient) => void;
 }
 
-// Tipo para los ajustes de compartir información
-interface SharingSettings {
-  installers: boolean;
-  clients: boolean;
-  estimators: boolean;
-}
-
-// Tipo para materiales necesarios
-interface MaterialNeeded {
-  id: string;
-  name: string;
-  quantity: number;
-  unit: string;
-}
-
-// Esquema para el formulario de sección de trabajadores
-const workerSectionSchema = z.object({
-  workerInstructions: z.string().optional(),
-  workerNotes: z.string().optional(),
-  materialsNeeded: z.array(
-    z.object({
-      id: z.string(),
-      name: z.string().min(1, "El nombre es requerido"),
-      quantity: z.number().min(0, "La cantidad debe ser mayor o igual a 0"),
-      unit: z.string().optional()
-    })
-  ).optional(),
-  safetyRequirements: z.string().optional(),
-});
-
-// Esquema para el formulario de sección de IA
-const aiSectionSchema = z.object({
-  aiGeneratedDescription: z.string().optional(),
-  aiProjectSummary: z.string().optional(),
-  aiSharingSettings: z.object({
-    installers: z.boolean().default(false),
-    clients: z.boolean().default(true),
-    estimators: z.boolean().default(true),
-  }),
-});
-
 export default function ProjectDetailEnhanced({ project, isOpen, onClose, onEdit }: ProjectDetailEnhancedProps) {
   const [activeTab, setActiveTab] = useState("overview");
-  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-  const { analyzeProject } = useOpenAI();
-  
-  // Formulario para la sección de trabajadores
-  const workerForm = useForm<z.infer<typeof workerSectionSchema>>({
-    resolver: zodResolver(workerSectionSchema),
-    defaultValues: {
-      workerInstructions: project?.workerInstructions || "",
-      workerNotes: project?.workerNotes || "",
-      materialsNeeded: (project?.materialsNeeded as MaterialNeeded[] || []),
-      safetyRequirements: project?.safetyRequirements || "",
-    }
-  });
-
-  // Formulario para la sección de IA
-  const aiForm = useForm<z.infer<typeof aiSectionSchema>>({
-    resolver: zodResolver(aiSectionSchema),
-    defaultValues: {
-      aiGeneratedDescription: project?.aiGeneratedDescription || "",
-      aiProjectSummary: project?.aiProjectSummary || "",
-      aiSharingSettings: project?.aiSharingSettings as SharingSettings || {
-        installers: false,
-        clients: true,
-        estimators: true,
-      },
-    }
-  });
-
-  // Actualizar valores por defecto cuando cambia el proyecto
-  useEffect(() => {
-    if (project) {
-      workerForm.reset({
-        workerInstructions: project?.workerInstructions || "",
-        workerNotes: project?.workerNotes || "",
-        materialsNeeded: (project?.materialsNeeded as MaterialNeeded[] || []),
-        safetyRequirements: project?.safetyRequirements || "",
-      });
-      
-      aiForm.reset({
-        aiGeneratedDescription: project?.aiGeneratedDescription || "",
-        aiProjectSummary: project?.aiProjectSummary || "",
-        aiSharingSettings: project?.aiSharingSettings as SharingSettings || {
-          installers: false,
-          clients: true,
-          estimators: true,
-        },
-      });
-    }
-  }, [project]);
-
-  // Mutation para actualizar la sección de trabajadores
-  const updateWorkerSectionMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof workerSectionSchema>) => {
-      const res = await apiRequest("PATCH", `/api/protected/projects/${project.id}`, data);
-      return await res.json();
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/protected/projects"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/protected/projects", project.id] });
-      
-      toast({
-        title: "Información para trabajadores actualizada",
-        description: "La sección para trabajadores se ha actualizado correctamente.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error al actualizar",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Mutation para actualizar la sección de IA
-  const updateAISectionMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof aiSectionSchema>) => {
-      const res = await apiRequest("PATCH", `/api/protected/projects/${project.id}`, {
-        ...data,
-        lastAiUpdate: new Date().toISOString(),
-      });
-      return await res.json();
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/protected/projects"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/protected/projects", project.id] });
-      
-      toast({
-        title: "Información de IA actualizada",
-        description: "La sección generada por IA se ha actualizado correctamente.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error al actualizar",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Función para generar el análisis de IA
-  const generateAIAnalysis = async () => {
-    if (!project) return;
-    
-    setIsGeneratingAI(true);
-    try {
-      // Obtener datos relacionados
-      const projectData = {
-        title: project.title,
-        description: project.description,
-        clientName: `${project.client?.firstName} ${project.client?.lastName}`,
-        budget: project.budget,
-        status: project.status,
-        startDate: project.startDate,
-        endDate: project.endDate,
-        notes: project.notes,
-        // Incluir cualquier otra información relevante
-      };
-      
-      // Llamar a la API de análisis de IA
-      const analysis = await analyzeProject(projectData);
-      
-      // Actualizar el formulario
-      aiForm.setValue('aiGeneratedDescription', analysis.description);
-      aiForm.setValue('aiProjectSummary', analysis.summary);
-      
-      // Guardar los cambios
-      const formData = aiForm.getValues();
-      await updateAISectionMutation.mutateAsync({
-        ...formData,
-        aiGeneratedDescription: analysis.description,
-        aiProjectSummary: analysis.summary,
-      });
-      
-      toast({
-        title: "Análisis de IA generado",
-        description: "El análisis de IA se ha generado y guardado correctamente.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error al generar análisis de IA",
-        description: error instanceof Error ? error.message : "Ocurrió un error desconocido",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGeneratingAI(false);
-    }
-  };
-
-  // Manejar envío del formulario de trabajadores
-  const onWorkerSubmit = async (data: z.infer<typeof workerSectionSchema>) => {
-    await updateWorkerSectionMutation.mutateAsync(data);
-  };
-
-  // Manejar envío del formulario de IA
-  const onAISubmit = async (data: z.infer<typeof aiSectionSchema>) => {
-    await updateAISectionMutation.mutateAsync(data);
-  };
-
-  // Añadir un nuevo material
-  const addMaterial = () => {
-    const currentMaterials = workerForm.getValues("materialsNeeded") || [];
-    workerForm.setValue("materialsNeeded", [
-      ...currentMaterials,
-      { id: `mat-${Date.now()}`, name: "", quantity: 1, unit: "unidad" }
-    ]);
-  };
-
-  // Eliminar un material
-  const removeMaterial = (id: string) => {
-    const currentMaterials = workerForm.getValues("materialsNeeded") || [];
-    workerForm.setValue(
-      "materialsNeeded",
-      currentMaterials.filter(material => material.id !== id)
-    );
-  };
 
   if (!project) return null;
 
