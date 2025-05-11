@@ -59,7 +59,7 @@ export interface IStorage {
   // Estimates
   getEstimates: (contractorId: number) => Promise<any[]>;
   getEstimate: (id: number, contractorId: number) => Promise<any>;
-  getEstimateById: (id: number) => Promise<any>; // Método público para clientes
+  getEstimateById: (id: number, contractorId: number) => Promise<any>; // Método público para clientes con seguridad
   createEstimate: (data: Omit<EstimateInsert, "id">) => Promise<any>;
   updateEstimate: (id: number, contractorId: number, data: Partial<EstimateInsert>) => Promise<any>;
   updateEstimateById: (id: number, data: Partial<EstimateInsert>) => Promise<any>; // Método público para clientes
@@ -84,7 +84,7 @@ export interface IStorage {
   // Invoices
   getInvoices: (contractorId: number) => Promise<any[]>;
   getInvoice: (id: number, contractorId: number) => Promise<any>;
-  getInvoiceById: (id: number) => Promise<any>; // Método público para clientes
+  getInvoiceById: (id: number, contractorId: number) => Promise<any>; // Método público para clientes con seguridad
   createInvoice: (data: Omit<InvoiceInsert, "id">) => Promise<any>;
   updateInvoice: (id: number, contractorId: number, data: Partial<InvoiceInsert>) => Promise<any>;
   updateInvoiceById: (id: number, data: Partial<InvoiceInsert>) => Promise<any>; // Método público para clientes
@@ -92,7 +92,7 @@ export interface IStorage {
   
   // Invoice Items
   getInvoiceItems: (invoiceId: number, contractorId: number) => Promise<any[]>;
-  getInvoiceItemsById: (invoiceId: number) => Promise<any[]>; // Método público para clientes
+  getInvoiceItemsById: (invoiceId: number, contractorId: number) => Promise<any[]>; // Método público para clientes con seguridad
   createInvoiceItem: (data: Omit<InvoiceItemInsert, "id">) => Promise<any>;
   updateInvoiceItem: (id: number, invoiceId: number, contractorId: number, data: Partial<InvoiceItemInsert>) => Promise<any>;
   deleteInvoiceItem: (id: number, invoiceId: number, contractorId: number) => Promise<boolean>;
@@ -448,31 +448,63 @@ class DatabaseStorage implements IStorage {
     });
   }
   
-  // Método público para obtener un estimado por ID sin verificar el contratista
-  async getEstimateById(id: number) {
-    return await db.query.estimates.findFirst({
-      where: eq(estimates.id, id),
-      with: {
-        client: true,
-        contractor: true,
-        project: {
-          columns: {
-            id: true,
-            title: true,
-            status: true,
-            contractorId: true,
-            clientId: true,
-            description: true,
-            budget: true,
-            startDate: true,
-            endDate: true,
-            notes: true,
-            createdAt: true
-          }
-        },
-        items: true
-      }
-    });
+  // Método para obtener un estimado por ID con verificación de contratista
+  async getEstimateById(id: number, contractorId?: number) {
+    // Si se proporcionó un ID de contratista, verificamos que el estimado pertenezca a ese contratista
+    if (contractorId) {
+      return await db.query.estimates.findFirst({
+        where: and(
+          eq(estimates.id, id),
+          eq(estimates.contractorId, contractorId)
+        ),
+        with: {
+          client: true,
+          contractor: true,
+          project: {
+            columns: {
+              id: true,
+              title: true,
+              status: true,
+              contractorId: true,
+              clientId: true,
+              description: true,
+              budget: true,
+              startDate: true,
+              endDate: true,
+              notes: true,
+              createdAt: true
+            }
+          },
+          items: true
+        }
+      });
+    } else {
+      // Si no se proporcionó ID de contratista, buscamos el estimado sin filtro adicional
+      // (para uso en rutas públicas donde aún no conocemos el contratista)
+      return await db.query.estimates.findFirst({
+        where: eq(estimates.id, id),
+        with: {
+          client: true,
+          contractor: true,
+          project: {
+            columns: {
+              id: true,
+              title: true,
+              status: true,
+              contractorId: true,
+              clientId: true,
+              description: true,
+              budget: true,
+              startDate: true,
+              endDate: true,
+              notes: true,
+              createdAt: true
+            }
+          },
+          items: true
+        }
+      });
+    }
   }
 
   async createEstimate(data: Omit<EstimateInsert, "id">) {
@@ -803,10 +835,13 @@ class DatabaseStorage implements IStorage {
     });
   }
   
-  // Método público para obtener una factura por ID sin verificar el contratista
-  async getInvoiceById(id: number) {
+  // Método para obtener una factura por ID con verificación de contratista
+  async getInvoiceById(id: number, contractorId: number) {
     return await db.query.invoices.findFirst({
-      where: eq(invoices.id, id),
+      where: and(
+        eq(invoices.id, id),
+        eq(invoices.contractorId, contractorId)
+      ),
       with: {
         client: true,
         contractor: true,
@@ -929,8 +964,25 @@ class DatabaseStorage implements IStorage {
     });
   }
   
-  // Método público para obtener items de factura por ID sin verificar el contratista
-  async getInvoiceItemsById(invoiceId: number) {
+  // Método para obtener items de factura por ID verificando primero que la factura pertenece al contratista
+  async getInvoiceItemsById(invoiceId: number, contractorId: number) {
+    // Primero verificamos que la factura pertenece al contratista
+    const invoice = await db.query.invoices.findFirst({
+      where: and(
+        eq(invoices.id, invoiceId),
+        eq(invoices.contractorId, contractorId)
+      ),
+      columns: {
+        id: true
+      }
+    });
+    
+    // Si no encontramos la factura o no pertenece al contratista, devolvemos un arreglo vacío
+    if (!invoice) {
+      return [];
+    }
+    
+    // Si la factura existe y pertenece al contratista, entonces devolvemos los items
     return await db.query.invoiceItems.findMany({
       where: eq(invoiceItems.invoiceId, invoiceId)
     });
