@@ -35,7 +35,7 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import SuperAdminDashboard from "@/pages/super-admin-dashboard-fixed";
 import AdminDashboardArchitectural from "@/pages/admin-dashboard-architectural";
 import SuperAdminAddContractor from "@/pages/super-admin-add-contractor";
-import GoogleSheetsPage from "@/pages/google-sheets-page";
+// Importación de Google Sheets eliminada
 
 function Router() {
   return (
@@ -63,7 +63,7 @@ function Router() {
       <ProtectedRoute path="/admin-architectural" component={AdminDashboardArchitectural} />
       <ProtectedRoute path="/super-admin" component={SuperAdminDashboard} />
       <ProtectedRoute path="/super-admin/add-contractor" component={SuperAdminAddContractor} />
-      <ProtectedRoute path="/google-sheets" component={GoogleSheetsPage} />
+      {/* Ruta de Google Sheets eliminada */}
       <Route path="/auth" component={AuthPage} />
       <Route path="/public/estimates/:id" component={PublicEstimateView} />
       <Route path="/public/invoices/:id" component={PublicInvoiceView} />
