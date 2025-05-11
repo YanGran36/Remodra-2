@@ -943,14 +943,39 @@ class DatabaseStorage implements IStorage {
     return updated;
   }
   
-  // Método público para actualizar una factura por ID sin verificar el contratista
+  // Método público para actualizar una factura por ID - Solo ciertos campos permitidos
+  // Este método es usado para el portal del cliente, donde no se autentica como contratista
   async updateInvoiceById(id: number, data: Partial<InvoiceInsert>) {
-    const [updated] = await db
-      .update(invoices)
-      .set(data)
-      .where(eq(invoices.id, id))
-      .returning();
-    return updated;
+    try {
+      // Primero obtenemos la factura para verificar que existe
+      const invoice = await db.query.invoices.findFirst({
+        where: eq(invoices.id, id)
+      });
+      
+      if (!invoice) {
+        return null;
+      }
+      
+      // Solo permitimos actualizar campos específicos para el cliente
+      const allowedFields: Partial<InvoiceInsert> = {};
+      
+      // Campos permitidos para actualización pública
+      if (data.status) allowedFields.status = data.status;
+      if (data.clientSignature) allowedFields.clientSignature = data.clientSignature;
+      if (data.notes) allowedFields.notes = data.notes;
+      
+      // Actualizamos solo los campos permitidos
+      const [updated] = await db
+        .update(invoices)
+        .set(allowedFields)
+        .where(eq(invoices.id, id))
+        .returning();
+        
+      return updated;
+    } catch (error) {
+      console.error("Error en updateInvoiceById:", error);
+      return null;
+    }
   }
 
   async deleteInvoice(id: number, contractorId: number) {
