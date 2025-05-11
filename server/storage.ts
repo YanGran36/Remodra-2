@@ -836,12 +836,14 @@ class DatabaseStorage implements IStorage {
   }
   
   // Método para obtener una factura por ID con verificación de contratista
-  async getInvoiceById(id: number, contractorId: number) {
-    return await db.query.invoices.findFirst({
-      where: and(
-        eq(invoices.id, id),
-        eq(invoices.contractorId, contractorId)
-      ),
+  async getInvoiceById(id: number, contractorId?: number) {
+    if (contractorId) {
+      // Si se proporciona el ID del contratista, verificamos que la factura le pertenezca
+      return await db.query.invoices.findFirst({
+        where: and(
+          eq(invoices.id, id),
+          eq(invoices.contractorId, contractorId)
+        ),
       with: {
         client: true,
         contractor: true,
@@ -878,6 +880,48 @@ class DatabaseStorage implements IStorage {
         }
       }
     });
+    } else {
+      // Si no se proporciona ID de contratista, buscamos la factura sin filtro adicional
+      // (para uso en rutas públicas donde aún no conocemos el contratista)
+      return await db.query.invoices.findFirst({
+        where: eq(invoices.id, id),
+        with: {
+          client: true,
+          contractor: true,
+          project: {
+            columns: {
+              id: true,
+              title: true,
+              status: true,
+              contractorId: true,
+              clientId: true,
+              description: true,
+              budget: true,
+              startDate: true,
+              endDate: true,
+              notes: true,
+              createdAt: true
+            }
+          },
+          items: true,
+          estimate: {
+            columns: {
+              id: true,
+              estimateNumber: true,
+              status: true,
+              contractorId: true,
+              clientId: true,
+              projectId: true,
+              subtotal: true,
+              tax: true,
+              discount: true,
+              total: true,
+              createdAt: true
+            }
+          }
+        }
+      });
+    }
   }
 
   async createInvoice(data: Omit<InvoiceInsert, "id">) {
