@@ -939,7 +939,21 @@ class DatabaseStorage implements IStorage {
       orderBy: asc(events.startTime),
       with: {
         client: true,
-        project: true
+        project: {
+          columns: {
+            id: true,
+            title: true,
+            status: true,
+            contractorId: true,
+            clientId: true,
+            description: true,
+            budget: true,
+            startDate: true,
+            endDate: true,
+            notes: true,
+            createdAt: true
+          }
+        }
       }
     });
   }
@@ -952,7 +966,21 @@ class DatabaseStorage implements IStorage {
       ),
       with: {
         client: true,
-        project: true
+        project: {
+          columns: {
+            id: true,
+            title: true,
+            status: true,
+            contractorId: true,
+            clientId: true,
+            description: true,
+            budget: true,
+            startDate: true,
+            endDate: true,
+            notes: true,
+            createdAt: true
+          }
+        }
       }
     });
   }
