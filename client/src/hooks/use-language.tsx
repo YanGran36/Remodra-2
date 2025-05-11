@@ -19,6 +19,7 @@ export const LanguageContext = createContext<LanguageContextType | null>(null);
 // English only
 const supportedLanguages = [
   { code: 'en' as Language, name: 'English' },
+  { code: 'es' as Language, name: 'Español' },
 ];
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
@@ -26,26 +27,78 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   
-  // Always use English as the only language
-  const [language, setLanguage] = useState<Language>('en');
+  // Use browser's language or user's saved preference from localStorage
+  const getUserLanguage = (): Language => {
+    // Check if a language is stored in localStorage
+    const savedLanguage = localStorage.getItem('preferredLanguage') as Language;
+    if (savedLanguage && supportedLanguages.some(lang => lang.code === savedLanguage)) {
+      return savedLanguage;
+    }
+    
+    // Use browser language if it matches our supported languages
+    const browserLang = navigator.language.split('-')[0];
+    if (browserLang === 'es') return 'es';
+    
+    // Default to English
+    return 'en';
+  };
+  
+  const [language, setLanguage] = useState<Language>(getUserLanguage());
 
   // Translation function
   const t = (key: string): string => {
     // Make sure the language exists in translations
     if (translations[language]) {
-      return getTranslation(translations[language] as Translation, key);
+      const result = getTranslation(translations[language] as Translation, key);
+      // If translation is missing, fallback to English
+      if (result === key && language !== 'en') {
+        console.warn(`Missing translation for key "${key}" in language "${language}"`);
+        return getTranslation(translations.en as Translation, key);
+      }
+      return result;
     }
     // Fallback to English if the selected language is not available
     return getTranslation(translations.en as Translation, key);
   };
 
-  // Function to change the language (simplified to only use English)
+  // Function to change the language
   const changeLanguage = async (newLanguage: Language) => {
-    // Always use English regardless of what was passed
-    if (newLanguage !== 'en') {
-      console.warn('Only English is supported');
+    if (!supportedLanguages.some(lang => lang.code === newLanguage)) {
+      console.warn(`Language ${newLanguage} is not supported`);
+      return;
     }
-    setLanguage('en');
+    
+    setIsLoading(true);
+    
+    try {
+      // Save the preference to localStorage
+      localStorage.setItem('preferredLanguage', newLanguage);
+      
+      // Update language in state
+      setLanguage(newLanguage);
+      
+      // If user is logged in, save preference to database
+      if (user) {
+        try {
+          await apiRequest("PATCH", "/api/user/preferences", { 
+            language: newLanguage 
+          });
+        } catch (error) {
+          console.error("Failed to update language preference on server", error);
+        }
+      }
+      
+      toast({
+        title: newLanguage === 'en' ? "Language changed" : "Idioma cambiado",
+        description: newLanguage === 'en' 
+          ? "Your language preference has been updated" 
+          : "Su preferencia de idioma ha sido actualizada",
+      });
+    } catch (error) {
+      console.error("Error changing language:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Update the HTML lang attribute when language changes
