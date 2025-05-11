@@ -66,7 +66,6 @@ function Router() {
       <ProtectedRoute path="/admin-architectural" component={AdminDashboardArchitectural} />
       <ProtectedRoute path="/super-admin" component={SuperAdminDashboard} />
       <ProtectedRoute path="/super-admin/add-contractor" component={SuperAdminAddContractor} />
-      <ProtectedRoute path="/achievements" component={AchievementsPage} />
       {/* Ruta de Google Sheets eliminada */}
       <Route path="/auth" component={AuthPage} />
       <Route path="/public/estimates/:id" component={PublicEstimateView} />
