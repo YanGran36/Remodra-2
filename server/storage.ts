@@ -92,7 +92,7 @@ export interface IStorage {
   
   // Invoice Items
   getInvoiceItems: (invoiceId: number, contractorId: number) => Promise<any[]>;
-  getInvoiceItemsById: (invoiceId: number, contractorId: number) => Promise<any[]>; // Método público para clientes con seguridad
+  getInvoiceItemsById: (invoiceId: number, contractorId?: number) => Promise<any[]>; // Método público para clientes con seguridad
   createInvoiceItem: (data: Omit<InvoiceItemInsert, "id">) => Promise<any>;
   updateInvoiceItem: (id: number, invoiceId: number, contractorId: number, data: Partial<InvoiceItemInsert>) => Promise<any>;
   deleteInvoiceItem: (id: number, invoiceId: number, contractorId: number) => Promise<boolean>;
