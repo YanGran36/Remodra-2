@@ -22,7 +22,7 @@ import Sidebar from "@/components/layout/sidebar";
 import MobileSidebar from "@/components/layout/mobile-sidebar";
 import { useLanguage } from "@/hooks/use-language";
 
-// Esquema de validación para el formulario
+// Validation schema for the form
 const timeclockFormSchema = z.object({
   employeeName: z.string().min(2, "Name must be at least 2 characters")
 });
@@ -310,13 +310,13 @@ export default function TimeclockPage() {
                     </div>
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
-                      No hay registros recientes
+                      No recent records
                     </div>
                   )}
                 </CardContent>
                 <CardFooter className="pt-0">
                   <Button variant="outline" className="w-full" onClick={() => setActiveTab("report")}>
-                    Ver todos los registros
+                    View all records
                   </Button>
                 </CardFooter>
               </Card>
