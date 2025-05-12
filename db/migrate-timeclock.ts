@@ -2,10 +2,19 @@ import { db } from "./index";
 import { sql } from "drizzle-orm";
 
 async function migrateTimeclockTable() {
-  console.log("Iniciando migración de la tabla de timeclock...");
+  console.log("Starting timeclock table migration...");
 
   try {
-    // Crear la tabla usando IF NOT EXISTS para evitar errores si ya existe
+    // Check if columns clock_in_entry_id and hours_worked exist
+    const columnExists = await db.execute(sql`
+      SELECT EXISTS (
+        SELECT 1 
+        FROM information_schema.columns 
+        WHERE table_name='timeclock_entries' AND column_name='clock_in_entry_id'
+      );
+    `);
+    
+    // Create table if it doesn't exist
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS timeclock_entries (
         id SERIAL PRIMARY KEY,
@@ -19,10 +28,23 @@ async function migrateTimeclockTable() {
         created_at TIMESTAMP DEFAULT NOW() NOT NULL
       );
     `);
+    
+    // Add new columns if they don't exist
+    if (!columnExists.rows[0].exists) {
+      console.log("Adding new columns to timeclock_entries...");
+      
+      await db.execute(sql`
+        ALTER TABLE timeclock_entries 
+        ADD COLUMN IF NOT EXISTS clock_in_entry_id INTEGER REFERENCES timeclock_entries(id),
+        ADD COLUMN IF NOT EXISTS hours_worked DECIMAL(5,2);
+      `);
+      
+      console.log("✅ New columns added to timeclock_entries table");
+    }
 
-    console.log("✅ Tabla timeclock_entries creada exitosamente");
+    console.log("✅ Timeclock_entries table migrated successfully");
   } catch (error) {
-    console.error("❌ Error al crear la tabla timeclock_entries:", error);
+    console.error("❌ Error migrating timeclock_entries table:", error);
     throw error;
   }
 }

@@ -585,16 +585,26 @@ export const timeclockEntries = pgTable("timeclock_entries", {
   id: serial("id").primaryKey(),
   contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
   employeeName: text("employee_name").notNull(),
-  type: text("type").notNull(), // "IN" o "OUT"
+  type: text("type").notNull(), // "IN" or "OUT"
   timestamp: timestamp("timestamp").defaultNow().notNull(),
   date: date("date").notNull(),
   location: text("location"),
   notes: text("notes"),
+  // For Clock Out entries, reference the corresponding Clock In entry
+  clockInEntryId: integer("clock_in_entry_id").references(() => timeclockEntries.id),
+  // Store hours worked (only for Clock Out entries)
+  hoursWorked: decimal("hours_worked", { precision: 5, scale: 2 }),
   createdAt: timestamp("created_at").defaultNow().notNull()
 });
 
-export const timeclockEntriesRelations = relations(timeclockEntries, ({ one }) => ({
-  contractor: one(contractors, { fields: [timeclockEntries.contractorId], references: [contractors.id] })
+export const timeclockEntriesRelations = relations(timeclockEntries, ({ one, many }) => ({
+  contractor: one(contractors, { fields: [timeclockEntries.contractorId], references: [contractors.id] }),
+  // Self-referential relationship for IN/OUT entries
+  clockInEntry: one(timeclockEntries, { 
+    fields: [timeclockEntries.clockInEntryId], 
+    references: [timeclockEntries.id] 
+  }),
+  clockOutEntries: many(timeclockEntries, { relationName: "clockInOutPair" })
 }));
 
 // Actualizamos las relaciones de contractors para incluir timeclockEntries
@@ -604,9 +614,9 @@ export const timeclockContractorsRelations = relations(contractors, ({ many }) =
 
 // Schemas para timeclockEntries
 export const timeclockEntryInsertSchema = createInsertSchema(timeclockEntries, {
-  employeeName: (schema) => schema.min(2, "El nombre del empleado debe tener al menos 2 caracteres"),
+  employeeName: (schema) => schema.min(2, "Employee name must be at least 2 characters"),
   type: (schema) => schema.refine(val => ["IN", "OUT"].includes(val), {
-    message: "El tipo debe ser 'IN' o 'OUT'"
+    message: "Type must be either 'IN' or 'OUT'"
   })
 });
 export type TimeclockEntryInsert = z.infer<typeof timeclockEntryInsertSchema>;
