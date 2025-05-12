@@ -23,7 +23,6 @@ import { useLanguage } from "@/hooks/use-language";
 // Esquema de validación para el formulario
 const timeclockFormSchema = z.object({
   employeeName: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
-  location: z.string().optional(),
   notes: z.string().optional()
 });
 
@@ -88,7 +87,6 @@ export default function TimeclockPage() {
     resolver: zodResolver(timeclockFormSchema),
     defaultValues: {
       employeeName: "",
-      location: "",
       notes: ""
     }
   });
@@ -98,7 +96,7 @@ export default function TimeclockPage() {
     mutationFn: async (data: TimeclockFormType) => {
       return await apiRequest("POST", "/api/timeclock/clock-in", {
         ...data,
-        location: data.location || currentLocation,
+        location: currentLocation, // Usar siempre la ubicación actual
         date: format(new Date(), "yyyy-MM-dd")
       });
     },
@@ -124,7 +122,7 @@ export default function TimeclockPage() {
     mutationFn: async (data: TimeclockFormType) => {
       return await apiRequest("POST", "/api/timeclock/clock-out", {
         ...data,
-        location: data.location || currentLocation,
+        location: currentLocation, // Usar siempre la ubicación actual
         date: format(new Date(), "yyyy-MM-dd")
       });
     },
@@ -214,36 +212,22 @@ export default function TimeclockPage() {
                       )}
                     />
 
-                    <FormField
-                      control={form.control}
-                      name="location"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Ubicación (opcional)</FormLabel>
-                          <div className="flex items-center space-x-2">
-                            <FormControl>
-                              <Input 
-                                placeholder="Ubicación" 
-                                {...field} 
-                                value={field.value || ""}
-                              />
-                            </FormControl>
+                    <div className="mb-4">
+                      <div className="flex items-center px-3 py-2 rounded-md bg-muted">
+                        <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-foreground">Ubicación actual</p>
+                          <p className="text-xs text-muted-foreground line-clamp-1">
                             {isLoadingLocation ? (
-                              <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-                            ) : (
-                              <MapPin className="h-4 w-4 text-gray-400" />
-                            )}
-                          </div>
-                          <FormDescription className="text-xs flex items-center">
-                            <span className="text-muted-foreground">Ubicación actual: </span>
-                            <span className="ml-1 text-xs line-clamp-1">
-                              {isLoadingLocation ? "Obteniendo ubicación..." : currentLocation || "No disponible"}
-                            </span>
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                              <span className="flex items-center">
+                                <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                                Obteniendo ubicación...
+                              </span>
+                            ) : currentLocation || "No disponible"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
 
                     <FormField
                       control={form.control}
