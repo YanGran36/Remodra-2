@@ -35,7 +35,7 @@ export default function TimeclockPage() {
   const [currentLocation, setCurrentLocation] = useState<string>("");
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
-  // Obtener la ubicación actual
+  // Get current location
   useEffect(() => {
     const getLocation = async () => {
       if ("geolocation" in navigator) {
@@ -45,7 +45,7 @@ export default function TimeclockPage() {
             async (position) => {
               const { latitude, longitude } = position.coords;
               try {
-                // Intentar obtener el nombre de la ubicación
+                // Try to get the location name
                 const response = await fetch(
                   `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
                 );
@@ -53,35 +53,35 @@ export default function TimeclockPage() {
                 const locationName = data.display_name || `Lat: ${latitude}, Lng: ${longitude}`;
                 setCurrentLocation(locationName);
               } catch (error) {
-                // Si falla la geocodificación inversa, usar coordenadas
+                // If reverse geocoding fails, use coordinates
                 setCurrentLocation(`Lat: ${latitude}, Lng: ${longitude}`);
               }
             },
             (error) => {
-              console.error("Error obteniendo ubicación:", error);
-              setCurrentLocation("No disponible");
+              console.error("Error getting location:", error);
+              setCurrentLocation("Not available");
             }
           );
         } catch (error) {
-          console.error("Error en geolocalización:", error);
-          setCurrentLocation("No disponible");
+          console.error("Error in geolocation:", error);
+          setCurrentLocation("Not available");
         } finally {
           setIsLoadingLocation(false);
         }
       } else {
-        setCurrentLocation("No soportado por el navegador");
+        setCurrentLocation("Not supported by browser");
       }
     };
 
     getLocation();
   }, []);
 
-  // Obtener entradas recientes
+  // Get recent entries
   const { data: recentEntries = [], isLoading: loadingEntries } = useQuery<any[]>({
     queryKey: ["/api/timeclock/recent"],
   });
 
-  // Configurar formulario
+  // Configure form
   const form = useForm<TimeclockFormType>({
     resolver: zodResolver(timeclockFormSchema),
     defaultValues: {
@@ -89,14 +89,14 @@ export default function TimeclockPage() {
     }
   });
 
-  // Mutaciones para entrada y salida
+  // Mutations for clock in and clock out
   const clockInMutation = useMutation({
     mutationFn: async (data: TimeclockFormType) => {
       return await apiRequest("POST", "/api/timeclock/clock-in", {
         ...data,
-        location: currentLocation, // Usar siempre la ubicación actual
+        location: currentLocation, // Always use current location
         date: format(new Date(), "yyyy-MM-dd"),
-        notes: "" // Vacío ya que no se solicita
+        notes: "" // Empty as it's not requested
       });
     },
     onSuccess: () => {
@@ -121,9 +121,9 @@ export default function TimeclockPage() {
     mutationFn: async (data: TimeclockFormType) => {
       return await apiRequest("POST", "/api/timeclock/clock-out", {
         ...data,
-        location: currentLocation, // Usar siempre la ubicación actual
+        location: currentLocation, // Always use current location
         date: format(new Date(), "yyyy-MM-dd"),
-        notes: "" // Vacío ya que no se solicita
+        notes: "" // Empty as it's not requested
       });
     },
     onSuccess: () => {
@@ -161,9 +161,9 @@ export default function TimeclockPage() {
       <main className="flex-1 overflow-y-auto bg-gray-50">
         <div className="container py-8">
           <div className="mb-6">
-            <h1 className="text-2xl md:text-3xl font-bold">Registro de Entrada/Salida</h1>
+            <h1 className="text-2xl md:text-3xl font-bold">Time Clock</h1>
             <p className="text-gray-600 mt-2">
-              Registre la entrada y salida de los empleados de forma rápida y sencilla.
+              Record employee clock in and clock out times quickly and easily.
             </p>
           </div>
 
