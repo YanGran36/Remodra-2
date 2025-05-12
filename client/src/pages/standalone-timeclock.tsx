@@ -134,6 +134,7 @@ export default function StandaloneTimeclockPage() {
       const payload = {
         employeeName: data.employeeName,
         location: locationText,
+        date: format(new Date(), "yyyy-MM-dd"), // Incluir la fecha actual en formato ISO
       };
 
       const response = await apiRequest("POST", endpoint, payload);

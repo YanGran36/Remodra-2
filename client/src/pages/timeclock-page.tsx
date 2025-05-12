@@ -114,8 +114,8 @@ export default function TimeclockPage() {
     },
     onSuccess: () => {
       toast({
-        title: "Entrada Registrada",
-        description: "Tu entrada ha sido registrada exitosamente",
+        title: "Clock In Registered",
+        description: "Your clock in has been successfully registered",
         variant: "default"
       });
       form.reset();
@@ -123,8 +123,8 @@ export default function TimeclockPage() {
     },
     onError: (error) => {
       toast({
-        title: "Error al Registrar Entrada",
-        description: error.message || "Ha ocurrido un error al registrar tu entrada",
+        title: "Error Registering Clock In",
+        description: error.message || "An error occurred while registering your clock in",
         variant: "destructive"
       });
     }
@@ -141,8 +141,8 @@ export default function TimeclockPage() {
     },
     onSuccess: () => {
       toast({
-        title: "Salida Registrada",
-        description: "Tu salida ha sido registrada exitosamente",
+        title: "Clock Out Registered",
+        description: "Your clock out has been successfully registered",
         variant: "default"
       });
       form.reset();
@@ -151,8 +151,8 @@ export default function TimeclockPage() {
     },
     onError: (error) => {
       toast({
-        title: "Error al Registrar Salida",
-        description: error.message || "Ha ocurrido un error al registrar tu salida",
+        title: "Error Registering Clock Out",
+        description: error.message || "An error occurred while registering your clock out",
         variant: "destructive"
       });
     }
