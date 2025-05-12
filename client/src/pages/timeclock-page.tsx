@@ -213,11 +213,11 @@ export default function TimeclockPage() {
                         <TabsList className="grid grid-cols-2 w-full">
                           <TabsTrigger value="in" className="data-[state=active]:bg-green-100 data-[state=active]:text-green-700">
                             <ArrowRight className="h-4 w-4 mr-2" />
-                            Entrada
+                            Clock In
                           </TabsTrigger>
                           <TabsTrigger value="out" className="data-[state=active]:bg-amber-100 data-[state=active]:text-amber-700">
                             <ArrowLeft className="h-4 w-4 mr-2" />
-                            Salida
+                            Clock Out
                           </TabsTrigger>
                         </TabsList>
                       </Tabs>
@@ -227,9 +227,9 @@ export default function TimeclockPage() {
                         name="employeeName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Nombre del Empleado</FormLabel>
+                            <FormLabel>Employee Name</FormLabel>
                             <FormControl>
-                              <Input placeholder="Nombre y apellido" {...field} />
+                              <Input placeholder="First and last name" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -248,7 +248,7 @@ export default function TimeclockPage() {
                         {(clockInMutation.isPending || clockOutMutation.isPending) && (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         )}
-                        {clockMode === "in" ? "Registrar Entrada" : "Registrar Salida"}
+                        {clockMode === "in" ? "Clock In" : "Clock Out"}
                       </Button>
                     </form>
                   </Form>
@@ -397,9 +397,9 @@ export default function TimeclockPage() {
                           <h3 className="font-semibold text-md">{format(new Date(date), "EEEE, MMMM dd, yyyy")}</h3>
                           <div className="bg-slate-50 rounded-lg p-4">
                             <div className="grid grid-cols-3 gap-4 font-medium text-sm mb-2 px-2">
-                              <div>Empleado</div>
-                              <div className="text-center">Horas</div>
-                              <div className="text-right">Registros</div>
+                              <div>Employee</div>
+                              <div className="text-center">Hours</div>
+                              <div className="text-right">Records</div>
                             </div>
                             <Separator className="my-2" />
                             {Object.keys(hoursReport[date]).map((employeeName) => {
@@ -430,7 +430,7 @@ export default function TimeclockPage() {
                                       <div>{totalHours}</div>
                                       {employeeData.weeklyHours > 0 && (
                                         <div className="text-xs font-medium text-blue-600">
-                                          {employeeData.weeklyHours.toFixed(2)} esta semana
+                                          {employeeData.weeklyHours.toFixed(2)} this week
                                         </div>
                                       )}
                                     </div>
