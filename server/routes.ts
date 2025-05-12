@@ -25,6 +25,7 @@ import {
 
 import { analyzeProject, generateSharingContent } from "./ai-service";
 import * as achievementService from "./services/achievement-service";
+import { registerTimeclockRoutes } from "./routes/timeclock-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
@@ -2249,6 +2250,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  // Registrar las rutas del timeclock
+  registerTimeclockRoutes(app);
 
   const httpServer = createServer(app);
 
