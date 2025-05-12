@@ -3,7 +3,10 @@ import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Clock, ArrowLeft, ArrowRight, MapPin, Loader2 } from "lucide-react";
+import { 
+  Clock, ArrowLeft, ArrowRight, MapPin, Loader2, 
+  ChevronDown, ChevronUp, Info 
+} from "lucide-react";
 import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
@@ -34,6 +37,7 @@ export default function TimeclockPage() {
   const queryClient = useQueryClient();
   const [currentLocation, setCurrentLocation] = useState<string>("");
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [expandedEmployees, setExpandedEmployees] = useState<{[key: string]: boolean}>({});
   const { data: user } = useQuery<any>({
     queryKey: ["/api/user"],
   });
@@ -352,12 +356,63 @@ export default function TimeclockPage() {
                               const employeeData = hoursReport[date][employeeName];
                               const totalHours = employeeData.totalHours.toFixed(2);
                               const entries = employeeData.entries.length;
+                              const rowKey = `${date}-${employeeName}`;
+                              const isExpanded = expandedEmployees[rowKey] || false;
                               
                               return (
-                                <div key={`${date}-${employeeName}`} className="grid grid-cols-3 gap-4 py-2 px-2 border-b border-gray-100 last:border-0">
-                                  <div className="font-medium">{employeeName}</div>
-                                  <div className="text-center">{totalHours}</div>
-                                  <div className="text-right text-gray-500 text-sm">{entries} {entries === 1 ? 'entry' : 'entries'}</div>
+                                <div key={rowKey} className="border-b border-gray-100 last:border-0">
+                                  <div 
+                                    className="grid grid-cols-3 gap-4 py-2 px-2 cursor-pointer hover:bg-gray-50 transition-colors"
+                                    onClick={() => setExpandedEmployees({
+                                      ...expandedEmployees,
+                                      [rowKey]: !isExpanded
+                                    })}
+                                  >
+                                    <div className="font-medium flex items-center">
+                                      {isExpanded ? (
+                                        <ChevronUp className="h-4 w-4 mr-1 text-gray-500" />
+                                      ) : (
+                                        <ChevronDown className="h-4 w-4 mr-1 text-gray-500" />
+                                      )}
+                                      {employeeName}
+                                    </div>
+                                    <div className="text-center">{totalHours}</div>
+                                    <div className="text-right text-gray-500 text-sm">{entries} {entries === 1 ? 'entry' : 'entries'}</div>
+                                  </div>
+                                  
+                                  {isExpanded && (
+                                    <div className="bg-gray-50 px-4 py-3 mb-2 rounded-b-lg">
+                                      <h4 className="text-sm font-medium mb-2 flex items-center">
+                                        <Info className="h-3 w-3 mr-1" />
+                                        Detalles de los registros
+                                      </h4>
+                                      <div className="space-y-3">
+                                        {employeeData.entries.map((entry, index) => (
+                                          <div key={entry.id} className="bg-white rounded p-2 text-sm border">
+                                            <div className="flex justify-between mb-1">
+                                              <span className="font-medium">
+                                                {format(new Date(entry.timestamp), "h:mm a")}
+                                              </span>
+                                              <span className="text-green-600 font-medium">
+                                                {parseFloat(entry.hoursWorked).toFixed(2)} horas
+                                              </span>
+                                            </div>
+                                            {entry.location && (
+                                              <div className="flex items-start gap-1 text-xs text-gray-600 mt-1">
+                                                <MapPin className="h-3 w-3 shrink-0 mt-0.5" />
+                                                <span>{entry.location}</span>
+                                              </div>
+                                            )}
+                                            {entry.notes && (
+                                              <div className="text-xs text-gray-600 mt-1 pl-4">
+                                                {entry.notes}
+                                              </div>
+                                            )}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               );
                             })}

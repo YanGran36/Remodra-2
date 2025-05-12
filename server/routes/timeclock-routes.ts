@@ -211,6 +211,9 @@ export function registerTimeclockRoutes(app: Express) {
           date: timeclockEntries.date,
           clockInEntryId: timeclockEntries.clockInEntryId,
           hoursWorked: timeclockEntries.hoursWorked,
+          timestamp: timeclockEntries.timestamp,
+          location: timeclockEntries.location,
+          notes: timeclockEntries.notes,
         })
         .from(timeclockEntries)
         .where(
@@ -250,7 +253,10 @@ export function registerTimeclockRoutes(app: Express) {
         dailyReport[dateKey][employeeName].entries.push({
           id: entry.id,
           clockInEntryId: entry.clockInEntryId,
-          hoursWorked
+          hoursWorked,
+          timestamp: entry.timestamp,
+          location: entry.location,
+          notes: entry.notes || ""
         });
       }
       
