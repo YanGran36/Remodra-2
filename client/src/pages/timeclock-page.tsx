@@ -8,6 +8,7 @@ import {
   ChevronDown, ChevronUp, Info 
 } from "lucide-react";
 import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -201,7 +202,7 @@ export default function TimeclockPage() {
                         Registro de Horas
                       </CardTitle>
                       <CardDescription>
-                        {format(new Date(), "EEEE, MMMM dd, yyyy, h:mm a")}
+                        {format(new Date(), "EEEE, d 'de' MMMM 'de' yyyy, h:mm a", { locale: es })}
                       </CardDescription>
                     </div>
                   </div>
@@ -434,7 +435,7 @@ export default function TimeclockPage() {
                                         </div>
                                       )}
                                     </div>
-                                    <div className="text-right text-gray-500 text-sm">{entries} {entries === 1 ? 'entry' : 'entries'}</div>
+                                    <div className="text-right text-gray-500 text-sm">{entries} {entries === 1 ? 'registro' : 'registros'}</div>
                                   </div>
                                   
                                   {isExpanded && (
@@ -460,7 +461,7 @@ export default function TimeclockPage() {
                                                   <ArrowLeft className="h-3 w-3 text-amber-600" />
                                                 )}
                                                 <span className="font-medium">
-                                                  {format(new Date(entry.timestamp), "h:mm a")}
+                                                  {format(new Date(entry.timestamp), "h:mm a", { locale: es })}
                                                 </span>
                                                 <Badge 
                                                   className={entry.type === "IN" ? 
