@@ -114,8 +114,8 @@ export default function TimeclockPage() {
     },
     onSuccess: () => {
       toast({
-        title: "Clock In Registered",
-        description: "Your clock in has been successfully recorded",
+        title: "Entrada Registrada",
+        description: "Tu entrada ha sido registrada exitosamente",
         variant: "default"
       });
       form.reset();
@@ -123,8 +123,8 @@ export default function TimeclockPage() {
     },
     onError: (error) => {
       toast({
-        title: "Error Recording Clock In",
-        description: error.message || "An error occurred while recording your clock in",
+        title: "Error al Registrar Entrada",
+        description: error.message || "Ha ocurrido un error al registrar tu entrada",
         variant: "destructive"
       });
     }
@@ -141,8 +141,8 @@ export default function TimeclockPage() {
     },
     onSuccess: () => {
       toast({
-        title: "Clock Out Registered",
-        description: "Your clock out has been successfully recorded",
+        title: "Salida Registrada",
+        description: "Tu salida ha sido registrada exitosamente",
         variant: "default"
       });
       form.reset();
@@ -151,8 +151,8 @@ export default function TimeclockPage() {
     },
     onError: (error) => {
       toast({
-        title: "Error Recording Clock Out",
-        description: error.message || "An error occurred while recording your clock out",
+        title: "Error al Registrar Salida",
+        description: error.message || "Ha ocurrido un error al registrar tu salida",
         variant: "destructive"
       });
     }
@@ -175,17 +175,17 @@ export default function TimeclockPage() {
       <main className="flex-1 overflow-y-auto bg-gray-50">
         <div className="container py-8">
           <div className="mb-6">
-            <h1 className="text-2xl md:text-3xl font-bold">Time Clock</h1>
+            <h1 className="text-2xl md:text-3xl font-bold">Registro de Horarios</h1>
             <p className="text-gray-600 mt-2">
-              Record employee clock in and clock out times quickly and easily.
+              Registra entradas y salidas de empleados de forma rápida y sencilla.
             </p>
           </div>
           
           <div className="mb-6">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="w-full">
-                <TabsTrigger value="clock">Time Clock</TabsTrigger>
-                {user && <TabsTrigger value="report">Hours Report</TabsTrigger>}
+                <TabsTrigger value="clock">Registro de Horas</TabsTrigger>
+                {user && <TabsTrigger value="report">Informe de Horas</TabsTrigger>}
               </TabsList>
             </Tabs>
           </div>
@@ -198,7 +198,7 @@ export default function TimeclockPage() {
                     <div>
                       <CardTitle className="text-xl flex items-center gap-2">
                         <Clock className="h-5 w-5 text-primary" />
-                        Time Clock
+                        Registro de Horas
                       </CardTitle>
                       <CardDescription>
                         {format(new Date(), "EEEE, MMMM dd, yyyy, h:mm a")}
