@@ -203,8 +203,8 @@ export function registerTimeclockRoutes(app: Express) {
 
       const contractorId = req.user.id;
       
-      // Get all clock out entries with hours worked
-      const clockOutEntries = await db
+      // Get ALL entries for this contractor
+      const allEntries = await db
         .select({
           id: timeclockEntries.id,
           employeeName: timeclockEntries.employeeName,
@@ -218,46 +218,32 @@ export function registerTimeclockRoutes(app: Express) {
         })
         .from(timeclockEntries)
         .where(
-          and(
-            eq(timeclockEntries.contractorId, contractorId),
-            eq(timeclockEntries.type, "OUT"),
-            sql`${timeclockEntries.hoursWorked} IS NOT NULL`
-          )
+          eq(timeclockEntries.contractorId, contractorId)
         )
         .orderBy(timeclockEntries.date, desc(timeclockEntries.timestamp));
-
-      // Get clock in entries for the same dates
-      const clockInIds = clockOutEntries.map(entry => entry.clockInEntryId).filter(Boolean);
       
-      let clockInEntries = [];
-      if (clockInIds.length > 0) {
-        clockInEntries = await db
-          .select({
-            id: timeclockEntries.id,
-            employeeName: timeclockEntries.employeeName,
-            date: timeclockEntries.date,
-            timestamp: timeclockEntries.timestamp,
-            location: timeclockEntries.location,
-            notes: timeclockEntries.notes,
-            type: timeclockEntries.type,
-          })
-          .from(timeclockEntries)
-          .where(
-            and(
-              eq(timeclockEntries.contractorId, contractorId),
-              inArray(timeclockEntries.id, clockInIds)
-            )
-          );
-      }
+      // Separate entries into clock-in and clock-out
+      const clockOutEntries = allEntries.filter(entry => entry.type === "OUT");
+      const clockInEntriesAll = allEntries.filter(entry => entry.type === "IN");
       
-      // Prepare a map of clock in entries by ID for easy lookup
+      // Create a map of all clock-in entries for easy lookup
       const clockInMap = {};
-      clockInEntries.forEach(entry => {
+      clockInEntriesAll.forEach(entry => {
         clockInMap[entry.id] = entry;
       });
+      
+      // Get all clockInEntryIds referenced from clock-out entries
+      const clockInIdsReferenced = clockOutEntries
+        .map(entry => entry.clockInEntryId)
+        .filter(Boolean);
+      
+      // Find clock-in entries that don't have a corresponding clock-out (still clocked in)
+      const standaloneClockIns = clockInEntriesAll.filter(entry => 
+        !clockInIdsReferenced.includes(entry.id)
+      );
 
-      // Combine all entries for processing
-      const entries = [...clockOutEntries];
+      // Combine all entries for processing - including standalone clock-ins
+      const entries = [...clockOutEntries, ...standaloneClockIns];
       
       // Group by date and employee name to get daily totals
       const dailyReport = {};
@@ -304,43 +290,60 @@ export function registerTimeclockRoutes(app: Express) {
           weeklyHours[weekStartDate][employeeName] = 0;
         }
         
-        // Parse hours worked (might be stored as string in DB)
-        const hoursWorked = typeof entry.hoursWorked === 'string' 
-          ? parseFloat(entry.hoursWorked) 
-          : entry.hoursWorked;
-        
-        // Get corresponding clock in entry
-        const clockInEntry = entry.clockInEntryId ? clockInMap[entry.clockInEntryId] : null;
-        
-        // Add clock in entry first
-        if (clockInEntry) {
+        // Si es una entrada de tipo OUT
+        if (entry.type === "OUT") {
+          // Parse hours worked (might be stored as string in DB)
+          const hoursWorked = typeof entry.hoursWorked === 'string' 
+            ? parseFloat(entry.hoursWorked) 
+            : entry.hoursWorked;
+          
+          // Get corresponding clock in entry
+          const clockInEntry = entry.clockInEntryId ? clockInMap[entry.clockInEntryId] : null;
+          
+          // Add clock in entry first
+          if (clockInEntry) {
+            dailyReport[dateKey][employeeName].entries.push({
+              id: clockInEntry.id,
+              type: 'IN',
+              timestamp: clockInEntry.timestamp,
+              location: clockInEntry.location,
+              notes: clockInEntry.notes || "",
+              isClockIn: true
+            });
+          }
+          
+          // Add clock out entry with hours worked
+          if (hoursWorked) {
+            dailyReport[dateKey][employeeName].totalHours += hoursWorked;
+            
+            // Update weekly hours total
+            weeklyHours[weekStartDate][employeeName] += hoursWorked;
+            dailyReport[dateKey][employeeName].weeklyHours = weeklyHours[weekStartDate][employeeName];
+          }
+          
           dailyReport[dateKey][employeeName].entries.push({
-            id: clockInEntry.id,
+            id: entry.id,
+            type: 'OUT',
+            clockInEntryId: entry.clockInEntryId,
+            hoursWorked,
+            timestamp: entry.timestamp,
+            location: entry.location,
+            notes: entry.notes || "",
+            isClockOut: true
+          });
+        } 
+        // Si es una entrada de tipo IN que no tiene salida
+        else {
+          // Agregar la entrada directamente (todavía está en clock-in)
+          dailyReport[dateKey][employeeName].entries.push({
+            id: entry.id,
             type: 'IN',
-            timestamp: clockInEntry.timestamp,
-            location: clockInEntry.location,
-            notes: clockInEntry.notes || "",
+            timestamp: entry.timestamp,
+            location: entry.location,
+            notes: entry.notes || "",
             isClockIn: true
           });
         }
-        
-        // Add clock out entry with hours worked
-        dailyReport[dateKey][employeeName].totalHours += hoursWorked;
-        
-        // Update weekly hours total
-        weeklyHours[weekStartDate][employeeName] += hoursWorked;
-        dailyReport[dateKey][employeeName].weeklyHours = weeklyHours[weekStartDate][employeeName];
-        
-        dailyReport[dateKey][employeeName].entries.push({
-          id: entry.id,
-          type: 'OUT',
-          clockInEntryId: entry.clockInEntryId,
-          hoursWorked,
-          timestamp: entry.timestamp,
-          location: entry.location,
-          notes: entry.notes || "",
-          isClockOut: true
-        });
       }
       
       return res.status(200).json(dailyReport);
