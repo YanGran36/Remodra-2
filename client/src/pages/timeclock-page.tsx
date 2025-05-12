@@ -20,9 +20,9 @@ import Sidebar from "@/components/layout/sidebar";
 import MobileSidebar from "@/components/layout/mobile-sidebar";
 import { useLanguage } from "@/hooks/use-language";
 
-// Esquema de validación para el formulario
+// Validation schema for the form
 const timeclockFormSchema = z.object({
-  employeeName: z.string().min(2, "El nombre debe tener al menos 2 caracteres")
+  employeeName: z.string().min(2, "Name must be at least 2 characters")
 });
 
 type TimeclockFormType = z.infer<typeof timeclockFormSchema>;
@@ -101,8 +101,8 @@ export default function TimeclockPage() {
     },
     onSuccess: () => {
       toast({
-        title: "Entrada registrada",
-        description: "Se ha registrado correctamente la entrada",
+        title: "Clock In Registered",
+        description: "Your clock in has been successfully recorded",
         variant: "default"
       });
       form.reset();
@@ -110,8 +110,8 @@ export default function TimeclockPage() {
     },
     onError: (error) => {
       toast({
-        title: "Error al registrar entrada",
-        description: error.message || "Ha ocurrido un error al registrar la entrada",
+        title: "Error Recording Clock In",
+        description: error.message || "An error occurred while recording your clock in",
         variant: "destructive"
       });
     }
@@ -128,8 +128,8 @@ export default function TimeclockPage() {
     },
     onSuccess: () => {
       toast({
-        title: "Salida registrada",
-        description: "Se ha registrado correctamente la salida",
+        title: "Clock Out Registered",
+        description: "Your clock out has been successfully recorded",
         variant: "default"
       });
       form.reset();
@@ -137,14 +137,14 @@ export default function TimeclockPage() {
     },
     onError: (error) => {
       toast({
-        title: "Error al registrar salida",
-        description: error.message || "Ha ocurrido un error al registrar la salida",
+        title: "Error Recording Clock Out",
+        description: error.message || "An error occurred while recording your clock out",
         variant: "destructive"
       });
     }
   });
 
-  // Manejar envío del formulario
+  // Handle form submission
   const onSubmit = (data: TimeclockFormType) => {
     if (activeTab === "in") {
       clockInMutation.mutate(data);
@@ -251,7 +251,7 @@ export default function TimeclockPage() {
                           <div>
                             <p className="font-medium">{entry.employeeName}</p>
                             <p className="text-sm text-muted-foreground">
-                              {format(new Date(entry.timestamp), "dd/MM/yyyy HH:mm")}
+                              {format(new Date(entry.timestamp), "MM/dd/yyyy h:mm a")}
                             </p>
                           </div>
                           <Badge
