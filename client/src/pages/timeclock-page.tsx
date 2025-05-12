@@ -23,7 +23,7 @@ import Sidebar from "@/components/layout/sidebar";
 import MobileSidebar from "@/components/layout/mobile-sidebar";
 import { useLanguage } from "@/hooks/use-language";
 
-// Validation schema for the form
+// Esquema de validación para el formulario
 const timeclockFormSchema = z.object({
   employeeName: z.string().min(2, "El nombre debe tener al menos 2 caracteres")
 });
@@ -43,7 +43,7 @@ export default function TimeclockPage() {
     queryKey: ["/api/user"],
   });
 
-  // Get current location
+  // Obtener ubicación actual
   useEffect(() => {
     const getLocation = async () => {
       if ("geolocation" in navigator) {
@@ -237,7 +237,7 @@ export default function TimeclockPage() {
                         )}
                       />
 
-                      {/* Location is automatically captured in the background but not shown */}
+                      {/* La ubicación se captura automáticamente en segundo plano pero no se muestra */}
 
                       <Button 
                         type="submit" 
