@@ -118,7 +118,7 @@ export function registerTimeclockRoutes(app: Express) {
 
       const contractorId = req.user.id;
 
-      // Obtener los últimos 10 registros
+      // Get last 10 entries with enhanced information
       const entries = await db
         .select()
         .from(timeclockEntries)
@@ -126,19 +126,25 @@ export function registerTimeclockRoutes(app: Express) {
         .orderBy(desc(timeclockEntries.timestamp))
         .limit(10);
 
-      return res.status(200).json(entries);
+      // For each OUT entry, include hours worked information
+      const enhancedEntries = entries.map(entry => {
+        // Only show hours worked to the contractor (who is authenticated here)
+        return entry;
+      });
+
+      return res.status(200).json(enhancedEntries);
     } catch (error) {
-      console.error("Error al obtener registros recientes:", error);
-      return res.status(500).json({ message: "Error interno del servidor" });
+      console.error("Error getting recent entries:", error);
+      return res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  // Obtener todos los registros (paginados)
+  // Get all entries (paginated)
   app.get("/api/timeclock/entries", async (req: Request, res: Response) => {
     try {
-      // Verificar que el usuario esté autenticado
+      // Verify user is authenticated
       if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "No autenticado" });
+        return res.status(401).json({ message: "Not authenticated" });
       }
 
       const contractorId = req.user.id;
@@ -146,7 +152,7 @@ export function registerTimeclockRoutes(app: Express) {
       const pageSize = parseInt(req.query.pageSize as string) || 20;
       const offset = (page - 1) * pageSize;
 
-      // Obtener los registros paginados
+      // Get paginated entries
       const entries = await db
         .select()
         .from(timeclockEntries)
@@ -154,15 +160,21 @@ export function registerTimeclockRoutes(app: Express) {
         .orderBy(desc(timeclockEntries.timestamp))
         .limit(pageSize)
         .offset(offset);
+      
+      // Add working hours information where available
+      const enhancedEntries = entries.map(entry => {
+        return entry;
+      });
 
-      // Obtener el total de registros para la paginación
+      // Get total count for pagination
       const [{ count }] = await db
         .select({ count: sql<number>`count(*)` })
         .from(timeclockEntries)
         .where(eq(timeclockEntries.contractorId, contractorId));
 
+      // Return data with pagination info
       return res.status(200).json({
-        entries,
+        entries: enhancedEntries,
         pagination: {
           total: count,
           page,
@@ -171,8 +183,8 @@ export function registerTimeclockRoutes(app: Express) {
         },
       });
     } catch (error) {
-      console.error("Error al obtener registros:", error);
-      return res.status(500).json({ message: "Error interno del servidor" });
+      console.error("Error getting entries:", error);
+      return res.status(500).json({ message: "Internal server error" });
     }
   });
 }

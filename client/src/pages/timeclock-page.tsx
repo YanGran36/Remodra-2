@@ -264,6 +264,14 @@ export default function TimeclockPage() {
                             {entry.type === "IN" ? "Clock In" : "Clock Out"}
                           </Badge>
                         </div>
+                        {entry.hoursWorked && entry.type === "OUT" && (
+                          <div className="mt-2 flex items-start gap-1">
+                            <Clock className="h-3 w-3 text-muted-foreground mt-0.5" />
+                            <p className="text-xs text-green-600 font-medium">
+                              {entry.hoursWorked} hours worked
+                            </p>
+                          </div>
+                        )}
                         {entry.location && (
                           <div className="mt-2 flex items-start gap-1">
                             <MapPin className="h-3 w-3 text-muted-foreground mt-0.5" />
