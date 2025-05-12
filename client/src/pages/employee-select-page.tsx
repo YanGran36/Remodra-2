@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
+import { useLocation } from "wouter";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ const employeeFormSchema = z.object({
 type EmployeeFormType = z.infer<typeof employeeFormSchema>;
 
 export default function EmployeeSelectPage() {
+  const [, navigate] = useLocation();
   const form = useForm<EmployeeFormType>({
     resolver: zodResolver(employeeFormSchema),
     defaultValues: {
@@ -23,10 +25,11 @@ export default function EmployeeSelectPage() {
     }
   });
 
-  // This is just a placeholder submit function
+  // Función para redirigir al usuario al modo de selección de acción
   const onSubmit = (data: EmployeeFormType) => {
     console.log(data.employeeName);
-    // We would normally set state or redirect here
+    // Redirigir a la página de selección de acción (Clock In/Out)
+    navigate(`/standalone-timeclock?employee=${encodeURIComponent(data.employeeName)}`);
   };
 
   return (

@@ -49,13 +49,26 @@ export default function StandaloneTimeclockPage() {
   const [selectedEmployeeName, setSelectedEmployeeName] = useState("");
   const [step, setStep] = useState("select-employee"); // "select-employee" or "select-action"
   const { toast } = useToast();
-
+  
   const form = useForm<TimeclockFormType>({
     resolver: zodResolver(timeclockFormSchema),
     defaultValues: {
       employeeName: ""
     }
   });
+  
+  // Obtener el nombre del empleado de la URL si está presente
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const employeeParam = searchParams.get('employee');
+    
+    if (employeeParam) {
+      setSelectedEmployeeName(employeeParam);
+      setStep("select-action");
+      // Asignar también al formulario
+      form.setValue("employeeName", employeeParam);
+    }
+  }, [form]);
 
   const fetchRecentEntries = async () => {
     try {
