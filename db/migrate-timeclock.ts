@@ -49,13 +49,13 @@ async function migrateTimeclockTable() {
   }
 }
 
-// Ejecutar migración
+// Execute migration
 migrateTimeclockTable()
   .then(() => {
-    console.log("✅ Migración de timeclock completada");
+    console.log("✅ Timeclock migration completed");
     process.exit(0);
   })
   .catch((error) => {
-    console.error("❌ Error en la migración de timeclock:", error);
+    console.error("❌ Error during timeclock migration:", error);
     process.exit(1);
   });

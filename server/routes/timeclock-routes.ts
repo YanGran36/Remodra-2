@@ -1,28 +1,29 @@
 import { Express, Request, Response } from "express";
 import { db } from "@db";
 import { timeclockEntries, timeclockEntryInsertSchema } from "@shared/schema";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, asc } from "drizzle-orm";
 import { z } from "zod";
+import { differenceInHours, differenceInMinutes } from "date-fns";
 
 export function registerTimeclockRoutes(app: Express) {
-  // Registrar Entrada (Clock In)
+  // Register Clock In
   app.post("/api/timeclock/clock-in", async (req: Request, res: Response) => {
     try {
-      // Verificar que el usuario esté autenticado
+      // Verify user is authenticated
       if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "No autenticado" });
+        return res.status(401).json({ message: "Not authenticated" });
       }
 
       const contractorId = req.user.id;
 
-      // Validar los datos recibidos
+      // Validate received data
       const validatedData = timeclockEntryInsertSchema.parse({
         ...req.body,
         contractorId,
-        type: "IN", // Fijar tipo como entrada
+        type: "IN", // Fixed type as clock in
       });
 
-      // Insertar en base de datos
+      // Insert into database
       const [entry] = await db
         .insert(timeclockEntries)
         .values(validatedData)
@@ -30,32 +31,68 @@ export function registerTimeclockRoutes(app: Express) {
 
       return res.status(201).json(entry);
     } catch (error) {
-      console.error("Error al registrar entrada:", error);
+      console.error("Error registering clock in:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ errors: error.errors });
       }
-      return res.status(500).json({ message: "Error interno del servidor" });
+      return res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  // Registrar Salida (Clock Out)
+  // Register Clock Out
   app.post("/api/timeclock/clock-out", async (req: Request, res: Response) => {
     try {
-      // Verificar que el usuario esté autenticado
+      // Verify user is authenticated
       if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "No autenticado" });
+        return res.status(401).json({ message: "Not authenticated" });
       }
 
       const contractorId = req.user.id;
+      const { employeeName, date } = req.body;
 
-      // Validar los datos recibidos
+      // Find the most recent clock in entry for this employee
+      const [latestClockIn] = await db
+        .select()
+        .from(timeclockEntries)
+        .where(
+          and(
+            eq(timeclockEntries.contractorId, contractorId),
+            eq(timeclockEntries.employeeName, employeeName),
+            eq(timeclockEntries.type, "IN"),
+            // Look for clock-in entries without an associated clock-out
+            sql`NOT EXISTS (
+              SELECT 1 FROM timeclock_entries t2 
+              WHERE t2.clock_in_entry_id = timeclock_entries.id
+            )`
+          )
+        )
+        .orderBy(desc(timeclockEntries.timestamp))
+        .limit(1);
+
+      // Calculate hours worked if found a clock in entry
+      let hoursWorked = null;
+      let clockInEntryId = null;
+      
+      if (latestClockIn) {
+        const clockInTime = new Date(latestClockIn.timestamp);
+        const clockOutTime = new Date();
+        
+        // Calculate hours worked (with 2 decimal precision)
+        const totalMinutes = differenceInMinutes(clockOutTime, clockInTime);
+        hoursWorked = parseFloat((totalMinutes / 60).toFixed(2));
+        clockInEntryId = latestClockIn.id;
+      }
+
+      // Validate received data
       const validatedData = timeclockEntryInsertSchema.parse({
         ...req.body,
         contractorId,
-        type: "OUT", // Fijar tipo como salida
+        type: "OUT", // Fixed type as clock out
+        clockInEntryId, // Link to the corresponding clock in entry
+        hoursWorked, // Store calculated hours worked
       });
 
-      // Insertar en base de datos
+      // Insert into database
       const [entry] = await db
         .insert(timeclockEntries)
         .values(validatedData)
@@ -63,20 +100,20 @@ export function registerTimeclockRoutes(app: Express) {
 
       return res.status(201).json(entry);
     } catch (error) {
-      console.error("Error al registrar salida:", error);
+      console.error("Error registering clock out:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ errors: error.errors });
       }
-      return res.status(500).json({ message: "Error interno del servidor" });
+      return res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  // Obtener registros recientes (últimos 10)
+  // Get recent entries (last 10)
   app.get("/api/timeclock/recent", async (req: Request, res: Response) => {
     try {
-      // Verificar que el usuario esté autenticado
+      // Verify user is authenticated
       if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "No autenticado" });
+        return res.status(401).json({ message: "Not authenticated" });
       }
 
       const contractorId = req.user.id;
