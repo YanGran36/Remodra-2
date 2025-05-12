@@ -257,9 +257,9 @@ export default function TimeclockPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-xl">Registros Recientes</CardTitle>
+                  <CardTitle className="text-xl">Recent Records</CardTitle>
                   <CardDescription>
-                    Últimas entradas y salidas registradas
+                    Latest clock in and clock out entries
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -292,7 +292,7 @@ export default function TimeclockPage() {
                             <div className="mt-2 flex items-start gap-1">
                               <Clock className="h-3 w-3 text-muted-foreground mt-0.5" />
                               <p className="text-xs text-green-600 font-medium">
-                                {entry.hoursWorked} horas trabajadas
+                                {entry.hoursWorked} hours worked
                               </p>
                             </div>
                           )}
@@ -434,14 +434,14 @@ export default function TimeclockPage() {
                                         </div>
                                       )}
                                     </div>
-                                    <div className="text-right text-gray-500 text-sm">{entries} {entries === 1 ? 'registro' : 'registros'}</div>
+                                    <div className="text-right text-gray-500 text-sm">{entries} {entries === 1 ? 'record' : 'records'}</div>
                                   </div>
                                   
                                   {isExpanded && (
                                     <div className="bg-gray-50 px-4 py-3 mb-2 rounded-b-lg">
                                       <h4 className="text-sm font-medium mb-2 flex items-center">
                                         <Info className="h-3 w-3 mr-1" />
-                                        Detalles de los registros
+                                        Record Details
                                       </h4>
                                       <div className="space-y-3">
                                         {employeeData.entries.map((entry, index) => (
@@ -468,12 +468,12 @@ export default function TimeclockPage() {
                                                     "bg-amber-100 text-amber-800 hover:bg-amber-100 ml-2 h-5"
                                                   }
                                                 >
-                                                  {entry.type === "IN" ? "Entrada" : "Salida"}
+                                                  {entry.type === "IN" ? "Clock In" : "Clock Out"}
                                                 </Badge>
                                               </div>
                                               {entry.hoursWorked && (
                                                 <span className="text-green-600 font-medium">
-                                                  {parseFloat(entry.hoursWorked).toFixed(2)} horas
+                                                  {parseFloat(entry.hoursWorked).toFixed(2)} hours
                                                 </span>
                                               )}
                                             </div>
