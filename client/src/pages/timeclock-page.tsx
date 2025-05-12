@@ -388,14 +388,37 @@ export default function TimeclockPage() {
                                       </h4>
                                       <div className="space-y-3">
                                         {employeeData.entries.map((entry, index) => (
-                                          <div key={entry.id} className="bg-white rounded p-2 text-sm border">
+                                          <div 
+                                            key={entry.id} 
+                                            className={`bg-white rounded p-2 text-sm border ${
+                                              entry.isClockIn ? 'border-l-4 border-l-green-500' : 
+                                              entry.isClockOut ? 'border-l-4 border-l-amber-500' : ''
+                                            }`}
+                                          >
                                             <div className="flex justify-between mb-1">
-                                              <span className="font-medium">
-                                                {format(new Date(entry.timestamp), "h:mm a")}
-                                              </span>
-                                              <span className="text-green-600 font-medium">
-                                                {parseFloat(entry.hoursWorked).toFixed(2)} horas
-                                              </span>
+                                              <div className="flex items-center gap-1">
+                                                {entry.type === "IN" ? (
+                                                  <ArrowRight className="h-3 w-3 text-green-600" />
+                                                ) : (
+                                                  <ArrowLeft className="h-3 w-3 text-amber-600" />
+                                                )}
+                                                <span className="font-medium">
+                                                  {format(new Date(entry.timestamp), "h:mm a")}
+                                                </span>
+                                                <Badge 
+                                                  className={entry.type === "IN" ? 
+                                                    "bg-green-100 text-green-800 hover:bg-green-100 ml-2 h-5" : 
+                                                    "bg-amber-100 text-amber-800 hover:bg-amber-100 ml-2 h-5"
+                                                  }
+                                                >
+                                                  {entry.type === "IN" ? "Entrada" : "Salida"}
+                                                </Badge>
+                                              </div>
+                                              {entry.hoursWorked && (
+                                                <span className="text-green-600 font-medium">
+                                                  {parseFloat(entry.hoursWorked).toFixed(2)} horas
+                                                </span>
+                                              )}
                                             </div>
                                             {entry.location && (
                                               <div className="flex items-start gap-1 text-xs text-gray-600 mt-1">
@@ -403,7 +426,7 @@ export default function TimeclockPage() {
                                                 <span>{entry.location}</span>
                                               </div>
                                             )}
-                                            {entry.notes && (
+                                            {entry.notes && entry.notes.trim() !== "" && (
                                               <div className="text-xs text-gray-600 mt-1 pl-4">
                                                 {entry.notes}
                                               </div>

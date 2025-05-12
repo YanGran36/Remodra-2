@@ -1,7 +1,7 @@
 import { Express, Request, Response } from "express";
 import { db } from "@db";
 import { timeclockEntries, timeclockEntryInsertSchema } from "@shared/schema";
-import { eq, desc, and, sql, asc } from "drizzle-orm";
+import { eq, desc, and, sql, asc, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { differenceInHours, differenceInMinutes } from "date-fns";
 
@@ -204,7 +204,7 @@ export function registerTimeclockRoutes(app: Express) {
       const contractorId = req.user.id;
       
       // Get all clock out entries with hours worked
-      const entries = await db
+      const clockOutEntries = await db
         .select({
           id: timeclockEntries.id,
           employeeName: timeclockEntries.employeeName,
@@ -214,6 +214,7 @@ export function registerTimeclockRoutes(app: Express) {
           timestamp: timeclockEntries.timestamp,
           location: timeclockEntries.location,
           notes: timeclockEntries.notes,
+          type: timeclockEntries.type,
         })
         .from(timeclockEntries)
         .where(
@@ -224,6 +225,39 @@ export function registerTimeclockRoutes(app: Express) {
           )
         )
         .orderBy(timeclockEntries.date, desc(timeclockEntries.timestamp));
+
+      // Get clock in entries for the same dates
+      const clockInIds = clockOutEntries.map(entry => entry.clockInEntryId).filter(Boolean);
+      
+      let clockInEntries = [];
+      if (clockInIds.length > 0) {
+        clockInEntries = await db
+          .select({
+            id: timeclockEntries.id,
+            employeeName: timeclockEntries.employeeName,
+            date: timeclockEntries.date,
+            timestamp: timeclockEntries.timestamp,
+            location: timeclockEntries.location,
+            notes: timeclockEntries.notes,
+            type: timeclockEntries.type,
+          })
+          .from(timeclockEntries)
+          .where(
+            and(
+              eq(timeclockEntries.contractorId, contractorId),
+              inArray(timeclockEntries.id, clockInIds)
+            )
+          );
+      }
+      
+      // Prepare a map of clock in entries by ID for easy lookup
+      const clockInMap = {};
+      clockInEntries.forEach(entry => {
+        clockInMap[entry.id] = entry;
+      });
+
+      // Combine all entries for processing
+      const entries = [...clockOutEntries];
       
       // Group by date and employee name to get daily totals
       const dailyReport = {};
@@ -249,14 +283,32 @@ export function registerTimeclockRoutes(app: Express) {
           ? parseFloat(entry.hoursWorked) 
           : entry.hoursWorked;
         
+        // Get corresponding clock in entry
+        const clockInEntry = entry.clockInEntryId ? clockInMap[entry.clockInEntryId] : null;
+        
+        // Add clock in entry first
+        if (clockInEntry) {
+          dailyReport[dateKey][employeeName].entries.push({
+            id: clockInEntry.id,
+            type: 'IN',
+            timestamp: clockInEntry.timestamp,
+            location: clockInEntry.location,
+            notes: clockInEntry.notes || "",
+            isClockIn: true
+          });
+        }
+        
+        // Add clock out entry with hours worked
         dailyReport[dateKey][employeeName].totalHours += hoursWorked;
         dailyReport[dateKey][employeeName].entries.push({
           id: entry.id,
+          type: 'OUT',
           clockInEntryId: entry.clockInEntryId,
           hoursWorked,
           timestamp: entry.timestamp,
           location: entry.location,
-          notes: entry.notes || ""
+          notes: entry.notes || "",
+          isClockOut: true
         });
       }
       
