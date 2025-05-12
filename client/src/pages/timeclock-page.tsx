@@ -8,7 +8,6 @@ import {
   ChevronDown, ChevronUp, Info 
 } from "lucide-react";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,7 +24,7 @@ import { useLanguage } from "@/hooks/use-language";
 
 // Esquema de validación para el formulario
 const timeclockFormSchema = z.object({
-  employeeName: z.string().min(2, "El nombre debe tener al menos 2 caracteres")
+  employeeName: z.string().min(2, "Name must be at least 2 characters")
 });
 
 type TimeclockFormType = z.infer<typeof timeclockFormSchema>;
@@ -176,17 +175,17 @@ export default function TimeclockPage() {
       <main className="flex-1 overflow-y-auto bg-gray-50">
         <div className="container py-8">
           <div className="mb-6">
-            <h1 className="text-2xl md:text-3xl font-bold">Registro de Horarios</h1>
+            <h1 className="text-2xl md:text-3xl font-bold">Time Clock</h1>
             <p className="text-gray-600 mt-2">
-              Registra entradas y salidas de empleados de forma rápida y sencilla.
+              Record employee clock in and clock out times quickly and easily.
             </p>
           </div>
           
           <div className="mb-6">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="w-full">
-                <TabsTrigger value="clock">Registro de Horas</TabsTrigger>
-                {user && <TabsTrigger value="report">Informe de Horas</TabsTrigger>}
+                <TabsTrigger value="clock">Time Clock</TabsTrigger>
+                {user && <TabsTrigger value="report">Hours Report</TabsTrigger>}
               </TabsList>
             </Tabs>
           </div>
@@ -199,10 +198,10 @@ export default function TimeclockPage() {
                     <div>
                       <CardTitle className="text-xl flex items-center gap-2">
                         <Clock className="h-5 w-5 text-primary" />
-                        Registro de Horas
+                        Time Clock
                       </CardTitle>
                       <CardDescription>
-                        {format(new Date(), "EEEE, d 'de' MMMM 'de' yyyy, h:mm a", { locale: es })}
+                        {format(new Date(), "EEEE, MMMM dd, yyyy, h:mm a")}
                       </CardDescription>
                     </div>
                   </div>
@@ -395,7 +394,7 @@ export default function TimeclockPage() {
                       </div>
                       {Object.keys(hoursReport).sort().reverse().map((date) => (
                         <div key={date} className="space-y-3">
-                          <h3 className="font-semibold text-md">{format(new Date(date), "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })}</h3>
+                          <h3 className="font-semibold text-md">{format(new Date(date), "EEEE, MMMM dd, yyyy")}</h3>
                           <div className="bg-slate-50 rounded-lg p-4">
                             <div className="grid grid-cols-3 gap-4 font-medium text-sm mb-2 px-2">
                               <div>Empleado</div>
@@ -461,7 +460,7 @@ export default function TimeclockPage() {
                                                   <ArrowLeft className="h-3 w-3 text-amber-600" />
                                                 )}
                                                 <span className="font-medium">
-                                                  {format(new Date(entry.timestamp), "h:mm a", { locale: es })}
+                                                  {format(new Date(entry.timestamp), "h:mm a")}
                                                 </span>
                                                 <Badge 
                                                   className={entry.type === "IN" ? 
