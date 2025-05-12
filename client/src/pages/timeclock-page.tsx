@@ -233,9 +233,9 @@ export default function TimeclockPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-xl">Registros Recientes</CardTitle>
+                <CardTitle className="text-xl">Recent Records</CardTitle>
                 <CardDescription>
-                  Últimas entradas y salidas registradas
+                  Latest clock in and clock out entries
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -261,7 +261,7 @@ export default function TimeclockPage() {
                                 : "bg-amber-100 text-amber-800 hover:bg-amber-100"
                             }
                           >
-                            {entry.type === "IN" ? "Entrada" : "Salida"}
+                            {entry.type === "IN" ? "Clock In" : "Clock Out"}
                           </Badge>
                         </div>
                         {entry.location && (
@@ -278,13 +278,13 @@ export default function TimeclockPage() {
                   </div>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
-                    No hay registros recientes
+                    No recent records
                   </div>
                 )}
               </CardContent>
               <CardFooter className="pt-0">
                 <Button variant="outline" className="w-full" onClick={() => setActiveTab("list")}>
-                  Ver todos los registros
+                  View all records
                 </Button>
               </CardFooter>
             </Card>
