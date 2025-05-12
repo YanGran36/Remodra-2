@@ -79,7 +79,7 @@ export default function TimeclockPage() {
   }, []);
 
   // Obtener entradas recientes
-  const { data: recentEntries, isLoading: loadingEntries } = useQuery({
+  const { data: recentEntries = [], isLoading: loadingEntries } = useQuery<any[]>({
     queryKey: ["/api/timeclock/recent"],
   });
 
@@ -290,7 +290,7 @@ export default function TimeclockPage() {
                   </div>
                 ) : recentEntries && recentEntries.length > 0 ? (
                   <div className="space-y-4">
-                    {recentEntries.map((entry: any) => (
+                    {recentEntries.map((entry) => (
                       <div key={entry.id} className="border rounded-lg p-3">
                         <div className="flex justify-between items-start">
                           <div>
