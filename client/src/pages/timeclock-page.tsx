@@ -22,8 +22,7 @@ import { useLanguage } from "@/hooks/use-language";
 
 // Esquema de validación para el formulario
 const timeclockFormSchema = z.object({
-  employeeName: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
-  notes: z.string().optional()
+  employeeName: z.string().min(2, "El nombre debe tener al menos 2 caracteres")
 });
 
 type TimeclockFormType = z.infer<typeof timeclockFormSchema>;
@@ -86,8 +85,7 @@ export default function TimeclockPage() {
   const form = useForm<TimeclockFormType>({
     resolver: zodResolver(timeclockFormSchema),
     defaultValues: {
-      employeeName: "",
-      notes: ""
+      employeeName: ""
     }
   });
 
@@ -97,7 +95,8 @@ export default function TimeclockPage() {
       return await apiRequest("POST", "/api/timeclock/clock-in", {
         ...data,
         location: currentLocation, // Usar siempre la ubicación actual
-        date: format(new Date(), "yyyy-MM-dd")
+        date: format(new Date(), "yyyy-MM-dd"),
+        notes: "" // Vacío ya que no se solicita
       });
     },
     onSuccess: () => {
@@ -123,7 +122,8 @@ export default function TimeclockPage() {
       return await apiRequest("POST", "/api/timeclock/clock-out", {
         ...data,
         location: currentLocation, // Usar siempre la ubicación actual
-        date: format(new Date(), "yyyy-MM-dd")
+        date: format(new Date(), "yyyy-MM-dd"),
+        notes: "" // Vacío ya que no se solicita
       });
     },
     onSuccess: () => {
@@ -212,36 +212,7 @@ export default function TimeclockPage() {
                       )}
                     />
 
-                    <div className="mb-4">
-                      <div className="flex items-center px-3 py-2 rounded-md bg-muted">
-                        <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium text-foreground">Ubicación actual</p>
-                          <p className="text-xs text-muted-foreground line-clamp-1">
-                            {isLoadingLocation ? (
-                              <span className="flex items-center">
-                                <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                                Obteniendo ubicación...
-                              </span>
-                            ) : currentLocation || "No disponible"}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="notes"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Notas (opcional)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Notas adicionales" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    {/* La ubicación y notas se capturan automáticamente pero no se muestran */}
 
                     <Button 
                       type="submit" 
