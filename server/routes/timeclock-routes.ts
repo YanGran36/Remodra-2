@@ -226,7 +226,8 @@ export function registerTimeclockRoutes(app: Express) {
       const dailyReport = {};
       
       for (const entry of entries) {
-        const dateKey = entry.date.toISOString().split('T')[0];
+        // Formato de fecha compatible con ambos tipos de datos (Date o string)
+        const dateKey = typeof entry.date === 'string' ? entry.date : entry.date.toISOString().split('T')[0];
         const employeeName = entry.employeeName;
         
         if (!dailyReport[dateKey]) {
