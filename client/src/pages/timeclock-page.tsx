@@ -103,7 +103,7 @@ export default function TimeclockPage() {
     }
   });
 
-  // Mutations for clock in and clock out
+  // Mutaciones para registro de entrada y salida
   const clockInMutation = useMutation({
     mutationFn: async (data: TimeclockFormType) => {
       return await apiRequest("POST", "/api/timeclock/clock-in", {
@@ -395,12 +395,12 @@ export default function TimeclockPage() {
                       </div>
                       {Object.keys(hoursReport).sort().reverse().map((date) => (
                         <div key={date} className="space-y-3">
-                          <h3 className="font-semibold text-md">{format(new Date(date), "EEEE, MMMM dd, yyyy")}</h3>
+                          <h3 className="font-semibold text-md">{format(new Date(date), "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })}</h3>
                           <div className="bg-slate-50 rounded-lg p-4">
                             <div className="grid grid-cols-3 gap-4 font-medium text-sm mb-2 px-2">
-                              <div>Employee</div>
-                              <div className="text-center">Hours</div>
-                              <div className="text-right">Entries</div>
+                              <div>Empleado</div>
+                              <div className="text-center">Horas</div>
+                              <div className="text-right">Registros</div>
                             </div>
                             <Separator className="my-2" />
                             {Object.keys(hoursReport[date]).map((employeeName) => {
