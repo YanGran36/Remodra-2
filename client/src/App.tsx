@@ -40,6 +40,7 @@ import SuperAdminAddContractor from "@/pages/super-admin-add-contractor";
 import AchievementsPage from "@/pages/achievements-page";
 import TimeclockPage from "@/pages/timeclock-page";
 import StandaloneTimeclockPage from "@/pages/standalone-timeclock";
+import EmployeeSelectPage from "@/pages/employee-select-page";
 // Google Sheets import removed
 
 function Router() {
@@ -75,6 +76,7 @@ function Router() {
       <Route path="/public/invoices/:id" component={PublicInvoiceView} />
       <Route path="/client-portal/:clientId" component={ClientPortal} />
       <Route path="/standalone-timeclock" component={StandaloneTimeclockPage} />
+      <Route path="/employee-select" component={EmployeeSelectPage} />
       <Route component={NotFound} />
     </Switch>
   );
