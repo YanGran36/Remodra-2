@@ -262,11 +262,26 @@ export function registerTimeclockRoutes(app: Express) {
       // Group by date and employee name to get daily totals
       const dailyReport = {};
       
+      // Track weekly hours by employee (reset each Monday)
+      const weeklyHours = {};
+      
+      // Function to get the week start date (Monday) for a given date
+      const getWeekStartDate = (dateStr: string) => {
+        const date = new Date(dateStr);
+        const day = date.getDay(); // 0 for Sunday, 1 for Monday, etc.
+        const diff = day === 0 ? 6 : day - 1; // Adjust for Monday as start of week
+        const monday = new Date(date);
+        monday.setDate(date.getDate() - diff);
+        return monday.toISOString().split('T')[0];
+      };
+      
       for (const entry of entries) {
         // Formato de fecha compatible con ambos tipos de datos (Date o string)
         const dateKey = typeof entry.date === 'string' ? entry.date : entry.date.toISOString().split('T')[0];
         const employeeName = entry.employeeName;
+        const weekStartDate = getWeekStartDate(dateKey);
         
+        // Initialize daily report structure
         if (!dailyReport[dateKey]) {
           dailyReport[dateKey] = {};
         }
@@ -274,8 +289,19 @@ export function registerTimeclockRoutes(app: Express) {
         if (!dailyReport[dateKey][employeeName]) {
           dailyReport[dateKey][employeeName] = {
             totalHours: 0,
-            entries: []
+            entries: [],
+            weeklyHours: 0,
+            weekStartDate
           };
+        }
+        
+        // Initialize weekly hours tracking
+        if (!weeklyHours[weekStartDate]) {
+          weeklyHours[weekStartDate] = {};
+        }
+        
+        if (!weeklyHours[weekStartDate][employeeName]) {
+          weeklyHours[weekStartDate][employeeName] = 0;
         }
         
         // Parse hours worked (might be stored as string in DB)
@@ -300,6 +326,11 @@ export function registerTimeclockRoutes(app: Express) {
         
         // Add clock out entry with hours worked
         dailyReport[dateKey][employeeName].totalHours += hoursWorked;
+        
+        // Update weekly hours total
+        weeklyHours[weekStartDate][employeeName] += hoursWorked;
+        dailyReport[dateKey][employeeName].weeklyHours = weeklyHours[weekStartDate][employeeName];
+        
         dailyReport[dateKey][employeeName].entries.push({
           id: entry.id,
           type: 'OUT',

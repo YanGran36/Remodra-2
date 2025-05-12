@@ -342,6 +342,56 @@ export default function TimeclockPage() {
                     </div>
                   ) : Object.keys(hoursReport).length > 0 ? (
                     <div className="space-y-6">
+                      {/* Resumen semanal */}
+                      <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 mb-6">
+                        <h3 className="text-blue-800 font-medium mb-2 text-sm">Resumen Semanal</h3>
+                        <div className="space-y-1">
+                          {(() => {
+                            // Extraer información de semanas únicas
+                            const weekData = {};
+                            
+                            Object.keys(hoursReport).forEach(date => {
+                              Object.keys(hoursReport[date]).forEach(emp => {
+                                const employeeData = hoursReport[date][emp];
+                                // Verificar que los datos esperados existen
+                                if (!employeeData || typeof employeeData !== 'object') return;
+                                
+                                const weekStartDate = employeeData.weekStartDate || '';
+                                const weeklyHours = employeeData.weeklyHours || 0;
+                                
+                                if (!weekStartDate) return;
+                                
+                                if (!weekData[weekStartDate]) {
+                                  weekData[weekStartDate] = {
+                                    weekStartDate,
+                                    employees: {}
+                                  };
+                                }
+                                
+                                // Actualizar o añadir las horas del empleado
+                                weekData[weekStartDate].employees[emp] = weeklyHours;
+                              });
+                            });
+                            
+                            // Renderizar los datos de la semana
+                            return Object.values(weekData).map((week: any) => (
+                              <div key={week.weekStartDate} className="border-b pb-2 mb-2 last:border-0">
+                                <div className="font-medium text-sm text-blue-700">
+                                  Semana del {week.weekStartDate ? format(new Date(week.weekStartDate), "dd/MM/yyyy") : "---"}
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 mt-1">
+                                  {Object.entries(week.employees).map(([name, hours]: [string, any]) => (
+                                    <div key={name} className="flex justify-between text-xs">
+                                      <span>{name}:</span>
+                                      <span className="font-medium">{parseFloat(hours).toFixed(2)} horas</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ));
+                          })()}
+                        </div>
+                      </div>
                       {Object.keys(hoursReport).sort().reverse().map((date) => (
                         <div key={date} className="space-y-3">
                           <h3 className="font-semibold text-md">{format(new Date(date), "EEEE, MMMM dd, yyyy")}</h3>
@@ -376,7 +426,14 @@ export default function TimeclockPage() {
                                       )}
                                       {employeeName}
                                     </div>
-                                    <div className="text-center">{totalHours}</div>
+                                    <div className="text-center flex flex-col">
+                                      <div>{totalHours}</div>
+                                      {employeeData.weeklyHours > 0 && (
+                                        <div className="text-xs font-medium text-blue-600">
+                                          {employeeData.weeklyHours.toFixed(2)} esta semana
+                                        </div>
+                                      )}
+                                    </div>
                                     <div className="text-right text-gray-500 text-sm">{entries} {entries === 1 ? 'entry' : 'entries'}</div>
                                   </div>
                                   
