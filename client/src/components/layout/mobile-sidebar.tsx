@@ -19,7 +19,8 @@ import {
   ClipboardCheckIcon,
   BarChart,
   Building,
-  HardDrive
+  HardDrive,
+  Clock
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -167,6 +168,10 @@ export default function MobileSidebar() {
             <Link href="/materials" className={getLinkClass("/materials")}>
               <Drill className="mr-3 h-5 w-5" />
               <span>{t('navigation.materials')}</span>
+            </Link>
+            <Link href="/timeclock" className={getLinkClass("/timeclock")}>
+              <Clock className="mr-3 h-5 w-5" />
+              <span>Control de Tiempo</span>
             </Link>
             <Link href="/ai-assistant" className={getLinkClass("/ai-assistant")}>
               <BotIcon className="mr-3 h-5 w-5" />

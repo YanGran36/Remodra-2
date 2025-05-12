@@ -38,6 +38,7 @@ import SuperAdminDashboard from "@/pages/super-admin-dashboard-fixed";
 import AdminDashboardArchitectural from "@/pages/admin-dashboard-architectural";
 import SuperAdminAddContractor from "@/pages/super-admin-add-contractor";
 import AchievementsPage from "@/pages/achievements-page";
+import TimeclockPage from "@/pages/timeclock-page";
 // Importación de Google Sheets eliminada
 
 function Router() {
@@ -59,6 +60,7 @@ function Router() {
       <ProtectedRoute path="/projects-debug" component={ProjectsDebugPage} />
       <ProtectedRoute path="/estimate-simple-test" component={EstimateSimpleTest} />
       <ProtectedRoute path="/materials" component={MaterialsPage} />
+      <ProtectedRoute path="/timeclock" component={TimeclockPage} />
       <ProtectedRoute path="/ai-assistant" component={AIAssistantPage} />
       <ProtectedRoute path="/price-configurations" component={PriceConfigurationsPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
