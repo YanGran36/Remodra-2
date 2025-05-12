@@ -83,14 +83,19 @@ export function registerTimeclockRoutes(app: Express) {
         clockInEntryId = latestClockIn.id;
       }
 
-      // Validate received data
-      const validatedData = timeclockEntryInsertSchema.parse({
+      // Prepare data for insertion
+      const dataToInsert = {
         ...req.body,
         contractorId,
         type: "OUT", // Fixed type as clock out
         clockInEntryId, // Link to the corresponding clock in entry
-        hoursWorked, // Store calculated hours worked
-      });
+        hoursWorked: hoursWorked ? hoursWorked.toString() : null, // Convert to string for validation
+      };
+      
+      console.log("Clock out data:", dataToInsert);
+      
+      // Validate received data
+      const validatedData = timeclockEntryInsertSchema.parse(dataToInsert);
 
       // Insert into database
       const [entry] = await db
