@@ -579,3 +579,37 @@ export type AchievementReward = z.infer<typeof achievementRewardSelectSchema>;
 export type AchievementRewardInsert = z.infer<typeof achievementRewardInsertSchema>;
 export type ContractorStreak = z.infer<typeof contractorStreakSelectSchema>;
 export type ContractorStreakInsert = z.infer<typeof contractorStreakInsertSchema>;
+
+// Employee Timeclock - Clock In/Clock Out
+export const timeclockEntries = pgTable("timeclock_entries", {
+  id: serial("id").primaryKey(),
+  contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
+  employeeName: text("employee_name").notNull(),
+  type: text("type").notNull(), // "IN" o "OUT"
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  date: date("date").notNull(),
+  location: text("location"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+
+export const timeclockEntriesRelations = relations(timeclockEntries, ({ one }) => ({
+  contractor: one(contractors, { fields: [timeclockEntries.contractorId], references: [contractors.id] })
+}));
+
+// Actualizamos las relaciones de contractors para incluir timeclockEntries
+export const timeclockContractorsRelations = relations(contractors, ({ many }) => ({
+  timeclockEntries: many(timeclockEntries)
+}));
+
+// Schemas para timeclockEntries
+export const timeclockEntryInsertSchema = createInsertSchema(timeclockEntries, {
+  employeeName: (schema) => schema.min(2, "El nombre del empleado debe tener al menos 2 caracteres"),
+  type: (schema) => schema.refine(val => ["IN", "OUT"].includes(val), {
+    message: "El tipo debe ser 'IN' o 'OUT'"
+  })
+});
+export type TimeclockEntryInsert = z.infer<typeof timeclockEntryInsertSchema>;
+
+export const timeclockEntrySelectSchema = createSelectSchema(timeclockEntries);
+export type TimeclockEntry = z.infer<typeof timeclockEntrySelectSchema>;
