@@ -34,6 +34,9 @@ export default function TimeclockPage() {
   const queryClient = useQueryClient();
   const [currentLocation, setCurrentLocation] = useState<string>("");
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const { data: user } = useQuery<any>({
+    queryKey: ["/api/user"],
+  });
 
   // Get current location
   useEffect(() => {
@@ -79,6 +82,12 @@ export default function TimeclockPage() {
   // Get recent entries
   const { data: recentEntries = [], isLoading: loadingEntries } = useQuery<any[]>({
     queryKey: ["/api/timeclock/recent"],
+  });
+  
+  // Get hours report (only for business owners)
+  const { data: hoursReport = {}, isLoading: loadingReport } = useQuery<any>({
+    queryKey: ["/api/timeclock/report"],
+    enabled: activeTab === "report" && !!user,
   });
 
   // Configure form
@@ -166,8 +175,18 @@ export default function TimeclockPage() {
               Record employee clock in and clock out times quickly and easily.
             </p>
           </div>
+          
+          <div className="mb-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="w-full">
+                <TabsTrigger value="clock">Time Clock</TabsTrigger>
+                {user && <TabsTrigger value="report">Hours Report</TabsTrigger>}
+              </TabsList>
+            </Tabs>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {activeTab === "clock" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <Card>
               <CardHeader>
                 <div className="flex justify-between items-center">
@@ -291,12 +310,74 @@ export default function TimeclockPage() {
                 )}
               </CardContent>
               <CardFooter className="pt-0">
-                <Button variant="outline" className="w-full" onClick={() => setActiveTab("list")}>
+                <Button variant="outline" className="w-full" onClick={() => setActiveTab("report")}>
                   View all records
                 </Button>
               </CardFooter>
             </Card>
           </div>
+          )}
+          
+          {activeTab === "report" && (
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-primary" />
+                    Hours Report by Employee
+                  </CardTitle>
+                  <CardDescription>
+                    View hours worked by each employee daily
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {loadingReport ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                  ) : Object.keys(hoursReport).length > 0 ? (
+                    <div className="space-y-6">
+                      {Object.keys(hoursReport).sort().reverse().map((date) => (
+                        <div key={date} className="space-y-3">
+                          <h3 className="font-semibold text-md">{format(new Date(date), "EEEE, MMMM dd, yyyy")}</h3>
+                          <div className="bg-slate-50 rounded-lg p-4">
+                            <div className="grid grid-cols-3 gap-4 font-medium text-sm mb-2 px-2">
+                              <div>Employee</div>
+                              <div className="text-center">Hours</div>
+                              <div className="text-right">Entries</div>
+                            </div>
+                            <Separator className="my-2" />
+                            {Object.keys(hoursReport[date]).map((employeeName) => {
+                              const employeeData = hoursReport[date][employeeName];
+                              const totalHours = employeeData.totalHours.toFixed(2);
+                              const entries = employeeData.entries.length;
+                              
+                              return (
+                                <div key={`${date}-${employeeName}`} className="grid grid-cols-3 gap-4 py-2 px-2 border-b border-gray-100 last:border-0">
+                                  <div className="font-medium">{employeeName}</div>
+                                  <div className="text-center">{totalHours}</div>
+                                  <div className="text-right text-gray-500 text-sm">{entries} {entries === 1 ? 'entry' : 'entries'}</div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No hours recorded yet
+                    </div>
+                  )}
+                </CardContent>
+                <CardFooter className="pt-0">
+                  <Button variant="outline" className="w-full" onClick={() => setActiveTab("clock")}>
+                    Back to time clock
+                  </Button>
+                </CardFooter>
+              </Card>
+            </div>
+          )}
         </div>
       </main>
     </div>

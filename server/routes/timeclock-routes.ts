@@ -192,4 +192,71 @@ export function registerTimeclockRoutes(app: Express) {
       return res.status(500).json({ message: "Internal server error" });
     }
   });
+  
+  // Get hours summary report by employee and day (for business owner only)
+  app.get("/api/timeclock/report", async (req: Request, res: Response) => {
+    try {
+      // Verify user is authenticated
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const contractorId = req.user.id;
+      
+      // Get all clock out entries with hours worked
+      const entries = await db
+        .select({
+          id: timeclockEntries.id,
+          employeeName: timeclockEntries.employeeName,
+          date: timeclockEntries.date,
+          clockInEntryId: timeclockEntries.clockInEntryId,
+          hoursWorked: timeclockEntries.hoursWorked,
+        })
+        .from(timeclockEntries)
+        .where(
+          and(
+            eq(timeclockEntries.contractorId, contractorId),
+            eq(timeclockEntries.type, "OUT"),
+            sql`${timeclockEntries.hoursWorked} IS NOT NULL`
+          )
+        )
+        .orderBy(timeclockEntries.date, desc(timeclockEntries.timestamp));
+      
+      // Group by date and employee name to get daily totals
+      const dailyReport = {};
+      
+      for (const entry of entries) {
+        const dateKey = entry.date.toISOString().split('T')[0];
+        const employeeName = entry.employeeName;
+        
+        if (!dailyReport[dateKey]) {
+          dailyReport[dateKey] = {};
+        }
+        
+        if (!dailyReport[dateKey][employeeName]) {
+          dailyReport[dateKey][employeeName] = {
+            totalHours: 0,
+            entries: []
+          };
+        }
+        
+        // Parse hours worked (might be stored as string in DB)
+        const hoursWorked = typeof entry.hoursWorked === 'string' 
+          ? parseFloat(entry.hoursWorked) 
+          : entry.hoursWorked;
+        
+        dailyReport[dateKey][employeeName].totalHours += hoursWorked;
+        dailyReport[dateKey][employeeName].entries.push({
+          id: entry.id,
+          clockInEntryId: entry.clockInEntryId,
+          hoursWorked
+        });
+      }
+      
+      return res.status(200).json(dailyReport);
+    } catch (error) {
+      console.error("Error generating hours report:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  });
 }
