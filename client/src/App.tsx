@@ -41,6 +41,7 @@ import AchievementsPage from "@/pages/achievements-page";
 import TimeclockPage from "@/pages/timeclock-page";
 import StandaloneTimeclockPage from "@/pages/standalone-timeclock";
 import EmployeeSelectPage from "@/pages/employee-select-page";
+import TimeClockSelectAction from "@/pages/time-clock-select-action";
 // Google Sheets import removed
 
 function Router() {
@@ -77,6 +78,7 @@ function Router() {
       <Route path="/client-portal/:clientId" component={ClientPortal} />
       <Route path="/standalone-timeclock" component={StandaloneTimeclockPage} />
       <Route path="/employee-select" component={EmployeeSelectPage} />
+      <Route path="/time-clock-action" component={TimeClockSelectAction} />
       <Route component={NotFound} />
     </Switch>
   );

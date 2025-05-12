@@ -29,7 +29,7 @@ export default function EmployeeSelectPage() {
   const onSubmit = (data: EmployeeFormType) => {
     console.log(data.employeeName);
     // Redirigir a la página de selección de acción (Clock In/Out)
-    navigate(`/standalone-timeclock?employee=${encodeURIComponent(data.employeeName)}`);
+    navigate(`/time-clock-action`);
   };
 
   return (
