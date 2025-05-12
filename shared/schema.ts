@@ -612,12 +612,15 @@ export const timeclockContractorsRelations = relations(contractors, ({ many }) =
   timeclockEntries: many(timeclockEntries)
 }));
 
-// Schemas para timeclockEntries
+// Schemas for timeclockEntries
 export const timeclockEntryInsertSchema = createInsertSchema(timeclockEntries, {
   employeeName: (schema) => schema.min(2, "Employee name must be at least 2 characters"),
   type: (schema) => schema.refine(val => ["IN", "OUT"].includes(val), {
     message: "Type must be either 'IN' or 'OUT'"
-  })
+  }),
+  hoursWorked: (schema) => schema.nullable().optional().transform(val => 
+    val === null || val === undefined ? null : typeof val === 'number' ? val : null
+  )
 });
 export type TimeclockEntryInsert = z.infer<typeof timeclockEntryInsertSchema>;
 
