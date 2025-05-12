@@ -46,6 +46,8 @@ export default function StandaloneTimeclockPage() {
   const [expandedEmployee, setExpandedEmployee] = useState(null);
   const [expandedDate, setExpandedDate] = useState(null);
   const [position, setPosition] = useState(null);
+  const [selectedEmployeeName, setSelectedEmployeeName] = useState("");
+  const [step, setStep] = useState("select-employee"); // "select-employee" or "select-action"
   const { toast } = useToast();
 
   const form = useForm<TimeclockFormType>({
@@ -116,25 +118,46 @@ export default function StandaloneTimeclockPage() {
     }
   }, [activeTab]);
 
-  const onClockInOut = async (data: TimeclockFormType) => {
+  // Handle selecting an employee
+  const handleEmployeeSelect = async (data: TimeclockFormType) => {
     try {
-      // Get location
+      // Get location in the background
       let locationText = "Location not available";
       try {
         const pos = await getPosition();
         setPosition(pos);
-        const { latitude, longitude } = pos.coords;
-        locationText = `${latitude}, ${longitude}`;
       } catch (error) {
         console.error("Error getting location:", error);
+      }
+      
+      setSelectedEmployeeName(data.employeeName);
+      setStep("select-action");
+      form.reset();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An error occurred while selecting employee",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Handle clock in/out
+  const onClockInOut = async () => {
+    try {
+      // Get location text
+      let locationText = "Location not available";
+      if (position) {
+        const { latitude, longitude } = position.coords;
+        locationText = `${latitude}, ${longitude}`;
       }
 
       const endpoint = clockMode === "in" ? "/api/timeclock/clock-in" : "/api/timeclock/clock-out";
       
       const payload = {
-        employeeName: data.employeeName,
+        employeeName: selectedEmployeeName,
         location: locationText,
-        date: format(new Date(), "yyyy-MM-dd"), // Incluir la fecha actual en formato ISO
+        date: format(new Date(), "yyyy-MM-dd"), // Include current date in ISO format
       };
 
       const response = await apiRequest("POST", endpoint, payload);
@@ -142,15 +165,14 @@ export default function StandaloneTimeclockPage() {
       if (response.ok) {
         toast({
           title: clockMode === "in" ? "Clocked In" : "Clocked Out",
-          description: `${data.employeeName} has been ${clockMode === "in" ? "clocked in" : "clocked out"} successfully.`,
+          description: `${selectedEmployeeName} has been ${clockMode === "in" ? "clocked in" : "clocked out"} successfully.`,
           variant: "default",
         });
         
-        form.reset();
+        // Reset to initial state
+        setSelectedEmployeeName("");
+        setStep("select-employee");
         fetchRecentEntries();
-        
-        // Switch mode after successful clock in/out
-        setClockMode(clockMode === "in" ? "out" : "in");
       } else {
         const errorData = await response.json();
         throw new Error(errorData.message || "Error processing request");
@@ -214,56 +236,90 @@ export default function StandaloneTimeclockPage() {
                 <div className="grid md:grid-cols-2 gap-6">
                   {/* Clock In/Out Form */}
                   <Card>
-                    <CardHeader className={cn(
-                      "pb-2",
-                      clockMode === "in" ? "bg-green-50 dark:bg-green-900/20" : "bg-amber-50 dark:bg-amber-900/20"
-                    )}>
-                      <CardTitle className="flex items-center text-xl font-semibold">
-                        {clockMode === "in" ? (
-                          <>
-                            <ArrowRightCircle className="mr-2 h-5 w-5 text-green-600" />
-                            <span className="text-green-600">Clock In</span>
-                          </>
-                        ) : (
-                          <>
-                            <ArrowLeftCircle className="mr-2 h-5 w-5 text-amber-600" />
-                            <span className="text-amber-600">Clock Out</span>
-                          </>
-                        )}
-                      </CardTitle>
-                      <CardDescription>
-                        {clockMode === "in" 
-                          ? "Enter your name to clock in" 
-                          : "Enter your name to clock out"
-                        }
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="pt-4">
-                      <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onClockInOut)} className="space-y-4">
-                          <FormField
-                            control={form.control}
-                            name="employeeName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormControl>
-                                  <div className="flex">
-                                    <div className="relative flex-grow">
-                                      <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                      <Input 
-                                        placeholder="Enter your name" 
-                                        className="pl-9" 
-                                        {...field} 
-                                      />
-                                    </div>
-                                  </div>
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                    {step === "select-employee" ? (
+                      <>
+                        <CardHeader className="pb-2 bg-blue-50 dark:bg-blue-900/20">
+                          <CardTitle className="flex items-center text-xl font-semibold">
+                            <User className="mr-2 h-5 w-5 text-blue-600" />
+                            <span className="text-blue-600">Select Employee</span>
+                          </CardTitle>
+                          <CardDescription>
+                            Enter employee name to continue
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-4">
+                          <Form {...form}>
+                            <form onSubmit={form.handleSubmit(handleEmployeeSelect)} className="space-y-4">
+                              <FormField
+                                control={form.control}
+                                name="employeeName"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormControl>
+                                      <div className="flex">
+                                        <div className="relative flex-grow">
+                                          <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                          <Input 
+                                            placeholder="Enter employee name" 
+                                            className="pl-9" 
+                                            {...field} 
+                                          />
+                                        </div>
+                                      </div>
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <div className="flex justify-between items-center">
+                                <div className="text-sm text-muted-foreground">
+                                  <Clock className="inline-block mr-1 h-3 w-3" />
+                                  <span>{format(new Date(), "h:mm a")} | </span>
+                                  <Calendar className="inline-block mx-1 h-3 w-3" />
+                                  <span>{format(new Date(), "MMM d, yyyy")}</span>
+                                </div>
+                                <Button 
+                                  type="submit" 
+                                  className="bg-blue-600 hover:bg-blue-700"
+                                >
+                                  Continue
+                                </Button>
+                              </div>
+                            </form>
+                          </Form>
+                        </CardContent>
+                      </>
+                    ) : (
+                      <>
+                        <CardHeader className="pb-2 bg-gray-50 dark:bg-gray-900/20">
+                          <CardTitle className="flex items-center text-xl font-semibold">
+                            <User className="mr-2 h-5 w-5" />
+                            <span>{selectedEmployeeName}</span>
+                          </CardTitle>
+                          <CardDescription>
+                            Select an action for this employee
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <Button 
+                              onClick={() => { setClockMode("in"); onClockInOut(); }}
+                              className="bg-green-600 hover:bg-green-700 h-24 flex flex-col items-center justify-center"
+                            >
+                              <ArrowRightCircle className="h-8 w-8 mb-2" />
+                              <span>Clock In</span>
+                            </Button>
+                            <Button 
+                              onClick={() => { setClockMode("out"); onClockInOut(); }}
+                              className="bg-amber-600 hover:bg-amber-700 h-24 flex flex-col items-center justify-center"
+                            >
+                              <ArrowLeftCircle className="h-8 w-8 mb-2" />
+                              <span>Clock Out</span>
+                            </Button>
+                          </div>
                           
-                          <div className="flex justify-between items-center">
+                          <div className="mt-4 flex justify-between items-center">
                             <div className="text-sm text-muted-foreground">
                               <Clock className="inline-block mr-1 h-3 w-3" />
                               <span>{format(new Date(), "h:mm a")} | </span>
@@ -271,15 +327,19 @@ export default function StandaloneTimeclockPage() {
                               <span>{format(new Date(), "MMM d, yyyy")}</span>
                             </div>
                             <Button 
-                              type="submit" 
-                              className={clockMode === "in" ? "bg-green-600 hover:bg-green-700" : "bg-amber-600 hover:bg-amber-700"}
+                              type="button" 
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedEmployeeName("");
+                                setStep("select-employee");
+                              }}
                             >
-                              {clockMode === "in" ? "Clock In" : "Clock Out"}
+                              Cancel
                             </Button>
                           </div>
-                        </form>
-                      </Form>
-                    </CardContent>
+                        </CardContent>
+                      </>
+                    )}
                   </Card>
                   
                   {/* Recent Entries */}
