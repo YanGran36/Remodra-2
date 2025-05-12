@@ -39,7 +39,8 @@ import AdminDashboardArchitectural from "@/pages/admin-dashboard-architectural";
 import SuperAdminAddContractor from "@/pages/super-admin-add-contractor";
 import AchievementsPage from "@/pages/achievements-page";
 import TimeclockPage from "@/pages/timeclock-page";
-// Importación de Google Sheets eliminada
+import StandaloneTimeclockPage from "@/pages/standalone-timeclock";
+// Google Sheets import removed
 
 function Router() {
   return (
@@ -73,6 +74,7 @@ function Router() {
       <Route path="/public/estimates/:id" component={PublicEstimateView} />
       <Route path="/public/invoices/:id" component={PublicInvoiceView} />
       <Route path="/client-portal/:clientId" component={ClientPortal} />
+      <Route path="/standalone-timeclock" component={StandaloneTimeclockPage} />
       <Route component={NotFound} />
     </Switch>
   );
