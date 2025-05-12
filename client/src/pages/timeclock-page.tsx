@@ -213,11 +213,11 @@ export default function TimeclockPage() {
                         <TabsList className="grid grid-cols-2 w-full">
                           <TabsTrigger value="in" className="data-[state=active]:bg-green-100 data-[state=active]:text-green-700">
                             <ArrowRight className="h-4 w-4 mr-2" />
-                            Clock In
+                            Entrada
                           </TabsTrigger>
                           <TabsTrigger value="out" className="data-[state=active]:bg-amber-100 data-[state=active]:text-amber-700">
                             <ArrowLeft className="h-4 w-4 mr-2" />
-                            Clock Out
+                            Salida
                           </TabsTrigger>
                         </TabsList>
                       </Tabs>
@@ -227,9 +227,9 @@ export default function TimeclockPage() {
                         name="employeeName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Employee Name</FormLabel>
+                            <FormLabel>Nombre del Empleado</FormLabel>
                             <FormControl>
-                              <Input placeholder="First and last name" {...field} />
+                              <Input placeholder="Nombre y apellido" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -248,7 +248,7 @@ export default function TimeclockPage() {
                         {(clockInMutation.isPending || clockOutMutation.isPending) && (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         )}
-                        {clockMode === "in" ? "Record Clock In" : "Record Clock Out"}
+                        {clockMode === "in" ? "Registrar Entrada" : "Registrar Salida"}
                       </Button>
                     </form>
                   </Form>
@@ -257,9 +257,9 @@ export default function TimeclockPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-xl">Recent Records</CardTitle>
+                  <CardTitle className="text-xl">Registros Recientes</CardTitle>
                   <CardDescription>
-                    Latest clock in and clock out entries
+                    Últimas entradas y salidas registradas
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -285,14 +285,14 @@ export default function TimeclockPage() {
                                   : "bg-amber-100 text-amber-800 hover:bg-amber-100"
                               }
                             >
-                              {entry.type === "IN" ? "Clock In" : "Clock Out"}
+                              {entry.type === "IN" ? "Entrada" : "Salida"}
                             </Badge>
                           </div>
                           {entry.hoursWorked && entry.type === "OUT" && (
                             <div className="mt-2 flex items-start gap-1">
                               <Clock className="h-3 w-3 text-muted-foreground mt-0.5" />
                               <p className="text-xs text-green-600 font-medium">
-                                {entry.hoursWorked} hours worked
+                                {entry.hoursWorked} horas trabajadas
                               </p>
                             </div>
                           )}
@@ -310,7 +310,7 @@ export default function TimeclockPage() {
                     </div>
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
-                      No recent records
+                      No hay registros recientes
                     </div>
                   )}
                 </CardContent>
