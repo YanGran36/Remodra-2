@@ -174,10 +174,10 @@ export default function TimeclockPage() {
                   <div>
                     <CardTitle className="text-xl flex items-center gap-2">
                       <Clock className="h-5 w-5 text-primary" />
-                      Control de Tiempo
+                      Time Clock
                     </CardTitle>
                     <CardDescription>
-                      {format(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy, HH:mm", { locale: es })}
+                      {format(new Date(), "EEEE, MMMM dd, yyyy, h:mm a")}
                     </CardDescription>
                   </div>
                 </div>
@@ -189,11 +189,11 @@ export default function TimeclockPage() {
                       <TabsList className="grid grid-cols-2 w-full">
                         <TabsTrigger value="in" className="data-[state=active]:bg-green-100 data-[state=active]:text-green-700">
                           <ArrowRight className="h-4 w-4 mr-2" />
-                          Entrada
+                          Clock In
                         </TabsTrigger>
                         <TabsTrigger value="out" className="data-[state=active]:bg-amber-100 data-[state=active]:text-amber-700">
                           <ArrowLeft className="h-4 w-4 mr-2" />
-                          Salida
+                          Clock Out
                         </TabsTrigger>
                       </TabsList>
                     </Tabs>
@@ -203,16 +203,16 @@ export default function TimeclockPage() {
                       name="employeeName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Nombre del Empleado</FormLabel>
+                          <FormLabel>Employee Name</FormLabel>
                           <FormControl>
-                            <Input placeholder="Nombre y apellido" {...field} />
+                            <Input placeholder="First and last name" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
 
-                    {/* La ubicación y notas se capturan automáticamente pero no se muestran */}
+                    {/* Location is automatically captured in the background but not shown */}
 
                     <Button 
                       type="submit" 
@@ -224,7 +224,7 @@ export default function TimeclockPage() {
                       {(clockInMutation.isPending || clockOutMutation.isPending) && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       )}
-                      {activeTab === "in" ? "Registrar Entrada" : "Registrar Salida"}
+                      {activeTab === "in" ? "Record Clock In" : "Record Clock Out"}
                     </Button>
                   </form>
                 </Form>
