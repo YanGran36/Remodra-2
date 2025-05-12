@@ -24,7 +24,7 @@ import { useLanguage } from "@/hooks/use-language";
 
 // Validation schema for the form
 const timeclockFormSchema = z.object({
-  employeeName: z.string().min(2, "Name must be at least 2 characters")
+  employeeName: z.string().min(2, "El nombre debe tener al menos 2 caracteres")
 });
 
 type TimeclockFormType = z.infer<typeof timeclockFormSchema>;
@@ -502,13 +502,13 @@ export default function TimeclockPage() {
                     </div>
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
-                      No hours recorded yet
+                      No hay horas registradas aún
                     </div>
                   )}
                 </CardContent>
                 <CardFooter className="pt-0">
                   <Button variant="outline" className="w-full" onClick={() => setActiveTab("clock")}>
-                    Back to time clock
+                    Volver al registro de horas
                   </Button>
                 </CardFooter>
               </Card>
