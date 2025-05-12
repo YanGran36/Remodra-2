@@ -90,7 +90,7 @@ export default function Sidebar() {
           </Link>
           <Link href="/timeclock" className={getLinkClass("/timeclock")}>
             <Clock className="mr-3 h-5 w-5" />
-            <span>Control de Tiempo</span>
+            <span>Time Clock</span>
           </Link>
           <Link href="/ai-assistant" className={getLinkClass("/ai-assistant")}>
             <BotIcon className="mr-3 h-5 w-5" />
@@ -100,7 +100,7 @@ export default function Sidebar() {
             <ClipboardCheckIcon className="mr-3 h-5 w-5" />
             <span>{t('navigation.vendorForm')}</span>
           </Link>
-          {/* Enlace a Google Sheets eliminado */}
+          {/* Google Sheets link removed */}
           <Link href="/settings" className={getLinkClass("/settings")}>
             <SettingsIcon className="mr-3 h-5 w-5" />
             <span>{t('navigation.settings')}</span>

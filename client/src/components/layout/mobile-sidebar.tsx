@@ -171,7 +171,7 @@ export default function MobileSidebar() {
             </Link>
             <Link href="/timeclock" className={getLinkClass("/timeclock")}>
               <Clock className="mr-3 h-5 w-5" />
-              <span>Control de Tiempo</span>
+              <span>Time Clock</span>
             </Link>
             <Link href="/ai-assistant" className={getLinkClass("/ai-assistant")}>
               <BotIcon className="mr-3 h-5 w-5" />
@@ -183,15 +183,15 @@ export default function MobileSidebar() {
             </Link>
             <Link href="/admin-dashboard" className={getLinkClass("/admin-dashboard")}>
               <BarChart className="mr-3 h-5 w-5" />
-              <span>Panel Administrador</span>
+              <span>Admin Dashboard</span>
             </Link>
             <Link href="/admin-architectural" className={getLinkClass("/admin-architectural")}>
               <HardDrive className="mr-3 h-5 w-5" />
-              <span>Panel Arquitectónico</span>
+              <span>Architectural Dashboard</span>
             </Link>
             <Link href="/super-admin" className={getLinkClass("/super-admin")}>
               <Building className="mr-3 h-5 w-5" />
-              <span>Panel Super Admin</span>
+              <span>Super Admin Dashboard</span>
             </Link>
             <Link href="/settings" className={getLinkClass("/settings")}>
               <SettingsIcon className="mr-3 h-5 w-5" />
