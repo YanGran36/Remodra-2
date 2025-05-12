@@ -316,7 +316,7 @@ export default function TimeclockPage() {
                 </CardContent>
                 <CardFooter className="pt-0">
                   <Button variant="outline" className="w-full" onClick={() => setActiveTab("report")}>
-                    View all records
+                    Ver todos los registros
                   </Button>
                 </CardFooter>
               </Card>
@@ -329,10 +329,10 @@ export default function TimeclockPage() {
                 <CardHeader>
                   <CardTitle className="text-xl flex items-center gap-2">
                     <Clock className="h-5 w-5 text-primary" />
-                    Hours Report by Employee
+                    Informe de Horas por Empleado
                   </CardTitle>
                   <CardDescription>
-                    View hours worked by each employee daily
+                    Ver horas trabajadas por cada empleado diariamente
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
