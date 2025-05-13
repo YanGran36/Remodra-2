@@ -1,14 +1,14 @@
 import OpenAI from "openai";
 import { log } from "./vite";
 
-// Inicializar el cliente de OpenAI
+// Initialize the OpenAI client
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
 // Check if the API key exists
 if (!process.env.OPENAI_API_KEY) {
-  console.warn("¡ADVERTENCIA! La clave API de OpenAI no está definida en las variables de entorno.");
+  console.warn("WARNING! The OpenAI API key is not defined in the environment variables.");
 }
 
 export interface JobCostAnalysisParams {
@@ -68,11 +68,11 @@ export interface JobCostAnalysisResult {
   summary: string;
 }
 
-// La función principal para analizar y estimar costos de trabajo
+// The main function to analyze and estimate job costs
 export async function analyzeJobCost(params: JobCostAnalysisParams): Promise<JobCostAnalysisResult> {
   try {
-    log("Analizando costos del trabajo con OpenAI", "openai");
-    console.log("Parámetros recibidos para análisis:", {
+    log("Analyzing job costs with OpenAI", "openai");
+    console.log("Parameters received for analysis:", {
       serviceType: params.serviceType,
       materialsCount: params.materials?.length || 0,
       hasLaborHours: !!params.laborHours,
@@ -81,63 +81,63 @@ export async function analyzeJobCost(params: JobCostAnalysisParams): Promise<Job
       hasAdditionalInfo: !!params.additionalInfo
     });
 
-    // Preparar los datos para enviar a la API
+    // Prepare the data to send to the API
     const prompt = `
-    Eres un consultor experto en análisis de costos para contratistas de construcción. Analiza los siguientes detalles de un trabajo y proporciona una estimación detallada y análisis de costos. Devuelve tu respuesta ÚNICAMENTE en formato JSON para facilitar su procesamiento por un sistema informático.
+    You are an expert cost analysis consultant for construction contractors. Analyze the following job details and provide a detailed cost estimate and analysis. Return your response ONLY in JSON format to facilitate processing by a computer system.
 
-    INFORMACIÓN DEL TRABAJO:
-    - Tipo de servicio: ${params.serviceType}
-    - Materiales: ${JSON.stringify(params.materials)}
-    ${params.laborHours ? `- Horas de trabajo estimadas: ${params.laborHours}` : ''}
-    ${params.propertySize?.squareFeet ? `- Tamaño de la propiedad (pies cuadrados): ${params.propertySize.squareFeet}` : ''}
-    ${params.propertySize?.linearFeet ? `- Tamaño de la propiedad (pies lineales): ${params.propertySize.linearFeet}` : ''}
-    ${params.propertySize?.units ? `- Unidades: ${params.propertySize.units}` : ''}
-    ${params.location ? `- Ubicación: ${params.location}` : ''}
-    ${params.difficulty ? `- Dificultad del trabajo: ${params.difficulty}` : ''}
-    ${params.additionalInfo ? `- Información adicional: ${params.additionalInfo}` : ''}
+    JOB INFORMATION:
+    - Service type: ${params.serviceType}
+    - Materials: ${JSON.stringify(params.materials)}
+    ${params.laborHours ? `- Estimated labor hours: ${params.laborHours}` : ''}
+    ${params.propertySize?.squareFeet ? `- Property size (square feet): ${params.propertySize.squareFeet}` : ''}
+    ${params.propertySize?.linearFeet ? `- Property size (linear feet): ${params.propertySize.linearFeet}` : ''}
+    ${params.propertySize?.units ? `- Units: ${params.propertySize.units}` : ''}
+    ${params.location ? `- Location: ${params.location}` : ''}
+    ${params.difficulty ? `- Job difficulty: ${params.difficulty}` : ''}
+    ${params.additionalInfo ? `- Additional information: ${params.additionalInfo}` : ''}
 
-    INSTRUCCIONES:
-    1. Analiza los costos de materiales proporcionados y sugiere ajustes si son necesarios.
-    2. Estima los costos de mano de obra basados en las horas estimadas (si se proporcionan) o en los requisitos típicos para este tipo de trabajo.
-    3. Calcula gastos generales (overhead) y márgenes de ganancia típicos para este tipo de contratista.
-    4. Proporciona un análisis competitivo de rango bajo, medio y alto de lo que otros contratistas podrían cobrar.
-    5. Identifica posibles problemas o costos ocultos que podrían surgir.
-    6. Proporciona recomendaciones para optimizar los costos sin sacrificar la calidad.
+    INSTRUCTIONS:
+    1. Analyze the provided material costs and suggest adjustments if necessary.
+    2. Estimate labor costs based on the estimated hours (if provided) or on typical requirements for this type of work.
+    3. Calculate typical overhead expenses and profit margins for this type of contractor.
+    4. Provide a competitive analysis of low, medium, and high ranges of what other contractors might charge.
+    5. Identify potential issues or hidden costs that could arise.
+    6. Provide recommendations to optimize costs without sacrificing quality.
 
-    Por favor, proporciona tu respuesta en FORMATO JSON ÚNICAMENTE con la siguiente estructura:
+    Please provide your response in JSON FORMAT ONLY with the following structure:
     {
-      "recommendedTotal": número,
+      "recommendedTotal": number,
       "breakdown": {
         "materials": {
-          "total": número,
+          "total": number,
           "items": [
             {
               "name": "string",
-              "estimatedCost": número,
-              "notes": "string (opcional)"
+              "estimatedCost": number,
+              "notes": "string (optional)"
             }
           ]
         },
         "labor": {
-          "total": número,
-          "estimatedHours": número,
-          "hourlyRate": número,
-          "notes": "string (opcional)"
+          "total": number,
+          "estimatedHours": number,
+          "hourlyRate": number,
+          "notes": "string (optional)"
         },
         "overhead": {
-          "total": número,
-          "percentage": número,
-          "notes": "string (opcional)"
+          "total": number,
+          "percentage": number,
+          "notes": "string (optional)"
         },
         "profit": {
-          "total": número,
-          "percentage": número,
-          "notes": "string (opcional)"
+          "total": number,
+          "percentage": number,
+          "notes": "string (optional)"
         },
         "recommendations": ["string"],
         "competitiveAnalysis": {
-          "lowRange": número,
-          "highRange": número,
+          "lowRange": number,
+          "highRange": number,
           "notes": "string"
         },
         "potentialIssues": ["string"]
@@ -146,53 +146,53 @@ export async function analyzeJobCost(params: JobCostAnalysisParams): Promise<Job
     }
     `;
 
-    console.log("Enviando solicitud a OpenAI para análisis de costos...");
+    console.log("Sending request to OpenAI for cost analysis...");
 
-    // Llamada a la API de OpenAI
+    // Call to the OpenAI API
     try {
-      // la nueva versión del modelo es "gpt-4o" que fue lanzada el 13 de mayo, 2024. usar "gpt-4o" en lugar de "gpt-4"
+      // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       const response = await openai.chat.completions.create({
-        model: "gpt-4o", // La última versión disponible
+        model: "gpt-4o", // The latest available version
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
         temperature: 0.7
       });
 
-      console.log("Respuesta recibida de OpenAI para análisis:", {
+      console.log("Response received from OpenAI for analysis:", {
         status: "success",
         model: response.model,
         choicesCount: response.choices.length
       });
 
-      // Procesar la respuesta
+      // Process the response
       const content = response.choices[0].message.content;
       if (!content) {
-        console.error("Contenido vacío en la respuesta de análisis de OpenAI");
-        throw new Error("No se recibió respuesta de la API de OpenAI");
+        console.error("Empty content in OpenAI analysis response");
+        throw new Error("No response received from OpenAI API");
       }
 
       try {
         const result = JSON.parse(content) as JobCostAnalysisResult;
-        console.log("Análisis completado con éxito. Total recomendado:", result.recommendedTotal);
+        console.log("Analysis completed successfully. Recommended total:", result.recommendedTotal);
         return result;
       } catch (parseError) {
-        console.error("Error al parsear la respuesta JSON:", parseError);
-        console.error("Contenido recibido:", content);
-        throw new Error("Error al procesar la respuesta de OpenAI");
+        console.error("Error parsing JSON response:", parseError);
+        console.error("Content received:", content);
+        throw new Error("Error processing OpenAI response");
       }
     } catch (error: unknown) {
       const openaiError = error as { message?: string };
-      console.error("Error específico de OpenAI en análisis:", openaiError);
+      console.error("Specific OpenAI error in analysis:", openaiError);
       
       // Check if it is an API key error
       if (openaiError.message && typeof openaiError.message === 'string' && openaiError.message.includes("api_key")) {
-        throw new Error("Error de autenticación con OpenAI. Verifica la clave API.");
+        throw new Error("Authentication error with OpenAI. Verify the API key.");
       }
       
       throw openaiError;
     }
   } catch (error) {
-    console.error("Error al analizar costos con OpenAI:", error);
+    console.error("Error analyzing costs with OpenAI:", error);
     throw error;
   }
 }
@@ -245,7 +245,7 @@ export async function generateJobDescription(params: JobCostAnalysisParams): Pro
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7
       });
-      console.log("Respuesta recibida de OpenAI:", {
+      console.log("Response received from OpenAI:", {
         status: "success",
         model: response.model,
         choicesCount: response.choices.length
