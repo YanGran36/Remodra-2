@@ -261,11 +261,22 @@ export function registerTimeclockRoutes(app: Express) {
         return monday.toISOString().split('T')[0];
       };
       
+      // Function to get the ISO week number for a date
+      const getWeekNumber = (dateStr: string) => {
+        const date = new Date(dateStr);
+        date.setHours(0, 0, 0, 0);
+        date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+        const week1 = new Date(date.getFullYear(), 0, 4);
+        return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+      };
+      
       for (const entry of entries) {
         // Formato de fecha compatible con ambos tipos de datos (Date o string)
         const dateKey = typeof entry.date === 'string' ? entry.date : entry.date.toISOString().split('T')[0];
         const employeeName = entry.employeeName;
         const weekStartDate = getWeekStartDate(dateKey);
+        const weekNumber = getWeekNumber(dateKey);
+        const yearWeekKey = `${new Date(dateKey).getFullYear()}-W${weekNumber}`;
         
         // Initialize daily report structure
         if (!dailyReport[dateKey]) {
@@ -277,17 +288,24 @@ export function registerTimeclockRoutes(app: Express) {
             totalHours: 0,
             entries: [],
             weeklyHours: 0,
-            weekStartDate
+            weekStartDate,
+            yearWeekKey,
+            weekNumber
           };
         }
         
         // Initialize weekly hours tracking
-        if (!weeklyHours[weekStartDate]) {
-          weeklyHours[weekStartDate] = {};
+        if (!weeklyHours[yearWeekKey]) {
+          weeklyHours[yearWeekKey] = {
+            startDate: weekStartDate,
+            year: new Date(dateKey).getFullYear(),
+            weekNumber,
+            employees: {}
+          };
         }
         
-        if (!weeklyHours[weekStartDate][employeeName]) {
-          weeklyHours[weekStartDate][employeeName] = 0;
+        if (!weeklyHours[yearWeekKey].employees[employeeName]) {
+          weeklyHours[yearWeekKey].employees[employeeName] = 0;
         }
         
         // Si es una entrada de tipo OUT
@@ -317,8 +335,8 @@ export function registerTimeclockRoutes(app: Express) {
             dailyReport[dateKey][employeeName].totalHours += hoursWorked;
             
             // Update weekly hours total
-            weeklyHours[weekStartDate][employeeName] += hoursWorked;
-            dailyReport[dateKey][employeeName].weeklyHours = weeklyHours[weekStartDate][employeeName];
+            weeklyHours[yearWeekKey].employees[employeeName] += hoursWorked;
+            dailyReport[dateKey][employeeName].weeklyHours = weeklyHours[yearWeekKey].employees[employeeName];
           }
           
           dailyReport[dateKey][employeeName].entries.push({
@@ -346,7 +364,13 @@ export function registerTimeclockRoutes(app: Express) {
         }
       }
       
-      return res.status(200).json(dailyReport);
+      // Format the response with additional weekly summary
+      const formattedResponse = {
+        dailyReport,
+        weeklyReport: weeklyHours
+      };
+      
+      return res.status(200).json(formattedResponse);
     } catch (error) {
       console.error("Error generating hours report:", error);
       return res.status(500).json({ message: "Internal server error" });
