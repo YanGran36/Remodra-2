@@ -19,6 +19,7 @@ import EstimateCreatePage from "@/pages/estimate-create-page";
 import EstimateDetailPage from "@/pages/estimate-detail-page";
 import EstimatePrintPage from "@/pages/estimate-print-page";
 import PdfTemplatePage from "@/pages/pdf-template-page";
+import ToolsDashboard from "@/pages/tools-dashboard";
 import PremiumEstimatePage from "@/pages/premium-estimate-page";
 import VendorEstimateFormPage from "@/pages/vendor-estimate-form-page";
 import VendorEstimateFormPageNew from "@/pages/vendor-estimate-form-page-new";
@@ -71,6 +72,7 @@ function Router() {
       <ProtectedRoute path="/price-configurations" component={PriceConfigurationsPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <ProtectedRoute path="/pdf-templates" component={PdfTemplatePage} />
+      <ProtectedRoute path="/tools-dashboard" component={ToolsDashboard} />
       <ProtectedRoute path="/admin-dashboard" component={AdminDashboard} />
       <ProtectedRoute path="/admin-architectural" component={AdminDashboardArchitectural} />
       <ProtectedRoute path="/super-admin" component={SuperAdminDashboard} />
