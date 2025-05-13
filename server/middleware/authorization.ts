@@ -119,30 +119,30 @@ export const verifyResourceOwnership = (entityType: EntityType, idParamName = 'i
           break;
 
         default:
-          return res.status(500).json({ message: "Tipo de entidad no soportado" });
+          return res.status(500).json({ message: "Unsupported entity type" });
       }
 
       if (!belongsToContractor) {
-        console.warn(`Intento de acceso no autorizado: El contratista ${contractorId} intentó acceder a ${entityType} con ID ${entityId}`);
+        console.warn(`Unauthorized access attempt: Contractor ${contractorId} tried to access ${entityType} with ID ${entityId}`);
         return res.status(403).json({ 
-          message: "No tienes permisos para acceder a este recurso" 
+          message: "You do not have permission to access this resource" 
         });
       }
 
-      // Si todo está bien, continuar
+      // If everything is ok, continue
       next();
     } catch (error) {
-      console.error(`Error en middleware de autorización: ${error}`);
+      console.error(`Error in authorization middleware: ${error}`);
       res.status(500).json({ 
-        message: "Error de autorización", 
+        message: "Authorization error", 
         error: error instanceof Error ? error.message : String(error)
       });
     }
   };
 };
 
-// Middleware para verificar relaciones entre entidades
-// Por ejemplo, verificar que un estimate pertenezca a un proyecto específico
+// Middleware to verify relationships between entities
+// For example, verify that an estimate belongs to a specific project
 export const verifyRelationship = (
   parentEntityType: EntityType, 
   childEntityType: EntityType,
@@ -152,7 +152,7 @@ export const verifyRelationship = (
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (!req.user || !req.user.id) {
-        return res.status(401).json({ message: "No autenticado" });
+        return res.status(401).json({ message: "Not authenticated" });
       }
 
       const contractorId = req.user.id;
@@ -160,7 +160,7 @@ export const verifyRelationship = (
       const childId = Number(req.params[childIdParamName]);
 
       if (!parentId || isNaN(parentId) || !childId || isNaN(childId)) {
-        return res.status(400).json({ message: "IDs inválidos" });
+        return res.status(400).json({ message: "Invalid IDs" });
       }
 
       let validRelationship = false;
@@ -266,7 +266,7 @@ export const preventCascadeOperations = (entityType: EntityType) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (!req.user || !req.user.id) {
-        return res.status(401).json({ message: "No autenticado" });
+        return res.status(401).json({ message: "Not authenticated" });
       }
 
       const contractorId = req.user.id;
