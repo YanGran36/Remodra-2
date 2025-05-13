@@ -450,8 +450,8 @@ export default function VendorEstimateFormPageNew() {
       // If there is description in the event, include it in additional notes
       if (latestEvent.description) {
         form.setValue("additionalInfo", form.getValues("additionalInfo") 
-          ? `${form.getValues("additionalInfo")}\n\nDescripción desde cita: ${latestEvent.description}`
-          : `Descripción desde cita: ${latestEvent.description}`
+          ? `${form.getValues("additionalInfo")}\n\nDescription from appointment: ${latestEvent.description}`
+          : `Description from appointment: ${latestEvent.description}`
         );
       }
     }
@@ -958,18 +958,18 @@ export default function VendorEstimateFormPageNew() {
                     name="clientId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Cliente*</FormLabel>
+                        <FormLabel>Client*</FormLabel>
                         <Select
                           value={field.value}
                           onValueChange={field.onChange}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Seleccionar cliente" />
+                              <SelectValue placeholder="Select client" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {/* Mostrar primero los clientes con citas programadas para la fecha seleccionada */}
+                            {/* Show first the clients with scheduled appointments for the selected date */}
                             {clientsWithAppointments.length > 0 && (
                               <>
                                 <div className="px-2 py-1.5 text-sm font-medium text-primary">
@@ -989,7 +989,7 @@ export default function VendorEstimateFormPageNew() {
                                 </div>
                               </>
                             )}
-                            {/* Filtrar para no mostrar duplicados de clientes con citas */}
+                            {/* Filter to avoid showing duplicate clients with appointments */}
                             {clients
                               .filter((client: any) => 
                                 !clientsWithAppointments.some((c: any) => c.id === client.id)
@@ -1003,7 +1003,7 @@ export default function VendorEstimateFormPageNew() {
                           </SelectContent>
                         </Select>
                         <FormDescription>
-                          El cliente para quien se realizará este trabajo
+                          The client for whom this work will be performed
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
