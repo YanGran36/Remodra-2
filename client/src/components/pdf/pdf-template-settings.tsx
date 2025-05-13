@@ -13,29 +13,29 @@ import { useToast } from "@/hooks/use-toast";
 import { Check, Save, Image, FileText, Layout, Palette, Type, Info } from "lucide-react";
 
 export interface PdfTemplateConfig {
-  // Opciones generales
+  // General options
   logo: boolean;
   showHeader: boolean;
   showFooter: boolean;
-  // Opciones de contenido
+  // Content options
   showItemDetails: boolean;
   showItemNotes: boolean;
   showProjectDetails: boolean;
   showClientDetails: boolean;
-  // Opciones de estilo
+  // Style options
   colorPrimary: string;
   colorSecondary: string;
   fontMain: string;
   headerStyle: 'simple' | 'gradient' | 'boxed';
   tableStyle: 'striped' | 'bordered' | 'minimal';
-  // Metadatos
+  // Metadata
   showTerms: boolean;
   showNotes: boolean;
   showSignatureLine: boolean;
   showDates: boolean;
 }
 
-// Configuración predeterminada
+// Default configuration
 const defaultConfig: PdfTemplateConfig = {
   logo: true,
   showHeader: true,
@@ -55,7 +55,7 @@ const defaultConfig: PdfTemplateConfig = {
   showDates: true,
 };
 
-// Plantillas predefinidas
+// Predefined templates
 const templates = {
   professional: {
     ...defaultConfig,
@@ -115,24 +115,24 @@ export default function PdfTemplateSettings({
     }));
   };
 
-  // Función para aplicar plantilla predefinida
+  // Function to apply predefined template
   const applyTemplate = (template: 'professional' | 'minimal' | 'elegant') => {
     const templateConfig = templates[template] as PdfTemplateConfig;
     setConfig(templateConfig);
     toast({
-      title: "Plantilla aplicada",
-      description: `Se ha aplicado la plantilla ${template}`,
+      title: "Template Applied",
+      description: `The ${template} template has been applied`,
     });
   };
 
-  // Función para guardar configuración
+  // Function to save configuration
   const handleSave = () => {
     if (onSave) {
       onSave(config);
     }
     toast({
-      title: "Configuración guardada",
-      description: "La configuración de la plantilla ha sido guardada",
+      title: "Configuration Saved",
+      description: "Your template configuration has been saved",
       action: (
         <div className="h-8 w-8 bg-primary/20 rounded-full flex items-center justify-center">
           <Check className="h-4 w-4" />
@@ -144,9 +144,9 @@ export default function PdfTemplateSettings({
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="text-lg">Configuración de Plantilla PDF</CardTitle>
+        <CardTitle className="text-lg">PDF Template Configuration</CardTitle>
         <CardDescription>
-          Personaliza el aspecto y contenido de tus documentos PDF
+          Customize the appearance and content of your PDF documents
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-4">
@@ -154,19 +154,19 @@ export default function PdfTemplateSettings({
           <TabsList className="grid grid-cols-4 mb-4">
             <TabsTrigger value="templates" className="flex items-center gap-2">
               <Layout className="h-4 w-4" />
-              <span className="hidden sm:inline">Plantillas</span>
+              <span className="hidden sm:inline">Templates</span>
             </TabsTrigger>
             <TabsTrigger value="content" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              <span className="hidden sm:inline">Contenido</span>
+              <span className="hidden sm:inline">Content</span>
             </TabsTrigger>
             <TabsTrigger value="style" className="flex items-center gap-2">
               <Palette className="h-4 w-4" />
-              <span className="hidden sm:inline">Estilo</span>
+              <span className="hidden sm:inline">Style</span>
             </TabsTrigger>
             <TabsTrigger value="metadata" className="flex items-center gap-2">
               <Info className="h-4 w-4" />
-              <span className="hidden sm:inline">Metadatos</span>
+              <span className="hidden sm:inline">Metadata</span>
             </TabsTrigger>
           </TabsList>
 
@@ -179,14 +179,14 @@ export default function PdfTemplateSettings({
                 onClick={() => applyTemplate('professional')}
               >
                 <CardHeader className="py-3">
-                  <CardTitle className="text-md">Profesional</CardTitle>
+                  <CardTitle className="text-md">Professional</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="h-32 bg-gradient-to-r from-teal-600 to-blue-600 rounded-md flex items-center justify-center">
-                    <div className="text-white font-bold">Vista previa</div>
+                    <div className="text-white font-bold">Preview</div>
                   </div>
                   <p className="text-sm mt-2 text-muted-foreground">
-                    Diseño profesional con colores vibrantes y detalles completos.
+                    Professional design with vibrant colors and complete details.
                   </p>
                 </CardContent>
               </Card>
@@ -198,14 +198,14 @@ export default function PdfTemplateSettings({
                 onClick={() => applyTemplate('minimal')}
               >
                 <CardHeader className="py-3">
-                  <CardTitle className="text-md">Minimalista</CardTitle>
+                  <CardTitle className="text-md">Minimalist</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="h-32 bg-slate-800 rounded-md flex items-center justify-center">
-                    <div className="text-white font-bold">Vista previa</div>
+                    <div className="text-white font-bold">Preview</div>
                   </div>
                   <p className="text-sm mt-2 text-muted-foreground">
-                    Diseño limpio y simple, sin elementos distractores.
+                    Clean and simple design, without distracting elements.
                   </p>
                 </CardContent>
               </Card>
