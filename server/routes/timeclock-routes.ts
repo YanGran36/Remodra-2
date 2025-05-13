@@ -242,6 +242,25 @@ export function registerTimeclockRoutes(app: Express) {
         !clockInIdsReferenced.includes(entry.id)
       );
 
+      // Recalcular horas para todas las entradas de clock-out
+      for (const outEntry of clockOutEntries) {
+        if (outEntry.clockInEntryId) {
+          const inEntry = clockInMap[outEntry.clockInEntryId];
+          if (inEntry) {
+            const clockInTime = new Date(inEntry.timestamp);
+            const clockOutTime = new Date(outEntry.timestamp);
+            
+            // Calcular minutos y convertir a horas (con 2 decimales)
+            const totalMinutes = differenceInMinutes(clockOutTime, clockInTime);
+            const hoursWorked = parseFloat((totalMinutes / 60).toFixed(2));
+            
+            // Actualizar entrada con horas calculadas
+            outEntry.hoursWorked = hoursWorked;
+            console.log(`Recalculated hours for ${outEntry.employeeName}: ${hoursWorked} hours (${totalMinutes} minutes)`);
+          }
+        }
+      }
+      
       // Combine all entries for processing - including standalone clock-ins
       const entries = [...clockOutEntries, ...standaloneClockIns];
       
