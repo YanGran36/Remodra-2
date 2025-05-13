@@ -147,6 +147,12 @@ function getColorSettings() {
   };
 }
 
+// Translate text based on current language setting
+function translate(textEs: string, textEn: string): string {
+  const useSpanish = localStorage.getItem('language') === 'es';
+  return useSpanish ? textEs : textEn;
+}
+
 // Formateo de moneda
 const formatCurrency = (amount: number | string) => {
   return new Intl.NumberFormat('en-US', { 
@@ -246,7 +252,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   pdf.setTextColor(PRIMARY_COLOR);
   pdf.setFontSize(22);
   pdf.setFont(fontFamily, "bold");
-  pdf.text("ESTIMATE", PAGE_MARGIN, 15);
+  pdf.text(translate("ESTIMADO", "ESTIMATE"), PAGE_MARGIN, 15);
   
   pdf.setFontSize(14);
   pdf.text(`#${data.estimateNumber}`, PAGE_MARGIN, 25);
@@ -1047,15 +1053,50 @@ export function downloadBlob(blob: Blob, filename: string): void {
 /**
  * Función para generar y descargar un PDF de estimado
  */
+/**
+ * Generate and download a PDF for an estimate using saved template settings
+ */
 export async function downloadEstimatePDF(estimate: EstimateData): Promise<void> {
-  const blob = await generateEstimatePDF(estimate);
-  downloadBlob(blob, `Estimado_${estimate.estimateNumber}.pdf`);
+  try {
+    // Generate the PDF using template settings
+    const blob = await generateEstimatePDF(estimate);
+    
+    // Use English or Spanish file name based on language setting
+    const useSpanish = localStorage.getItem('language') === 'es';
+    const fileName = useSpanish 
+      ? `Estimado_${estimate.estimateNumber}.pdf`
+      : `Estimate_${estimate.estimateNumber}.pdf`;
+      
+    downloadBlob(blob, fileName);
+    
+    // Log application of template settings
+    console.log("PDF created with template settings:", getTemplateSettings());
+  } catch (error) {
+    console.error("Error generating PDF with template:", error);
+    throw error;
+  }
 }
 
 /**
- * Función para generar y descargar un PDF de factura
+ * Generate and download a PDF for an invoice using saved template settings
  */
 export async function downloadInvoicePDF(invoice: InvoiceData): Promise<void> {
-  const blob = await generateInvoicePDF(invoice);
-  downloadBlob(blob, `Factura_${invoice.invoiceNumber}.pdf`);
+  try {
+    // Generate the PDF using template settings
+    const blob = await generateInvoicePDF(invoice);
+    
+    // Use English or Spanish file name based on language setting
+    const useSpanish = localStorage.getItem('language') === 'es';
+    const fileName = useSpanish 
+      ? `Factura_${invoice.invoiceNumber}.pdf`
+      : `Invoice_${invoice.invoiceNumber}.pdf`;
+      
+    downloadBlob(blob, fileName);
+    
+    // Log application of template settings
+    console.log("PDF created with template settings:", getTemplateSettings());
+  } catch (error) {
+    console.error("Error generating PDF with template:", error);
+    throw error;
+  }
 }
