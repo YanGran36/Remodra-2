@@ -322,7 +322,7 @@ export default function PdfTemplatePage() {
           
           <Button>
             <Download className="h-4 w-4 mr-2" />
-            Exportar configuración
+            Export Configuration
           </Button>
         </div>
       </div>
@@ -331,15 +331,15 @@ export default function PdfTemplatePage() {
         <TabsList className="grid w-full grid-cols-3 mb-8">
           <TabsTrigger value="settings">
             <Settings className="h-4 w-4 mr-2" />
-            Configuración de Plantilla
+            Template Configuration
           </TabsTrigger>
           <TabsTrigger value="estimate">
             <FileText className="h-4 w-4 mr-2" />
-            Plantilla de Estimado
+            Estimate Template
           </TabsTrigger>
           <TabsTrigger value="invoice">
             <FileText className="h-4 w-4 mr-2" />
-            Plantilla de Factura
+            Invoice Template
           </TabsTrigger>
         </TabsList>
         
@@ -353,47 +353,47 @@ export default function PdfTemplatePage() {
         <TabsContent value="estimate">
           <Card>
             <CardContent className="pt-6">
-              <h2 className="text-xl font-semibold mb-4">Configuración Específica de Estimados</h2>
+              <h2 className="text-xl font-semibold mb-4">Estimate-Specific Configuration</h2>
               <p className="text-muted-foreground mb-4">
-                Configura opciones adicionales específicas para estimados. Estas opciones complementan
-                la configuración general de plantillas.
+                Configure additional options specific to estimates. These options complement
+                the general template configuration.
               </p>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Opciones de aceptación</h3>
+                  <h3 className="text-lg font-medium">Acceptance Options</h3>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="estimateTitle">Título del documento</Label>
-                    <Input id="estimateTitle" defaultValue="ESTIMADO" placeholder="Título del documento" />
+                    <Label htmlFor="estimateTitle">Document Title</Label>
+                    <Input id="estimateTitle" defaultValue="ESTIMATE" placeholder="Document title" />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="estimateTerms">Términos y condiciones</Label>
+                    <Label htmlFor="estimateTerms">Terms and Conditions</Label>
                     <Textarea 
                       id="estimateTerms" 
-                      placeholder="Términos específicos para estimados" 
-                      defaultValue="El pago debe ser realizado dentro de los 30 días posteriores a la fecha de emisión. Se aplican nuestros términos y condiciones estándar."
+                      placeholder="Specific terms for estimates" 
+                      defaultValue="Payment must be made within 30 days of the issue date. Our standard terms and conditions apply."
                       rows={4}
                     />
                   </div>
                 </div>
                 
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Personalización</h3>
+                  <h3 className="text-lg font-medium">Customization</h3>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="estimateTextAboveSignature">Texto sobre línea de firma</Label>
+                    <Label htmlFor="estimateTextAboveSignature">Text Above Signature Line</Label>
                     <Textarea 
                       id="estimateTextAboveSignature" 
-                      placeholder="Texto que aparecerá sobre la línea de firma" 
-                      defaultValue="Al firmar este documento, usted acepta los términos y condiciones del estimado."
+                      placeholder="Text that will appear above the signature line" 
+                      defaultValue="By signing this document, you accept the terms and conditions of the estimate."
                       rows={4}
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="estimateValidPeriod">Período de validez (días)</Label>
+                    <Label htmlFor="estimateValidPeriod">Validity Period (days)</Label>
                     <Input id="estimateValidPeriod" type="number" defaultValue="30" />
                   </div>
                 </div>
@@ -402,7 +402,7 @@ export default function PdfTemplatePage() {
               <Separator className="my-6" />
               
               <div className="flex justify-end">
-                <Button>Guardar configuración de estimados</Button>
+                <Button>Save Estimate Configuration</Button>
               </div>
             </CardContent>
           </Card>
@@ -411,47 +411,47 @@ export default function PdfTemplatePage() {
         <TabsContent value="invoice">
           <Card>
             <CardContent className="pt-6">
-              <h2 className="text-xl font-semibold mb-4">Configuración Específica de Facturas</h2>
+              <h2 className="text-xl font-semibold mb-4">Invoice-Specific Configuration</h2>
               <p className="text-muted-foreground mb-4">
-                Configura opciones adicionales específicas para facturas. Estas opciones complementan
-                la configuración general de plantillas.
+                Configure additional options specific to invoices. These options complement
+                the general template configuration.
               </p>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Opciones de pago</h3>
+                  <h3 className="text-lg font-medium">Payment Options</h3>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="invoiceTitle">Título del documento</Label>
-                    <Input id="invoiceTitle" defaultValue="FACTURA" placeholder="Título del documento" />
+                    <Label htmlFor="invoiceTitle">Document Title</Label>
+                    <Input id="invoiceTitle" defaultValue="INVOICE" placeholder="Document title" />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="invoiceTerms">Términos de pago</Label>
+                    <Label htmlFor="invoiceTerms">Payment Terms</Label>
                     <Textarea 
                       id="invoiceTerms" 
-                      placeholder="Términos específicos para facturas" 
-                      defaultValue="El pago debe realizarse en un plazo de 15 días a partir de la fecha de emisión. Se aplicarán cargos por mora después de este período."
+                      placeholder="Specific terms for invoices" 
+                      defaultValue="Payment must be made within 15 days from the issue date. Late fees will apply after this period."
                       rows={4}
                     />
                   </div>
                 </div>
                 
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Personalización</h3>
+                  <h3 className="text-lg font-medium">Customization</h3>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="invoiceTextAboveSignature">Texto sobre línea de firma</Label>
+                    <Label htmlFor="invoiceTextAboveSignature">Text Above Signature Line</Label>
                     <Textarea 
                       id="invoiceTextAboveSignature" 
-                      placeholder="Texto que aparecerá sobre la línea de firma" 
-                      defaultValue="Con mi firma confirmo la recepción de los servicios descritos en esta factura."
+                      placeholder="Text that will appear above the signature line" 
+                      defaultValue="With my signature, I confirm receipt of the services described in this invoice."
                       rows={4}
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="invoicePaymentPeriod">Período de pago (días)</Label>
+                    <Label htmlFor="invoicePaymentPeriod">Payment Period (days)</Label>
                     <Input id="invoicePaymentPeriod" type="number" defaultValue="15" />
                   </div>
                 </div>
@@ -460,7 +460,7 @@ export default function PdfTemplatePage() {
               <Separator className="my-6" />
               
               <div className="flex justify-end">
-                <Button>Guardar configuración de facturas</Button>
+                <Button>Save Invoice Configuration</Button>
               </div>
             </CardContent>
           </Card>
