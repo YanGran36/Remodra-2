@@ -32,7 +32,11 @@ export default function ToolsDashboard() {
           link: "/pdf-template-gallery"
         },
         {
-          label: "Customize Template",
+          label: "Modern Editor",
+          link: "/pdf-template-luxury"
+        },
+        {
+          label: "Classic Editor",
           link: "/pdf-template"
         }
       ]

@@ -89,14 +89,14 @@ export default function PdfTemplateGallery() {
   const handleTemplateSelect = (templateId: string) => {
     // Apply template config or go to custom editor
     if (templateId === "custom") {
-      setLocation("/pdf-template");
+      setLocation("/pdf-template-luxury");
     } else {
       // In a real implementation, would set this template as active or save it
       const template = templatePreviews.find(t => t.id === templateId);
       if (template && template.config) {
         // Could save this template config as a starting point
         localStorage.setItem('selectedTemplate', templateId);
-        setLocation("/pdf-template");
+        setLocation("/pdf-template-luxury");
       }
     }
   };
@@ -126,10 +126,10 @@ export default function PdfTemplateGallery() {
           </p>
         </div>
         <div className="mt-4 md:mt-0">
-          <Link href="/pdf-template">
+          <Link href="/pdf-template-luxury">
             <Button>
               <Paintbrush className="h-4 w-4 mr-2" />
-              Customize Template
+              Luxury Editor
             </Button>
           </Link>
         </div>
