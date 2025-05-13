@@ -353,15 +353,18 @@ export function registerTimeclockRoutes(app: Express) {
           // Get corresponding clock in entry
           const clockInEntry = entry.clockInEntryId ? clockInMap[entry.clockInEntryId] : null;
           
-          // Add clock in entry first
+          // Add clock in entry first with matching timestamps
           if (clockInEntry) {
+            const timestamp = clockInEntry.timestamp;
             dailyReport[dateKey][employeeName].entries.push({
               id: clockInEntry.id,
               type: 'IN',
-              timestamp: clockInEntry.timestamp,
+              timestamp: timestamp,
               location: clockInEntry.location,
               notes: clockInEntry.notes || "",
-              isClockIn: true
+              isClockIn: true,
+              // Incluir hora exacta para mostrar en detalles
+              entryTime: timestamp
             });
           }
           
@@ -379,12 +382,16 @@ export function registerTimeclockRoutes(app: Express) {
           console.log(`Updated weekly hours for ${employeeName} to ${weeklyHours[yearWeekKey].employees[employeeName]} (+${safeHoursWorked})`);
           dailyReport[dateKey][employeeName].weeklyHours = weeklyHours[yearWeekKey].employees[employeeName];
           
+          // Guardar hora del Clock Out
+          const outTimestamp = entry.timestamp;
+          
           dailyReport[dateKey][employeeName].entries.push({
             id: entry.id,
             type: 'OUT',
             clockInEntryId: entry.clockInEntryId,
             hoursWorked,
-            timestamp: entry.timestamp,
+            timestamp: outTimestamp,
+            entryTime: outTimestamp, // Incluir hora exacta para mostrar
             location: entry.location,
             notes: entry.notes || "",
             isClockOut: true
@@ -393,10 +400,13 @@ export function registerTimeclockRoutes(app: Express) {
         // Si es una entrada de tipo IN que no tiene salida
         else {
           // Agregar la entrada directamente (todavía está en clock-in)
+          const inTimestamp = entry.timestamp;
+          
           dailyReport[dateKey][employeeName].entries.push({
             id: entry.id,
             type: 'IN',
-            timestamp: entry.timestamp,
+            timestamp: inTimestamp,
+            entryTime: inTimestamp, // Incluir hora exacta para mostrar
             location: entry.location,
             notes: entry.notes || "",
             isClockIn: true

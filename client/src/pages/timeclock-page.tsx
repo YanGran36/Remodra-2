@@ -453,7 +453,7 @@ export default function TimeclockPage() {
                                                   <ArrowLeft className="h-3 w-3 text-amber-600" />
                                                 )}
                                                 <span className="font-medium">
-                                                  {format(new Date(entry.timestamp), "h:mm a")}
+                                                  {format(new Date(entry.entryTime || entry.timestamp), "h:mm a")}
                                                 </span>
                                                 <Badge 
                                                   className={entry.type === "IN" ? 
@@ -466,7 +466,7 @@ export default function TimeclockPage() {
                                               </div>
                                               {entry.hoursWorked && (
                                                 <span className="text-green-600 font-medium">
-                                                  {parseFloat(entry.hoursWorked).toFixed(2)} hours
+                                                  {parseFloat(String(entry.hoursWorked || '0')).toFixed(2)} Hours
                                                 </span>
                                               )}
                                             </div>
