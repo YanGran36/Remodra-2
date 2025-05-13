@@ -273,25 +273,25 @@ export default function VendorEstimateFormPageNew() {
   // Process events and filter clients with appointments for today
   useEffect(() => {
     if (events.length > 0 && clients.length > 0) {
-      // Si hay un clientId en la URL, buscar ese cliente
+      // If there's a clientId in the URL, find that client
       if (clientIdFromUrl) {
         const selectedClient = clients.find((client: any) => 
           client.id.toString() === clientIdFromUrl
         );
         
         if (selectedClient) {
-          // Si encontramos el cliente, buscar eventos relacionados
+          // If we find the client, look for related events
           const clientEvents = events.filter((event: any) => 
             event.clientId && event.clientId.toString() === clientIdFromUrl
           );
           
           if (clientEvents.length > 0) {
-            // Ordenar eventos por fecha (más reciente primero)
+            // Sort events by date (most recent first)
             clientEvents.sort((a: any, b: any) => 
               new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
             );
             
-            // Tomar el evento más reciente
+            // Take the most recent event
             const latestEvent = clientEvents[0];
             
             toast({
@@ -299,7 +299,7 @@ export default function VendorEstimateFormPageNew() {
               description: `Information for ${selectedClient.firstName} ${selectedClient.lastName} has been loaded from the calendar`,
             });
             
-            // Almacenar el ID del proyecto para usarlo en otro useEffect
+            // Store the project ID to use in another useEffect
             if (latestEvent.projectId) {
               const relatedProject = projects.find((p: any) => p.id === latestEvent.projectId);
               if (relatedProject) {
@@ -357,10 +357,10 @@ export default function VendorEstimateFormPageNew() {
     }
   }, [selectedProjectFromEvent, form]);
   
-  // Efecto para cargar materiales relevantes cuando cambia el tipo de servicio
+  // Effect to load relevant materials when service type changes
   useEffect(() => {
     if (watchServiceType && Object.prototype.hasOwnProperty.call(MATERIALS_BY_SERVICE, watchServiceType)) {
-      // Reiniciar materiales seleccionados cuando cambia el servicio
+      // Reset selected materials when service changes
       setSelectedMaterials([]);
       setSelectedOptions([]);
       
