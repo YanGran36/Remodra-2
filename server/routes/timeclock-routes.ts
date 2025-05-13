@@ -344,11 +344,17 @@ export function registerTimeclockRoutes(app: Express) {
           }
           
           // Siempre actualizar las horas totales, incluso si es 0
-          dailyReport[dateKey][employeeName].totalHours += hoursWorked;
+          const safeHoursWorked = ensureNumber(hoursWorked);
+          
+          // Actualizar con precaución, asegurando que los valores son numéricos
+          dailyReport[dateKey][employeeName].totalHours = ensureNumber(dailyReport[dateKey][employeeName].totalHours) + safeHoursWorked;
           
           // Update weekly hours total - siempre actualizar
-          weeklyHours[yearWeekKey].employees[employeeName] += hoursWorked;
-          console.log(`Updated weekly hours for ${employeeName} to ${weeklyHours[yearWeekKey].employees[employeeName]}`);
+          // Nos aseguramos de que el valor en weeklyHours también sea numérico antes de sumar
+          const currentWeeklyHours = ensureNumber(weeklyHours[yearWeekKey].employees[employeeName]);
+          weeklyHours[yearWeekKey].employees[employeeName] = currentWeeklyHours + safeHoursWorked;
+          
+          console.log(`Updated weekly hours for ${employeeName} to ${weeklyHours[yearWeekKey].employees[employeeName]} (+${safeHoursWorked})`);
           dailyReport[dateKey][employeeName].weeklyHours = weeklyHours[yearWeekKey].employees[employeeName];
           
           dailyReport[dateKey][employeeName].entries.push({
