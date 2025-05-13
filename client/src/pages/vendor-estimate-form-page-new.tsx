@@ -364,7 +364,7 @@ export default function VendorEstimateFormPageNew() {
       setSelectedMaterials([]);
       setSelectedOptions([]);
       
-      // Incluir TODOS los materiales básicos automáticamente para este tipo de servicio
+      // Include ALL basic materials automatically for this type of service
       const allMaterials = MATERIALS_BY_SERVICE[watchServiceType as keyof typeof MATERIALS_BY_SERVICE] || [];
       const initialMaterials: MaterialInput[] = allMaterials.map((material: any) => ({
         name: material.name,
@@ -375,7 +375,7 @@ export default function VendorEstimateFormPageNew() {
       
       setSelectedMaterials(initialMaterials);
       
-      // Calcular total inicial
+      // Calculate initial total
       const initialTotal = initialMaterials.reduce((sum, mat) => sum + (mat.quantity * mat.unitPrice), 0);
       setTotalAmount(initialTotal);
       
@@ -386,30 +386,30 @@ export default function VendorEstimateFormPageNew() {
     }
   }, [watchServiceType]);
   
-  // Función para seleccionar un cliente con cita y rellenar sus datos automáticamente
+  // Function to select a client with appointment and automatically fill in their data
   const handleSelectClientWithAppointment = (client: any) => {
     if (!client) return;
     
-    // Configurar el ID del cliente
+    // Set the client ID
     form.setValue("clientId", client.id.toString());
     
-    // Verificar si el cliente tiene proyectos y si hay alguno seleccionado
+    // Check if the client has projects and if any are selected
     const clientProjects = projects.filter((project: any) => project.clientId === client.id);
     if (clientProjects.length > 0) {
-      // Si el cliente tiene proyectos, mostrar toast con esa información
+      // If client has projects, show toast with that information
       toast({
         title: "Projects available",
         description: `Client has ${clientProjects.length} available project(s)`,
       });
     }
     
-    // Buscar eventos (citas) relacionados con este cliente
+    // Search for events (appointments) related to this client
     const clientEvents = events.filter((event: any) => 
       event.clientId && event.clientId === client.id
     );
     
     if (clientEvents.length > 0) {
-      // Ordenar eventos por fecha (más reciente primero)
+      // Sort events by date (most recent first)
       clientEvents.sort((a: any, b: any) => 
         new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
       );
