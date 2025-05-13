@@ -791,26 +791,55 @@ export default function CostAnalysisAssistant({
         <TabsContent value="description" className="m-0">
           {jobDescription ? (
             <CardContent className="p-6">
-              <div className="bg-primary/5 p-4 rounded-lg">
-                <h3 className="text-lg font-semibold mb-4 flex items-center">
-                  <FileText className="w-5 h-5 mr-2 text-primary" />
-                  Descripción del Trabajo
+              <div className="bg-gradient-to-r from-primary/5 to-secondary/5 p-6 rounded-lg border border-primary/20 shadow-sm">
+                <h3 className="text-xl font-bold mb-4 flex items-center text-primary">
+                  <FileText className="w-6 h-6 mr-2 text-primary" />
+                  <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                    Descripción del Trabajo
+                  </span>
                 </h3>
-                <ScrollArea className="max-h-[400px]">
-                  <div className="whitespace-pre-line text-muted-foreground">
+                <ScrollArea className="max-h-[400px] pr-4">
+                  <div className="whitespace-pre-line text-base leading-relaxed bg-white/80 p-5 rounded-md border shadow-sm">
                     {jobDescription}
                   </div>
                 </ScrollArea>
-              </div>
-              <div className="mt-4 text-sm text-muted-foreground flex items-center">
-                <Lightbulb className="w-4 h-4 mr-2 text-amber-500" />
-                Esta descripción fue generada por IA y puede ser editada o personalizada según tus necesidades.
+                <div className="flex justify-between mt-6">
+                  <div className="text-sm text-muted-foreground flex items-center">
+                    <Lightbulb className="w-4 h-4 mr-2 text-amber-500" />
+                    <span className="italic">Esta descripción fue generada por IA y puede ser personalizada</span>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-sm flex items-center bg-white"
+                    onClick={() => {
+                      if (onDescriptionGenerated) {
+                        onDescriptionGenerated(jobDescription);
+                      }
+                      navigator.clipboard.writeText(jobDescription);
+                      toast({
+                        title: "Descripción copiada",
+                        description: "La descripción ha sido copiada al portapapeles.",
+                      });
+                    }}
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    Copiar al portapapeles
+                  </Button>
+                </div>
               </div>
             </CardContent>
           ) : (
-            <CardContent className="p-6 text-center text-muted-foreground">
-              <FileText className="w-12 h-12 mx-auto mb-3 opacity-20" />
-              <p>Genera una descripción del trabajo para ver los resultados aquí.</p>
+            <CardContent className="p-6">
+              <div className="bg-gradient-to-r from-muted/10 to-muted/20 p-6 rounded-lg flex items-center justify-center text-center min-h-[300px] border border-dashed">
+                <div>
+                  <FileText className="w-16 h-16 mx-auto text-muted mb-4 opacity-50" />
+                  <h3 className="text-xl font-medium mb-3">Sin descripción generada</h3>
+                  <p className="text-muted-foreground max-w-md">
+                    Complete el análisis de costos en la pestaña "Datos del Proyecto" para generar automáticamente una descripción del trabajo profesional.
+                  </p>
+                </div>
+              </div>
             </CardContent>
           )}
         </TabsContent>
