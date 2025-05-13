@@ -273,12 +273,12 @@ export const preventCascadeOperations = (entityType: EntityType) => {
       const entityId = Number(req.params.id);
 
       if (!entityId || isNaN(entityId)) {
-        return res.status(400).json({ message: "ID inválido" });
+        return res.status(400).json({ message: "Invalid ID" });
       }
 
-      // Solo implementamos caso para clientes por ahora
+      // We only implement the client case for now
       if (entityType === 'client') {
-        // Verificar si el cliente tiene proyectos asociados
+        // Check if the client has associated projects
         const clientProjects = await db.query.projects.findMany({
           where: and(
             eq(projects.clientId, entityId),
@@ -288,7 +288,7 @@ export const preventCascadeOperations = (entityType: EntityType) => {
 
         if (clientProjects.length > 0) {
           return res.status(400).json({ 
-            message: "No se puede eliminar un cliente con proyectos asociados", 
+            message: "Cannot delete a client with associated projects", 
             projectCount: clientProjects.length 
           });
         }
@@ -296,9 +296,9 @@ export const preventCascadeOperations = (entityType: EntityType) => {
 
       next();
     } catch (error) {
-      console.error(`Error verificando operaciones en cascada: ${error}`);
+      console.error(`Error verifying cascade operations: ${error}`);
       res.status(500).json({ 
-        message: "Error verificando dependencias", 
+        message: "Error verifying dependencies", 
         error: error instanceof Error ? error.message : String(error)
       });
     }

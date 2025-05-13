@@ -1317,7 +1317,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Attachments routes
   app.get("/api/protected/attachments/:entityType/:entityId", 
     (req, res, next) => {
-      // Verificar que el tipo de entidad y el ID son válidos y pertenecen al contratista
+      // Verify that the entity type and ID are valid and belong to the contractor
       const entityType = req.params.entityType;
       const entityId = Number(req.params.entityId);
       
@@ -1587,7 +1587,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (invalidMaterials) {
         return res.status(400).json({ 
-          error: "Datos inválidos", 
+          error: "Invalid data", 
           message: "Algunos materiales tienen información incompleta o inválida" 
         });
       }
@@ -1640,7 +1640,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (invalidMaterials) {
         return res.status(400).json({ 
-          error: "Datos inválidos", 
+          error: "Invalid data", 
           message: "Algunos materiales tienen información incompleta o inválida" 
         });
       }
@@ -1980,7 +1980,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         console.error("Error de validación:", JSON.stringify(error.errors, null, 2));
         return res.status(400).json({ 
-          message: "Datos inválidos", 
+          message: "Invalid data", 
           errors: error.errors,
           details: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
         });
