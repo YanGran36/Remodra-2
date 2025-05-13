@@ -165,7 +165,7 @@ export const verifyRelationship = (
 
       let validRelationship = false;
 
-      // Verificar relación basada en los tipos de entidades
+      // Verify relationship based on entity types
       switch (`${parentEntityType}-${childEntityType}`) {
         case 'client-project':
           const project = await db.query.projects.findFirst({
@@ -239,29 +239,29 @@ export const verifyRelationship = (
           break;
 
         default:
-          return res.status(500).json({ message: "Relación no soportada" });
+          return res.status(500).json({ message: "Unsupported relationship" });
       }
 
       if (!validRelationship) {
-        console.warn(`Relación inválida: ${parentEntityType}(${parentId}) -> ${childEntityType}(${childId}) para contratista ${contractorId}`);
+        console.warn(`Invalid relationship: ${parentEntityType}(${parentId}) -> ${childEntityType}(${childId}) for contractor ${contractorId}`);
         return res.status(403).json({ 
-          message: "El recurso solicitado no tiene la relación especificada" 
+          message: "The requested resource does not have the specified relationship" 
         });
       }
 
       next();
     } catch (error) {
-      console.error(`Error verificando relación entre entidades: ${error}`);
+      console.error(`Error verifying relationship between entities: ${error}`);
       res.status(500).json({ 
-        message: "Error verificando relación entre entidades", 
+        message: "Error verifying relationship between entities", 
         error: error instanceof Error ? error.message : String(error)
       });
     }
   };
 };
 
-// Middleware para limitar operaciones en cascada
-// Por ejemplo, impedir que se elimine un cliente con proyectos activos
+// Middleware to limit cascade operations
+// For example, prevent deletion of a client with active projects
 export const preventCascadeOperations = (entityType: EntityType) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {

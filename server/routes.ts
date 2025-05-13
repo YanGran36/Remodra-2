@@ -1893,7 +1893,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Temporalmente, comentamos la verificación de autenticación para pruebas
     /*
     if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "No autenticado" });
+      return res.status(401).json({ message: "Not authenticated" });
     }
     
     // Verificar que el usuario es super admin
@@ -2055,7 +2055,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/achievements", async (req, res) => {
     try {
       if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "No autenticado" });
+        return res.status(401).json({ message: "Not authenticated" });
       }
 
       const achievements = await achievementService.getAllAchievements();
@@ -2072,7 +2072,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/contractor/achievements", async (req, res) => {
     try {
       if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "No autenticado" });
+        return res.status(401).json({ message: "Not authenticated" });
       }
 
       const contractorId = req.user?.id;
@@ -2094,7 +2094,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/contractor/achievements/unread", async (req, res) => {
     try {
       if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "No autenticado" });
+        return res.status(401).json({ message: "Not authenticated" });
       }
 
       const contractorId = req.user?.id;
@@ -2116,7 +2116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/contractor/achievements/:achievementId/mark-read", async (req, res) => {
     try {
       if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "No autenticado" });
+        return res.status(401).json({ message: "Not authenticated" });
       }
 
       const contractorId = req.user?.id;
@@ -2144,7 +2144,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/contractor/achievements/:achievementId/unlock-reward", async (req, res) => {
     try {
       if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "No autenticado" });
+        return res.status(401).json({ message: "Not authenticated" });
       }
 
       const contractorId = req.user?.id;
@@ -2172,7 +2172,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/contractor/stats", async (req, res) => {
     try {
       if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "No autenticado" });
+        return res.status(401).json({ message: "Not authenticated" });
       }
 
       const contractorId = req.user?.id;
@@ -2194,7 +2194,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/contractor/streak/update", async (req, res) => {
     try {
       if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "No autenticado" });
+        return res.status(401).json({ message: "Not authenticated" });
       }
 
       const contractorId = req.user?.id;
@@ -2218,7 +2218,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/contractor/achievements/check", async (req, res) => {
     try {
       if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "No autenticado" });
+        return res.status(401).json({ message: "Not authenticated" });
       }
 
       const contractorId = req.user?.id;
