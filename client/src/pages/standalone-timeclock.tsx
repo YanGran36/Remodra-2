@@ -45,7 +45,7 @@ export default function StandaloneTimeclockPage() {
   const [reportData, setReportData] = useState({});
   const [expandedEmployee, setExpandedEmployee] = useState(null);
   const [expandedDate, setExpandedDate] = useState(null);
-  const [position, setPosition] = useState(null);
+  const [position, setPosition] = useState<GeolocationPosition | null>(null);
   const [selectedEmployeeName, setSelectedEmployeeName] = useState("");
   const [step, setStep] = useState("select-employee"); // "select-employee" or "select-action"
   const { toast } = useToast();
@@ -139,7 +139,7 @@ export default function StandaloneTimeclockPage() {
       try {
         const pos = await getPosition();
         setPosition(pos);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Error getting location:", error);
       }
       
@@ -158,11 +158,31 @@ export default function StandaloneTimeclockPage() {
   // Handle clock in/out
   const onClockInOut = async () => {
     try {
-      // Get location text
-      let locationText = "Location not available";
-      if (position) {
-        const { latitude, longitude } = position.coords;
-        locationText = `${latitude}, ${longitude}`;
+      // Verificar que tenemos ubicación disponible
+      if (!position || !position.coords) {
+        toast({
+          title: "Location Required",
+          description: "Your location is required for Clock In/Out. Please enable location access and try again.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Obtener texto de ubicación
+      const { latitude, longitude } = position.coords;
+      let locationText = `${latitude}, ${longitude}`;
+      
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
+        );
+        const data = await response.json();
+        if (data.display_name) {
+          locationText = data.display_name;
+        }
+      } catch (error: unknown) {
+        // Si falla el geocoding inverso, usamos las coordenadas que ya tenemos
+        console.error("Error with reverse geocoding:", error);
       }
 
       const endpoint = clockMode === "in" ? "/api/timeclock/clock-in" : "/api/timeclock/clock-out";
