@@ -226,7 +226,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ message: "Project not found" });
         }
         
-        // Verificar que el proyecto no esté ya cancelado
+        // Verify that the project is not already cancelled
         if (existingProject.status === "cancelled") {
           return res.status(400).json({ message: "Project is already cancelled" });
         }
@@ -313,7 +313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/protected/estimates", async (req, res) => {
     console.log("POST /api/protected/estimates - Recibiendo solicitud:", JSON.stringify(req.body, null, 2));
     try {
-      // Verificar que el proyecto pertenezca al contratista si se proporciona uno
+      // Verify that the project belongs to the contractor if one is provided
       if (req.body.projectId) {
         const projectId = Number(req.body.projectId);
         // Buscar el proyecto directamente con storage
@@ -769,12 +769,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // El middleware ya verificó que la factura existe y pertenece al contratista
         const existingInvoice = await storage.getInvoice(invoiceId, req.user!.id);
         
-        // Verificar que la factura existe
+        // Verify that the invoice exists
         if (!existingInvoice) {
           return res.status(404).json({ message: "Invoice not found" });
         }
         
-        // Verificar que la factura no esté ya cancelada
+        // Verify that the invoice is not already cancelled
         if (existingInvoice.status === "cancelled") {
           return res.status(400).json({ message: "Invoice is already cancelled" });
         }
@@ -1325,7 +1325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Entity type and ID are required" });
       }
       
-      // Usamos un middleware dinámico basado en el tipo de entidad
+      // We use a dynamic middleware based on the entity type
       return verifyResourceOwnership(entityType as EntityType, 'entityId')(req, res, next);
     },
     async (req, res) => {
@@ -1333,7 +1333,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const entityType = req.params.entityType;
         const entityId = Number(req.params.entityId);
         
-        // El middleware ya verificó que la entidad existe y pertenece al contratista
+        // The middleware already verified that the entity exists and belongs to the contractor
         const attachments = await storage.getAttachments(req.user!.id, entityType, entityId);
         res.json(attachments);
       } catch (error) {
@@ -1343,7 +1343,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/protected/attachments", 
-    // Verificamos que la entidad a la que se adjunta el archivo pertenece al contratista
+    // We verify that the entity to which the file is attached belongs to the contractor
     (req, res, next) => {
       const { entityType, entityId } = req.body;
       
@@ -1351,12 +1351,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Entity type and ID are required" });
       }
       
-      // Usamos un middleware dinámico basado en el tipo de entidad
+      // We use a dynamic middleware based on the entity type
       return verifyResourceOwnership(entityType as EntityType, 'entityId')(req, res, next);
     },
     async (req, res) => {
       try {
-        // El middleware ya verificó que la entidad existe y pertenece al contratista
+        // The middleware already verified that the entity exists and belongs to the contractor
         const validatedData = {
           ...req.body,
           contractorId: req.user!.id
@@ -1580,7 +1580,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Verificar si hay materiales con datos inválidos
+      // Check if there are materials with invalid data
       const invalidMaterials = params.materials.some(
         (m: {name?: string; quantity?: number; unitPrice?: number}) => !m.name || typeof m.quantity !== 'number' || typeof m.unitPrice !== 'number'
       );
@@ -1633,7 +1633,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Verificar si hay materiales con datos inválidos
+      // Check if there are materials with invalid data
       const invalidMaterials = params.materials.some(
         (m: {name?: string; quantity?: number; unitPrice?: number}) => !m.name || typeof m.quantity !== 'number' || typeof m.unitPrice !== 'number'
       );

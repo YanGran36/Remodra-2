@@ -6,7 +6,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-// Verificar si la clave API existe
+// Check if the API key exists
 if (!process.env.OPENAI_API_KEY) {
   console.warn("¡ADVERTENCIA! La clave API de OpenAI no está definida en las variables de entorno.");
 }
