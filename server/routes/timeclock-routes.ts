@@ -245,6 +245,8 @@ export function registerTimeclockRoutes(app: Express) {
       // Combine all entries for processing - including standalone clock-ins
       const entries = [...clockOutEntries, ...standaloneClockIns];
       
+      console.log(`Found ${entries.length} total entries for report (${clockOutEntries.length} clock-outs and ${standaloneClockIns.length} active clock-ins)`);
+      
       // Group by date and employee name to get daily totals
       const dailyReport = {};
       
@@ -363,6 +365,9 @@ export function registerTimeclockRoutes(app: Express) {
           });
         }
       }
+      
+      // Debug para ver qué está pasando con los datos
+      console.log("Weekly hours data:", JSON.stringify(weeklyHours, null, 2));
       
       // Format the response with additional weekly summary
       const formattedResponse = {
