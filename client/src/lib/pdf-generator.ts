@@ -80,9 +80,52 @@ interface InvoiceData {
 const PAGE_MARGIN = 20;
 const PAGE_WIDTH = 210; // A4 width in mm
 const CONTENT_WIDTH = PAGE_WIDTH - (PAGE_MARGIN * 2);
-const PRIMARY_COLOR = "#003366"; // Color principal para encabezados
-const SECONDARY_COLOR = "#0D6EFD"; // Color secundario
-const ACCENT_COLOR = "#4F46E5"; // Color de acento
+
+// Default colors - these will be overridden by template settings if available
+const PRIMARY_COLOR_DEFAULT = "#003366"; // Color principal para encabezados
+const SECONDARY_COLOR_DEFAULT = "#0D6EFD"; // Color secundario
+const ACCENT_COLOR_DEFAULT = "#4F46E5"; // Color de acento
+
+// Get template settings from localStorage or use defaults
+interface TemplateSettings {
+  colorPrimary: string;
+  colorSecondary: string;
+  fontMain: string;
+  headerStyle: 'simple' | 'gradient' | 'boxed';
+  tableStyle: 'striped' | 'bordered' | 'minimal';
+  showHeader: boolean;
+  showFooter: boolean;
+  showItemDetails: boolean;
+  showItemNotes: boolean;
+  showProjectDetails: boolean;
+  showClientDetails: boolean;
+  showTerms: boolean;
+  showNotes: boolean;
+  showSignatureLine: boolean;
+  showDates: boolean;
+}
+
+function getTemplateSettings(): TemplateSettings | null {
+  try {
+    const savedTemplate = localStorage.getItem('pdfTemplateConfig');
+    if (savedTemplate) {
+      return JSON.parse(savedTemplate);
+    }
+  } catch (e) {
+    console.error("Error loading PDF template settings:", e);
+  }
+  return null;
+}
+
+// Get current active color settings
+function getColorSettings() {
+  const templateSettings = getTemplateSettings();
+  return {
+    PRIMARY_COLOR: templateSettings?.colorPrimary || PRIMARY_COLOR_DEFAULT,
+    SECONDARY_COLOR: templateSettings?.colorSecondary || SECONDARY_COLOR_DEFAULT,
+    ACCENT_COLOR: templateSettings?.colorSecondary || ACCENT_COLOR_DEFAULT
+  };
+}
 
 // Formateo de moneda
 const formatCurrency = (amount: number | string) => {
@@ -123,6 +166,10 @@ function getStatusText(status: string): string {
  * Genera un PDF a partir de un estimado
  */
 export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
+  // Get template settings
+  const templateSettings = getTemplateSettings();
+  const { PRIMARY_COLOR, SECONDARY_COLOR, ACCENT_COLOR } = getColorSettings();
+  
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -130,16 +177,32 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   });
   
   // Configuración de fuentes
-  pdf.setFont("helvetica");
+  const fontFamily = templateSettings?.fontMain || "helvetica";
+  pdf.setFont(fontFamily);
   
-  // Encabezado con logo y datos de la empresa
-  pdf.setFillColor(247, 250, 252); // Fondo gris claro
-  pdf.rect(0, 0, PAGE_WIDTH, 40, 'F');
+  // Apply header style based on settings
+  if (templateSettings?.showHeader !== false) {
+    const headerStyle = templateSettings?.headerStyle || 'gradient';
+    
+    if (headerStyle === 'gradient') {
+      // Gradient header
+      pdf.setFillColor(247, 250, 252); // Fondo gris claro
+      pdf.rect(0, 0, PAGE_WIDTH, 40, 'F');
+    } else if (headerStyle === 'boxed') {
+      // Boxed header
+      pdf.setDrawColor(parseInt(PRIMARY_COLOR.slice(1, 3), 16), 
+                      parseInt(PRIMARY_COLOR.slice(3, 5), 16), 
+                      parseInt(PRIMARY_COLOR.slice(5, 7), 16));
+      pdf.setLineWidth(0.5);
+      pdf.rect(PAGE_MARGIN - 5, 5, CONTENT_WIDTH + 10, 35);
+    }
+    // Simple style doesn't need special formatting
+  }
   
   pdf.setTextColor(PRIMARY_COLOR);
   pdf.setFontSize(22);
-  pdf.setFont("helvetica", "bold");
-  pdf.text("ESTIMADO", PAGE_MARGIN, 15);
+  pdf.setFont(fontFamily, "bold");
+  pdf.text("ESTIMATE", PAGE_MARGIN, 15);
   
   pdf.setFontSize(14);
   pdf.text(`#${data.estimateNumber}`, PAGE_MARGIN, 25);
