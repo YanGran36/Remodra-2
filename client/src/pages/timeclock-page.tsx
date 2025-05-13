@@ -89,10 +89,14 @@ export default function TimeclockPage() {
   });
   
   // Get hours report (only for business owners)
-  const { data: hoursReport = {}, isLoading: loadingReport } = useQuery<any>({
+  const { data: hoursReportData, isLoading: loadingReport } = useQuery<any>({
     queryKey: ["/api/timeclock/report"],
     enabled: activeTab === "report" && !!user,
   });
+  
+  // Extraer el reporte diario y semanal de la respuesta
+  const hoursReport = hoursReportData?.dailyReport || {};
+  const weeklyReport = hoursReportData?.weeklyReport || {};
 
   // Configure form
   const form = useForm<TimeclockFormType>({
@@ -342,53 +346,42 @@ export default function TimeclockPage() {
                     </div>
                   ) : Object.keys(hoursReport).length > 0 ? (
                     <div className="space-y-6">
-                      {/* Resumen semanal */}
+                      {/* Weekly Summary */}
                       <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 mb-6">
-                        <h3 className="text-blue-800 font-medium mb-2 text-sm">Resumen Semanal</h3>
+                        <h3 className="text-blue-800 font-medium mb-2 text-sm">Weekly Summary</h3>
                         <div className="space-y-1">
                           {(() => {
-                            // Extraer información de semanas únicas
-                            const weekData = {};
-                            
-                            Object.keys(hoursReport).forEach(date => {
-                              Object.keys(hoursReport[date]).forEach(emp => {
-                                const employeeData = hoursReport[date][emp];
-                                // Verificar que los datos esperados existen
-                                if (!employeeData || typeof employeeData !== 'object') return;
-                                
-                                const weekStartDate = employeeData.weekStartDate || '';
-                                const weeklyHours = employeeData.weeklyHours || 0;
-                                
-                                if (!weekStartDate) return;
-                                
-                                if (!weekData[weekStartDate]) {
-                                  weekData[weekStartDate] = {
-                                    weekStartDate,
-                                    employees: {}
-                                  };
-                                }
-                                
-                                // Actualizar o añadir las horas del empleado
-                                weekData[weekStartDate].employees[emp] = weeklyHours;
-                              });
-                            });
+                            // Ordenar las semanas por fecha más reciente (año y número de semana)
+                            const sortedWeeks = Object.entries(weeklyReport)
+                              .sort(([weekKeyA], [weekKeyB]) => weekKeyB.localeCompare(weekKeyA))
+                              .map(([weekKey, weekData]: [string, any]) => ({
+                                weekKey,
+                                startDate: weekData.startDate,
+                                year: weekData.year,
+                                weekNumber: weekData.weekNumber,
+                                employees: weekData.employees || {}
+                              }));
                             
                             // Renderizar los datos de la semana
-                            return Object.values(weekData).map((week: any) => (
-                              <div key={week.weekStartDate} className="border-b pb-2 mb-2 last:border-0">
-                                <div className="font-medium text-sm text-blue-700">
-                                  Semana del {week.weekStartDate ? format(new Date(week.weekStartDate), "dd/MM/yyyy") : "---"}
+                            return sortedWeeks.length > 0 ? (
+                              sortedWeeks.map((week: any) => (
+                                <div key={week.weekKey} className="border-b pb-2 mb-2 last:border-0">
+                                  <div className="font-medium text-sm text-blue-700">
+                                    Week {week.weekNumber}, {week.year} (starts {format(new Date(week.startDate), "MM/dd/yyyy")})
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-2 mt-1">
+                                    {Object.entries(week.employees).map(([name, hours]: [string, any]) => (
+                                      <div key={name} className="flex justify-between text-xs">
+                                        <span>{name}:</span>
+                                        <span className="font-medium">{parseFloat(hours).toFixed(2)} hours</span>
+                                      </div>
+                                    ))}
+                                  </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-2 mt-1">
-                                  {Object.entries(week.employees).map(([name, hours]: [string, any]) => (
-                                    <div key={name} className="flex justify-between text-xs">
-                                      <span>{name}:</span>
-                                      <span className="font-medium">{parseFloat(hours).toFixed(2)} horas</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ));
+                              ))
+                            ) : (
+                              <p className="text-sm text-gray-500">No weekly data available</p>
+                            );
                           })()}
                         </div>
                       </div>
