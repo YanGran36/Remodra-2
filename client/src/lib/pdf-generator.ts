@@ -168,53 +168,46 @@ const formatCurrency = (amount: number | string) => {
   }).format(typeof amount === 'string' ? parseFloat(amount) : amount);
 };
 
-// Formateo de fechas
+// Date formatting with language support
 const formatDate = (dateString?: string | Date | null) => {
-  if (!dateString) return "Not specified";
-  // Check if we should use Spanish or English format based on localStorage setting
-  const useSpanish = localStorage.getItem('language') === 'es';
-  if (useSpanish) {
-    return format(new Date(dateString), "d 'de' MMMM, yyyy", { locale: es });
-  } else {
-    return format(new Date(dateString), "MMMM d, yyyy");
+  if (!dateString) return translate("No especificado", "Not specified");
+  
+  try {
+    const date = new Date(dateString);
+    // Format date based on language preference
+    const spanishDate = format(date, "d 'de' MMMM, yyyy", { locale: es });
+    const englishDate = format(date, "MMMM d, yyyy");
+    
+    return translate(spanishDate, englishDate);
+  } catch (error) {
+    console.error("Error formatting date:", error);
+    return translate("Fecha inválida", "Invalid date");
   }
 };
 
 /**
- * Obtiene el valor de un objeto de estado para PDFs
+ * Gets the localized status text for PDFs
  */
 function getStatusText(status: string): string {
-  // Check language preference
-  const useSpanish = localStorage.getItem('language') === 'es';
-  
-  const statusMapEs: Record<string, string> = {
-    'draft': 'Borrador',
-    'pending': 'Pendiente',
-    'sent': 'Enviado',
-    'accepted': 'Aceptado',
-    'rejected': 'Rechazado',
-    'converted': 'Convertido a factura',
-    'paid': 'Pagado',
-    'partially_paid': 'Parcialmente pagado',
-    'overdue': 'Vencido',
-    'cancelled': 'Cancelado'
+  // Use paired Spanish/English values for each status
+  const statusMap: Record<string, [string, string]> = {
+    'draft': ['Borrador', 'Draft'],
+    'pending': ['Pendiente', 'Pending'],
+    'sent': ['Enviado', 'Sent'],
+    'accepted': ['Aceptado', 'Accepted'],
+    'rejected': ['Rechazado', 'Rejected'],
+    'converted': ['Convertido a factura', 'Converted to Invoice'],
+    'paid': ['Pagado', 'Paid'],
+    'partially_paid': ['Parcialmente pagado', 'Partially Paid'],
+    'overdue': ['Vencido', 'Overdue'],
+    'cancelled': ['Cancelado', 'Cancelled']
   };
   
-  const statusMapEn: Record<string, string> = {
-    'draft': 'Draft',
-    'pending': 'Pending',
-    'sent': 'Sent',
-    'accepted': 'Accepted',
-    'rejected': 'Rejected',
-    'converted': 'Converted to Invoice',
-    'paid': 'Paid',
-    'partially_paid': 'Partially Paid',
-    'overdue': 'Overdue',
-    'cancelled': 'Cancelled'
-  };
+  // Get the pair for the status or use status itself as fallback
+  const pair = statusMap[status.toLowerCase()] || [status, status];
   
-  const statusMap = useSpanish ? statusMapEs : statusMapEn;
-  return statusMap[status.toLowerCase()] || status;
+  // Use our translate function to get the right language version
+  return translate(pair[0], pair[1]);
 }
 
 /**
@@ -948,9 +941,9 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     }
     
     pdf.setFontSize(11);
-    pdf.setFont("helvetica", "bold");
+    pdf.setFont(getFontFamily(), "bold");
     pdf.setTextColor(PRIMARY_COLOR);
-    pdf.text("FIRMA DEL CLIENTE", PAGE_MARGIN, currentY);
+    pdf.text(translate("FIRMA DEL CLIENTE", "CLIENT SIGNATURE"), PAGE_MARGIN, currentY);
     
     currentY += 8;
     
