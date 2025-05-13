@@ -158,6 +158,19 @@ function translate(textEs: string, textEn: string): string {
   return useSpanish ? textEs : textEn;
 }
 
+// Check if a template feature is enabled (enabled by default if not specified)
+function isTemplateFeatureEnabled(featureName: keyof TemplateSettings): boolean {
+  const settings = getTemplateSettings();
+  if (!settings) return true; // Default to enabled if no settings
+  
+  // If the property exists and is explicitly false, disable the feature
+  if (featureName in settings && settings[featureName] === false) {
+    return false;
+  }
+  
+  return true; // Default to enabled
+}
+
 // Formateo de moneda
 const formatCurrency = (amount: number | string) => {
   return new Intl.NumberFormat('en-US', { 
@@ -1053,6 +1066,13 @@ export function downloadBlob(blob: Blob, filename: string): void {
  */
 /**
  * Generate and download a PDF for an estimate using saved template settings
+ * 
+ * This function applies custom template settings including:
+ * - Custom colors from template settings
+ * - Custom font selection
+ * - Content section visibility (client details, project details, etc.)
+ * - Language localization based on user preferences
+ * - Style options for header, tables, etc.
  */
 export async function downloadEstimatePDF(estimate: EstimateData): Promise<void> {
   try {
@@ -1077,6 +1097,14 @@ export async function downloadEstimatePDF(estimate: EstimateData): Promise<void>
 
 /**
  * Generate and download a PDF for an invoice using saved template settings
+ * 
+ * This function applies custom template settings including:
+ * - Custom colors from template settings
+ * - Custom font selection
+ * - Content section visibility (client details, project details, etc.)
+ * - Language localization based on user preferences
+ * - Style options for header, tables, etc.
+ * - Signature line display settings
  */
 export async function downloadInvoicePDF(invoice: InvoiceData): Promise<void> {
   try {
