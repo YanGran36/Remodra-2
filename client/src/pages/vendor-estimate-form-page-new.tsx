@@ -7,7 +7,7 @@ import { useLanguage } from "@/hooks/use-language";
 import { useAiCostAnalysis, MaterialInput, AiAnalysisResult } from "@/hooks/use-ai-cost-analysis";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -262,10 +262,10 @@ export default function VendorEstimateFormPageNew() {
     
     // Mostrar mensaje con el número de clientes encontrados
     if (clientsForDate.length > 0) {
-      const formattedDate = format(date, "PPP", { locale: es });
+      const formattedDate = format(date, "PPP", { locale: enUS });
       toast({
-        title: `Clientes con citas para ${formattedDate}`,
-        description: `Se han encontrado ${clientsForDate.length} clientes con citas programadas`,
+        title: `Clients with appointments for ${formattedDate}`,
+        description: `Found ${clientsForDate.length} clients with scheduled appointments`,
       });
     }
   };
@@ -295,8 +295,8 @@ export default function VendorEstimateFormPageNew() {
             const latestEvent = clientEvents[0];
             
             toast({
-              title: "Cliente con cita programada",
-              description: `Se ha cargado la información de ${selectedClient.firstName} ${selectedClient.lastName} desde el calendario`,
+              title: "Client with scheduled appointment",
+              description: `Information for ${selectedClient.firstName} ${selectedClient.lastName} has been loaded from the calendar`,
             });
             
             // Almacenar el ID del proyecto para usarlo en otro useEffect
@@ -339,8 +339,8 @@ export default function VendorEstimateFormPageNew() {
       const selectedClient = clients.find((c: any) => c.id.toString() === clientIdFromUrl);
       if (selectedClient) {
         toast({
-          title: "Cliente cargado automáticamente",
-          description: `Se ha seleccionado al cliente ${selectedClient.firstName} ${selectedClient.lastName} desde la cita programada.`,
+          title: "Client automatically loaded",
+          description: `Client ${selectedClient.firstName} ${selectedClient.lastName} has been selected from the scheduled appointment.`,
         });
       }
     }
@@ -351,8 +351,8 @@ export default function VendorEstimateFormPageNew() {
     if (selectedProjectFromEvent && form) {
       form.setValue("projectId", selectedProjectFromEvent);
       toast({
-        title: "Proyecto cargado automáticamente",
-        description: "Se ha seleccionado el proyecto asociado a la cita programada."
+        title: "Project automatically loaded",
+        description: "The project associated with the scheduled appointment has been selected."
       });
     }
   }, [selectedProjectFromEvent, form]);
@@ -380,8 +380,8 @@ export default function VendorEstimateFormPageNew() {
       setTotalAmount(initialTotal);
       
       toast({
-        title: "Materiales básicos incluidos",
-        description: `Se han agregado automáticamente ${initialMaterials.length} materiales básicos para ${getServiceLabel(watchServiceType)}`,
+        title: "Basic materials included",
+        description: `${initialMaterials.length} basic materials have been automatically added for ${getServiceLabel(watchServiceType)}`,
       });
     }
   }, [watchServiceType]);
@@ -398,8 +398,8 @@ export default function VendorEstimateFormPageNew() {
     if (clientProjects.length > 0) {
       // Si el cliente tiene proyectos, mostrar toast con esa información
       toast({
-        title: "Proyectos disponibles",
-        description: `El cliente tiene ${clientProjects.length} proyecto(s) disponible(s)`,
+        title: "Projects available",
+        description: `Client has ${clientProjects.length} available project(s)`,
       });
     }
     
