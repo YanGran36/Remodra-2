@@ -373,7 +373,7 @@ export default function TimeclockPage() {
                                     {Object.entries(week.employees).map(([name, hours]: [string, any]) => (
                                       <div key={name} className="flex justify-between text-xs">
                                         <span>{name}:</span>
-                                        <span className="font-medium">{parseFloat(hours).toFixed(2)} hours</span>
+                                        <span className="font-medium">{parseFloat(String(hours || '0')).toFixed(2)} Hours</span>
                                       </div>
                                     ))}
                                   </div>
