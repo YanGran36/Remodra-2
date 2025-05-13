@@ -174,6 +174,18 @@ export default function MobileSidebar() {
               <Clock className="mr-3 h-5 w-5" />
               <span>Time Clock</span>
             </Link>
+            
+            {/* Tools section with divider for better organization */}
+            <div className="mt-2 mb-2 px-3">
+              <div className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold">
+                Tools
+              </div>
+            </div>
+            
+            <Link href="/pdf-templates" className={getLinkClass("/pdf-templates")}>
+              <Palette className="mr-3 h-5 w-5" />
+              <span>PDF Templates</span>
+            </Link>
             <Link href="/ai-assistant" className={getLinkClass("/ai-assistant")}>
               <BotIcon className="mr-3 h-5 w-5" />
               <span>{t('navigation.aiAssistant')}</span>
@@ -181,10 +193,6 @@ export default function MobileSidebar() {
             <Link href="/vendor-estimate-form-new" className={getLinkClass("/vendor-estimate-form-new")}>
               <ClipboardCheckIcon className="mr-3 h-5 w-5" />
               <span>{t('navigation.vendorForm')}</span>
-            </Link>
-            <Link href="/pdf-templates" className={getLinkClass("/pdf-templates")}>
-              <Palette className="mr-3 h-5 w-5" />
-              <span>PDF Templates</span>
             </Link>
             <Link href="/admin-dashboard" className={getLinkClass("/admin-dashboard")}>
               <BarChart className="mr-3 h-5 w-5" />
