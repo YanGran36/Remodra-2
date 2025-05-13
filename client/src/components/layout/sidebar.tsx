@@ -18,6 +18,7 @@ import {
   TrophyIcon,
   Clock,
   Palette,
+  Settings,
   FileText
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -102,6 +103,10 @@ export default function Sidebar() {
             </div>
           </div>
           
+          <Link href="/tools-dashboard" className={getLinkClass("/tools-dashboard")}>
+            <FileText className="mr-3 h-5 w-5" />
+            <span>Tools Dashboard</span>
+          </Link>
           <Link href="/pdf-templates" className={getLinkClass("/pdf-templates")}>
             <Palette className="mr-3 h-5 w-5" />
             <span>PDF Templates</span>
