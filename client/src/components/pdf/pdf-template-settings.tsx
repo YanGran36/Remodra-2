@@ -86,12 +86,16 @@ interface PdfTemplateSettingsProps {
   initialConfig?: Partial<PdfTemplateConfig>;
   onChange?: (config: PdfTemplateConfig) => void;
   onSave?: (config: PdfTemplateConfig) => void;
+  onUpdate?: (config: PdfTemplateConfig) => void; // For live preview
+  livePreview?: boolean; // Whether to enable live preview mode
 }
 
 export default function PdfTemplateSettings({ 
   initialConfig, 
   onChange,
-  onSave
+  onSave,
+  onUpdate,
+  livePreview = false
 }: PdfTemplateSettingsProps) {
   const [config, setConfig] = useState<PdfTemplateConfig>({
     ...defaultConfig,
@@ -100,12 +104,16 @@ export default function PdfTemplateSettings({
   const [activeTab, setActiveTab] = useState("content");
   const { toast } = useToast();
 
-  // Effect to notify changes
+  // Effect to notify changes and live preview
   useEffect(() => {
     if (onChange) {
       onChange(config);
     }
-  }, [config, onChange]);
+    // Update live preview if enabled
+    if (livePreview && onUpdate) {
+      onUpdate(config);
+    }
+  }, [config, onChange, onUpdate, livePreview]);
 
   // Function to update configuration
   const updateConfig = (key: keyof PdfTemplateConfig, value: any) => {
