@@ -65,31 +65,31 @@ export default function Sidebar() {
         <nav>
           <Link href="/" className={getLinkClass("/")}>
             <LayoutDashboardIcon className="mr-3 h-5 w-5" />
-            <span>{t('navigation.dashboard')}</span>
+            <span>Dashboard</span>
           </Link>
           <Link href="/calendar" className={getLinkClass("/calendar")}>
             <CalendarIcon className="mr-3 h-5 w-5" />
-            <span>{t('navigation.calendar')}</span>
+            <span>Calendar</span>
           </Link>
           <Link href="/clients" className={getLinkClass("/clients")}>
             <UsersIcon className="mr-3 h-5 w-5" />
-            <span>{t('navigation.clients')}</span>
+            <span>Clients</span>
           </Link>
           <Link href="/estimates" className={getLinkClass("/estimates")}>
             <FileTextIcon className="mr-3 h-5 w-5" />
-            <span>{t('navigation.estimates')}</span>
+            <span>Estimates</span>
           </Link>
           <Link href="/invoices" className={getLinkClass("/invoices")}>
             <BanknoteIcon className="mr-3 h-5 w-5" />
-            <span>{t('navigation.invoices')}</span>
+            <span>Invoices</span>
           </Link>
           <Link href="/projects" className={getLinkClass("/projects")}>
             <HammerIcon className="mr-3 h-5 w-5" />
-            <span>{t('navigation.projects')}</span>
+            <span>Projects</span>
           </Link>
           <Link href="/materials" className={getLinkClass("/materials")}>
             <Drill className="mr-3 h-5 w-5" />
-            <span>{t('navigation.materials')}</span>
+            <span>Materials</span>
           </Link>
           <Link href="/timeclock" className={getLinkClass("/timeclock")}>
             <Clock className="mr-3 h-5 w-5" />
@@ -113,16 +113,16 @@ export default function Sidebar() {
           </Link>
           <Link href="/ai-assistant" className={getLinkClass("/ai-assistant")}>
             <BotIcon className="mr-3 h-5 w-5" />
-            <span>{t('navigation.aiAssistant')}</span>
+            <span>AI Assistant</span>
           </Link>
           <Link href="/vendor-estimate-form-new" className={getLinkClass("/vendor-estimate-form-new")}>
             <ClipboardCheckIcon className="mr-3 h-5 w-5" />
-            <span>{t('navigation.vendorForm')}</span>
+            <span>Vendor Form</span>
           </Link>
           {/* Google Sheets link removed */}
           <Link href="/settings" className={getLinkClass("/settings")}>
             <SettingsIcon className="mr-3 h-5 w-5" />
-            <span>{t('navigation.settings')}</span>
+            <span>Settings</span>
           </Link>
         </nav>
       </div>
@@ -133,7 +133,7 @@ export default function Sidebar() {
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <Globe className="mr-2 h-4 w-4 text-gray-400" />
-              <span className="text-sm">{t('settings.language')}</span>
+              <span className="text-sm">Language</span>
             </div>
             <LanguageSwitcher variant="ghost" showText={false} size="sm" />
           </div>
@@ -155,7 +155,7 @@ export default function Sidebar() {
             <button 
               className="ml-auto text-gray-400 hover:text-white"
               onClick={handleLogout}
-              aria-label={t('navigation.logout')}
+              aria-label="Logout"
             >
               <LogOutIcon className="h-5 w-5" />
             </button>

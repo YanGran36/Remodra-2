@@ -19,7 +19,6 @@ export const LanguageContext = createContext<LanguageContextType | null>(null);
 // English only
 const supportedLanguages = [
   { code: 'en' as Language, name: 'English' },
-  { code: 'es' as Language, name: 'Español' },
 ];
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
@@ -27,19 +26,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   
-  // Use browser's language or user's saved preference from localStorage
+  // Always use English
   const getUserLanguage = (): Language => {
-    // Check if a language is stored in localStorage
-    const savedLanguage = localStorage.getItem('preferredLanguage') as Language;
-    if (savedLanguage && supportedLanguages.some(lang => lang.code === savedLanguage)) {
-      return savedLanguage;
-    }
-    
-    // Use browser language if it matches our supported languages
-    const browserLang = navigator.language.split('-')[0];
-    if (browserLang === 'es') return 'es';
-    
-    // Default to English
+    // Always return English
     return 'en';
   };
   
@@ -88,10 +77,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       }
       
       toast({
-        title: newLanguage === 'en' ? "Language changed" : "Idioma cambiado",
-        description: newLanguage === 'en' 
-          ? "Your language preference has been updated" 
-          : "Su preferencia de idioma ha sido actualizada",
+        title: "Language changed",
+        description: "Your language preference has been updated",
       });
     } catch (error) {
       console.error("Error changing language:", error);
