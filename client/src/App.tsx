@@ -19,6 +19,8 @@ import EstimateCreatePage from "@/pages/estimate-create-page";
 import EstimateDetailPage from "@/pages/estimate-detail-page";
 import EstimatePrintPage from "@/pages/estimate-print-page";
 import PdfTemplatePage from "@/pages/pdf-template-page";
+import PdfTemplateGallery from "@/pages/pdf-template-gallery";
+import PdfTemplatePageNew from "@/pages/pdf-template-page-new"; 
 import ToolsDashboard from "@/pages/tools-dashboard";
 import PremiumEstimatePage from "@/pages/premium-estimate-page";
 import VendorEstimateFormPage from "@/pages/vendor-estimate-form-page";
@@ -77,6 +79,8 @@ function Router() {
       <ProtectedRoute path="/admin-architectural" component={AdminDashboardArchitectural} />
       <ProtectedRoute path="/super-admin" component={SuperAdminDashboard} />
       <ProtectedRoute path="/super-admin/add-contractor" component={SuperAdminAddContractor} />
+      <ProtectedRoute path="/pdf-template" component={PdfTemplatePageNew} />
+      <ProtectedRoute path="/pdf-template-gallery" component={PdfTemplateGallery} />
       {/* Ruta de Google Sheets eliminada */}
       <Route path="/auth" component={AuthPage} />
       <Route path="/public/estimates/:id" component={PublicEstimateView} />

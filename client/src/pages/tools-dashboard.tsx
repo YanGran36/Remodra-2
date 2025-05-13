@@ -23,13 +23,17 @@ export default function ToolsDashboard() {
       title: "PDF Templates",
       description: "Customize document appearance with colors, fonts, and content options",
       icon: <Palette className="h-12 w-12 text-primary" />,
-      link: "/pdf-templates",
+      link: "/pdf-template-gallery",
       color: "bg-gradient-to-br from-blue-500/10 to-purple-500/10",
       borderColor: "border-blue-200 dark:border-blue-800",
       actions: [
         {
-          label: "Customize Templates",
-          link: "/pdf-templates"
+          label: "Browse Templates",
+          link: "/pdf-template-gallery"
+        },
+        {
+          label: "Customize Template",
+          link: "/pdf-template"
         }
       ]
     },
@@ -152,25 +156,25 @@ export default function ToolsDashboard() {
             </CardFooter>
           </Card>
           
-          <Card className="border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-500/5 to-gray-600/5">
+          <Card className="border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-500/5 to-indigo-500/5">
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Create New Template</CardTitle>
-              <CardDescription>Start from scratch or import</CardDescription>
+              <CardTitle className="text-lg">Browse Template Gallery</CardTitle>
+              <CardDescription>Explore professional designs</CardDescription>
             </CardHeader>
             <CardContent className="pt-0">
               <div className="flex items-center gap-2">
-                <PaintBucket className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Choose Colors & Fonts</span>
+                <Brush className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Professional Designs</span>
               </div>
               <div className="flex items-center gap-2 mt-1">
                 <Layout className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Customize Layout</span>
+                <span className="text-xs text-muted-foreground">Multiple Layouts</span>
               </div>
             </CardContent>
             <CardFooter>
-              <Link href="/pdf-templates" className="w-full">
+              <Link href="/pdf-template-gallery" className="w-full">
                 <Button variant="default" size="sm" className="w-full">
-                  Create Template
+                  View Gallery
                 </Button>
               </Link>
             </CardFooter>
