@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Download, FileText, Settings, Eye } from "lucide-react";
 
-// Datos simulados para mostrar vista previa
+// Simulated data for preview
 const previewData = {
   estimateNumber: "EST-2025-001",
   status: "pending",
@@ -23,29 +23,29 @@ const previewData = {
   tax: 280,
   discount: 200,
   total: 3580,
-  terms: "El pago debe ser realizado dentro de los 30 días posteriores a la fecha de emisión. Se aplican nuestros términos y condiciones estándar.",
-  notes: "Los precios están sujetos a cambios basados en la disponibilidad de materiales. Se puede requerir un depósito del 30% para comenzar el trabajo.",
+  terms: "Payment must be made within 30 days of the issue date. Our standard terms and conditions apply.",
+  notes: "Prices are subject to change based on material availability. A 30% deposit may be required to begin work.",
   items: [
     {
-      description: "Instalación de ventanas de alta eficiencia",
+      description: "High-efficiency window installation",
       quantity: 4,
       unitPrice: 450,
       amount: 1800,
-      notes: "Incluye marco de aluminio y doble acristalamiento"
+      notes: "Includes aluminum frame and double glazing"
     },
     {
-      description: "Servicio de pintura interior",
+      description: "Interior painting service",
       quantity: 3,
       unitPrice: 300,
       amount: 900,
-      notes: "Pintura premium resistente a manchas"
+      notes: "Premium stain-resistant paint"
     },
     {
-      description: "Reparación de yeso y acabado",
+      description: "Plaster repair and finishing",
       quantity: 1,
       unitPrice: 800,
       amount: 800,
-      notes: "Incluye materiales y mano de obra"
+      notes: "Includes materials and labor"
     }
   ],
   client: {

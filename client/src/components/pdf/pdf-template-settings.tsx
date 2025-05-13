@@ -100,14 +100,14 @@ export default function PdfTemplateSettings({
   const [activeTab, setActiveTab] = useState("content");
   const { toast } = useToast();
 
-  // Efecto para notificar cambios
+  // Effect to notify changes
   useEffect(() => {
     if (onChange) {
       onChange(config);
     }
   }, [config, onChange]);
 
-  // Función para actualizar configuración
+  // Function to update configuration
   const updateConfig = (key: keyof PdfTemplateConfig, value: any) => {
     setConfig(prev => ({
       ...prev,
@@ -384,38 +384,38 @@ export default function PdfTemplateSettings({
                 </div>
                 
                 <div className="space-y-4">
-                  <h3 className="text-base font-medium">Estilos de elementos</h3>
+                  <h3 className="text-base font-medium">Element Styles</h3>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="headerStyle">Estilo de encabezado</Label>
+                    <Label htmlFor="headerStyle">Header Style</Label>
                     <Select 
                       value={config.headerStyle} 
                       onValueChange={value => updateConfig('headerStyle', value as 'simple' | 'gradient' | 'boxed')}
                     >
                       <SelectTrigger id="headerStyle">
-                        <SelectValue placeholder="Seleccionar estilo" />
+                        <SelectValue placeholder="Select style" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="simple">Simple</SelectItem>
-                        <SelectItem value="gradient">Gradiente</SelectItem>
-                        <SelectItem value="boxed">Con borde</SelectItem>
+                        <SelectItem value="gradient">Gradient</SelectItem>
+                        <SelectItem value="boxed">Boxed</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="tableStyle">Estilo de tabla</Label>
+                    <Label htmlFor="tableStyle">Table Style</Label>
                     <Select 
                       value={config.tableStyle} 
                       onValueChange={value => updateConfig('tableStyle', value as 'striped' | 'bordered' | 'minimal')}
                     >
                       <SelectTrigger id="tableStyle">
-                        <SelectValue placeholder="Seleccionar estilo" />
+                        <SelectValue placeholder="Select style" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="striped">Alternando filas</SelectItem>
-                        <SelectItem value="bordered">Con bordes</SelectItem>
-                        <SelectItem value="minimal">Minimalista</SelectItem>
+                        <SelectItem value="striped">Striped</SelectItem>
+                        <SelectItem value="bordered">Bordered</SelectItem>
+                        <SelectItem value="minimal">Minimal</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -428,11 +428,11 @@ export default function PdfTemplateSettings({
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                 <div className="space-y-4">
-                  <h3 className="text-base font-medium">Información adicional</h3>
+                  <h3 className="text-base font-medium">Additional Information</h3>
                   
                   <div className="flex items-center justify-between">
                     <Label htmlFor="showTerms" className="cursor-pointer">
-                      Mostrar términos y condiciones
+                      Show Terms and Conditions
                     </Label>
                     <Switch 
                       id="showTerms" 
@@ -443,7 +443,7 @@ export default function PdfTemplateSettings({
                   
                   <div className="flex items-center justify-between">
                     <Label htmlFor="showNotes" className="cursor-pointer">
-                      Mostrar notas generales
+                      Show General Notes
                     </Label>
                     <Switch 
                       id="showNotes" 
@@ -454,11 +454,11 @@ export default function PdfTemplateSettings({
                 </div>
                 
                 <div className="space-y-4">
-                  <h3 className="text-base font-medium">Elementos legales</h3>
+                  <h3 className="text-base font-medium">Legal Elements</h3>
                   
                   <div className="flex items-center justify-between">
                     <Label htmlFor="showSignatureLine" className="cursor-pointer">
-                      Mostrar línea de firma
+                      Show Signature Line
                     </Label>
                     <Switch 
                       id="showSignatureLine" 
@@ -469,7 +469,7 @@ export default function PdfTemplateSettings({
                   
                   <div className="flex items-center justify-between">
                     <Label htmlFor="showDates" className="cursor-pointer">
-                      Mostrar fechas (emisión/expiración)
+                      Show Dates (issue/expiration)
                     </Label>
                     <Switch 
                       id="showDates" 
@@ -486,7 +486,7 @@ export default function PdfTemplateSettings({
         <div className="flex justify-end mt-6">
           <Button onClick={handleSave} className="flex items-center gap-2">
             <Save className="h-4 w-4" />
-            Guardar configuración
+            Save Configuration
           </Button>
         </div>
       </CardContent>
