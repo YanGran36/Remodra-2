@@ -323,6 +323,9 @@ export function registerTimeclockRoutes(app: Express) {
         
         // Si es una entrada de tipo OUT
         if (entry.type === "OUT") {
+          // Debug de la entrada completa para ver qué contiene
+          console.log("PROCESSING ENTRY:", JSON.stringify(entry, null, 2));
+          
           // Parse hours worked using our safe ensureNumber function
           const hoursWorked = ensureNumber(entry.hoursWorked);
           
