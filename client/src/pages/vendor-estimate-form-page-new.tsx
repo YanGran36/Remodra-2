@@ -414,40 +414,40 @@ export default function VendorEstimateFormPageNew() {
         new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
       );
       
-      // Usar el evento más reciente
+      // Use the most recent event
       const latestEvent = clientEvents[0];
       
-      // Si el evento tiene un proyecto asociado, seleccionarlo automáticamente
+      // If the event has an associated project, select it automatically
       if (latestEvent.projectId) {
         form.setValue("projectId", latestEvent.projectId.toString());
         
-        // Buscar información del proyecto
+        // Search for project information
         const relatedProject = projects.find((p: any) => p.id === latestEvent.projectId);
         if (relatedProject) {
-          // Si el proyecto tiene información sobre el tipo de servicio, seleccionarlo automáticamente
+          // If the project has information about the service type, select it automatically
           if (relatedProject.serviceType) {
             form.setValue("serviceType", relatedProject.serviceType);
           }
           
-          // Si hay notas en el proyecto, incluirlas
+          // If there are notes in the project, include them
           if (relatedProject.description) {
             form.setValue("notes", form.getValues("notes") 
-              ? `${form.getValues("notes")}\n\nDesde proyecto: ${relatedProject.description}`
-              : `Desde proyecto: ${relatedProject.description}`
+              ? `${form.getValues("notes")}\n\nFrom project: ${relatedProject.description}`
+              : `From project: ${relatedProject.description}`
             );
           }
         }
       }
       
-      // Si el evento tiene información sobre ubicación, incluirla en notas adicionales
+      // If the event has location information, include it in additional notes
       if (latestEvent.location) {
         form.setValue("additionalInfo", form.getValues("additionalInfo") 
-          ? `${form.getValues("additionalInfo")}\n\nUbicación desde cita: ${latestEvent.location}`
-          : `Ubicación desde cita: ${latestEvent.location}`
+          ? `${form.getValues("additionalInfo")}\n\nLocation from appointment: ${latestEvent.location}`
+          : `Location from appointment: ${latestEvent.location}`
         );
       }
       
-      // Si hay descripción en el evento, incluirla en notas adicionales
+      // If there is description in the event, include it in additional notes
       if (latestEvent.description) {
         form.setValue("additionalInfo", form.getValues("additionalInfo") 
           ? `${form.getValues("additionalInfo")}\n\nDescripción desde cita: ${latestEvent.description}`
