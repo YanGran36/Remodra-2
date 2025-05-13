@@ -260,7 +260,7 @@ export default function VendorEstimateFormPageNew() {
     const clientsForDate = getClientsWithAppointmentsForDate(date);
     setClientsWithAppointments(clientsForDate);
     
-    // Mostrar mensaje con el número de clientes encontrados
+    // Show message with the number of clients found
     if (clientsForDate.length > 0) {
       const formattedDate = format(date, "PPP", { locale: enUS });
       toast({
@@ -270,7 +270,7 @@ export default function VendorEstimateFormPageNew() {
     }
   };
 
-  // Procesar eventos y filtrar clientes con citas para hoy
+  // Process events and filter clients with appointments for today
   useEffect(() => {
     if (events.length > 0 && clients.length > 0) {
       // Si hay un clientId en la URL, buscar ese cliente
@@ -885,7 +885,7 @@ export default function VendorEstimateFormPageNew() {
                             className="ml-auto h-8 w-auto gap-1"
                           >
                             <CalendarIcon className="h-3.5 w-3.5" />
-                            <span>{format(selectedDate, "PPP", { locale: es })}</span>
+                            <span>{format(selectedDate, "PPP", { locale: enUS })}</span>
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
@@ -907,8 +907,8 @@ export default function VendorEstimateFormPageNew() {
                       <Badge variant="outline" className="text-xs font-normal gap-1 py-0 h-6">
                         <span className="text-primary">•</span>
                         {clientsWithAppointments.length === 0 
-                          ? "No hay clientes con citas para esta fecha" 
-                          : `${clientsWithAppointments.length} cliente(s) con citas programadas`}
+                          ? "No clients with appointments for this date" 
+                          : `${clientsWithAppointments.length} client(s) with scheduled appointments`}
                       </Badge>
                     </div>
                   </div>
@@ -917,7 +917,7 @@ export default function VendorEstimateFormPageNew() {
                   {clientsWithAppointments.length > 0 && (
                     <div className="mb-4">
                       <h3 className="text-sm font-medium mb-2 text-primary">
-                        Clientes con citas para {format(selectedDate, "PPP", { locale: es })}:
+                        Clients with appointments for {format(selectedDate, "PPP", { locale: enUS })}:
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                         {clientsWithAppointments.map((client: any) => (
@@ -973,7 +973,7 @@ export default function VendorEstimateFormPageNew() {
                             {clientsWithAppointments.length > 0 && (
                               <>
                                 <div className="px-2 py-1.5 text-sm font-medium text-primary">
-                                  Clientes con citas el {format(selectedDate, "PP", { locale: es })}
+                                  Clients with appointments on {format(selectedDate, "PP", { locale: enUS })}
                                 </div>
                                 {clientsWithAppointments.map((client: any) => (
                                   <SelectItem key={`appointment-${client.id}`} value={client.id.toString()}>
@@ -985,7 +985,7 @@ export default function VendorEstimateFormPageNew() {
                                 ))}
                                 <Separator className="my-1" />
                                 <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground">
-                                  Todos los clientes
+                                  All clients
                                 </div>
                               </>
                             )}
