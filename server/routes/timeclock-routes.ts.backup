@@ -272,17 +272,6 @@ export function registerTimeclockRoutes(app: Express) {
         return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
       };
       
-      // Función para asegurar que un valor es numérico
-      const ensureNumber = (value: any): number => {
-        if (value === null || value === undefined) return 0;
-        if (typeof value === 'number') return value;
-        if (typeof value === 'string') {
-          const parsed = parseFloat(value);
-          return isNaN(parsed) ? 0 : parsed;
-        }
-        return 0;
-      };
-      
       for (const entry of entries) {
         // Formato de fecha compatible con ambos tipos de datos (Date o string)
         const dateKey = typeof entry.date === 'string' ? entry.date : entry.date.toISOString().split('T')[0];
@@ -323,8 +312,15 @@ export function registerTimeclockRoutes(app: Express) {
         
         // Si es una entrada de tipo OUT
         if (entry.type === "OUT") {
-          // Parse hours worked using our safe ensureNumber function
-          const hoursWorked = ensureNumber(entry.hoursWorked);
+          // Parse hours worked (might be stored as string in DB)
+          let hoursWorked = typeof entry.hoursWorked === 'string' 
+            ? parseFloat(entry.hoursWorked) 
+            : entry.hoursWorked;
+            
+          // Asegurarse de que el valor es un número válido
+          if (isNaN(hoursWorked) || hoursWorked === null) {
+            hoursWorked = 0;
+          }
           
           console.log(`Processing entry for ${employeeName}: hours worked = ${hoursWorked}`);
           
