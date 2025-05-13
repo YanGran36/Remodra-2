@@ -712,13 +712,12 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   
   // Invoice information
   pdf.setFontSize(12);
-  // Use existing fontFamily variable or default to helvetica
-  pdf.setFont(fontFamily, "bold");
+  pdf.setFont(getFontFamily(), "bold");
   pdf.setTextColor(PRIMARY_COLOR);
   pdf.text(translate("DETALLES DE LA FACTURA", "INVOICE DETAILS"), PAGE_WIDTH / 2, 55);
   
   currentY = 63;
-  pdf.setFont(fontFamily, "normal");
+  pdf.setFont(getFontFamily(), "normal");
   pdf.setTextColor(60, 60, 60);
   pdf.setFontSize(10);
   
