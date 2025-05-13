@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function TimeClockSelectAction() {
   const [, navigate] = useLocation();
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [position, setPosition] = useState(null);
+  const [position, setPosition] = useState<GeolocationPosition | null>(null);
   const [employeeName, setEmployeeName] = useState("Yandeivis Granado");
   const { toast } = useToast();
 
@@ -38,7 +38,7 @@ export default function TimeClockSelectAction() {
       try {
         const pos = await getPosition();
         setPosition(pos);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Error getting location:", error);
       }
     };
@@ -67,7 +67,7 @@ export default function TimeClockSelectAction() {
         );
         const data = await response.json();
         locationString = data.display_name || `${latitude}, ${longitude}`;
-      } catch (error) {
+      } catch (error: unknown) {
         locationString = `${latitude}, ${longitude}`;
       }
 
@@ -101,10 +101,10 @@ export default function TimeClockSelectAction() {
         const errorData = await response.json();
         throw new Error(errorData.message || "An error occurred");
       }
-    } catch (error) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: error.message || "Failed to clock in/out",
+        description: error instanceof Error ? error.message : "Failed to clock in/out",
         variant: "destructive",
       });
     }

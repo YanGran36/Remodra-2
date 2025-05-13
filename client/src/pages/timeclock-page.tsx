@@ -140,6 +140,10 @@ export default function TimeclockPage() {
 
   const clockOutMutation = useMutation({
     mutationFn: async (data: TimeclockFormType) => {
+      if (!currentLocation || currentLocation === "Not available" || currentLocation === "Not supported by browser") {
+        throw new Error("Location is required for Clock Out. Please enable location access and try again.");
+      }
+      
       return await apiRequest("POST", "/api/timeclock/clock-out", {
         ...data,
         location: currentLocation, // Always use current location
