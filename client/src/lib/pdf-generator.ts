@@ -1,0 +1,934 @@
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+
+// Tipos para estimados y facturas
+interface Item {
+  description: string;
+  quantity: string | number;
+  unitPrice: string | number;
+  amount: string | number;
+  notes?: string;
+}
+
+interface ClientInfo {
+  firstName: string;
+  lastName: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+}
+
+interface ContractorInfo {
+  businessName: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  logo?: string;
+}
+
+// Interfaces para los documentos
+interface EstimateData {
+  estimateNumber: string;
+  status: string;
+  issueDate: Date | string;
+  expiryDate?: Date | string;
+  subtotal: string | number;
+  tax?: string | number;
+  discount?: string | number;
+  total: string | number;
+  terms?: string;
+  notes?: string;
+  items: Item[];
+  client: ClientInfo;
+  contractor: ContractorInfo;
+  projectTitle?: string;
+  projectDescription?: string;
+}
+
+interface InvoiceData {
+  invoiceNumber: string;
+  status: string;
+  issueDate: Date | string;
+  dueDate?: Date | string;
+  subtotal: string | number;
+  tax?: string | number;
+  discount?: string | number;
+  total: string | number;
+  amountPaid?: string | number;
+  terms?: string;
+  notes?: string;
+  items: Item[];
+  client: ClientInfo;
+  contractor: ContractorInfo;
+  projectTitle?: string;
+  projectDescription?: string;
+  clientSignature?: string; // Base64 de la firma
+  paymentMethod?: string;
+}
+
+// Configuración general
+const PAGE_MARGIN = 20;
+const PAGE_WIDTH = 210; // A4 width in mm
+const CONTENT_WIDTH = PAGE_WIDTH - (PAGE_MARGIN * 2);
+const PRIMARY_COLOR = "#003366"; // Color principal para encabezados
+const SECONDARY_COLOR = "#0D6EFD"; // Color secundario
+const ACCENT_COLOR = "#4F46E5"; // Color de acento
+
+// Formateo de moneda
+const formatCurrency = (amount: number | string) => {
+  return new Intl.NumberFormat('en-US', { 
+    style: 'currency', 
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(typeof amount === 'string' ? parseFloat(amount) : amount);
+};
+
+// Formateo de fechas
+const formatDate = (dateString?: string | Date | null) => {
+  if (!dateString) return "No especificada";
+  return format(new Date(dateString), "d 'de' MMMM, yyyy", { locale: es });
+};
+
+/**
+ * Obtiene el valor de un objeto de estado para PDFs
+ */
+function getStatusText(status: string): string {
+  const statusMap: Record<string, string> = {
+    'draft': 'Borrador',
+    'pending': 'Pendiente',
+    'sent': 'Enviado',
+    'accepted': 'Aceptado',
+    'rejected': 'Rechazado',
+    'converted': 'Convertido a factura',
+    'paid': 'Pagado',
+    'partially_paid': 'Parcialmente pagado',
+    'overdue': 'Vencido',
+    'cancelled': 'Cancelado'
+  };
+  return statusMap[status.toLowerCase()] || status;
+}
+
+/**
+ * Genera un PDF a partir de un estimado
+ */
+export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4'
+  });
+  
+  // Configuración de fuentes
+  pdf.setFont("helvetica");
+  
+  // Encabezado con logo y datos de la empresa
+  pdf.setFillColor(247, 250, 252); // Fondo gris claro
+  pdf.rect(0, 0, PAGE_WIDTH, 40, 'F');
+  
+  pdf.setTextColor(PRIMARY_COLOR);
+  pdf.setFontSize(22);
+  pdf.setFont("helvetica", "bold");
+  pdf.text("ESTIMADO", PAGE_MARGIN, 15);
+  
+  pdf.setFontSize(14);
+  pdf.text(`#${data.estimateNumber}`, PAGE_MARGIN, 25);
+  
+  // Si hay logo, agregarlo
+  if (data.contractor.logo) {
+    try {
+      pdf.addImage(data.contractor.logo, 'PNG', PAGE_WIDTH - 60, 10, 40, 20);
+    } catch (error) {
+      console.error("Error adding logo to PDF:", error);
+    }
+  }
+  
+  // Información de la empresa
+  pdf.setFontSize(12);
+  pdf.setFont("helvetica", "bold");
+  pdf.text(data.contractor.businessName, PAGE_WIDTH - PAGE_MARGIN - 80, 15, { align: 'right' });
+  
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(10);
+  if (data.contractor.address) {
+    pdf.text(data.contractor.address, PAGE_WIDTH - PAGE_MARGIN - 80, 20, { align: 'right' });
+  }
+  if (data.contractor.city && data.contractor.state) {
+    pdf.text(`${data.contractor.city}, ${data.contractor.state} ${data.contractor.zipCode || ''}`,
+      PAGE_WIDTH - PAGE_MARGIN - 80, 25, { align: 'right' });
+  }
+  if (data.contractor.phone) {
+    pdf.text(`Tel: ${data.contractor.phone}`, PAGE_WIDTH - PAGE_MARGIN - 80, 30, { align: 'right' });
+  }
+  if (data.contractor.email) {
+    pdf.text(`Email: ${data.contractor.email}`, PAGE_WIDTH - PAGE_MARGIN - 80, 35, { align: 'right' });
+  }
+  
+  // Línea de separación
+  pdf.setDrawColor(220, 220, 220);
+  pdf.line(PAGE_MARGIN, 45, PAGE_WIDTH - PAGE_MARGIN, 45);
+  
+  // Información del cliente y estimado
+  let currentY = 55;
+  
+  // Cliente
+  pdf.setFontSize(12);
+  pdf.setFont("helvetica", "bold");
+  pdf.setTextColor(PRIMARY_COLOR);
+  pdf.text("CLIENTE", PAGE_MARGIN, currentY);
+  
+  currentY += 8;
+  pdf.setFont("helvetica", "normal");
+  pdf.setTextColor(60, 60, 60);
+  pdf.setFontSize(11);
+  pdf.text(`${data.client.firstName} ${data.client.lastName}`, PAGE_MARGIN, currentY);
+  
+  currentY += 5;
+  if (data.client.email) {
+    pdf.setFontSize(10);
+    pdf.text(`Email: ${data.client.email}`, PAGE_MARGIN, currentY);
+    currentY += 5;
+  }
+  
+  if (data.client.phone) {
+    pdf.setFontSize(10);
+    pdf.text(`Tel: ${data.client.phone}`, PAGE_MARGIN, currentY);
+    currentY += 5;
+  }
+  
+  if (data.client.address) {
+    pdf.setFontSize(10);
+    pdf.text(data.client.address, PAGE_MARGIN, currentY);
+    currentY += 5;
+    
+    if (data.client.city && data.client.state) {
+      pdf.text(`${data.client.city}, ${data.client.state} ${data.client.zipCode || ''}`, PAGE_MARGIN, currentY);
+      currentY += 5;
+    }
+  }
+  
+  // Información del estimado (en la misma línea)
+  pdf.setFontSize(12);
+  pdf.setFont("helvetica", "bold");
+  pdf.setTextColor(PRIMARY_COLOR);
+  pdf.text("DETALLES DEL ESTIMADO", PAGE_WIDTH / 2, 55);
+  
+  currentY = 63;
+  pdf.setFont("helvetica", "normal");
+  pdf.setTextColor(60, 60, 60);
+  pdf.setFontSize(10);
+  
+  // Estado
+  pdf.setFont("helvetica", "bold");
+  pdf.text("Estado:", PAGE_WIDTH / 2, currentY);
+  pdf.setFont("helvetica", "normal");
+  pdf.text(getStatusText(data.status), PAGE_WIDTH / 2 + 25, currentY);
+  currentY += 6;
+  
+  // Fecha de emisión
+  pdf.setFont("helvetica", "bold");
+  pdf.text("Fecha de emisión:", PAGE_WIDTH / 2, currentY);
+  pdf.setFont("helvetica", "normal");
+  pdf.text(formatDate(data.issueDate), PAGE_WIDTH / 2 + 35, currentY);
+  currentY += 6;
+  
+  // Fecha de expiración
+  if (data.expiryDate) {
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Válido hasta:", PAGE_WIDTH / 2, currentY);
+    pdf.setFont("helvetica", "normal");
+    pdf.text(formatDate(data.expiryDate), PAGE_WIDTH / 2 + 30, currentY);
+    currentY += 6;
+  }
+  
+  // Proyecto (si está disponible)
+  if (data.projectTitle) {
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Proyecto:", PAGE_WIDTH / 2, currentY);
+    pdf.setFont("helvetica", "normal");
+    pdf.text(data.projectTitle, PAGE_WIDTH / 2 + 25, currentY);
+    currentY += 6;
+  }
+  
+  // Línea de separación
+  currentY = Math.max(currentY, 90); // Asegurar que hay suficiente espacio
+  pdf.setDrawColor(220, 220, 220);
+  pdf.line(PAGE_MARGIN, currentY, PAGE_WIDTH - PAGE_MARGIN, currentY);
+  
+  currentY += 10;
+  
+  // Tabla de ítems
+  pdf.setFontSize(12);
+  pdf.setFont("helvetica", "bold");
+  pdf.setTextColor(PRIMARY_COLOR);
+  pdf.text("DETALLE DE SERVICIOS", PAGE_MARGIN, currentY);
+  
+  currentY += 8;
+  
+  // Encabezados de tabla
+  pdf.setFillColor(247, 250, 252);
+  pdf.rect(PAGE_MARGIN, currentY, CONTENT_WIDTH, 8, 'F');
+  
+  pdf.setTextColor(60, 60, 60);
+  pdf.setFontSize(10);
+  pdf.text("Descripción", PAGE_MARGIN + 5, currentY + 5.5);
+  pdf.text("Cant.", PAGE_MARGIN + 100, currentY + 5.5);
+  pdf.text("Precio Unit.", PAGE_MARGIN + 125, currentY + 5.5);
+  pdf.text("Total", PAGE_MARGIN + 160, currentY + 5.5);
+  
+  currentY += 8;
+  
+  // Filas de ítems
+  let alternateRow = false;
+  for (const item of data.items) {
+    const itemHeight = 10;
+    
+    // Alternar colores de fondo para mejorar legibilidad
+    if (alternateRow) {
+      pdf.setFillColor(252, 252, 252);
+      pdf.rect(PAGE_MARGIN, currentY, CONTENT_WIDTH, itemHeight, 'F');
+    }
+    alternateRow = !alternateRow;
+    
+    // Verificar si necesitamos agregar una nueva página
+    if (currentY > 250) {
+      pdf.addPage();
+      currentY = 20;
+      // Encabezados de tabla en la nueva página
+      pdf.setFillColor(247, 250, 252);
+      pdf.rect(PAGE_MARGIN, currentY, CONTENT_WIDTH, 8, 'F');
+      
+      pdf.setTextColor(60, 60, 60);
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Descripción", PAGE_MARGIN + 5, currentY + 5.5);
+      pdf.text("Cant.", PAGE_MARGIN + 100, currentY + 5.5);
+      pdf.text("Precio Unit.", PAGE_MARGIN + 125, currentY + 5.5);
+      pdf.text("Total", PAGE_MARGIN + 160, currentY + 5.5);
+      
+      currentY += 8;
+    }
+    
+    pdf.setTextColor(60, 60, 60);
+    pdf.setFontSize(9);
+    pdf.setFont("helvetica", "normal");
+    
+    // Descripción (truncada si es muy larga)
+    const description = item.description.length > 50 
+      ? item.description.substring(0, 50) + "..." 
+      : item.description;
+    pdf.text(description, PAGE_MARGIN + 5, currentY + 5.5);
+    
+    // Cantidad
+    pdf.text(String(item.quantity), PAGE_MARGIN + 100, currentY + 5.5);
+    
+    // Precio unitario
+    const unitPriceNumber = typeof item.unitPrice === 'string' 
+      ? parseFloat(item.unitPrice) 
+      : item.unitPrice;
+    pdf.text(formatCurrency(unitPriceNumber), PAGE_MARGIN + 125, currentY + 5.5);
+    
+    // Monto total
+    const amountNumber = typeof item.amount === 'string' 
+      ? parseFloat(item.amount) 
+      : item.amount;
+    pdf.text(formatCurrency(amountNumber), PAGE_MARGIN + 160, currentY + 5.5);
+    
+    currentY += itemHeight;
+  }
+  
+  // Subtotal, impuestos, descuento y total
+  pdf.setDrawColor(220, 220, 220);
+  pdf.line(PAGE_MARGIN, currentY, PAGE_WIDTH - PAGE_MARGIN, currentY);
+  
+  currentY += 5;
+  
+  // Verificar si necesitamos agregar una nueva página para los totales
+  if (currentY > 250) {
+    pdf.addPage();
+    currentY = 20;
+  }
+  
+  // Alinear totales a la derecha
+  pdf.setTextColor(60, 60, 60);
+  pdf.setFontSize(10);
+  
+  // Subtotal
+  pdf.setFont("helvetica", "normal");
+  pdf.text("Subtotal:", PAGE_WIDTH - PAGE_MARGIN - 60, currentY + 5);
+  pdf.setFont("helvetica", "bold");
+  pdf.text(formatCurrency(data.subtotal), PAGE_WIDTH - PAGE_MARGIN, currentY + 5, { align: 'right' });
+  
+  currentY += 8;
+  
+  // Impuestos (si aplican)
+  if (data.tax && Number(data.tax) > 0) {
+    pdf.setFont("helvetica", "normal");
+    pdf.text(`Impuesto (${data.tax}%):`, PAGE_WIDTH - PAGE_MARGIN - 60, currentY + 5);
+    
+    const taxAmount = parseFloat(String(data.subtotal)) * (parseFloat(String(data.tax)) / 100);
+    pdf.setFont("helvetica", "bold");
+    pdf.text(formatCurrency(taxAmount), PAGE_WIDTH - PAGE_MARGIN, currentY + 5, { align: 'right' });
+    
+    currentY += 8;
+  }
+  
+  // Descuento (si aplica)
+  if (data.discount && Number(data.discount) > 0) {
+    pdf.setFont("helvetica", "normal");
+    pdf.text(`Descuento (${data.discount}%):`, PAGE_WIDTH - PAGE_MARGIN - 60, currentY + 5);
+    
+    const discountAmount = parseFloat(String(data.subtotal)) * (parseFloat(String(data.discount)) / 100);
+    pdf.setFont("helvetica", "bold");
+    pdf.text(`-${formatCurrency(discountAmount)}`, PAGE_WIDTH - PAGE_MARGIN, currentY + 5, { align: 'right' });
+    
+    currentY += 8;
+  }
+  
+  // Total
+  pdf.setDrawColor(180, 180, 180);
+  pdf.line(PAGE_WIDTH - PAGE_MARGIN - 60, currentY + 1, PAGE_WIDTH - PAGE_MARGIN, currentY + 1);
+  
+  currentY += 3;
+  
+  pdf.setFontSize(11);
+  pdf.setFont("helvetica", "bold");
+  pdf.setTextColor(PRIMARY_COLOR);
+  pdf.text("TOTAL:", PAGE_WIDTH - PAGE_MARGIN - 60, currentY + 5);
+  pdf.text(formatCurrency(data.total), PAGE_WIDTH - PAGE_MARGIN, currentY + 5, { align: 'right' });
+  
+  currentY += 15;
+  
+  // Términos y condiciones
+  if (data.terms) {
+    // Verificar si necesitamos agregar una nueva página
+    if (currentY > 230) {
+      pdf.addPage();
+      currentY = 20;
+    }
+    
+    pdf.setFontSize(11);
+    pdf.setFont("helvetica", "bold");
+    pdf.setTextColor(PRIMARY_COLOR);
+    pdf.text("TÉRMINOS Y CONDICIONES", PAGE_MARGIN, currentY);
+    
+    currentY += 8;
+    
+    pdf.setFontSize(9);
+    pdf.setFont("helvetica", "normal");
+    pdf.setTextColor(80, 80, 80);
+    
+    // Dividir los términos en múltiples líneas si es necesario
+    const termLines = pdf.splitTextToSize(data.terms, CONTENT_WIDTH);
+    pdf.text(termLines, PAGE_MARGIN, currentY);
+    
+    currentY += (termLines.length * 5) + 10;
+  }
+  
+  // Notas adicionales
+  if (data.notes) {
+    // Verificar si necesitamos agregar una nueva página
+    if (currentY > 230) {
+      pdf.addPage();
+      currentY = 20;
+    }
+    
+    pdf.setFontSize(11);
+    pdf.setFont("helvetica", "bold");
+    pdf.setTextColor(PRIMARY_COLOR);
+    pdf.text("NOTAS", PAGE_MARGIN, currentY);
+    
+    currentY += 8;
+    
+    pdf.setFontSize(9);
+    pdf.setFont("helvetica", "normal");
+    pdf.setTextColor(80, 80, 80);
+    
+    // Dividir las notas en múltiples líneas si es necesario
+    const noteLines = pdf.splitTextToSize(data.notes, CONTENT_WIDTH);
+    pdf.text(noteLines, PAGE_MARGIN, currentY);
+    
+    currentY += (noteLines.length * 5) + 10;
+  }
+  
+  // Pie de página
+  const footerY = 280;
+  
+  pdf.setFontSize(8);
+  pdf.setTextColor(120, 120, 120);
+  pdf.text(`Generado el ${new Date().toLocaleDateString()} por ${data.contractor.businessName}`, 
+    PAGE_MARGIN, footerY);
+  
+  pdf.text("Página 1", PAGE_WIDTH - PAGE_MARGIN, footerY, { align: 'right' });
+  
+  return pdf.output('blob');
+}
+
+/**
+ * Genera un PDF a partir de una factura
+ */
+export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4'
+  });
+  
+  // Configuración de fuentes
+  pdf.setFont("helvetica");
+  
+  // Encabezado con logo y datos de la empresa
+  pdf.setFillColor(247, 250, 252); // Fondo gris claro
+  pdf.rect(0, 0, PAGE_WIDTH, 40, 'F');
+  
+  pdf.setTextColor(PRIMARY_COLOR);
+  pdf.setFontSize(22);
+  pdf.setFont("helvetica", "bold");
+  pdf.text("FACTURA", PAGE_MARGIN, 15);
+  
+  pdf.setFontSize(14);
+  pdf.text(`#${data.invoiceNumber}`, PAGE_MARGIN, 25);
+  
+  // Si hay logo, agregarlo
+  if (data.contractor.logo) {
+    try {
+      pdf.addImage(data.contractor.logo, 'PNG', PAGE_WIDTH - 60, 10, 40, 20);
+    } catch (error) {
+      console.error("Error adding logo to PDF:", error);
+    }
+  }
+  
+  // Información de la empresa
+  pdf.setFontSize(12);
+  pdf.setFont("helvetica", "bold");
+  pdf.text(data.contractor.businessName, PAGE_WIDTH - PAGE_MARGIN - 80, 15, { align: 'right' });
+  
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(10);
+  if (data.contractor.address) {
+    pdf.text(data.contractor.address, PAGE_WIDTH - PAGE_MARGIN - 80, 20, { align: 'right' });
+  }
+  if (data.contractor.city && data.contractor.state) {
+    pdf.text(`${data.contractor.city}, ${data.contractor.state} ${data.contractor.zipCode || ''}`,
+      PAGE_WIDTH - PAGE_MARGIN - 80, 25, { align: 'right' });
+  }
+  if (data.contractor.phone) {
+    pdf.text(`Tel: ${data.contractor.phone}`, PAGE_WIDTH - PAGE_MARGIN - 80, 30, { align: 'right' });
+  }
+  if (data.contractor.email) {
+    pdf.text(`Email: ${data.contractor.email}`, PAGE_WIDTH - PAGE_MARGIN - 80, 35, { align: 'right' });
+  }
+  
+  // Línea de separación
+  pdf.setDrawColor(220, 220, 220);
+  pdf.line(PAGE_MARGIN, 45, PAGE_WIDTH - PAGE_MARGIN, 45);
+  
+  // Información del cliente y factura
+  let currentY = 55;
+  
+  // Cliente
+  pdf.setFontSize(12);
+  pdf.setFont("helvetica", "bold");
+  pdf.setTextColor(PRIMARY_COLOR);
+  pdf.text("CLIENTE", PAGE_MARGIN, currentY);
+  
+  currentY += 8;
+  pdf.setFont("helvetica", "normal");
+  pdf.setTextColor(60, 60, 60);
+  pdf.setFontSize(11);
+  pdf.text(`${data.client.firstName} ${data.client.lastName}`, PAGE_MARGIN, currentY);
+  
+  currentY += 5;
+  if (data.client.email) {
+    pdf.setFontSize(10);
+    pdf.text(`Email: ${data.client.email}`, PAGE_MARGIN, currentY);
+    currentY += 5;
+  }
+  
+  if (data.client.phone) {
+    pdf.setFontSize(10);
+    pdf.text(`Tel: ${data.client.phone}`, PAGE_MARGIN, currentY);
+    currentY += 5;
+  }
+  
+  if (data.client.address) {
+    pdf.setFontSize(10);
+    pdf.text(data.client.address, PAGE_MARGIN, currentY);
+    currentY += 5;
+    
+    if (data.client.city && data.client.state) {
+      pdf.text(`${data.client.city}, ${data.client.state} ${data.client.zipCode || ''}`, PAGE_MARGIN, currentY);
+      currentY += 5;
+    }
+  }
+  
+  // Información de la factura (en la misma línea)
+  pdf.setFontSize(12);
+  pdf.setFont("helvetica", "bold");
+  pdf.setTextColor(PRIMARY_COLOR);
+  pdf.text("DETALLES DE LA FACTURA", PAGE_WIDTH / 2, 55);
+  
+  currentY = 63;
+  pdf.setFont("helvetica", "normal");
+  pdf.setTextColor(60, 60, 60);
+  pdf.setFontSize(10);
+  
+  // Estado
+  pdf.setFont("helvetica", "bold");
+  pdf.text("Estado:", PAGE_WIDTH / 2, currentY);
+  pdf.setFont("helvetica", "normal");
+  pdf.text(getStatusText(data.status), PAGE_WIDTH / 2 + 25, currentY);
+  currentY += 6;
+  
+  // Fecha de emisión
+  pdf.setFont("helvetica", "bold");
+  pdf.text("Fecha de emisión:", PAGE_WIDTH / 2, currentY);
+  pdf.setFont("helvetica", "normal");
+  pdf.text(formatDate(data.issueDate), PAGE_WIDTH / 2 + 35, currentY);
+  currentY += 6;
+  
+  // Fecha de vencimiento
+  if (data.dueDate) {
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Fecha de vencimiento:", PAGE_WIDTH / 2, currentY);
+    pdf.setFont("helvetica", "normal");
+    pdf.text(formatDate(data.dueDate), PAGE_WIDTH / 2 + 45, currentY);
+    currentY += 6;
+  }
+  
+  // Método de pago
+  if (data.paymentMethod) {
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Método de pago:", PAGE_WIDTH / 2, currentY);
+    pdf.setFont("helvetica", "normal");
+    pdf.text(data.paymentMethod, PAGE_WIDTH / 2 + 35, currentY);
+    currentY += 6;
+  }
+  
+  // Proyecto (si está disponible)
+  if (data.projectTitle) {
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Proyecto:", PAGE_WIDTH / 2, currentY);
+    pdf.setFont("helvetica", "normal");
+    pdf.text(data.projectTitle, PAGE_WIDTH / 2 + 25, currentY);
+    currentY += 6;
+  }
+  
+  // Línea de separación
+  currentY = Math.max(currentY, 90); // Asegurar que hay suficiente espacio
+  pdf.setDrawColor(220, 220, 220);
+  pdf.line(PAGE_MARGIN, currentY, PAGE_WIDTH - PAGE_MARGIN, currentY);
+  
+  currentY += 10;
+  
+  // Tabla de ítems
+  pdf.setFontSize(12);
+  pdf.setFont("helvetica", "bold");
+  pdf.setTextColor(PRIMARY_COLOR);
+  pdf.text("DETALLE DE SERVICIOS", PAGE_MARGIN, currentY);
+  
+  currentY += 8;
+  
+  // Encabezados de tabla
+  pdf.setFillColor(247, 250, 252);
+  pdf.rect(PAGE_MARGIN, currentY, CONTENT_WIDTH, 8, 'F');
+  
+  pdf.setTextColor(60, 60, 60);
+  pdf.setFontSize(10);
+  pdf.text("Descripción", PAGE_MARGIN + 5, currentY + 5.5);
+  pdf.text("Cant.", PAGE_MARGIN + 100, currentY + 5.5);
+  pdf.text("Precio Unit.", PAGE_MARGIN + 125, currentY + 5.5);
+  pdf.text("Total", PAGE_MARGIN + 160, currentY + 5.5);
+  
+  currentY += 8;
+  
+  // Filas de ítems
+  let alternateRow = false;
+  for (const item of data.items) {
+    const itemHeight = 10;
+    
+    // Alternar colores de fondo para mejorar legibilidad
+    if (alternateRow) {
+      pdf.setFillColor(252, 252, 252);
+      pdf.rect(PAGE_MARGIN, currentY, CONTENT_WIDTH, itemHeight, 'F');
+    }
+    alternateRow = !alternateRow;
+    
+    // Verificar si necesitamos agregar una nueva página
+    if (currentY > 250) {
+      pdf.addPage();
+      currentY = 20;
+      // Encabezados de tabla en la nueva página
+      pdf.setFillColor(247, 250, 252);
+      pdf.rect(PAGE_MARGIN, currentY, CONTENT_WIDTH, 8, 'F');
+      
+      pdf.setTextColor(60, 60, 60);
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Descripción", PAGE_MARGIN + 5, currentY + 5.5);
+      pdf.text("Cant.", PAGE_MARGIN + 100, currentY + 5.5);
+      pdf.text("Precio Unit.", PAGE_MARGIN + 125, currentY + 5.5);
+      pdf.text("Total", PAGE_MARGIN + 160, currentY + 5.5);
+      
+      currentY += 8;
+    }
+    
+    pdf.setTextColor(60, 60, 60);
+    pdf.setFontSize(9);
+    pdf.setFont("helvetica", "normal");
+    
+    // Descripción (truncada si es muy larga)
+    const description = item.description.length > 50 
+      ? item.description.substring(0, 50) + "..." 
+      : item.description;
+    pdf.text(description, PAGE_MARGIN + 5, currentY + 5.5);
+    
+    // Cantidad
+    pdf.text(String(item.quantity), PAGE_MARGIN + 100, currentY + 5.5);
+    
+    // Precio unitario
+    const unitPriceNumber = typeof item.unitPrice === 'string' 
+      ? parseFloat(item.unitPrice) 
+      : item.unitPrice;
+    pdf.text(formatCurrency(unitPriceNumber), PAGE_MARGIN + 125, currentY + 5.5);
+    
+    // Monto total
+    const amountNumber = typeof item.amount === 'string' 
+      ? parseFloat(item.amount) 
+      : item.amount;
+    pdf.text(formatCurrency(amountNumber), PAGE_MARGIN + 160, currentY + 5.5);
+    
+    currentY += itemHeight;
+  }
+  
+  // Subtotal, impuestos, descuento y total
+  pdf.setDrawColor(220, 220, 220);
+  pdf.line(PAGE_MARGIN, currentY, PAGE_WIDTH - PAGE_MARGIN, currentY);
+  
+  currentY += 5;
+  
+  // Verificar si necesitamos agregar una nueva página para los totales
+  if (currentY > 250) {
+    pdf.addPage();
+    currentY = 20;
+  }
+  
+  // Alinear totales a la derecha
+  pdf.setTextColor(60, 60, 60);
+  pdf.setFontSize(10);
+  
+  // Subtotal
+  pdf.setFont("helvetica", "normal");
+  pdf.text("Subtotal:", PAGE_WIDTH - PAGE_MARGIN - 60, currentY + 5);
+  pdf.setFont("helvetica", "bold");
+  pdf.text(formatCurrency(data.subtotal), PAGE_WIDTH - PAGE_MARGIN, currentY + 5, { align: 'right' });
+  
+  currentY += 8;
+  
+  // Impuestos (si aplican)
+  if (data.tax && Number(data.tax) > 0) {
+    pdf.setFont("helvetica", "normal");
+    pdf.text(`Impuesto (${data.tax}%):`, PAGE_WIDTH - PAGE_MARGIN - 60, currentY + 5);
+    
+    const taxAmount = parseFloat(String(data.subtotal)) * (parseFloat(String(data.tax)) / 100);
+    pdf.setFont("helvetica", "bold");
+    pdf.text(formatCurrency(taxAmount), PAGE_WIDTH - PAGE_MARGIN, currentY + 5, { align: 'right' });
+    
+    currentY += 8;
+  }
+  
+  // Descuento (si aplica)
+  if (data.discount && Number(data.discount) > 0) {
+    pdf.setFont("helvetica", "normal");
+    pdf.text(`Descuento (${data.discount}%):`, PAGE_WIDTH - PAGE_MARGIN - 60, currentY + 5);
+    
+    const discountAmount = parseFloat(String(data.subtotal)) * (parseFloat(String(data.discount)) / 100);
+    pdf.setFont("helvetica", "bold");
+    pdf.text(`-${formatCurrency(discountAmount)}`, PAGE_WIDTH - PAGE_MARGIN, currentY + 5, { align: 'right' });
+    
+    currentY += 8;
+  }
+  
+  // Total
+  pdf.setDrawColor(180, 180, 180);
+  pdf.line(PAGE_WIDTH - PAGE_MARGIN - 60, currentY + 1, PAGE_WIDTH - PAGE_MARGIN, currentY + 1);
+  
+  currentY += 3;
+  
+  pdf.setFontSize(11);
+  pdf.setFont("helvetica", "bold");
+  pdf.setTextColor(PRIMARY_COLOR);
+  pdf.text("TOTAL:", PAGE_WIDTH - PAGE_MARGIN - 60, currentY + 5);
+  pdf.text(formatCurrency(data.total), PAGE_WIDTH - PAGE_MARGIN, currentY + 5, { align: 'right' });
+  
+  // Mostrar monto pagado si hay
+  if (data.amountPaid && Number(data.amountPaid) > 0) {
+    currentY += 8;
+    pdf.setFont("helvetica", "normal");
+    pdf.setTextColor(60, 60, 60);
+    pdf.text("Pagado:", PAGE_WIDTH - PAGE_MARGIN - 60, currentY + 5);
+    
+    pdf.setFont("helvetica", "bold");
+    pdf.setTextColor(39, 174, 96); // Verde para pagos
+    pdf.text(formatCurrency(data.amountPaid), PAGE_WIDTH - PAGE_MARGIN, currentY + 5, { align: 'right' });
+    
+    // Saldo pendiente
+    currentY += 8;
+    pdf.setFont("helvetica", "normal");
+    pdf.setTextColor(60, 60, 60);
+    pdf.text("Saldo pendiente:", PAGE_WIDTH - PAGE_MARGIN - 60, currentY + 5);
+    
+    const pendingAmount = parseFloat(String(data.total)) - parseFloat(String(data.amountPaid));
+    pdf.setFont("helvetica", "bold");
+    // Color rojo si hay pendiente, verde si está completo
+    if (pendingAmount > 0) {
+      pdf.setTextColor(231, 76, 60); 
+    } else {
+      pdf.setTextColor(39, 174, 96);
+    }
+    pdf.text(formatCurrency(pendingAmount), PAGE_WIDTH - PAGE_MARGIN, currentY + 5, { align: 'right' });
+  }
+  
+  currentY += 15;
+  
+  // Firma del cliente si está disponible
+  if (data.clientSignature) {
+    // Verificar si necesitamos agregar una nueva página
+    if (currentY > 220) {
+      pdf.addPage();
+      currentY = 20;
+    }
+    
+    pdf.setFontSize(11);
+    pdf.setFont("helvetica", "bold");
+    pdf.setTextColor(PRIMARY_COLOR);
+    pdf.text("FIRMA DEL CLIENTE", PAGE_MARGIN, currentY);
+    
+    currentY += 8;
+    
+    try {
+      // Agregar la imagen de la firma
+      pdf.addImage(data.clientSignature, 'PNG', PAGE_MARGIN, currentY, 60, 30);
+      
+      currentY += 35;
+      
+      pdf.setFontSize(9);
+      pdf.setFont("helvetica", "normal");
+      pdf.setTextColor(80, 80, 80);
+      pdf.text(`Fecha de firma: ${formatDate(new Date())}`, PAGE_MARGIN, currentY);
+      
+      currentY += 10;
+    } catch (error) {
+      console.error("Error adding signature to PDF:", error);
+      
+      pdf.setFontSize(9);
+      pdf.setFont("helvetica", "normal");
+      pdf.setTextColor(200, 0, 0);
+      pdf.text("Error al cargar la firma del cliente", PAGE_MARGIN, currentY);
+      
+      currentY += 10;
+    }
+  }
+  
+  // Términos y condiciones
+  if (data.terms) {
+    // Verificar si necesitamos agregar una nueva página
+    if (currentY > 230) {
+      pdf.addPage();
+      currentY = 20;
+    }
+    
+    pdf.setFontSize(11);
+    pdf.setFont("helvetica", "bold");
+    pdf.setTextColor(PRIMARY_COLOR);
+    pdf.text("TÉRMINOS Y CONDICIONES", PAGE_MARGIN, currentY);
+    
+    currentY += 8;
+    
+    pdf.setFontSize(9);
+    pdf.setFont("helvetica", "normal");
+    pdf.setTextColor(80, 80, 80);
+    
+    // Dividir los términos en múltiples líneas si es necesario
+    const termLines = pdf.splitTextToSize(data.terms, CONTENT_WIDTH);
+    pdf.text(termLines, PAGE_MARGIN, currentY);
+    
+    currentY += (termLines.length * 5) + 10;
+  }
+  
+  // Notas adicionales
+  if (data.notes) {
+    // Verificar si necesitamos agregar una nueva página
+    if (currentY > 230) {
+      pdf.addPage();
+      currentY = 20;
+    }
+    
+    pdf.setFontSize(11);
+    pdf.setFont("helvetica", "bold");
+    pdf.setTextColor(PRIMARY_COLOR);
+    pdf.text("NOTAS", PAGE_MARGIN, currentY);
+    
+    currentY += 8;
+    
+    pdf.setFontSize(9);
+    pdf.setFont("helvetica", "normal");
+    pdf.setTextColor(80, 80, 80);
+    
+    // Dividir las notas en múltiples líneas si es necesario
+    const noteLines = pdf.splitTextToSize(data.notes, CONTENT_WIDTH);
+    pdf.text(noteLines, PAGE_MARGIN, currentY);
+    
+    currentY += (noteLines.length * 5) + 10;
+  }
+  
+  // Pie de página
+  const footerY = 280;
+  
+  pdf.setFontSize(8);
+  pdf.setTextColor(120, 120, 120);
+  pdf.text(`Generado el ${new Date().toLocaleDateString()} por ${data.contractor.businessName}`, 
+    PAGE_MARGIN, footerY);
+  
+  pdf.text("Página 1", PAGE_WIDTH - PAGE_MARGIN, footerY, { align: 'right' });
+  
+  return pdf.output('blob');
+}
+
+/**
+ * Función de utilidad para descargar un blob como un archivo
+ */
+export function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Función para generar y descargar un PDF de estimado
+ */
+export async function downloadEstimatePDF(estimate: EstimateData): Promise<void> {
+  const blob = await generateEstimatePDF(estimate);
+  downloadBlob(blob, `Estimado_${estimate.estimateNumber}.pdf`);
+}
+
+/**
+ * Función para generar y descargar un PDF de factura
+ */
+export async function downloadInvoicePDF(invoice: InvoiceData): Promise<void> {
+  const blob = await generateInvoicePDF(invoice);
+  downloadBlob(blob, `Factura_${invoice.invoiceNumber}.pdf`);
+}

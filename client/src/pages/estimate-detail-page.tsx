@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { useRoute, Link } from "wouter";
-import { Loader2, ChevronLeft, FileText, Send, Printer, Check, X, BanknoteIcon } from "lucide-react";
+import { Loader2, ChevronLeft, FileText, Send, Printer, Check, X, BanknoteIcon, Download } from "lucide-react";
 import { useEstimates } from "@/hooks/use-estimates";
+import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useQueryClient } from "@tanstack/react-query";
 import { EstimateClientLink } from "@/components/estimates/estimate-client-link";
+import { downloadEstimatePDF } from "@/lib/pdf-generator";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -205,10 +207,76 @@ export default function EstimateDetailPage() {
           </div>
           
           <div className="flex gap-2">
+            <Button variant="outline" onClick={async () => {
+              try {
+                // Obtener datos del usuario actual
+                const { user } = useAuth();
+                if (!user) throw new Error("Usuario no autenticado");
+                
+                // Preparar datos para el PDF
+                const pdfData = {
+                  estimateNumber: estimate.estimateNumber || `#${estimate.id}`,
+                  status: estimate.status,
+                  issueDate: estimate.issueDate,
+                  expiryDate: estimate.expiryDate,
+                  subtotal: estimate.subtotal,
+                  tax: estimate.tax,
+                  discount: estimate.discount,
+                  total: estimate.total,
+                  terms: estimate.terms,
+                  notes: estimate.notes,
+                  items: estimate.items || [],
+                  client: {
+                    firstName: estimate.client?.firstName || "",
+                    lastName: estimate.client?.lastName || "",
+                    email: estimate.client?.email,
+                    phone: estimate.client?.phone,
+                    address: estimate.client?.address,
+                    city: estimate.client?.city,
+                    state: estimate.client?.state,
+                    zipCode: estimate.client?.zipCode
+                  },
+                  contractor: {
+                    businessName: user.businessName || `${user.firstName} ${user.lastName}`,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    email: user.email,
+                    phone: user.phone,
+                    address: user.address,
+                    city: user.city,
+                    state: user.state,
+                    zipCode: user.zipCode
+                  },
+                  projectTitle: estimate.project?.title,
+                  projectDescription: estimate.project?.description
+                };
+                
+                // Generar y descargar el PDF
+                await downloadEstimatePDF(pdfData);
+                
+                toast({
+                  title: "PDF generado",
+                  description: "El PDF del estimado se ha descargado correctamente.",
+                });
+              } catch (error) {
+                console.error("Error al generar PDF:", error);
+                toast({
+                  title: "Error al generar PDF",
+                  description: error instanceof Error ? error.message : "Error desconocido",
+                  variant: "destructive"
+                });
+              }
+            }}>
+              <Download className="h-4 w-4 mr-2" />
+              Descargar PDF
+            </Button>
+            
             <Button variant="outline" onClick={() => {
+              // Redirigir a la versión de impresión
+              window.open(`/estimates/${estimate.id}/print`, '_blank');
               toast({
-                title: "Funcionalidad en desarrollo",
-                description: "La funcionalidad de impresión será implementada próximamente.",
+                title: "Vista de impresión",
+                description: "Se ha abierto la vista de impresión del estimado."
               });
             }}>
               <Printer className="h-4 w-4 mr-2" />
