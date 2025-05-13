@@ -3,6 +3,26 @@ import html2canvas from 'html2canvas';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
+// Interface for template configuration
+export interface PdfTemplateConfig {
+  logo?: boolean;
+  showHeader?: boolean;
+  showFooter?: boolean;
+  showItemDetails?: boolean;
+  showItemNotes?: boolean;
+  showProjectDetails?: boolean;
+  showClientDetails?: boolean;
+  colorPrimary?: string;
+  colorSecondary?: string;
+  fontMain?: string;
+  headerStyle?: 'simple' | 'gradient' | 'boxed';
+  tableStyle?: 'striped' | 'bordered' | 'minimal';
+  showTerms?: boolean;
+  showNotes?: boolean;
+  showSignatureLine?: boolean;
+  showDates?: boolean;
+}
+
 // Tipos para estimados y facturas
 interface Item {
   description: string;
@@ -139,15 +159,24 @@ const formatCurrency = (amount: number | string) => {
 
 // Formateo de fechas
 const formatDate = (dateString?: string | Date | null) => {
-  if (!dateString) return "No especificada";
-  return format(new Date(dateString), "d 'de' MMMM, yyyy", { locale: es });
+  if (!dateString) return "Not specified";
+  // Check if we should use Spanish or English format based on localStorage setting
+  const useSpanish = localStorage.getItem('language') === 'es';
+  if (useSpanish) {
+    return format(new Date(dateString), "d 'de' MMMM, yyyy", { locale: es });
+  } else {
+    return format(new Date(dateString), "MMMM d, yyyy");
+  }
 };
 
 /**
  * Obtiene el valor de un objeto de estado para PDFs
  */
 function getStatusText(status: string): string {
-  const statusMap: Record<string, string> = {
+  // Check language preference
+  const useSpanish = localStorage.getItem('language') === 'es';
+  
+  const statusMapEs: Record<string, string> = {
     'draft': 'Borrador',
     'pending': 'Pendiente',
     'sent': 'Enviado',
@@ -159,6 +188,21 @@ function getStatusText(status: string): string {
     'overdue': 'Vencido',
     'cancelled': 'Cancelado'
   };
+  
+  const statusMapEn: Record<string, string> = {
+    'draft': 'Draft',
+    'pending': 'Pending',
+    'sent': 'Sent',
+    'accepted': 'Accepted',
+    'rejected': 'Rejected',
+    'converted': 'Converted to Invoice',
+    'paid': 'Paid',
+    'partially_paid': 'Partially Paid',
+    'overdue': 'Overdue',
+    'cancelled': 'Cancelled'
+  };
+  
+  const statusMap = useSpanish ? statusMapEs : statusMapEn;
   return statusMap[status.toLowerCase()] || status;
 }
 
@@ -541,6 +585,10 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
  * Genera un PDF a partir de una factura
  */
 export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
+  // Get template settings
+  const templateSettings = getTemplateSettings();
+  const { PRIMARY_COLOR, SECONDARY_COLOR, ACCENT_COLOR } = getColorSettings();
+  
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -548,16 +596,32 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   });
   
   // Configuración de fuentes
-  pdf.setFont("helvetica");
+  const fontFamily = templateSettings?.fontMain || "helvetica";
+  pdf.setFont(fontFamily);
   
-  // Encabezado con logo y datos de la empresa
-  pdf.setFillColor(247, 250, 252); // Fondo gris claro
-  pdf.rect(0, 0, PAGE_WIDTH, 40, 'F');
+  // Apply header style based on settings
+  if (templateSettings?.showHeader !== false) {
+    const headerStyle = templateSettings?.headerStyle || 'gradient';
+    
+    if (headerStyle === 'gradient') {
+      // Gradient header
+      pdf.setFillColor(247, 250, 252); // Fondo gris claro
+      pdf.rect(0, 0, PAGE_WIDTH, 40, 'F');
+    } else if (headerStyle === 'boxed') {
+      // Boxed header
+      pdf.setDrawColor(parseInt(PRIMARY_COLOR.slice(1, 3), 16), 
+                      parseInt(PRIMARY_COLOR.slice(3, 5), 16), 
+                      parseInt(PRIMARY_COLOR.slice(5, 7), 16));
+      pdf.setLineWidth(0.5);
+      pdf.rect(PAGE_MARGIN - 5, 5, CONTENT_WIDTH + 10, 35);
+    }
+    // Simple style doesn't need special formatting
+  }
   
   pdf.setTextColor(PRIMARY_COLOR);
   pdf.setFontSize(22);
-  pdf.setFont("helvetica", "bold");
-  pdf.text("FACTURA", PAGE_MARGIN, 15);
+  pdf.setFont(fontFamily, "bold");
+  pdf.text("INVOICE", PAGE_MARGIN, 15);
   
   pdf.setFontSize(14);
   pdf.text(`#${data.invoiceNumber}`, PAGE_MARGIN, 25);
