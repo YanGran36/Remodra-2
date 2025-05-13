@@ -164,7 +164,7 @@ export async function checkAndUpdateAchievement(data: AchievementCheckData) {
       throw new Error(`Logro con código ${data.code} no encontrado`);
     }
     
-    // Verificar si el contratista ya tiene este logro
+    // Check if the contractor already has this achievement
     let contractorAchievement = await db.query.contractorAchievements.findFirst({
       where: and(
         eq(contractorAchievements.contractorId, data.contractorId),
@@ -238,7 +238,7 @@ export async function checkAndUpdateAchievement(data: AchievementCheckData) {
         let newLevel = streak.level;
         let newNextLevelXp = streak.nextLevelXp;
         
-        // Verificar si subió de nivel
+        // Check if level increased
         if (newXp >= levelUpThreshold) {
           newLevel += 1;
           newNextLevelXp = Math.round(levelUpThreshold * 1.5); // Incremento del 50% para el siguiente nivel

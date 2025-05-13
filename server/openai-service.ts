@@ -184,7 +184,7 @@ export async function analyzeJobCost(params: JobCostAnalysisParams): Promise<Job
       const openaiError = error as { message?: string };
       console.error("Error específico de OpenAI en análisis:", openaiError);
       
-      // Verificar si es un error de API key
+      // Check if it is an API key error
       if (openaiError.message && typeof openaiError.message === 'string' && openaiError.message.includes("api_key")) {
         throw new Error("Error de autenticación con OpenAI. Verifica la clave API.");
       }
@@ -199,8 +199,8 @@ export async function analyzeJobCost(params: JobCostAnalysisParams): Promise<Job
 
 export async function generateJobDescription(params: JobCostAnalysisParams): Promise<string> {
   try {
-    log("Generando descripción del trabajo con OpenAI", "openai");
-    console.log("Parámetros recibidos:", {
+    log("Generating job description with OpenAI", "openai");
+    console.log("Parameters received:", {
       serviceType: params.serviceType,
       materialsCount: params.materials?.length || 0,
       hasLocation: !!params.location,
@@ -208,40 +208,40 @@ export async function generateJobDescription(params: JobCostAnalysisParams): Pro
       hasAdditionalInfo: !!params.additionalInfo
     });
 
-    // Preparar los datos para enviar a la API
+    // Prepare the data to send to the API
     const prompt = `
-    Eres un contratista profesional. Crea una descripción concisa, directa y fácil de entender para este proyecto:
+    You are a professional contractor. Create a concise, direct, and easy-to-understand description for this project:
 
-    INFORMACIÓN DEL TRABAJO:
-    - Tipo de servicio: ${params.serviceType}
-    - Materiales principales: ${params.materials.map(m => m.name).join(", ")}
-    ${params.propertySize?.squareFeet ? `- Tamaño de la propiedad (pies cuadrados): ${params.propertySize.squareFeet}` : ''}
-    ${params.propertySize?.linearFeet ? `- Tamaño de la propiedad (pies lineales): ${params.propertySize.linearFeet}` : ''}
-    ${params.propertySize?.units ? `- Unidades: ${params.propertySize.units}` : ''}
-    ${params.location ? `- Ubicación: ${params.location}` : ''}
-    ${params.difficulty ? `- Dificultad del trabajo: ${params.difficulty}` : ''}
-    ${params.additionalInfo ? `- Información adicional: ${params.additionalInfo}` : ''}
+    JOB INFORMATION:
+    - Service type: ${params.serviceType}
+    - Main materials: ${params.materials.map(m => m.name).join(", ")}
+    ${params.propertySize?.squareFeet ? `- Property size (square feet): ${params.propertySize.squareFeet}` : ''}
+    ${params.propertySize?.linearFeet ? `- Property size (linear feet): ${params.propertySize.linearFeet}` : ''}
+    ${params.propertySize?.units ? `- Units: ${params.propertySize.units}` : ''}
+    ${params.location ? `- Location: ${params.location}` : ''}
+    ${params.difficulty ? `- Job difficulty: ${params.difficulty}` : ''}
+    ${params.additionalInfo ? `- Additional information: ${params.additionalInfo}` : ''}
 
-    La descripción debe ser:
-    1. Corta y directa (máximo 150 palabras)
-    2. Estructurada en formato de lista con viñetas (•)
-    3. Fácil de leer para clientes sin conocimientos técnicos
-    4. Incluir exactamente estos 4 puntos, cada uno como un párrafo separado con una viñeta (•):
-      • Qué servicio exactamente se realizará
-      • Qué materiales se usarán y por qué son buenos
-      • Cuánto tiempo aproximadamente tomará el trabajo
-      • Qué beneficio principal obtendrá el cliente
+    The description should be:
+    1. Short and direct (maximum 150 words)
+    2. Structured in a bulleted list format (•)
+    3. Easy to read for clients without technical knowledge
+    4. Include exactly these 4 points, each as a separate paragraph with a bullet point (•):
+      • What service will be performed exactly
+      • What materials will be used and why they are good
+      • Approximately how long the job will take
+      • What main benefit the client will receive
 
-    Usa un tono profesional pero sencillo, como si hablaras directamente con un cliente. No incluyas precios específicos.
+    Use a professional but simple tone, as if you were speaking directly to a client. Do not include specific prices.
     `;
 
-    console.log("Enviando prompt a OpenAI:", prompt);
+    console.log("Sending prompt to OpenAI:", prompt);
 
-    // Llamada a la API de OpenAI
+    // Call to the OpenAI API
     try {
-      console.log("Iniciando llamada a OpenAI API...");
+      console.log("Starting OpenAI API call...");
       const response = await openai.chat.completions.create({
-        model: "gpt-4o", // la nueva versión del modelo es "gpt-4o" que fue lanzada el 13 de mayo, 2024. utilizar esta versión
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7
       });
@@ -264,7 +264,7 @@ export async function generateJobDescription(params: JobCostAnalysisParams): Pro
       const openaiError = error as { message?: string };
       console.error("Error específico de OpenAI:", openaiError);
       
-      // Verificar si es un error de API key
+      // Check if it is an API key error
       if (openaiError.message && typeof openaiError.message === 'string' && openaiError.message.includes("api_key")) {
         throw new Error("Error de autenticación con OpenAI. Verifica la clave API.");
       }
