@@ -16,7 +16,9 @@ import {
   ClipboardCheckIcon,
   Globe,
   TrophyIcon,
-  Clock
+  Clock,
+  Palette,
+  FileText
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -99,6 +101,10 @@ export default function Sidebar() {
           <Link href="/vendor-estimate-form-new" className={getLinkClass("/vendor-estimate-form-new")}>
             <ClipboardCheckIcon className="mr-3 h-5 w-5" />
             <span>{t('navigation.vendorForm')}</span>
+          </Link>
+          <Link href="/pdf-templates" className={getLinkClass("/pdf-templates")}>
+            <Palette className="mr-3 h-5 w-5" />
+            <span>PDF Templates</span>
           </Link>
           {/* Google Sheets link removed */}
           <Link href="/settings" className={getLinkClass("/settings")}>

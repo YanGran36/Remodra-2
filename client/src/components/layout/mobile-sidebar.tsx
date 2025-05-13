@@ -20,7 +20,8 @@ import {
   BarChart,
   Building,
   HardDrive,
-  Clock
+  Clock,
+  Palette
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -180,6 +181,10 @@ export default function MobileSidebar() {
             <Link href="/vendor-estimate-form-new" className={getLinkClass("/vendor-estimate-form-new")}>
               <ClipboardCheckIcon className="mr-3 h-5 w-5" />
               <span>{t('navigation.vendorForm')}</span>
+            </Link>
+            <Link href="/pdf-templates" className={getLinkClass("/pdf-templates")}>
+              <Palette className="mr-3 h-5 w-5" />
+              <span>PDF Templates</span>
             </Link>
             <Link href="/admin-dashboard" className={getLinkClass("/admin-dashboard")}>
               <BarChart className="mr-3 h-5 w-5" />
