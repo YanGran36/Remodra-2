@@ -14,12 +14,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   AlertCircle, 
   ArrowRight, 
+  BarChart3,
   CheckCircle2, 
   ChevronsUpDown, 
   DollarSign, 
   FileText, 
   Lightbulb, 
   Loader2, 
+  Package,
   PieChart, 
   ShoppingCart, 
   Triangle, 
@@ -614,7 +616,7 @@ export default function CostAnalysisAssistant({
                     {analysisResult.breakdown.competitiveAnalysis && (
                       <div className="mt-4 pt-4 border-t">
                         <h4 className="text-sm font-semibold mb-2 flex items-center text-primary">
-                          <BarChart className="w-4 h-4 mr-2" />
+                          <BarChart3 className="w-4 h-4 mr-2" />
                           Análisis Competitivo
                         </h4>
                         <div className="bg-gradient-to-r from-primary/5 to-secondary/5 p-4 rounded-md border border-muted">
@@ -664,44 +666,83 @@ export default function CostAnalysisAssistant({
                   {/* Detalles adicionales */}
                   <div className="space-y-4">
                     {/* Detalles de la mano de obra */}
-                    <div className="border rounded-md p-3">
-                      <h4 className="text-sm font-medium mb-2 flex items-center">
+                    <div className="border rounded-lg p-4 shadow-sm bg-card overflow-hidden">
+                      <h4 className="text-sm font-medium mb-3 flex items-center text-primary">
                         <Wrench className="w-4 h-4 mr-2" />
                         Mano de Obra
                       </h4>
-                      <div className="space-y-1 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Horas estimadas:</span>
-                          <span>{analysisResult.breakdown.labor.estimatedHours} hrs</span>
+                      <div className="space-y-3 text-sm">
+                        <div className="bg-muted/30 p-3 rounded-md flex justify-between items-center">
+                          <div>
+                            <span className="text-muted-foreground block">Horas estimadas:</span>
+                            <span className="text-xl font-bold">{analysisResult.breakdown.labor.estimatedHours}</span>
+                            <span className="text-xs ml-1">horas</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-muted-foreground block">Tarifa por hora:</span>
+                            <span className="text-xl font-bold">{formatCurrency(analysisResult.breakdown.labor.hourlyRate)}</span>
+                            <span className="text-xs ml-1">/hr</span>
+                          </div>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Tarifa por hora:</span>
-                          <span>{formatCurrency(analysisResult.breakdown.labor.hourlyRate)}/hr</span>
+                        
+                        <div className="flex justify-between items-center bg-primary/5 p-3 rounded-md">
+                          <span className="font-medium">Total Mano de Obra:</span>
+                          <span className="font-bold text-primary">{formatCurrency(analysisResult.breakdown.labor.total)}</span>
                         </div>
+                        
                         {analysisResult.breakdown.labor.notes && (
-                          <p className="text-xs mt-2 text-muted-foreground">{analysisResult.breakdown.labor.notes}</p>
+                          <div className="p-2 border-l-2 border-primary/30 bg-muted/10 rounded-r-md">
+                            <p className="text-xs text-muted-foreground italic">{analysisResult.breakdown.labor.notes}</p>
+                          </div>
                         )}
                       </div>
                     </div>
                     
                     {/* Porcentajes de gastos generales y ganancias */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="border rounded-md p-3">
-                        <h4 className="text-sm font-medium mb-2">Gastos Generales</h4>
-                        <div className="text-xl font-bold text-center mb-1">
-                          {analysisResult.breakdown.overhead.percentage}%
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="border rounded-lg p-4 shadow-sm bg-gradient-to-br from-transparent to-muted/10">
+                        <h4 className="text-sm font-medium mb-2 flex items-center">
+                          <PieChart className="w-4 h-4 mr-2 text-primary" />
+                          Gastos Generales
+                        </h4>
+                        <div className="flex items-center justify-between">
+                          <div className="bg-primary/10 h-16 w-16 rounded-full flex items-center justify-center">
+                            <div className="text-2xl font-bold text-center">
+                              {analysisResult.breakdown.overhead.percentage}%
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-sm text-muted-foreground">Total:</span>
+                            <div className="text-lg font-bold">{formatCurrency(analysisResult.breakdown.overhead.total)}</div>
+                          </div>
                         </div>
                         {analysisResult.breakdown.overhead.notes && (
-                          <p className="text-xs text-muted-foreground">{analysisResult.breakdown.overhead.notes}</p>
+                          <div className="mt-2 p-2 border-t text-xs text-muted-foreground">
+                            {analysisResult.breakdown.overhead.notes}
+                          </div>
                         )}
                       </div>
-                      <div className="border rounded-md p-3">
-                        <h4 className="text-sm font-medium mb-2">Margen de Ganancia</h4>
-                        <div className="text-xl font-bold text-center text-primary mb-1">
-                          {analysisResult.breakdown.profit.percentage}%
+
+                      <div className="border rounded-lg p-4 shadow-sm bg-gradient-to-br from-transparent to-primary/5">
+                        <h4 className="text-sm font-medium mb-2 flex items-center">
+                          <ShoppingCart className="w-4 h-4 mr-2 text-primary" />
+                          Margen de Ganancia
+                        </h4>
+                        <div className="flex items-center justify-between">
+                          <div className="bg-primary/20 h-16 w-16 rounded-full flex items-center justify-center">
+                            <div className="text-2xl font-bold text-center text-primary">
+                              {analysisResult.breakdown.profit.percentage}%
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-sm text-muted-foreground">Total:</span>
+                            <div className="text-lg font-bold text-primary">{formatCurrency(analysisResult.breakdown.profit.total)}</div>
+                          </div>
                         </div>
                         {analysisResult.breakdown.profit.notes && (
-                          <p className="text-xs text-muted-foreground">{analysisResult.breakdown.profit.notes}</p>
+                          <div className="mt-2 p-2 border-t text-xs text-muted-foreground">
+                            {analysisResult.breakdown.profit.notes}
+                          </div>
                         )}
                       </div>
                     </div>
@@ -709,34 +750,34 @@ export default function CostAnalysisAssistant({
                 </div>
                 
                 {/* Recomendaciones y problemas potenciales */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                   {/* Recomendaciones */}
-                  <div className="border rounded-md p-4">
-                    <h3 className="text-base font-medium flex items-center mb-3">
-                      <Lightbulb className="w-4 h-4 mr-2 text-amber-500" />
+                  <div className="border rounded-lg p-5 shadow-sm bg-gradient-to-br from-transparent to-green-50/30">
+                    <h3 className="text-base font-semibold flex items-center mb-4 text-primary">
+                      <Lightbulb className="w-5 h-5 mr-2 text-amber-500" />
                       Recomendaciones
                     </h3>
-                    <ul className="space-y-2">
+                    <ul className="space-y-3">
                       {analysisResult.breakdown.recommendations.map((rec, index) => (
-                        <li key={index} className="flex items-start text-sm">
-                          <CheckCircle2 className="w-4 h-4 mr-2 text-green-500 shrink-0 mt-0.5" />
-                          <span>{rec}</span>
+                        <li key={index} className="flex items-start text-sm bg-white/80 p-3 rounded-md border border-green-100/50 shadow-sm hover:shadow-md transition-shadow">
+                          <CheckCircle2 className="w-5 h-5 mr-3 text-green-500 shrink-0 mt-0.5" />
+                          <span className="font-medium text-slate-700">{rec}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
                   
                   {/* Problemas potenciales */}
-                  <div className="border rounded-md p-4">
-                    <h3 className="text-base font-medium flex items-center mb-3">
-                      <Triangle className="w-4 h-4 mr-2 text-destructive" />
+                  <div className="border rounded-lg p-5 shadow-sm bg-gradient-to-br from-transparent to-amber-50/30">
+                    <h3 className="text-base font-semibold flex items-center mb-4 text-primary">
+                      <Triangle className="w-5 h-5 mr-2 text-destructive" />
                       Problemas Potenciales
                     </h3>
-                    <ul className="space-y-2">
+                    <ul className="space-y-3">
                       {analysisResult.breakdown.potentialIssues.map((issue, index) => (
-                        <li key={index} className="flex items-start text-sm">
-                          <AlertCircle className="w-4 h-4 mr-2 text-amber-500 shrink-0 mt-0.5" />
-                          <span>{issue}</span>
+                        <li key={index} className="flex items-start text-sm bg-white/80 p-3 rounded-md border border-amber-100/50 shadow-sm hover:shadow-md transition-shadow">
+                          <AlertCircle className="w-5 h-5 mr-3 text-amber-500 shrink-0 mt-0.5" />
+                          <span className="font-medium text-slate-700">{issue}</span>
                         </li>
                       ))}
                     </ul>
