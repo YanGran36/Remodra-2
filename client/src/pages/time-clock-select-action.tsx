@@ -49,19 +49,26 @@ export default function TimeClockSelectAction() {
   // Function to handle clock in/out
   const handleClockAction = async (type: "IN" | "OUT") => {
     try {
+      if (!position || !position.coords) {
+        toast({
+          title: "Location Required",
+          description: "Your location is required for Clock In/Out. Please enable location access and try again.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       let locationString = "";
       
-      if (position && position.coords) {
-        const { latitude, longitude } = position.coords;
-        try {
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
-          );
-          const data = await response.json();
-          locationString = data.display_name || `${latitude}, ${longitude}`;
-        } catch (error) {
-          locationString = `${latitude}, ${longitude}`;
-        }
+      const { latitude, longitude } = position.coords;
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
+        );
+        const data = await response.json();
+        locationString = data.display_name || `${latitude}, ${longitude}`;
+      } catch (error) {
+        locationString = `${latitude}, ${longitude}`;
       }
 
       const currentDate = format(new Date(), "yyyy-MM-dd");

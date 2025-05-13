@@ -109,6 +109,10 @@ export default function TimeclockPage() {
   // Mutaciones para registro de entrada y salida
   const clockInMutation = useMutation({
     mutationFn: async (data: TimeclockFormType) => {
+      if (!currentLocation || currentLocation === "Not available" || currentLocation === "Not supported by browser") {
+        throw new Error("Location is required for Clock In. Please enable location access and try again.");
+      }
+      
       return await apiRequest("POST", "/api/timeclock/clock-in", {
         ...data,
         location: currentLocation, // Always use current location
