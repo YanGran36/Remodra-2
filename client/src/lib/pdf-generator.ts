@@ -147,6 +147,11 @@ function getColorSettings() {
   };
 }
 
+// Get the configured font family
+function getFontFamily(): string {
+  return getTemplateSettings()?.fontMain || "helvetica";
+}
+
 // Translate text based on current language setting
 function translate(textEs: string, textEn: string): string {
   const useSpanish = localStorage.getItem('language') === 'es';
@@ -705,14 +710,15 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     }
   }
   
-  // Información de la factura (en la misma línea)
+  // Invoice information
   pdf.setFontSize(12);
-  pdf.setFont("helvetica", "bold");
+  // Use existing fontFamily variable or default to helvetica
+  pdf.setFont(fontFamily, "bold");
   pdf.setTextColor(PRIMARY_COLOR);
-  pdf.text("DETALLES DE LA FACTURA", PAGE_WIDTH / 2, 55);
+  pdf.text(translate("DETALLES DE LA FACTURA", "INVOICE DETAILS"), PAGE_WIDTH / 2, 55);
   
   currentY = 63;
-  pdf.setFont("helvetica", "normal");
+  pdf.setFont(fontFamily, "normal");
   pdf.setTextColor(60, 60, 60);
   pdf.setFontSize(10);
   
