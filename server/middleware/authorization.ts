@@ -4,27 +4,27 @@ import { db } from "../../db";
 import { and, eq } from "drizzle-orm";
 import { clients, projects, estimates, invoices, events, materials, propertyMeasurements, attachments, followUps } from "../../shared/schema";
 
-// Tipos de entidades que protegeremos
+// Entity types that we'll protect
 export type EntityType = 'client' | 'project' | 'estimate' | 'invoice' | 'event' | 'material' | 'property-measurement' | 'attachment' | 'follow-up';
 
-// Middleware para verificar que la entidad pertenezca al contratista autenticado
+// Middleware to verify that the entity belongs to the authenticated contractor
 export const verifyResourceOwnership = (entityType: EntityType, idParamName = 'id') => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Si no hay usuario autenticado, devolver 401
+      // If no authenticated user, return 401
       if (!req.user || !req.user.id) {
-        return res.status(401).json({ message: "No autenticado" });
+        return res.status(401).json({ message: "Not authenticated" });
       }
 
       const contractorId = req.user.id;
       const entityId = Number(req.params[idParamName]);
 
-      // Si no hay ID válido, continuar al siguiente middleware
+      // If no valid ID, continue to the next middleware
       if (!entityId || isNaN(entityId)) {
-        return res.status(400).json({ message: `ID inválido: ${req.params[idParamName]}` });
+        return res.status(400).json({ message: `Invalid ID: ${req.params[idParamName]}` });
       }
 
-      // Verificar la propiedad basada en el tipo de entidad
+      // Verify ownership based on entity type
       let belongsToContractor = false;
 
       switch (entityType) {

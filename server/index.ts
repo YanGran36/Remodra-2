@@ -7,7 +7,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Añadimos el middleware de auditoría global
+// Add global auditing middleware
 app.use(auditMiddleware);
 
 app.use((req, res, next) => {

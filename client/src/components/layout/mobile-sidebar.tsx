@@ -145,31 +145,31 @@ export default function MobileSidebar() {
           <nav>
             <Link href="/" className={getLinkClass("/")}>
               <LayoutDashboardIcon className="mr-3 h-5 w-5" />
-              <span>{t('navigation.dashboard')}</span>
+              <span>Dashboard</span>
             </Link>
             <Link href="/calendar" className={getLinkClass("/calendar")}>
               <CalendarIcon className="mr-3 h-5 w-5" />
-              <span>{t('navigation.calendar')}</span>
+              <span>Calendar</span>
             </Link>
             <Link href="/clients" className={getLinkClass("/clients")}>
               <UsersIcon className="mr-3 h-5 w-5" />
-              <span>{t('navigation.clients')}</span>
+              <span>Clients</span>
             </Link>
             <Link href="/estimates" className={getLinkClass("/estimates")}>
               <FileTextIcon className="mr-3 h-5 w-5" />
-              <span>{t('navigation.estimates')}</span>
+              <span>Estimates</span>
             </Link>
             <Link href="/invoices" className={getLinkClass("/invoices")}>
               <BanknoteIcon className="mr-3 h-5 w-5" />
-              <span>{t('navigation.invoices')}</span>
+              <span>Invoices</span>
             </Link>
             <Link href="/projects" className={getLinkClass("/projects")}>
               <HammerIcon className="mr-3 h-5 w-5" />
-              <span>{t('navigation.projects')}</span>
+              <span>Projects</span>
             </Link>
             <Link href="/materials" className={getLinkClass("/materials")}>
               <Drill className="mr-3 h-5 w-5" />
-              <span>{t('navigation.materials')}</span>
+              <span>Materials</span>
             </Link>
             <Link href="/timeclock" className={getLinkClass("/timeclock")}>
               <Clock className="mr-3 h-5 w-5" />
@@ -193,11 +193,11 @@ export default function MobileSidebar() {
             </Link>
             <Link href="/ai-assistant" className={getLinkClass("/ai-assistant")}>
               <BotIcon className="mr-3 h-5 w-5" />
-              <span>{t('navigation.aiAssistant')}</span>
+              <span>AI Assistant</span>
             </Link>
             <Link href="/vendor-estimate-form-new" className={getLinkClass("/vendor-estimate-form-new")}>
               <ClipboardCheckIcon className="mr-3 h-5 w-5" />
-              <span>{t('navigation.vendorForm')}</span>
+              <span>Vendor Form</span>
             </Link>
             <Link href="/admin-dashboard" className={getLinkClass("/admin-dashboard")}>
               <BarChart className="mr-3 h-5 w-5" />
@@ -213,7 +213,7 @@ export default function MobileSidebar() {
             </Link>
             <Link href="/settings" className={getLinkClass("/settings")}>
               <SettingsIcon className="mr-3 h-5 w-5" />
-              <span>{t('navigation.settings')}</span>
+              <span>Settings</span>
             </Link>
           </nav>
         </div>
@@ -233,7 +233,7 @@ export default function MobileSidebar() {
               <button 
                 className="ml-auto text-gray-400 hover:text-white"
                 onClick={handleLogout}
-                aria-label={t('navigation.logout')}
+                aria-label="Logout"
               >
                 <LogOutIcon className="h-5 w-5" />
               </button>
