@@ -257,18 +257,18 @@ export default function EstimateDetailPage() {
                   projectDescription: estimate.project?.description
                 };
                 
-                // Generar y descargar el PDF
+                // Generate and download the PDF (using template settings)
                 await downloadEstimatePDF(pdfData);
                 
                 toast({
-                  title: "PDF generado",
-                  description: "El PDF del estimado se ha descargado correctamente.",
+                  title: "PDF Generated",
+                  description: "The estimate PDF has been downloaded successfully with your template settings.",
                 });
               } catch (error) {
-                console.error("Error al generar PDF:", error);
+                console.error("Error generating PDF:", error);
                 toast({
-                  title: "Error al generar PDF",
-                  description: error instanceof Error ? error.message : "Error desconocido",
+                  title: "Error Generating PDF",
+                  description: error instanceof Error ? error.message : "Unknown error",
                   variant: "destructive"
                 });
               }

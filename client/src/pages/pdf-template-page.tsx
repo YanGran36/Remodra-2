@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Download, FileText, Settings, Eye } from "lucide-react";
+import { Download, FileText, Settings, Eye, ChevronLeft, Home } from "lucide-react";
+import { Link } from "wouter";
 
 // Simulated data for preview
 const previewData = {
@@ -118,6 +119,21 @@ export default function PdfTemplatePage() {
 
   return (
     <div className="container py-6">
+      <div className="flex flex-wrap gap-2 mb-4">
+        <Link href="/">
+          <Button variant="outline" size="sm" className="flex items-center gap-1">
+            <Home className="h-4 w-4" />
+            Home
+          </Button>
+        </Link>
+        <Link href="/estimates">
+          <Button variant="outline" size="sm" className="flex items-center gap-1">
+            <ChevronLeft className="h-4 w-4" />
+            Back to Estimates
+          </Button>
+        </Link>
+      </div>
+      
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold">PDF Template Configuration</h1>
