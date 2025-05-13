@@ -49,31 +49,31 @@ const previewData = {
     }
   ],
   client: {
-    firstName: "Carlos",
-    lastName: "Rodríguez",
-    email: "carlos@ejemplo.com",
+    firstName: "John",
+    lastName: "Smith",
+    email: "john@example.com",
     phone: "555-123-4567",
-    address: "Calle Principal 123",
-    city: "Ciudad Ejemplo",
-    state: "Estado Ejemplo",
+    address: "123 Main Street",
+    city: "Sample City",
+    state: "Sample State",
     zipCode: "12345"
   },
   contractor: {
-    businessName: "Servicios de Construcción ABC",
-    firstName: "Juan",
-    lastName: "Pérez",
-    email: "info@construccionesabc.com",
+    businessName: "ABC Construction Services",
+    firstName: "Michael",
+    lastName: "Johnson",
+    email: "info@abcconstruction.com",
     phone: "555-987-6543",
-    address: "Av. Construcción 456",
-    city: "Ciudad Ejemplo",
-    state: "Estado Ejemplo",
+    address: "456 Construction Ave",
+    city: "Sample City",
+    state: "Sample State",
     zipCode: "54321"
   },
-  projectTitle: "Renovación de sala de estar",
-  projectDescription: "Proyecto completo de renovación incluyendo pintura, instalación de ventanas y reparación de superficies."
+  projectTitle: "Living Room Renovation",
+  projectDescription: "Complete renovation project including painting, window installation, and surface repairs."
 };
 
-// Función para formatear moneda
+// Function to format currency
 const formatCurrency = (amount: number | string = 0) => {
   if (typeof amount === 'string') amount = parseFloat(amount) || 0;
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
@@ -85,32 +85,32 @@ export default function PdfTemplatePage() {
   const [activeTab, setActiveTab] = useState("settings");
   const { toast } = useToast();
   
-  // Cargar configuración guardada de localStorage al inicio
+  // Load saved configuration from localStorage on startup
   useEffect(() => {
     const savedConfig = localStorage.getItem('pdfTemplateConfig');
     if (savedConfig) {
       try {
         setPdfConfig(JSON.parse(savedConfig));
       } catch (e) {
-        console.error("Error al cargar configuración guardada:", e);
+        console.error("Error loading saved configuration:", e);
       }
     }
   }, []);
   
-  // Guardar configuración en localStorage
+  // Save configuration to localStorage
   const saveConfig = (config: PdfTemplateConfig) => {
     try {
       localStorage.setItem('pdfTemplateConfig', JSON.stringify(config));
       setPdfConfig(config);
       toast({
-        title: "Configuración guardada",
-        description: "La configuración de plantillas PDF se ha guardado correctamente",
+        title: "Configuration Saved",
+        description: "The PDF template configuration has been saved successfully",
       });
     } catch (e) {
-      console.error("Error al guardar configuración:", e);
+      console.error("Error saving configuration:", e);
       toast({
-        title: "Error al guardar",
-        description: "No se pudo guardar la configuración",
+        title: "Error Saving",
+        description: "Could not save the configuration",
         variant: "destructive",
       });
     }
@@ -120,9 +120,9 @@ export default function PdfTemplatePage() {
     <div className="container py-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Configuración de Plantillas PDF</h1>
+          <h1 className="text-2xl font-bold">PDF Template Configuration</h1>
           <p className="text-muted-foreground">
-            Personaliza tus plantillas de PDF para estimados, facturas y órdenes de trabajo
+            Customize your PDF templates for estimates, invoices, and work orders
           </p>
         </div>
         <div className="mt-4 md:mt-0">
@@ -130,19 +130,19 @@ export default function PdfTemplatePage() {
             <DialogTrigger asChild>
               <Button variant="outline" className="mr-2">
                 <Eye className="h-4 w-4 mr-2" />
-                Vista previa
+                Preview
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-4xl h-[90vh]">
               <DialogHeader>
-                <DialogTitle>Vista previa de documento</DialogTitle>
+                <DialogTitle>Document Preview</DialogTitle>
                 <DialogDescription>
-                  Así se verá tu documento PDF con la configuración actual
+                  This is how your PDF document will look with the current configuration
                 </DialogDescription>
               </DialogHeader>
               <ScrollArea className="h-full py-4">
                 <div className="p-6 border rounded-lg bg-white">
-                  {/* Vista previa que refleja la configuración - Versión simplificada */}
+                  {/* Preview reflecting the configuration - Simplified version */}
                   <div className="mb-6">
                     <div 
                       className={`py-6 mb-6 rounded-t-lg ${
