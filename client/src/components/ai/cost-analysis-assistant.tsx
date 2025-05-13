@@ -218,29 +218,31 @@ export default function CostAnalysisAssistant({
   );
 
   return (
-    <Card className="w-full shadow-md">
-      <CardHeader>
+    <Card className="w-full shadow-md border-t-4 border-primary/60">
+      <CardHeader className="bg-gradient-to-r from-primary/5 to-secondary/5">
         <CardTitle className="flex items-center text-lg md:text-xl">
-          <PieChart className="w-5 h-5 mr-2 text-primary" />
-          Asistente de Análisis de Costos con IA
+          <PieChart className="w-6 h-6 mr-2 text-primary" />
+          <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent font-bold">
+            Asistente de Análisis de Costos con IA
+          </span>
         </CardTitle>
-        <CardDescription>
-          Ingresa los detalles del proyecto para recibir un análisis de costos y recomendaciones
+        <CardDescription className="text-base">
+          Ingresa los detalles del proyecto para recibir un análisis de costos y recomendaciones basadas en inteligencia artificial
         </CardDescription>
       </CardHeader>
       
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <div className="px-6">
-          <TabsList className="w-full">
-            <TabsTrigger value="analysis" className="flex-1">
+        <div className="px-6 pt-2">
+          <TabsList className="w-full grid grid-cols-3 p-1 rounded-lg bg-muted/50">
+            <TabsTrigger value="analysis" className="flex items-center justify-center rounded-md data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary/80 data-[state=active]:to-secondary/80 data-[state=active]:text-white">
               <ShoppingCart className="w-4 h-4 mr-2" />
               Datos del Proyecto
             </TabsTrigger>
-            <TabsTrigger value="results" className="flex-1" disabled={!analysisResult}>
+            <TabsTrigger value="results" className="flex items-center justify-center rounded-md" disabled={!analysisResult}>
               <PieChart className="w-4 h-4 mr-2" />
               Resultados
             </TabsTrigger>
-            <TabsTrigger value="description" className="flex-1" disabled={!jobDescription}>
+            <TabsTrigger value="description" className="flex items-center justify-center rounded-md" disabled={!jobDescription}>
               <FileText className="w-4 h-4 mr-2" />
               Descripción
             </TabsTrigger>
@@ -569,12 +571,14 @@ export default function CostAnalysisAssistant({
             <CardContent className="p-6">
               <div className="space-y-6">
                 {/* Resumen general */}
-                <div className="bg-primary/10 p-4 rounded-lg">
-                  <h3 className="text-lg font-semibold flex items-center mb-2">
-                    <DollarSign className="w-5 h-5 mr-2 text-primary" />
-                    Precio Recomendado: {formatCurrency(analysisResult.recommendedTotal)}
+                <div className="bg-gradient-to-r from-primary/10 to-secondary/10 p-6 rounded-lg border border-primary/20 shadow-sm">
+                  <h3 className="text-xl font-bold flex items-center mb-3 text-primary">
+                    <DollarSign className="w-6 h-6 mr-2 text-primary" />
+                    <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                      Precio Recomendado: {formatCurrency(analysisResult.recommendedTotal)}
+                    </span>
                   </h3>
-                  <p className="text-muted-foreground">{analysisResult.summary}</p>
+                  <p className="text-base italic">{analysisResult.summary}</p>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -609,18 +613,49 @@ export default function CostAnalysisAssistant({
                     {/* Análisis competitivo si existe */}
                     {analysisResult.breakdown.competitiveAnalysis && (
                       <div className="mt-4 pt-4 border-t">
-                        <h4 className="text-sm font-medium mb-2">Análisis Competitivo</h4>
-                        <div className="bg-muted/50 p-3 rounded-md">
-                          <div className="flex justify-between mb-1 text-sm">
-                            <span>Rango bajo: {formatCurrency(analysisResult.breakdown.competitiveAnalysis.lowRange)}</span>
-                            <span>Rango alto: {formatCurrency(analysisResult.breakdown.competitiveAnalysis.highRange)}</span>
+                        <h4 className="text-sm font-semibold mb-2 flex items-center text-primary">
+                          <BarChart className="w-4 h-4 mr-2" />
+                          Análisis Competitivo
+                        </h4>
+                        <div className="bg-gradient-to-r from-primary/5 to-secondary/5 p-4 rounded-md border border-muted">
+                          <div className="flex justify-between mb-2 text-sm">
+                            <span className="font-medium">Rango bajo: {formatCurrency(analysisResult.breakdown.competitiveAnalysis.lowRange)}</span>
+                            <span className="font-medium">Rango alto: {formatCurrency(analysisResult.breakdown.competitiveAnalysis.highRange)}</span>
                           </div>
-                          <Progress 
-                            value={((analysisResult.recommendedTotal - analysisResult.breakdown.competitiveAnalysis.lowRange) / 
-                              (analysisResult.breakdown.competitiveAnalysis.highRange - analysisResult.breakdown.competitiveAnalysis.lowRange)) * 100} 
-                            className="h-2 mb-2"
-                          />
-                          <p className="text-xs text-muted-foreground">{analysisResult.breakdown.competitiveAnalysis.notes}</p>
+                          
+                          <div className="relative h-6 bg-muted rounded-full overflow-hidden mb-3">
+                            <div className="absolute inset-0 flex">
+                              <div className="h-full bg-red-400/20 flex-1" />
+                              <div className="h-full bg-yellow-400/20 flex-1" />
+                              <div className="h-full bg-green-400/20 flex-1" />
+                              <div className="h-full bg-blue-400/20 flex-1" />
+                            </div>
+                            
+                            {/* Marcador de precio recomendado */}
+                            <div 
+                              className="absolute top-0 h-full w-4 bg-primary rounded-full shadow-md"
+                              style={{ 
+                                left: `calc(${((analysisResult.recommendedTotal - analysisResult.breakdown.competitiveAnalysis.lowRange) / 
+                                  (analysisResult.breakdown.competitiveAnalysis.highRange - analysisResult.breakdown.competitiveAnalysis.lowRange)) * 100}% - 8px)`,
+                                transition: "left 0.5s ease-in-out"
+                              }}
+                            />
+                          </div>
+                          
+                          <div className="flex justify-between text-xs mb-2">
+                            <span>Muy Económico</span>
+                            <span>Económico</span>
+                            <span>Estándar</span>
+                            <span>Premium</span>
+                          </div>
+                          
+                          <div className="mt-3 text-sm bg-white/80 p-2 rounded border">
+                            <p className="text-sm">
+                              <span className="font-semibold">Tu precio recomendado: </span>
+                              <span className="font-bold text-primary">{formatCurrency(analysisResult.recommendedTotal)}</span>
+                            </p>
+                            <p className="text-xs mt-1 text-muted-foreground">{analysisResult.breakdown.competitiveAnalysis.notes}</p>
+                          </div>
                         </div>
                       </div>
                     )}

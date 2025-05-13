@@ -44,6 +44,7 @@ export default function EstimateDetailPage() {
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
   const { getEstimate, updateEstimateStatusMutation, convertToInvoiceMutation } = useEstimates();
   const { data: estimate, isLoading, error } = getEstimate(estimateId);
 
@@ -209,9 +210,14 @@ export default function EstimateDetailPage() {
           <div className="flex gap-2">
             <Button variant="outline" onClick={async () => {
               try {
-                // Obtener datos del usuario actual
-                const { user } = useAuth();
-                if (!user) throw new Error("Usuario no autenticado");
+                if (!user) {
+                  toast({
+                    title: "Error",
+                    description: "Usuario no autenticado",
+                    variant: "destructive"
+                  });
+                  return;
+                }
                 
                 // Preparar datos para el PDF
                 const pdfData = {
@@ -229,23 +235,23 @@ export default function EstimateDetailPage() {
                   client: {
                     firstName: estimate.client?.firstName || "",
                     lastName: estimate.client?.lastName || "",
-                    email: estimate.client?.email,
-                    phone: estimate.client?.phone,
-                    address: estimate.client?.address,
-                    city: estimate.client?.city,
-                    state: estimate.client?.state,
-                    zipCode: estimate.client?.zipCode
+                    email: estimate.client?.email || undefined,
+                    phone: estimate.client?.phone || undefined,
+                    address: estimate.client?.address || undefined,
+                    city: estimate.client?.city || undefined,
+                    state: estimate.client?.state || undefined,
+                    zipCode: estimate.client?.zipCode || undefined
                   },
                   contractor: {
-                    businessName: user.businessName || `${user.firstName} ${user.lastName}`,
+                    businessName: user.companyName || `${user.firstName} ${user.lastName}`,
                     firstName: user.firstName,
                     lastName: user.lastName,
                     email: user.email,
-                    phone: user.phone,
-                    address: user.address,
-                    city: user.city,
-                    state: user.state,
-                    zipCode: user.zipCode
+                    phone: user.phone || undefined,
+                    address: user.address || undefined,
+                    city: undefined, // No tenemos esta información en el modelo de usuario
+                    state: undefined, // No tenemos esta información en el modelo de usuario
+                    zipCode: undefined // No tenemos esta información en el modelo de usuario
                   },
                   projectTitle: estimate.project?.title,
                   projectDescription: estimate.project?.description
