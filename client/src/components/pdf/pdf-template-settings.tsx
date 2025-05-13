@@ -217,14 +217,14 @@ export default function PdfTemplateSettings({
                 onClick={() => applyTemplate('elegant')}
               >
                 <CardHeader className="py-3">
-                  <CardTitle className="text-md">Elegante</CardTitle>
+                  <CardTitle className="text-md">Elegant</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="h-32 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-md flex items-center justify-center">
-                    <div className="text-white font-bold">Vista previa</div>
+                    <div className="text-white font-bold">Preview</div>
                   </div>
                   <p className="text-sm mt-2 text-muted-foreground">
-                    Diseño elegante con tonos sofisticados y estilo refinado.
+                    Elegant design with sophisticated tones and refined style.
                   </p>
                 </CardContent>
               </Card>
@@ -235,12 +235,12 @@ export default function PdfTemplateSettings({
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                 <div className="space-y-4">
-                  <h3 className="text-base font-medium">Elementos principales</h3>
+                  <h3 className="text-base font-medium">Main Elements</h3>
                   
                   <div className="flex items-center justify-between">
                     <Label htmlFor="logo" className="cursor-pointer flex items-center">
                       <Image className="h-4 w-4 mr-2 text-muted-foreground" />
-                      Mostrar logo
+                      Show Logo
                     </Label>
                     <Switch 
                       id="logo" 
@@ -251,7 +251,7 @@ export default function PdfTemplateSettings({
                   
                   <div className="flex items-center justify-between">
                     <Label htmlFor="showHeader" className="cursor-pointer">
-                      Mostrar encabezado
+                      Show Header
                     </Label>
                     <Switch 
                       id="showHeader" 
@@ -262,7 +262,7 @@ export default function PdfTemplateSettings({
                   
                   <div className="flex items-center justify-between">
                     <Label htmlFor="showFooter" className="cursor-pointer">
-                      Mostrar pie de página
+                      Show Footer
                     </Label>
                     <Switch 
                       id="showFooter" 
@@ -273,11 +273,11 @@ export default function PdfTemplateSettings({
                 </div>
                 
                 <div className="space-y-4">
-                  <h3 className="text-base font-medium">Información detallada</h3>
+                  <h3 className="text-base font-medium">Detailed Information</h3>
                   
                   <div className="flex items-center justify-between">
                     <Label htmlFor="showItemDetails" className="cursor-pointer">
-                      Mostrar detalles de ítems
+                      Show Item Details
                     </Label>
                     <Switch 
                       id="showItemDetails" 
@@ -288,7 +288,7 @@ export default function PdfTemplateSettings({
                   
                   <div className="flex items-center justify-between">
                     <Label htmlFor="showItemNotes" className="cursor-pointer">
-                      Mostrar notas de ítems
+                      Show Item Notes
                     </Label>
                     <Switch 
                       id="showItemNotes" 
@@ -299,7 +299,7 @@ export default function PdfTemplateSettings({
                   
                   <div className="flex items-center justify-between">
                     <Label htmlFor="showProjectDetails" className="cursor-pointer">
-                      Mostrar detalles del proyecto
+                      Show Project Details
                     </Label>
                     <Switch 
                       id="showProjectDetails" 
@@ -310,7 +310,7 @@ export default function PdfTemplateSettings({
                   
                   <div className="flex items-center justify-between">
                     <Label htmlFor="showClientDetails" className="cursor-pointer">
-                      Mostrar detalles del cliente
+                      Show Client Details
                     </Label>
                     <Switch 
                       id="showClientDetails" 
@@ -327,11 +327,11 @@ export default function PdfTemplateSettings({
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                 <div className="space-y-4">
-                  <h3 className="text-base font-medium">Colores</h3>
+                  <h3 className="text-base font-medium">Colors</h3>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="colorPrimary">Color primario</Label>
+                      <Label htmlFor="colorPrimary">Primary Color</Label>
                       <div className="flex items-center gap-2">
                         <div 
                           className="h-8 w-8 rounded-md border" 
@@ -347,7 +347,7 @@ export default function PdfTemplateSettings({
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="colorSecondary">Color secundario</Label>
+                      <Label htmlFor="colorSecondary">Secondary Color</Label>
                       <div className="flex items-center gap-2">
                         <div 
                           className="h-8 w-8 rounded-md border" 
@@ -364,13 +364,13 @@ export default function PdfTemplateSettings({
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="fontMain">Fuente principal</Label>
+                    <Label htmlFor="fontMain">Main Font</Label>
                     <Select 
                       value={config.fontMain} 
                       onValueChange={value => updateConfig('fontMain', value)}
                     >
                       <SelectTrigger id="fontMain">
-                        <SelectValue placeholder="Seleccionar fuente" />
+                        <SelectValue placeholder="Select font" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Inter">Inter</SelectItem>
