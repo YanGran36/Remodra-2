@@ -18,6 +18,7 @@ import {
   X,
   ClipboardCheckIcon,
   BarChart,
+  FileText,
   Building,
   HardDrive,
   Clock,
@@ -182,6 +183,10 @@ export default function MobileSidebar() {
               </div>
             </div>
             
+            <Link href="/tools-dashboard" className={getLinkClass("/tools-dashboard")}>
+              <FileText className="mr-3 h-5 w-5" />
+              <span>Tools Dashboard</span>
+            </Link>
             <Link href="/pdf-templates" className={getLinkClass("/pdf-templates")}>
               <Palette className="mr-3 h-5 w-5" />
               <span>PDF Templates</span>

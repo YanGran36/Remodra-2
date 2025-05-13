@@ -12,11 +12,10 @@ import {
   Layout,
   Brush
 } from "lucide-react";
-import { useTranslation } from "@/hooks/use-translation";
-import { useSettings } from "@/hooks/use-settings";
+import { useLanguage } from "@/hooks/use-language";
 
 export default function ToolsDashboard() {
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   
   const tools = [
     {
