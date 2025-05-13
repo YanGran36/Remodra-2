@@ -142,10 +142,10 @@ export default function PdfTemplatePageNew() {
             Home
           </Button>
         </Link>
-        <Link href="/estimates">
+        <Link href="/tools-dashboard">
           <Button variant="outline" size="sm" className="flex items-center gap-1">
             <ChevronLeft className="h-4 w-4" />
-            Back to Estimates
+            Back to Tools
           </Button>
         </Link>
       </div>
@@ -157,8 +157,13 @@ export default function PdfTemplatePageNew() {
             Customize your PDF templates with real-time preview
           </p>
         </div>
-        <div className="mt-4 md:mt-0">
-          <Button variant="outline" className="mr-2" onClick={() => {
+        <div className="mt-4 md:mt-0 flex items-center gap-2">
+          <div className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full flex items-center mr-2">
+            <Eye className="h-3 w-3 mr-1" />
+            Live preview enabled
+          </div>
+          
+          <Button variant="outline" onClick={() => {
             // Reset to default settings
             if (window.confirm("Are you sure you want to reset all template settings to default?")) {
               localStorage.removeItem('pdfTemplateConfig');
@@ -254,19 +259,20 @@ export default function PdfTemplatePageNew() {
             <CardHeader className="pb-3 border-b">
               <CardTitle className="text-lg flex justify-between items-center">
                 <div className="flex items-center">
-                  <Eye className="h-5 w-5 mr-2" />
-                  Live Preview
+                  <FileText className="h-5 w-5 mr-2" />
+                  Document Preview
                 </div>
                 <div className="flex items-center">
-                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                    Auto-updating
+                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full flex items-center">
+                    <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                    Real-time updates
                   </span>
                 </div>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <ScrollArea className="h-[calc(100vh-300px)]">
-                <div className="p-6">
+                <div className="p-6 bg-gray-50">
                   {/* Document Preview */}
                   <div className="border rounded-lg shadow-sm overflow-hidden bg-white">
                     {/* Header */}
