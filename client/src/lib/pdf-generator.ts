@@ -395,7 +395,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   pdf.setFontSize(12);
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(PRIMARY_COLOR);
-  pdf.text("DETALLE DE SERVICIOS", PAGE_MARGIN, currentY);
+  pdf.text("SERVICE DETAILS", PAGE_MARGIN, currentY);
   
   currentY += 8;
   
@@ -779,7 +779,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   pdf.setFontSize(12);
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(PRIMARY_COLOR);
-  pdf.text("DETALLE DE SERVICIOS", PAGE_MARGIN, currentY);
+  pdf.text("SERVICE DETAILS", PAGE_MARGIN, currentY);
   
   currentY += 8;
   
