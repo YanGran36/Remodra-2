@@ -335,7 +335,7 @@ export default function VendorEstimateFormPage() {
           onClick={() => setLocation('/estimates')}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Volver a Estimados
+          Back to Estimates
         </Button>
         
         <Button 
@@ -345,7 +345,7 @@ export default function VendorEstimateFormPage() {
           disabled={isSubmitting}
         >
           <Save className="h-4 w-4 mr-2" />
-          {isSubmitting ? "Guardando..." : "Guardar Estimado"}
+          {isSubmitting ? "Saving..." : "Save Estimate"}
         </Button>
       </div>
       
@@ -353,17 +353,17 @@ export default function VendorEstimateFormPage() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="information">Información Básica</TabsTrigger>
-              <TabsTrigger value="materials">Materiales</TabsTrigger>
-              <TabsTrigger value="summary">Resumen y Total</TabsTrigger>
+              <TabsTrigger value="information">Basic Information</TabsTrigger>
+              <TabsTrigger value="materials">Materials</TabsTrigger>
+              <TabsTrigger value="summary">Summary & Total</TabsTrigger>
             </TabsList>
             
             <TabsContent value="information" className="space-y-6 pt-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Información Básica</CardTitle>
+                  <CardTitle>Basic Information</CardTitle>
                   <CardDescription>
-                    Seleccione el cliente y tipo de servicio para este estimado
+                    Select the client and service type for this estimate
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -372,7 +372,7 @@ export default function VendorEstimateFormPage() {
                     name="clientId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Cliente*</FormLabel>
+                        <FormLabel>Client*</FormLabel>
                         <Select
                           value={field.value}
                           onValueChange={field.onChange}
@@ -403,7 +403,7 @@ export default function VendorEstimateFormPage() {
                     name="projectId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Proyecto</FormLabel>
+                        <FormLabel>Project</FormLabel>
                         <Select
                           value={field.value}
                           onValueChange={field.onChange}
@@ -415,7 +415,7 @@ export default function VendorEstimateFormPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="none">Ninguno / Nuevo Proyecto</SelectItem>
+                            <SelectItem value="none">None / New Project</SelectItem>
                             {filteredProjects.map((project: any) => (
                               <SelectItem key={project.id} value={project.id.toString()}>
                                 {project.name}
@@ -436,7 +436,7 @@ export default function VendorEstimateFormPage() {
                     name="serviceType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Tipo de Servicio*</FormLabel>
+                        <FormLabel>Service Type*</FormLabel>
                         <Select
                           value={field.value}
                           onValueChange={field.onChange}
