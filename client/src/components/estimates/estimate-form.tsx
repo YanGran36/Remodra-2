@@ -186,12 +186,12 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
       recalculateTotals(updatedItems);
       
       console.log("Item added:", validatedItem);
-      console.log("Items actuales:", updatedItems);
+      console.log("Current items:", updatedItems);
     } catch (error) {
       if (error instanceof z.ZodError) {
         const errorMessages = error.errors.map(err => `${err.path}: ${err.message}`).join(", ");
         toast({
-          title: "Error al agregar ítem",
+          title: "Error adding item",
           description: errorMessages,
           variant: "destructive",
         });
@@ -225,11 +225,11 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
     // Calcular total: subtotal + impuestos - descuento
     const total = subtotal + taxAmount - discountAmount;
     
-    // Asegurarse de utilizar valores numéricos precisos antes de convertir a string
+    // Ensure we use precise numeric values before converting to string
     const subtotalRounded = parseFloat(subtotal.toFixed(2));
     const totalRounded = parseFloat(total.toFixed(2));
     
-    // Actualizar valores en el formulario
+    // Update values in the form
     form.setValue("subtotal", subtotalRounded.toString(), { shouldValidate: true });
     form.setValue("total", totalRounded.toString(), { shouldValidate: true });
     
@@ -270,10 +270,10 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
             estimateData.expiryDate = new Date(estimateData.expiryDate);
           }
           
-          // Actualizar formulario con datos del estimado
+          // Update form with estimate data
           form.reset(estimateData);
           
-          // Cargar ítems del estimado
+          // Load estimate items
           if (estimateData.items && Array.isArray(estimateData.items)) {
             setItems(estimateData.items);
           }
@@ -295,11 +295,11 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
     }
   }, [estimateId, form]);
   
-  // Manejar el envío del formulario
+  // Handle form submission
   const onSubmit = (data: EstimateFormValues) => {
     if (items.length === 0) {
       toast({
-        title: "No se pueden agregar ítems",
+        title: "Cannot add items",
         description: "Debe agregar al menos un ítem al estimado.",
         variant: "destructive",
       });
