@@ -533,7 +533,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   
   currentY += 15;
   
-  // Términos y condiciones
+  // Terms and conditions
   if (data.terms) {
     // Check if we need to add a new page
     if (currentY > 230) {
@@ -544,7 +544,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
     pdf.setFontSize(11);
     pdf.setFont("helvetica", "bold");
     pdf.setTextColor(PRIMARY_COLOR);
-    pdf.text("TÉRMINOS Y CONDICIONES", PAGE_MARGIN, currentY);
+    pdf.text("TERMS AND CONDITIONS", PAGE_MARGIN, currentY);
     
     currentY += 8;
     
@@ -930,11 +930,11 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     currentY += 8;
     pdf.setFont("helvetica", "normal");
     pdf.setTextColor(60, 60, 60);
-    pdf.text("Saldo pendiente:", PAGE_WIDTH - PAGE_MARGIN - 60, currentY + 5);
+    pdf.text("Balance due:", PAGE_WIDTH - PAGE_MARGIN - 60, currentY + 5);
     
     const pendingAmount = parseFloat(String(data.total)) - parseFloat(String(data.amountPaid));
     pdf.setFont("helvetica", "bold");
-    // Color rojo si hay pendiente, verde si está completo
+    // Red if there is balance due, green if paid in full
     if (pendingAmount > 0) {
       pdf.setTextColor(231, 76, 60); 
     } else {
@@ -984,7 +984,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     }
   }
   
-  // Términos y condiciones
+  // Terms and conditions
   if (data.terms) {
     // Check if we need to add a new page
     if (currentY > 230) {
@@ -995,7 +995,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     pdf.setFontSize(11);
     pdf.setFont("helvetica", "bold");
     pdf.setTextColor(PRIMARY_COLOR);
-    pdf.text("TÉRMINOS Y CONDICIONES", PAGE_MARGIN, currentY);
+    pdf.text("TERMS AND CONDITIONS", PAGE_MARGIN, currentY);
     
     currentY += 8;
     
