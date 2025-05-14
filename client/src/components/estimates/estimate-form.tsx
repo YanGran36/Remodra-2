@@ -315,7 +315,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
       data.estimateNumber = `EST-${year}${month}-${random}`;
     }
     
-    // Preparar objeto de estimado completo con sus ítems
+    // Prepare complete estimate object with its items
     const estimateData = {
       ...data,
       // Si proyecto es 0, enviar null para evitar error de clave foránea
@@ -324,12 +324,12 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
       status: isEditing ? form.getValues("status") || "pending" : "pending",
       items: items.map(item => ({
         ...item,
-        estimateId: isEditing && estimateId ? estimateId : 0, // Mantener relación con el estimado si es edición
+        estimateId: isEditing && estimateId ? estimateId : 0, // Maintain relationship with the estimate if in edit mode
       })),
     };
     
     if (isEditing && estimateId) {
-      // Actualizar estimado existente
+      // Update existing estimate
       updateEstimateMutation.mutate(
         { 
           id: estimateId, 
@@ -339,7 +339,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
           onSuccess: (updatedEstimate) => {
             toast({
               title: "Estimado actualizado",
-              description: `El estimado ${updatedEstimate.estimateNumber} ha sido actualizado exitosamente.`,
+              description: `Estimate ${updatedEstimate.estimateNumber} has been successfully updated.`,
             });
             
             if (onSuccess) {
@@ -349,12 +349,12 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
         }
       );
     } else {
-      // Crear nuevo estimado
+      // Create new estimate
       createEstimateMutation.mutate(estimateData, {
         onSuccess: (newEstimate) => {
           toast({
             title: "Estimado creado",
-            description: `El estimado ${newEstimate.estimateNumber} ha sido creado exitosamente.`,
+            description: `Estimate ${newEstimate.estimateNumber} has been successfully created.`,
           });
           
           if (onSuccess) {
@@ -370,7 +370,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
     return (
       <div className="flex flex-col items-center justify-center w-full h-64">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-        <p className="text-gray-500">Cargando datos del estimado...</p>
+        <p className="text-gray-500">Loading estimate data...</p>
       </div>
     );
   }
