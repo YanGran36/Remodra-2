@@ -666,7 +666,7 @@ export default function VendorEstimateFormPageNew() {
       return;
     }
     
-    // Preparar los ítems de la factura a partir del análisis
+    // Prepare invoice items from the analysis
     const items = analysisResult.breakdown.materials.items.map(item => ({
       description: item.name,
       quantity: "1",
@@ -684,7 +684,7 @@ export default function VendorEstimateFormPageNew() {
       notes: analysisResult.breakdown.labor.notes || ""
     });
     
-    // Obtener cliente seleccionado
+    // Get selected client
     const selectedClient = clients.find((c: any) => c.id.toString() === watchClientId);
     
     // Prepare invoice data
@@ -747,7 +747,7 @@ export default function VendorEstimateFormPageNew() {
     if (!watchMaterialType) {
       toast({
         title: "Seleccione un material",
-        description: "Debe seleccionar un tipo de material para agregarlo.",
+        description: "You must select a material type to add it.",
         variant: "destructive",
       });
       return;
@@ -756,7 +756,7 @@ export default function VendorEstimateFormPageNew() {
     if (!watchServiceType || !Object.prototype.hasOwnProperty.call(MATERIALS_BY_SERVICE, watchServiceType)) {
       toast({
         title: "Error",
-        description: "Seleccione un tipo de servicio válido.",
+        description: "Select a valid service type.",
         variant: "destructive",
       });
       return;
@@ -798,7 +798,7 @@ export default function VendorEstimateFormPageNew() {
     // Notify the user that the material has been removed
     toast({
       title: "Material eliminado",
-      description: "Se ha eliminado el material del estimado",
+      description: "The material has been removed from the estimate",
     });
   };
   
@@ -1067,7 +1067,7 @@ export default function VendorEstimateFormPageNew() {
                           </SelectContent>
                         </Select>
                         <FormDescription>
-                          El tipo de servicio que se proporcionará
+                          The type of service to be provided
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -1233,7 +1233,7 @@ export default function VendorEstimateFormPageNew() {
                       ) : (
                         <div className="text-center p-4 border border-dashed rounded-md">
                           <p className="text-muted-foreground">
-                            No hay materiales seleccionados. Seleccione un tipo de servicio y agregue materiales.
+                            No materials selected. Select a service type and add materials.
                           </p>
                         </div>
                       )}
@@ -1486,12 +1486,12 @@ export default function VendorEstimateFormPageNew() {
                   className="w-full max-w-md"
                   disabled={isSubmitting}
                   onClick={() => {
-                    // Forzar que cambie a la pestaña de información básica si no hay cliente seleccionado
+                    // Force it to change to the basic information tab if no client is selected
                     if (!watchClientId) {
                       setActiveTab("information");
                       toast({
                         title: "Atención",
-                        description: "Debe seleccionar un cliente primero",
+                        description: "You must select a client first",
                       });
                       return;
                     }
@@ -1511,7 +1511,7 @@ export default function VendorEstimateFormPageNew() {
                   }}
                 >
                   <Save className="mr-2 h-5 w-5" />
-                  {isSubmitting ? "Creando estimado..." : "Crear Estimado desde Formulario"}
+                  {isSubmitting ? "Creating estimate..." : "Create Estimate from Form"}
                 </Button>
               </div>
             </TabsContent>
