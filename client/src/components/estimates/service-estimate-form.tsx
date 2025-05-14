@@ -238,16 +238,16 @@ export default function ServiceEstimateForm({
     // Suma de items personalizados
     const customTotal = customItems.reduce((sum, c) => sum + c.total, 0);
     
-    // Costo total de labor
+    // Total labor cost
     const laborTotal = laborHours * laborRate;
     
-    // Total general
+    // Grand total
     const total = materialsTotal + optionsTotal + customTotal + laborTotal;
     
     setLaborCost(laborTotal);
     setTotalAmount(total);
     
-    // Notificar al componente padre
+    // Notify parent component
     const allItems = [
       ...selectedMaterials,
       ...selectedOptions,
@@ -309,7 +309,7 @@ export default function ServiceEstimateForm({
     }
   };
   
-  // Limpiar formulario
+  // Clear form
   const handleClearForm = () => {
     setSelectedMaterials([]);
     setSelectedOptions([]);
@@ -324,7 +324,7 @@ export default function ServiceEstimateForm({
     }
   };
   
-  // Renderizar formulario según el tipo de servicio
+  // Render form based on service type
   return (
     <Card className="max-w-4xl mx-auto">
       <CardHeader>
@@ -332,7 +332,7 @@ export default function ServiceEstimateForm({
           <span className="mr-2">Estimado de {serviceLabel}</span>
         </CardTitle>
         <CardDescription>
-          Complete las medidas y seleccione los materiales para generar un estimado detallado
+          Complete the measurements and select materials to generate a detailed estimate
         </CardDescription>
       </CardHeader>
       
@@ -345,7 +345,7 @@ export default function ServiceEstimateForm({
           </h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Campos específicos según el tipo de servicio */}
+            {/* Specific fields based on service type */}
             {(serviceType === 'roof' || serviceType === 'deck' || serviceType === 'siding') && (
               <>
                 <div className="space-y-2">
