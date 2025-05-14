@@ -140,8 +140,8 @@ export default function ProjectAISection({ project, tab }: ProjectAISectionProps
       });
       
       toast({
-        title: "Análisis de IA generado",
-        description: "El análisis de IA se ha generado y guardado correctamente.",
+        title: "AI Analysis Generated",
+        description: "AI analysis has been generated and saved successfully.",
       });
     } catch (error) {
       toast({
