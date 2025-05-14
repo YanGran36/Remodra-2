@@ -115,7 +115,7 @@ import {
   getServiceLabel
 } from "@/lib/service-options";
 
-// Define el esquema de validación del formulario
+// Define the form validation schema
 // Note: The translations will be applied by useForm when rendering the form
 const formSchema = z.object({
   clientId: z.string().min(1, { message: "Please select a client" }),
@@ -457,8 +457,8 @@ export default function VendorEstimateFormPageNew() {
     }
     
     toast({
-      title: "Cliente seleccionado",
-      description: `Datos de ${client.firstName} ${client.lastName} cargados automáticamente`,
+      title: "Client selected",
+      description: `${client.firstName} ${client.lastName}'s data loaded automatically`,
     });
   };
 
@@ -562,16 +562,16 @@ export default function VendorEstimateFormPageNew() {
         
         // Validar que items sea un array
         if (!Array.isArray(data.items) || data.items.length === 0) {
-          throw new Error("Debe incluir al menos un ítem en la factura");
+          throw new Error("You must include at least one item in the invoice");
         }
         
-        console.log("Enviando datos de factura:", JSON.stringify(data, null, 2));
+        console.log("Sending invoice data:", JSON.stringify(data, null, 2));
         
         const res = await apiRequest("POST", "/api/protected/invoices", data);
         
         if (!res.ok) {
           const errorData = await res.json();
-          throw new Error(errorData.message || "Error al crear la factura");
+          throw new Error(errorData.message || "Error creating the invoice");
         }
         
         return await res.json();
@@ -594,7 +594,7 @@ export default function VendorEstimateFormPageNew() {
       setIsSubmitting(false);
       console.error("Error en createInvoiceMutation.onError:", error);
       toast({
-        title: "Error al crear factura",
+        title: "Error creating invoice",
         description: error.message || "Ocurrió un error inesperado al crear la factura",
         variant: "destructive",
       });
