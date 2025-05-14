@@ -244,6 +244,46 @@ function renderTableHeaderColumns(pdf: jsPDF, currentY: number): { nextColPositi
   return { nextColPosition: colPosition };
 }
 
+// Function to render table data row based on column visibility settings
+function renderTableDataRow(pdf: jsPDF, item: Item, currentY: number): void {
+  let colPosition = PAGE_MARGIN + 5;
+  
+  // Description (truncated if too long)
+  if (isColumnEnabled('description')) {
+    const description = item.description.length > 50 
+      ? item.description.substring(0, 47) + "..." 
+      : item.description;
+    pdf.text(description, colPosition, currentY + 5);
+    colPosition = PAGE_MARGIN + 100;  // Default position for quantity
+  }
+  
+  // Quantity
+  if (isColumnEnabled('quantity')) {
+    pdf.text(String(item.quantity), colPosition, currentY + 5);
+    colPosition += 25;
+  }
+  
+  // Unit price
+  if (isColumnEnabled('unitPrice')) {
+    pdf.text(formatCurrency(item.unitPrice), colPosition, currentY + 5);
+    colPosition += 35;
+  }
+  
+  // Amount
+  if (isColumnEnabled('amount')) {
+    pdf.text(formatCurrency(item.amount), colPosition, currentY + 5);
+    colPosition += 35;
+  }
+  
+  // Notes (if enabled and available)
+  if (isColumnEnabled('notes') && isTemplateFeatureEnabled('showItemNotes') && item.notes) {
+    const notes = item.notes.length > 25 
+      ? item.notes.substring(0, 22) + "..." 
+      : item.notes;
+    pdf.text(notes, colPosition, currentY + 5);
+  }
+}
+
 // Formateo de moneda
 const formatCurrency = (amount: number | string) => {
   return new Intl.NumberFormat('en-US', { 
