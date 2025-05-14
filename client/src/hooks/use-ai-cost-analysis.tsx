@@ -68,50 +68,50 @@ export function useAiCostAnalysis() {
   const { toast } = useToast();
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
 
-  // Mutation para análisis de costos
+  // Mutation for cost analysis
   const analysisMutation = useMutation({
     mutationFn: async (params: AiAnalysisParams) => {
-      // Validación de datos mínimos
+      // Minimum data validation
       if (!params.serviceType) {
-        throw new Error("Debe seleccionar un tipo de servicio");
+        throw new Error("You must select a service type");
       }
       
       if (!params.materials || params.materials.length === 0) {
-        throw new Error("Debe agregar al menos un material");
+        throw new Error("You must add at least one material");
       }
       
       const response = await apiRequest("POST", "/api/protected/ai/analyze-job-cost", params);
       
-      // Verificar si la respuesta es exitosa
+      // Verify if the response is successful
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Error al analizar los costos");
+        throw new Error(errorData.message || "Error analyzing costs");
       }
       
       return response.json() as Promise<AiAnalysisResult>;
     },
     onError: (error) => {
-      console.error("Error en el análisis de costos:", error);
+      console.error("Error in cost analysis:", error);
       toast({
-        title: "Error en el análisis de costos",
-        description: error.message || "No se pudo completar el análisis. Por favor, verifica que has proporcionado los datos necesarios.",
+        title: "Error in cost analysis",
+        description: error.message || "Could not complete the analysis. Please verify that you have provided the necessary data.",
         variant: "destructive",
       });
     },
   });
 
-  // Mutation para generar descripción
+  // Mutation for generating description
   const descriptionMutation = useMutation({
     mutationFn: async (params: AiAnalysisParams) => {
       setIsGeneratingDescription(true);
       try {
-        // Validación de datos mínimos
+        // Minimum data validation
         if (!params.serviceType) {
-          throw new Error("Debe seleccionar un tipo de servicio");
+          throw new Error("You must select a service type");
         }
         
         if (!params.materials || params.materials.length === 0) {
-          throw new Error("Debe agregar al menos un material");
+          throw new Error("You must add at least one material");
         }
         
         const response = await apiRequest("POST", "/api/protected/ai/generate-job-description", params);
