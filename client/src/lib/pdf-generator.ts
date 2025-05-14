@@ -277,7 +277,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
     }
   }
   
-  // Información de la empresa
+  // Business information
   pdf.setFontSize(12);
   pdf.setFont("helvetica", "bold");
   pdf.text(data.contractor.businessName, PAGE_WIDTH - PAGE_MARGIN - 80, 15, { align: 'right' });
@@ -352,21 +352,21 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   pdf.setTextColor(60, 60, 60);
   pdf.setFontSize(10);
   
-  // Estado
+  // Status
   pdf.setFont("helvetica", "bold");
   pdf.text("Estado:", PAGE_WIDTH / 2, currentY);
   pdf.setFont("helvetica", "normal");
   pdf.text(getStatusText(data.status), PAGE_WIDTH / 2 + 25, currentY);
   currentY += 6;
   
-  // Fecha de emisión
+  // Issue date
   pdf.setFont("helvetica", "bold");
   pdf.text("Fecha de emisión:", PAGE_WIDTH / 2, currentY);
   pdf.setFont("helvetica", "normal");
   pdf.text(formatDate(data.issueDate), PAGE_WIDTH / 2 + 35, currentY);
   currentY += 6;
   
-  // Fecha de expiración
+  // Expiration date
   if (data.expiryDate) {
     pdf.setFont("helvetica", "bold");
     pdf.text("Válido hasta:", PAGE_WIDTH / 2, currentY);
@@ -375,7 +375,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
     currentY += 6;
   }
   
-  // Proyecto (si está disponible)
+  // Project (if available)
   if (data.projectTitle) {
     pdf.setFont("helvetica", "bold");
     pdf.text("Proyecto:", PAGE_WIDTH / 2, currentY);
@@ -399,7 +399,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   
   currentY += 8;
   
-  // Encabezados de tabla
+  // Table headers
   pdf.setFillColor(247, 250, 252);
   pdf.rect(PAGE_MARGIN, currentY, CONTENT_WIDTH, 8, 'F');
   
@@ -412,7 +412,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   
   currentY += 8;
   
-  // Filas de ítems
+  // Item rows
   let alternateRow = false;
   for (const item of data.items) {
     const itemHeight = 10;
@@ -424,11 +424,11 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
     }
     alternateRow = !alternateRow;
     
-    // Verificar si necesitamos agregar una nueva página
+    // Check if we need to add a new page
     if (currentY > 250) {
       pdf.addPage();
       currentY = 20;
-      // Encabezados de tabla en la nueva página
+      // Table headers en la nueva página
       pdf.setFillColor(247, 250, 252);
       pdf.rect(PAGE_MARGIN, currentY, CONTENT_WIDTH, 8, 'F');
       
@@ -471,13 +471,13 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
     currentY += itemHeight;
   }
   
-  // Subtotal, impuestos, descuento y total
+  // Subtotal, taxes, discount and total
   pdf.setDrawColor(220, 220, 220);
   pdf.line(PAGE_MARGIN, currentY, PAGE_WIDTH - PAGE_MARGIN, currentY);
   
   currentY += 5;
   
-  // Verificar si necesitamos agregar una nueva página para los totales
+  // Check if we need to add a new page para los totales
   if (currentY > 250) {
     pdf.addPage();
     currentY = 20;
@@ -535,7 +535,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   
   // Términos y condiciones
   if (data.terms) {
-    // Verificar si necesitamos agregar una nueva página
+    // Check if we need to add a new page
     if (currentY > 230) {
       pdf.addPage();
       currentY = 20;
@@ -561,7 +561,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   
   // Notas adicionales
   if (data.notes) {
-    // Verificar si necesitamos agregar una nueva página
+    // Check if we need to add a new page
     if (currentY > 230) {
       pdf.addPage();
       currentY = 20;
@@ -652,7 +652,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     }
   }
   
-  // Información de la empresa
+  // Business information
   pdf.setFontSize(12);
   pdf.setFont("helvetica", "bold");
   pdf.text(data.contractor.businessName, PAGE_WIDTH - PAGE_MARGIN - 80, 15, { align: 'right' });
@@ -727,21 +727,21 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   pdf.setTextColor(60, 60, 60);
   pdf.setFontSize(10);
   
-  // Estado
+  // Status
   pdf.setFont("helvetica", "bold");
   pdf.text("Estado:", PAGE_WIDTH / 2, currentY);
   pdf.setFont("helvetica", "normal");
   pdf.text(getStatusText(data.status), PAGE_WIDTH / 2 + 25, currentY);
   currentY += 6;
   
-  // Fecha de emisión
+  // Issue date
   pdf.setFont("helvetica", "bold");
   pdf.text("Fecha de emisión:", PAGE_WIDTH / 2, currentY);
   pdf.setFont("helvetica", "normal");
   pdf.text(formatDate(data.issueDate), PAGE_WIDTH / 2 + 35, currentY);
   currentY += 6;
   
-  // Fecha de vencimiento
+  // Due date
   if (data.dueDate) {
     pdf.setFont("helvetica", "bold");
     pdf.text("Fecha de vencimiento:", PAGE_WIDTH / 2, currentY);
@@ -759,7 +759,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     currentY += 6;
   }
   
-  // Proyecto (si está disponible)
+  // Project (if available)
   if (data.projectTitle) {
     pdf.setFont("helvetica", "bold");
     pdf.text("Proyecto:", PAGE_WIDTH / 2, currentY);
@@ -783,7 +783,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   
   currentY += 8;
   
-  // Encabezados de tabla
+  // Table headers
   pdf.setFillColor(247, 250, 252);
   pdf.rect(PAGE_MARGIN, currentY, CONTENT_WIDTH, 8, 'F');
   
@@ -796,7 +796,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   
   currentY += 8;
   
-  // Filas de ítems
+  // Item rows
   let alternateRow = false;
   for (const item of data.items) {
     const itemHeight = 10;
@@ -808,11 +808,11 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     }
     alternateRow = !alternateRow;
     
-    // Verificar si necesitamos agregar una nueva página
+    // Check if we need to add a new page
     if (currentY > 250) {
       pdf.addPage();
       currentY = 20;
-      // Encabezados de tabla en la nueva página
+      // Table headers en la nueva página
       pdf.setFillColor(247, 250, 252);
       pdf.rect(PAGE_MARGIN, currentY, CONTENT_WIDTH, 8, 'F');
       
@@ -855,13 +855,13 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     currentY += itemHeight;
   }
   
-  // Subtotal, impuestos, descuento y total
+  // Subtotal, taxes, discount and total
   pdf.setDrawColor(220, 220, 220);
   pdf.line(PAGE_MARGIN, currentY, PAGE_WIDTH - PAGE_MARGIN, currentY);
   
   currentY += 5;
   
-  // Verificar si necesitamos agregar una nueva página para los totales
+  // Check if we need to add a new page para los totales
   if (currentY > 250) {
     pdf.addPage();
     currentY = 20;
@@ -947,7 +947,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   
   // Client signature if available
   if (data.clientSignature) {
-    // Verificar si necesitamos agregar una nueva página
+    // Check if we need to add a new page
     if (currentY > 220) {
       pdf.addPage();
       currentY = 20;
@@ -986,7 +986,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   
   // Términos y condiciones
   if (data.terms) {
-    // Verificar si necesitamos agregar una nueva página
+    // Check if we need to add a new page
     if (currentY > 230) {
       pdf.addPage();
       currentY = 20;
@@ -1012,7 +1012,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   
   // Notas adicionales
   if (data.notes) {
-    // Verificar si necesitamos agregar una nueva página
+    // Check if we need to add a new page
     if (currentY > 230) {
       pdf.addPage();
       currentY = 20;
