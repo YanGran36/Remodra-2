@@ -106,7 +106,7 @@ export default function ProjectAISection({ project, tab }: ProjectAISectionProps
     },
   });
 
-  // Función para generar el análisis de IA
+  // Function to generate AI analysis
   const generateAIAnalysis = async () => {
     if (!project) return;
     
@@ -124,7 +124,7 @@ export default function ProjectAISection({ project, tab }: ProjectAISectionProps
         notes: project.notes,
       };
       
-      // Llamar a la API de análisis de IA
+      // Call the AI analysis API
       const analysis = await analyzeProject(projectData);
       
       // Actualizar el formulario

@@ -172,7 +172,7 @@ export default function ProjectDetailEnhanced({ project, isOpen, onClose, onEdit
                   {project.description ? (
                     <p className="text-sm whitespace-pre-line">{project.description}</p>
                   ) : (
-                    <p className="text-sm text-muted-foreground italic">No hay descripción para este proyecto.</p>
+                    <p className="text-sm text-muted-foreground italic">There is no description for this project.</p>
                   )}
                 </CardContent>
               </Card>
@@ -185,7 +185,7 @@ export default function ProjectDetailEnhanced({ project, isOpen, onClose, onEdit
                   {project.notes ? (
                     <p className="text-sm whitespace-pre-line">{project.notes}</p>
                   ) : (
-                    <p className="text-sm text-muted-foreground italic">No hay notas para este proyecto.</p>
+                    <p className="text-sm text-muted-foreground italic">There are no notes for this project.</p>
                   )}
                 </CardContent>
               </Card>

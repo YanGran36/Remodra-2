@@ -116,10 +116,10 @@ export function useAiCostAnalysis() {
         
         const response = await apiRequest("POST", "/api/protected/ai/generate-job-description", params);
         
-        // Verificar si la respuesta es exitosa
+        // Verify if the response is successful
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.message || "Error al generar la descripción");
+          throw new Error(errorData.message || "Error generating the description");
         }
         
         const data = await response.json();
@@ -130,10 +130,10 @@ export function useAiCostAnalysis() {
     },
     onError: (error) => {
       setIsGeneratingDescription(false);
-      console.error("Error al generar descripción:", error);
+      console.error("Error generating description:", error);
       toast({
-        title: "Error al generar descripción",
-        description: error.message || "No se pudo generar la descripción. Por favor, verifica que has proporcionado los datos necesarios.",
+        title: "Error generating description",
+        description: error.message || "Could not generate the description. Please verify that you have provided the necessary data.",
         variant: "destructive",
       });
     },
