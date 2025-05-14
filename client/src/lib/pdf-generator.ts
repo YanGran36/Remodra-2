@@ -753,7 +753,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   // Método de pago
   if (data.paymentMethod) {
     pdf.setFont("helvetica", "bold");
-    pdf.text("Método de pago:", PAGE_WIDTH / 2, currentY);
+    pdf.text("Payment method:", PAGE_WIDTH / 2, currentY);
     pdf.setFont("helvetica", "normal");
     pdf.text(data.paymentMethod, PAGE_WIDTH / 2 + 35, currentY);
     currentY += 6;
@@ -915,15 +915,15 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   pdf.text("TOTAL:", PAGE_WIDTH - PAGE_MARGIN - 60, currentY + 5);
   pdf.text(formatCurrency(data.total), PAGE_WIDTH - PAGE_MARGIN, currentY + 5, { align: 'right' });
   
-  // Mostrar monto pagado si hay
+  // Show amount paid if any
   if (data.amountPaid && Number(data.amountPaid) > 0) {
     currentY += 8;
     pdf.setFont("helvetica", "normal");
     pdf.setTextColor(60, 60, 60);
-    pdf.text("Pagado:", PAGE_WIDTH - PAGE_MARGIN - 60, currentY + 5);
+    pdf.text("Paid:", PAGE_WIDTH - PAGE_MARGIN - 60, currentY + 5);
     
     pdf.setFont("helvetica", "bold");
-    pdf.setTextColor(39, 174, 96); // Verde para pagos
+    pdf.setTextColor(39, 174, 96); // Green for payments
     pdf.text(formatCurrency(data.amountPaid), PAGE_WIDTH - PAGE_MARGIN, currentY + 5, { align: 'right' });
     
     // Saldo pendiente
