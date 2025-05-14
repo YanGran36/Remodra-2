@@ -578,7 +578,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
     pdf.setFont("helvetica", "normal");
     pdf.setTextColor(80, 80, 80);
     
-    // Dividir las notas en múltiples líneas si es necesario
+    // Split notes into multiple lines if necessary
     const noteLines = pdf.splitTextToSize(data.notes, CONTENT_WIDTH);
     pdf.text(noteLines, PAGE_MARGIN, currentY);
     
@@ -1029,7 +1029,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     pdf.setFont("helvetica", "normal");
     pdf.setTextColor(80, 80, 80);
     
-    // Dividir las notas en múltiples líneas si es necesario
+    // Split notes into multiple lines if necessary
     const noteLines = pdf.splitTextToSize(data.notes, CONTENT_WIDTH);
     pdf.text(noteLines, PAGE_MARGIN, currentY);
     
