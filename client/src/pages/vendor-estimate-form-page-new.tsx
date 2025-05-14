@@ -797,7 +797,7 @@ export default function VendorEstimateFormPageNew() {
     
     // Notify the user that the material has been removed
     toast({
-      title: "Material eliminado",
+      title: "Material removed",
       description: "The material has been removed from the estimate",
     });
   };
@@ -1490,7 +1490,7 @@ export default function VendorEstimateFormPageNew() {
                     if (!watchClientId) {
                       setActiveTab("information");
                       toast({
-                        title: "Atención",
+                        title: "Attention",
                         description: "You must select a client first",
                       });
                       return;
