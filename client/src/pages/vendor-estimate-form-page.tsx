@@ -476,7 +476,7 @@ export default function VendorEstimateFormPage() {
                           />
                         </FormControl>
                         <FormDescription>
-                          Detalles adicionales sobre el trabajo a realizar
+                          Additional details about the work to be performed
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -586,15 +586,15 @@ export default function VendorEstimateFormPage() {
             <TabsContent value="summary" className="space-y-6 pt-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Resumen del Estimado</CardTitle>
+                  <CardTitle>Estimate Summary</CardTitle>
                   <CardDescription>
-                    Revise la información antes de generar el estimado
+                    Review the information before generating the estimate
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <h3 className="text-md font-medium mb-2">Información del Cliente</h3>
+                      <h3 className="text-md font-medium mb-2">Client Information</h3>
                       <div className="rounded-md bg-muted p-4">
                         {watchClientId ? (
                           <>
@@ -627,7 +627,7 @@ export default function VendorEstimateFormPage() {
                         {watchServiceType ? (
                           <div className="space-y-2">
                             <p>
-                              <span className="font-medium">Tipo de Servicio:</span>{" "}
+                              <span className="font-medium">Service Type:</span>{" "}
                               {SERVICE_TYPES.find(s => s.value === watchServiceType)?.label}
                             </p>
                           </div>
@@ -673,7 +673,7 @@ export default function VendorEstimateFormPage() {
                       </TableBody>
                       <TableFooter>
                         <TableRow>
-                          <TableCell colSpan={3}>Total Estimado</TableCell>
+                          <TableCell colSpan={3}>Estimated Total</TableCell>
                           <TableCell className="text-right font-bold">
                             ${totalAmount.toFixed(2)}
                           </TableCell>
@@ -683,9 +683,9 @@ export default function VendorEstimateFormPage() {
                   </div>
                   
                   <div className="rounded-md border p-4">
-                    <h3 className="text-md font-medium mb-2">Notas</h3>
+                    <h3 className="text-md font-medium mb-2">Notes</h3>
                     <p className="text-sm text-muted-foreground">
-                      {form.getValues("notes") || "No se han agregado notas"}
+                      {form.getValues("notes") || "No notes have been added"}
                     </p>
                   </div>
                 </CardContent>
@@ -701,7 +701,7 @@ export default function VendorEstimateFormPage() {
                     type="submit" 
                     disabled={isSubmitting || estimateItems.length === 0}
                   >
-                    {isSubmitting ? "Guardando..." : "Generar Estimado"}
+                    {isSubmitting ? "Saving..." : "Generate Estimate"}
                   </Button>
                 </CardFooter>
               </Card>
