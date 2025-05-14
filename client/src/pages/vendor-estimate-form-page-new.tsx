@@ -29,7 +29,7 @@ import {
 // AI analysis component
 import AiAnalysisPanel from "@/components/ai/ai-analysis-panel";
 
-// Componentes de Medición Digital
+// Digital Measurement Components
 import DigitalMeasurement from "@/components/measurement/digital-measurement";
 import LiDARScanner from "@/components/measurement/lidar-scanner";
 
@@ -132,7 +132,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-// Interfaz para los elementos seleccionados
+// Interface for selected items
 interface SelectedItem {
   id: string;
   name: string;
@@ -149,11 +149,11 @@ export default function VendorEstimateFormPageNew() {
   const { t } = useLanguage();
   const queryClient = useQueryClient();
   
-  // Obtener clientId de la URL si existe
+  // Get clientId from URL if it exists
   const urlParams = new URLSearchParams(location.split('?')[1] || '');
   const clientIdFromUrl = urlParams.get('clientId');
   
-  // Estados locales
+  // Local states
   const [activeTab, setActiveTab] = useState("information");
   const [selectedMaterials, setSelectedMaterials] = useState<MaterialInput[]>([]);
   const [selectedOptions, setSelectedOptions] = useState<SelectedItem[]>([]);
@@ -164,14 +164,14 @@ export default function VendorEstimateFormPageNew() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showAppointmentCalendar, setShowAppointmentCalendar] = useState(false);
   
-  // Estados para herramientas de medición
+  // States for measurement tools
   const [isDigitalMeasurementOpen, setIsDigitalMeasurementOpen] = useState(false);
   const [isLidarScannerOpen, setIsLidarScannerOpen] = useState(false);
   const [measurements, setMeasurements] = useState<any[]>([]);
   const [scanResults, setScanResults] = useState<any[]>([]);
   const [selectedProjectFromEvent, setSelectedProjectFromEvent] = useState<string>();
   
-  // Funciones auxiliares
+  // Helper functions
   function addDays(date: Date, days: number): Date {
     const result = new Date(date);
     result.setDate(result.getDate() + days);
@@ -346,7 +346,7 @@ export default function VendorEstimateFormPageNew() {
     }
   }, [clientIdFromUrl, clients]);
   
-  // Efecto para establecer el proyecto cuando se selecciona desde un evento
+  // Effect to set the project when selected from an event
   useEffect(() => {
     if (selectedProjectFromEvent && form) {
       form.setValue("projectId", selectedProjectFromEvent);
@@ -711,7 +711,7 @@ export default function VendorEstimateFormPageNew() {
   // Las funciones auxiliares addDays, generateEstimateNumber y generateInvoiceNumber
   // ya están definidas al inicio del componente, por lo que se omiten aquí.
   
-  // Funciones para las herramientas de medición
+  // Functions for measurement tools
   const handleMeasurementsChange = (newMeasurements: any[]) => {
     setMeasurements(newMeasurements);
     
