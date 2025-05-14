@@ -369,7 +369,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   // Expiration date
   if (data.expiryDate) {
     pdf.setFont("helvetica", "bold");
-    pdf.text("Válido hasta:", PAGE_WIDTH / 2, currentY);
+    pdf.text("Valid until:", PAGE_WIDTH / 2, currentY);
     pdf.setFont("helvetica", "normal");
     pdf.text(formatDate(data.expiryDate), PAGE_WIDTH / 2 + 30, currentY);
     currentY += 6;
@@ -378,7 +378,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   // Project (if available)
   if (data.projectTitle) {
     pdf.setFont("helvetica", "bold");
-    pdf.text("Proyecto:", PAGE_WIDTH / 2, currentY);
+    pdf.text("Project:", PAGE_WIDTH / 2, currentY);
     pdf.setFont("helvetica", "normal");
     pdf.text(data.projectTitle, PAGE_WIDTH / 2 + 25, currentY);
     currentY += 6;
@@ -744,7 +744,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   // Due date
   if (data.dueDate) {
     pdf.setFont("helvetica", "bold");
-    pdf.text("Fecha de vencimiento:", PAGE_WIDTH / 2, currentY);
+    pdf.text("Due date:", PAGE_WIDTH / 2, currentY);
     pdf.setFont("helvetica", "normal");
     pdf.text(formatDate(data.dueDate), PAGE_WIDTH / 2 + 45, currentY);
     currentY += 6;
@@ -762,7 +762,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   // Project (if available)
   if (data.projectTitle) {
     pdf.setFont("helvetica", "bold");
-    pdf.text("Proyecto:", PAGE_WIDTH / 2, currentY);
+    pdf.text("Project:", PAGE_WIDTH / 2, currentY);
     pdf.setFont("helvetica", "normal");
     pdf.text(data.projectTitle, PAGE_WIDTH / 2 + 25, currentY);
     currentY += 6;
@@ -969,7 +969,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
       pdf.setFontSize(9);
       pdf.setFont("helvetica", "normal");
       pdf.setTextColor(80, 80, 80);
-      pdf.text(`Fecha de firma: ${formatDate(new Date())}`, PAGE_MARGIN, currentY);
+      pdf.text(`Signature date: ${formatDate(new Date())}`, PAGE_MARGIN, currentY);
       
       currentY += 10;
     } catch (error) {
