@@ -247,22 +247,22 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
     return () => subscription.unsubscribe();
   }, [form, items]);
   
-  // Cargar datos del estimado si estamos en modo edición
+  // Load estimate data if we are in edit mode
   useEffect(() => {
     if (estimateId) {
-      // Realizar consulta para obtener los datos del estimado
+      // Query to get estimate data
       setIsLoading(true);
       
       const fetchEstimate = async () => {
         try {
           const response = await fetch(`/api/protected/estimates/${estimateId}`);
           if (!response.ok) {
-            throw new Error('No se pudo cargar el estimado');
+            throw new Error('Could not load the estimate');
           }
           
           const estimateData = await response.json();
           
-          // Convertir fechas de string a objetos Date
+          // Convert dates from strings to Date objects
           if (estimateData.issueDate) {
             estimateData.issueDate = new Date(estimateData.issueDate);
           }
@@ -300,7 +300,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
     if (items.length === 0) {
       toast({
         title: "Cannot add items",
-        description: "Debe agregar al menos un ítem al estimado.",
+        description: "You must add at least one item to the estimate.",
         variant: "destructive",
       });
       return;
