@@ -98,7 +98,7 @@ export default function CostAnalysisAssistant({
     }));
   };
 
-  // Realizar el análisis
+  // Perform the analysis
   const runAnalysis = async () => {
     try {
       // Validar que se haya agregado al menos un material

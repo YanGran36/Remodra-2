@@ -129,7 +129,7 @@ export default function AiAnalysisPanel({
     }
   };
   
-  // Crear estimado a partir del análisis
+  // Create estimate from analysis
   const handleCreateEstimate = () => {
     if (!analysisResult) return;
     
@@ -138,7 +138,7 @@ export default function AiAnalysisPanel({
     }
   };
   
-  // Crear factura a partir del análisis
+  // Create invoice from analysis
   const handleCreateInvoice = () => {
     if (!analysisResult) return;
     
@@ -165,10 +165,10 @@ export default function AiAnalysisPanel({
               <Alert>
                 <AlertTitle className="flex items-center gap-2">
                   <InfoIcon className="h-4 w-4" />
-                  Información de análisis
+                  Analysis Information
                 </AlertTitle>
                 <AlertDescription>
-                  El análisis utilizará el tipo de servicio, materiales, tamaños y otra información 
+                  The analysis will use the service type, materials, sizes, and other information 
                   proporcionada para generar un estimado detallado y recomendaciones para este trabajo.
                 </AlertDescription>
               </Alert>
@@ -307,7 +307,7 @@ export default function AiAnalysisPanel({
                     <div className="rounded-md bg-slate-50 p-4 dark:bg-slate-900">
                       <div className="mb-2">
                         <div className="flex justify-between mb-1">
-                          <span className="text-sm">Rango de precios en el mercado:</span>
+                          <span className="text-sm">Market price range:</span>
                           <span className="text-sm">
                             {formatCurrency(analysisResult.breakdown.competitiveAnalysis.lowRange)} - {formatCurrency(analysisResult.breakdown.competitiveAnalysis.highRange)}
                           </span>
@@ -356,7 +356,7 @@ export default function AiAnalysisPanel({
                 variant="outline" 
                 className="flex-1"
                 onClick={handleCreateEstimate}
-                title="Esto sólo transfiere el análisis al formulario, no crea el estimado directamente"
+                title="This only transfers the analysis to the form, it does not create the estimate directly"
                 type="button"
               >
                 <FileText className="h-4 w-4 mr-2" />
@@ -366,7 +366,7 @@ export default function AiAnalysisPanel({
                 variant="default" 
                 className="flex-1"
                 onClick={handleCreateInvoice}
-                title="Esto sólo transfiere el análisis al formulario, no crea la factura directamente"
+                title="This only transfers the analysis to the form, it does not create the invoice directly"
                 type="button"
               >
                 <FileCheck className="h-4 w-4 mr-2" />
@@ -380,7 +380,7 @@ export default function AiAnalysisPanel({
               type="button"
             >
               <BarChart2 className="h-4 w-4 mr-2" />
-              Nuevo análisis
+              New Analysis
             </Button>
           </CardFooter>
         )}
