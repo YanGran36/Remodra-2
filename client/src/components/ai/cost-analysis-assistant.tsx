@@ -104,7 +104,7 @@ export default function CostAnalysisAssistant({
       // Validar que se haya agregado al menos un material
       if (params.materials.length === 0) {
         toast({
-          title: "Error en el análisis de costos",
+          title: "Error in cost analysis",
           description: "Debe agregar al menos un material",
           variant: "destructive"
         });
@@ -114,7 +114,7 @@ export default function CostAnalysisAssistant({
       // Validar que se haya seleccionado un tipo de servicio
       if (!params.serviceType) {
         toast({
-          title: "Error en el análisis de costos",
+          title: "Error in cost analysis",
           description: "Debe seleccionar un tipo de servicio",
           variant: "destructive"
         });
@@ -130,10 +130,10 @@ export default function CostAnalysisAssistant({
       // Mostrar feedback positivo
       toast({
         title: "Análisis completado",
-        description: "Se ha generado el análisis de costos exitosamente"
+        description: "Cost analysis has been successfully generated"
       });
     } catch (error) {
-      console.error("Error en el análisis:", error);
+      console.error("Error in analysis:", error);
       toast({
         title: "Error en el análisis de costos",
         description: "Ocurrió un error al procesar la solicitud. Intente nuevamente.",
@@ -142,13 +142,13 @@ export default function CostAnalysisAssistant({
     }
   };
 
-  // Generar descripción del trabajo
+  // Generate job description
   const generateDescription = async () => {
     try {
       // Validar que se haya agregado al menos un material
       if (params.materials.length === 0) {
         toast({
-          title: "Error al generar descripción",
+          title: "Error generating description",
           description: "Debe agregar al menos un material",
           variant: "destructive"
         });
@@ -158,14 +158,14 @@ export default function CostAnalysisAssistant({
       // Validar que se haya seleccionado un tipo de servicio
       if (!params.serviceType) {
         toast({
-          title: "Error al generar descripción",
+          title: "Error generating description",
           description: "Debe seleccionar un tipo de servicio",
           variant: "destructive"
         });
         return;
       }
 
-      // Mostrar análisis automáticamente si no existe
+      // Show analysis automatically if it does not exist
       if (!analysisResult) {
         try {
           const result = await analyzeJobCost(params);
@@ -174,8 +174,8 @@ export default function CostAnalysisAssistant({
             onAnalysisComplete(result);
           }
         } catch (analyzeError) {
-          console.error("Error en el análisis previo:", analyzeError);
-          // Continuar con la generación de descripción incluso si el análisis falla
+          console.error("Error in previous analysis:", analyzeError);
+          // Continue with description generation even if analysis fails
         }
       }
 
@@ -185,7 +185,7 @@ export default function CostAnalysisAssistant({
         onDescriptionGenerated(description);
       }
       
-      // Ir automáticamente a la pestaña de descripción
+      // Go automatically to the description tab
       setActiveTab("description");
       
       // Mostrar feedback positivo
