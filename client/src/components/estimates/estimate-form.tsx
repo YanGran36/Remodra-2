@@ -205,7 +205,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
     updatedItems.splice(index, 1);
     setItems(updatedItems);
     
-    // Recalcular totales
+    // Recalculate totals
     recalculateTotals(updatedItems);
   };
   

@@ -45,7 +45,7 @@ const formatCurrency = (amount: number | string) => {
 
 // Schema for payment form
 const paymentSchema = z.object({
-  amount: z.string().min(1, "El monto es requerido"),
+  amount: z.string().min(1, "Amount is required"),
   paymentMethod: z.string().min(1, "El método de pago es requerido"),
   paymentDate: z.string().optional(),
   notes: z.string().optional(),

@@ -165,7 +165,7 @@ export default function PremiumEstimatePage() {
       <div className="container py-10">
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
           <div className="text-center">
-            <h2 className="text-2xl font-bold">No se pudo cargar el estimado</h2>
+            <h2 className="text-2xl font-bold">Could not load the estimate</h2>
             <p className="mt-2 text-muted-foreground">
               {error instanceof Error ? error.message : "Ha ocurrido un error"}
             </p>
