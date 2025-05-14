@@ -57,7 +57,7 @@ export default function AiAnalysisPanel({
     isGeneratingDescription 
   } = useAiCostAnalysis();
   
-  // Realizar análisis de costos
+  // Perform cost analysis
   const handleAnalyze = async () => {
     if (!serviceType) {
       toast({
@@ -77,7 +77,7 @@ export default function AiAnalysisPanel({
       return;
     }
     
-    // Mostrar toast de inicio de análisis
+    // Show toast for analysis start
     toast({
       title: "Analizando",
       description: "Estamos analizando los datos. Esto puede tomar un momento...",
@@ -104,26 +104,26 @@ export default function AiAnalysisPanel({
         // Todo exitoso
         toast({
           title: "Análisis completado",
-          description: "El análisis de costos y la descripción han sido generados exitosamente.",
+          description: "The cost analysis and description have been successfully generated.",
         });
       } catch (descError) {
         // Análisis exitoso pero falló la descripción
         console.error("Error al generar descripción:", descError);
         toast({
           title: "Análisis parcial",
-          description: "Se completó el análisis de costos, pero no se pudo generar la descripción.",
+          description: "The cost analysis was completed, but the description could not be generated.",
           variant: "default",
         });
       }
       
-      // Cambiar a la pestaña de análisis en cualquier caso
+      // Switch to analysis tab in any case
       setActiveTab("analysis");
     } catch (analyzeError) {
-      // Falló el análisis de costos
-      console.error("Error en el análisis de costos:", analyzeError);
+      // Cost analysis failed
+      console.error("Error in cost analysis:", analyzeError);
       toast({
-        title: "Error en el análisis",
-        description: analyzeError instanceof Error ? analyzeError.message : "No se pudo completar el análisis. Intente nuevamente.",
+        title: "Analysis Error",
+        description: analyzeError instanceof Error ? analyzeError.message : "Could not complete the analysis. Please try again.",
         variant: "destructive",
       });
     }
