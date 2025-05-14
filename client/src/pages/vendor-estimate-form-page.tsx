@@ -5,7 +5,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -222,8 +221,8 @@ export default function VendorEstimateFormPage() {
       setIsSubmitting(false);
       queryClient.invalidateQueries({ queryKey: ["/api/protected/estimates"] });
       toast({
-        title: "¡Estimado creado exitosamente!",
-        description: "El estimado ha sido generado a partir de los datos capturados.",
+        title: "Estimate created successfully!",
+        description: "The estimate has been generated from the captured data.",
       });
       // Redirect to the newly created estimate
       setLocation(`/estimates/${data.id}`);
@@ -231,7 +230,7 @@ export default function VendorEstimateFormPage() {
     onError: (error: Error) => {
       setIsSubmitting(false);
       toast({
-        title: "Error al crear estimado",
+        title: "Error creating estimate",
         description: error.message,
         variant: "destructive",
       });
@@ -242,8 +241,8 @@ export default function VendorEstimateFormPage() {
   const onSubmit = (values: FormValues) => {
     if (totalAmount <= 0) {
       toast({
-        title: "Información incompleta",
-        description: "Por favor complete las medidas y seleccione al menos un material.",
+        title: "Incomplete information",
+        description: "Please complete the measurements and select at least one material.",
         variant: "destructive",
       });
       return;
@@ -278,8 +277,8 @@ export default function VendorEstimateFormPage() {
       tax: "0",
       discount: "0",
       total: totalAmount.toString(),
-      terms: "1. Este estimado es válido por 30 días a partir de la fecha de emisión.\n2. Se requiere un pago del 50% para iniciar el trabajo.\n3. El balance restante se pagará al completar el trabajo.\n4. Cualquier modificación al alcance del trabajo puede resultar en costos adicionales.",
-      notes: values.notes || `Estimado para ${SERVICE_TYPES.find(s => s.value === values.serviceType)?.label} generado durante visita al cliente el ${format(new Date(), "PPP", { locale: es })}`,
+      terms: "1. This estimate is valid for 30 days from the issue date.\n2. A payment of 50% is required to start the work.\n3. The remaining balance will be paid upon completion of the work.\n4. Any modifications to the scope of work may result in additional costs.",
+      notes: values.notes || `Estimate for ${SERVICE_TYPES.find(s => s.value === values.serviceType)?.label} generated during client visit on ${format(new Date(), "PPP")}`,
       contractorSignature: user?.firstName + " " + user?.lastName,
       items
     };
@@ -307,8 +306,8 @@ export default function VendorEstimateFormPage() {
     setMeasurements(newMeasurements);
     
     toast({
-      title: "Medidas actualizadas",
-      description: "Las mediciones han sido registradas correctamente.",
+      title: "Measurements updated",
+      description: "The measurements have been registered correctly.",
     });
   };
   
@@ -316,8 +315,8 @@ export default function VendorEstimateFormPage() {
     setScanResults(prev => [...prev, result]);
     
     toast({
-      title: "Escaneo completado",
-      description: "El escaneo se ha completado. Puede usar estas imágenes para tomar medidas precisas.",
+      title: "Scan completed",
+      description: "The scan has been completed. You can use these images to take precise measurements.",
     });
   };
   
