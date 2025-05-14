@@ -85,7 +85,7 @@ export async function analyzeProject(data: ProjectAnalysisRequest): Promise<Proj
 
     const content = response.choices[0].message.content;
     if (!content) {
-      throw new Error("No se recibió respuesta del modelo de IA");
+      throw new Error("No response received from the AI model");
     }
 
     return JSON.parse(content);
@@ -96,7 +96,7 @@ export async function analyzeProject(data: ProjectAnalysisRequest): Promise<Proj
 }
 
 /**
- * Genera contenido personalizado para diferentes roles basado en la configuración de compartir
+ * Generates personalized content for different roles based on sharing configuration
  */
 export async function generateSharingContent(
   projectData: any,
@@ -142,12 +142,12 @@ export async function generateSharingContent(
 
     const content = response.choices[0].message.content;
     if (!content) {
-      throw new Error("No se recibió respuesta del modelo de IA");
+      throw new Error("No response received from the AI model");
     }
 
     return JSON.parse(content);
   } catch (error) {
-    console.error("Error al generar contenido para compartir:", error);
-    throw new Error(`Error al generar contenido para compartir: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+    console.error("Error generating content for sharing:", error);
+    throw new Error(`Error generating content for sharing: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
