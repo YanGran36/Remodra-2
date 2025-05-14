@@ -345,7 +345,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   pdf.setFontSize(12);
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(PRIMARY_COLOR);
-  pdf.text("DETALLES DEL ESTIMADO", PAGE_WIDTH / 2, 55);
+  pdf.text("ESTIMATE DETAILS", PAGE_WIDTH / 2, 55);
   
   currentY = 63;
   pdf.setFont("helvetica", "normal");
@@ -599,7 +599,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
 }
 
 /**
- * Genera un PDF a partir de una factura
+ * Generates a PDF from an invoice
  */
 export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   // Get template settings
@@ -677,7 +677,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   pdf.setDrawColor(220, 220, 220);
   pdf.line(PAGE_MARGIN, 45, PAGE_WIDTH - PAGE_MARGIN, 45);
   
-  // Información del cliente y factura
+  // Client and invoice information
   let currentY = 55;
   
   // Cliente
@@ -945,7 +945,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   
   currentY += 15;
   
-  // Firma del cliente si está disponible
+  // Client signature if available
   if (data.clientSignature) {
     // Verificar si necesitamos agregar una nueva página
     if (currentY > 220) {
@@ -978,7 +978,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
       pdf.setFontSize(9);
       pdf.setFont("helvetica", "normal");
       pdf.setTextColor(200, 0, 0);
-      pdf.text("Error al cargar la firma del cliente", PAGE_MARGIN, currentY);
+      pdf.text("Error loading client signature", PAGE_MARGIN, currentY);
       
       currentY += 10;
     }
@@ -1062,7 +1062,7 @@ export function downloadBlob(blob: Blob, filename: string): void {
 }
 
 /**
- * Función para generar y descargar un PDF de estimado
+ * Function to generate and download a PDF estimate
  */
 /**
  * Generate and download a PDF for an estimate using saved template settings
