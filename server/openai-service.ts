@@ -262,17 +262,17 @@ export async function generateJobDescription(params: JobCostAnalysisParams): Pro
       return content;
     } catch (error: unknown) {
       const openaiError = error as { message?: string };
-      console.error("Error específico de OpenAI:", openaiError);
+      console.error("Specific OpenAI error:", openaiError);
       
       // Check if it is an API key error
       if (openaiError.message && typeof openaiError.message === 'string' && openaiError.message.includes("api_key")) {
-        throw new Error("Error de autenticación con OpenAI. Verifica la clave API.");
+        throw new Error("Authentication error with OpenAI. Verify the API key.");
       }
       
       throw error;
     }
   } catch (error) {
-    console.error("Error al generar descripción del trabajo con OpenAI:", error);
+    console.error("Error generating job description with OpenAI:", error);
     throw error;
   }
 }

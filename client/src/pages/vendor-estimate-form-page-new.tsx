@@ -106,7 +106,7 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 
-// Importar tipos y datos de servicio
+// Import service types and data
 import { 
   SERVICE_TYPES, 
   MATERIALS_BY_SERVICE, 
@@ -226,21 +226,21 @@ export default function VendorEstimateFormPageNew() {
     }
   });
   
-  // Función para filtrar clientes con citas en una fecha específica
+  // Function to filter clients with appointments on a specific date
   const getClientsWithAppointmentsForDate = (date: Date) => {
     if (!events.length || !clients.length) return [];
     
-    // Crear límites de la fecha seleccionada (principio y fin de día)
+    // Create limits for the selected date (start and end of day)
     const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     const dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59);
     
-    // Filtrar eventos para la fecha seleccionada
+    // Filter events for the selected date
     const eventsForSelectedDate = events.filter((event: any) => {
       const eventDate = new Date(event.startTime);
       return eventDate >= dayStart && eventDate <= dayEnd;
     });
     
-    // Extraer los IDs de clientes con citas en esa fecha
+    // Extract IDs of clients with appointments on that date
     const clientIds = eventsForSelectedDate
       .filter((event: any) => event.clientId)
       .map((event: any) => event.clientId.toString());
