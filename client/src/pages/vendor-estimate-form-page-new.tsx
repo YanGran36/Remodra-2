@@ -1023,7 +1023,7 @@ export default function VendorEstimateFormPageNew() {
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Seleccionar proyecto (opcional)" />
+                              <SelectValue placeholder="Select project (optional)" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -1055,7 +1055,7 @@ export default function VendorEstimateFormPageNew() {
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Seleccionar tipo de servicio" />
+                              <SelectValue placeholder="Select service type" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -1086,7 +1086,7 @@ export default function VendorEstimateFormPageNew() {
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Seleccionar nivel de dificultad" />
+                              <SelectValue placeholder="Select difficulty level" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -1162,7 +1162,7 @@ export default function VendorEstimateFormPageNew() {
                                   >
                                     <FormControl>
                                       <SelectTrigger className="w-[300px]">
-                                        <SelectValue placeholder="Seleccionar material" />
+                                        <SelectValue placeholder="Select material" />
                                       </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
@@ -1410,13 +1410,13 @@ export default function VendorEstimateFormPageNew() {
                             {watchClientId 
                               ? clients.find((c: any) => c.id.toString() === watchClientId)?.firstName + ' ' + 
                                 clients.find((c: any) => c.id.toString() === watchClientId)?.lastName
-                              : "No seleccionado"}
+                              : "Not selected"}
                           </p>
                         </div>
                         
                         <div>
-                          <h3 className="text-sm font-semibold">Tipo de servicio:</h3>
-                          <p>{getServiceLabel(watchServiceType) || "No seleccionado"}</p>
+                          <h3 className="text-sm font-semibold">Service type:</h3>
+                          <p>{getServiceLabel(watchServiceType) || "Not selected"}</p>
                         </div>
                         
                         <div>
@@ -1424,7 +1424,7 @@ export default function VendorEstimateFormPageNew() {
                           <p>
                             {watchProjectId && watchProjectId !== "none"
                               ? projects.find((p: any) => p.id.toString() === watchProjectId)?.title
-                              : "Nuevo proyecto"}
+                              : "New project"}
                           </p>
                         </div>
                         
