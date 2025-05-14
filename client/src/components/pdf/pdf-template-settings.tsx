@@ -341,6 +341,64 @@ export default function PdfTemplateSettings({
                       onCheckedChange={value => updateConfig('showClientDetails', value)} 
                     />
                   </div>
+                  
+                  <h3 className="text-base font-medium mt-6">Table Columns</h3>
+                  <div className="space-y-2 mt-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="showColumnsDescription" className="cursor-pointer">
+                        Description Column
+                      </Label>
+                      <Switch 
+                        id="showColumnsDescription" 
+                        checked={config.showColumns.description} 
+                        onCheckedChange={value => updateConfig('showColumns', {...config.showColumns, description: value})} 
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="showColumnsQuantity" className="cursor-pointer">
+                        Quantity Column
+                      </Label>
+                      <Switch 
+                        id="showColumnsQuantity" 
+                        checked={config.showColumns.quantity} 
+                        onCheckedChange={value => updateConfig('showColumns', {...config.showColumns, quantity: value})} 
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="showColumnsUnitPrice" className="cursor-pointer">
+                        Unit Price Column
+                      </Label>
+                      <Switch 
+                        id="showColumnsUnitPrice" 
+                        checked={config.showColumns.unitPrice} 
+                        onCheckedChange={value => updateConfig('showColumns', {...config.showColumns, unitPrice: value})} 
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="showColumnsAmount" className="cursor-pointer">
+                        Amount Column
+                      </Label>
+                      <Switch 
+                        id="showColumnsAmount" 
+                        checked={config.showColumns.amount} 
+                        onCheckedChange={value => updateConfig('showColumns', {...config.showColumns, amount: value})} 
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="showColumnsNotes" className="cursor-pointer">
+                        Notes Column
+                      </Label>
+                      <Switch 
+                        id="showColumnsNotes" 
+                        checked={config.showColumns.notes} 
+                        onCheckedChange={value => updateConfig('showColumns', {...config.showColumns, notes: value})} 
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

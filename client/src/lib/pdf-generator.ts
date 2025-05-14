@@ -21,6 +21,13 @@ export interface PdfTemplateConfig {
   showNotes?: boolean;
   showSignatureLine?: boolean;
   showDates?: boolean;
+  showColumns?: {
+    description?: boolean;
+    quantity?: boolean;
+    unitPrice?: boolean;
+    amount?: boolean;
+    notes?: boolean;
+  };
 }
 
 // Types for estimates and invoices
@@ -123,6 +130,13 @@ interface TemplateSettings {
   showNotes: boolean;
   showSignatureLine: boolean;
   showDates: boolean;
+  showColumns: {
+    description: boolean;
+    quantity: boolean;
+    unitPrice: boolean;
+    amount: boolean;
+    notes: boolean;
+  };
 }
 
 function getTemplateSettings(): TemplateSettings | null {
