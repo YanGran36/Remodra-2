@@ -23,7 +23,7 @@ import {
   contractorInsertSchema
 } from "@shared/schema";
 
-import { analyzeProject, generateSharingContent } from "./ai-service";
+import { analyzeProject, generateSharingContent, generateProfessionalJobDescription } from "./ai-service";
 import * as achievementService from "./services/achievement-service";
 import { registerTimeclockRoutes } from "./routes/timeclock-routes";
 

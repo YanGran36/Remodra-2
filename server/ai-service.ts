@@ -34,6 +34,25 @@ interface SharingContent {
   estimators: string;
 }
 
+interface JobDescriptionRequest {
+  serviceType?: string;
+  appointmentNotes: string;
+  propertyDetails?: {
+    squareFeet?: number;
+    linearFeet?: number;
+    units?: number;
+  };
+  clientName?: string;
+}
+
+interface JobDescriptionResponse {
+  professionalDescription: string;
+  scope: string[];
+  materials: string[];
+  timeEstimate: string;
+  clientBenefits: string[];
+}
+
 /**
  * Analyzes a project and generates summaries, descriptions, and analysis using AI
  */
@@ -92,6 +111,66 @@ export async function analyzeProject(data: ProjectAnalysisRequest): Promise<Proj
   } catch (error) {
     console.error("Error in AI analysis:", error);
     throw new Error(`Error in AI analysis: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Generates a professional job description based on appointment notes and service details
+ */
+export async function generateProfessionalJobDescription(data: JobDescriptionRequest): Promise<JobDescriptionResponse> {
+  try {
+    console.log("Generating professional job description with AI", data);
+    
+    const prompt = `
+      You are a professional construction estimator. Create a detailed, professional job description based on the following appointment notes and details. 
+      Focus on making vague notes into a clear, compelling description that showcases professionalism.
+      
+      APPOINTMENT DETAILS:
+      ${data.serviceType ? `Service Type: ${data.serviceType}` : ''}
+      ${data.clientName ? `Client: ${data.clientName}` : ''}
+      ${data.propertyDetails?.squareFeet ? `Square Feet: ${data.propertyDetails.squareFeet}` : ''}
+      ${data.propertyDetails?.linearFeet ? `Linear Feet: ${data.propertyDetails.linearFeet}` : ''}
+      ${data.propertyDetails?.units ? `Units: ${data.propertyDetails.units}` : ''}
+      
+      APPOINTMENT NOTES:
+      ${data.appointmentNotes || "No notes provided"}
+      
+      INSTRUCTIONS:
+      1. Transform these basic notes into a professional, detailed job description.
+      2. Use industry-standard terminology and present the work in the most professional light.
+      3. Structure your response to include:
+         - A comprehensive description of work to be performed
+         - Materials that will be used (infer from service type if not mentioned in notes)
+         - Estimated timeframe for completion
+         - Benefits the client will receive
+      4. Make reasonable inferences where information is missing.
+      5. Keep the tone professional but accessible to clients.
+      
+      Respond in JSON format with the following keys:
+      {
+        "professionalDescription": "A complete, well-written paragraph describing the entire job",
+        "scope": ["scope item 1", "scope item 2", ...],
+        "materials": ["material 1", "material 2", ...],
+        "timeEstimate": "estimated time to complete",
+        "clientBenefits": ["benefit 1", "benefit 2", ...]
+      }
+    `;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
+    });
+
+    const content = response.choices[0].message.content;
+    if (!content) {
+      throw new Error("No response received from the AI model");
+    }
+
+    return JSON.parse(content);
+  } catch (error) {
+    console.error("Error generating professional job description:", error);
+    throw new Error(`Error generating job description: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
