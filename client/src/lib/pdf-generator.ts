@@ -102,7 +102,7 @@ const PAGE_WIDTH = 210; // A4 width in mm
 const CONTENT_WIDTH = PAGE_WIDTH - (PAGE_MARGIN * 2);
 
 // Default colors - these will be overridden by template settings if available
-const PRIMARY_COLOR_DEFAULT = "#003366"; // Color principal para encabezados
+const PRIMARY_COLOR_DEFAULT = "#003366"; // Primary color for headers
 const SECONDARY_COLOR_DEFAULT = "#0D6EFD"; // Color secundario
 const ACCENT_COLOR_DEFAULT = "#4F46E5"; // Color de acento
 
@@ -391,7 +391,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   
   currentY += 10;
   
-  // Tabla de ítems
+  // Items table
   pdf.setFontSize(12);
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(PRIMARY_COLOR);
@@ -585,7 +585,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
     currentY += (noteLines.length * 5) + 10;
   }
   
-  // Pie de página
+  // Footer
   const footerY = 280;
   
   pdf.setFontSize(8);
@@ -775,7 +775,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   
   currentY += 10;
   
-  // Tabla de ítems
+  // Items table
   pdf.setFontSize(12);
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(PRIMARY_COLOR);
@@ -1036,7 +1036,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     currentY += (noteLines.length * 5) + 10;
   }
   
-  // Pie de página
+  // Footer
   const footerY = 280;
   
   pdf.setFontSize(8);
