@@ -715,7 +715,7 @@ export default function VendorEstimateFormPageNew() {
   const handleMeasurementsChange = (newMeasurements: any[]) => {
     setMeasurements(newMeasurements);
     
-    // Si hay medidas en pies cuadrados o lineales, actualizar el formulario
+    // If there are measurements in square feet or linear feet, update the form
     const squareFeetMeasurement = newMeasurements.find(m => m.type === "area");
     const linearFeetMeasurement = newMeasurements.find(m => m.type === "linear");
     
@@ -778,7 +778,7 @@ export default function VendorEstimateFormPageNew() {
   };
   
   const handleRemoveMaterial = (index: number, e?: React.MouseEvent) => {
-    // Evitar que se propague el evento y cause un envío del formulario
+    // Prevent the event from propagating and causing a form submission
     if (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -795,7 +795,7 @@ export default function VendorEstimateFormPageNew() {
       return newMaterials;
     });
     
-    // Notificar al usuario que se ha eliminado el material
+    // Notify the user that the material has been removed
     toast({
       title: "Material eliminado",
       description: "Se ha eliminado el material del estimado",
@@ -947,7 +947,7 @@ export default function VendorEstimateFormPageNew() {
                         ))}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
-                        Haga clic en un cliente para cargar automáticamente sus datos
+                        Click on a client to automatically load their data
                       </div>
                     </div>
                   )}
@@ -1478,7 +1478,7 @@ export default function VendorEstimateFormPageNew() {
                 </div>
               </div>
               
-              {/* Botón de envío del formulario */}
+              {/* Form submission button */}
               <div className="flex justify-center mt-8">
                 <Button 
                   type="submit" 
@@ -1496,7 +1496,7 @@ export default function VendorEstimateFormPageNew() {
                       return;
                     }
                     
-                    // Asegurarse de que el formulario se envíe correctamente
+                    // Make sure the form is submitted correctly
                     console.log("Haciendo click en Crear Estimado desde Formulario");
                     if (selectedMaterials.length === 0) {
                       toast({
@@ -1506,8 +1506,8 @@ export default function VendorEstimateFormPageNew() {
                       return;
                     }
                     
-                    // No necesitamos llamar a onSubmit aquí, ya que el botón es de tipo submit
-                    // y el formulario ya tiene el controlador onSubmit asociado
+                    // We don't need to call onSubmit here, since the button is of type submit
+                    // and the form already has the onSubmit handler associated with it
                   }}
                 >
                   <Save className="mr-2 h-5 w-5" />
