@@ -62,12 +62,12 @@ export const projects = pgTable("projects", {
   endDate: timestamp("end_date"),
   budget: decimal("budget", { precision: 10, scale: 2 }),
   notes: text("notes"),
-  // Campos nuevos para la sección de trabajadores
+  // New fields for the workers section
   workerInstructions: text("worker_instructions"),
   workerNotes: text("worker_notes"),
   materialsNeeded: jsonb("materials_needed").default('[]'),
   safetyRequirements: text("safety_requirements"),
-  // Campos nuevos para la sección de IA
+  // New fields for the AI section
   aiProjectSummary: text("ai_project_summary"),
   aiAnalysis: jsonb("ai_analysis").default('{}'),
   aiGeneratedDescription: text("ai_generated_description"),
@@ -232,21 +232,21 @@ export const propertyMeasurements = pgTable("property_measurements", {
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
 
-// Configuración de precios por contratista
+// Price configuration by contractor
 export const priceConfigurations = pgTable("price_configurations", {
   id: serial("id").primaryKey(),
   contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
   
-  // Identificación del servicio
+  // Service identification
   serviceType: text("service_type").notNull(), // deck, fence, roof, siding, windows, gutters, etc.
-  configName: text("config_name").notNull(), // Nombre amigable de la configuración
+  configName: text("config_name").notNull(), // Friendly name of the configuration
   
-  // Precios base por unidad de medida
+  // Base prices per unit of measurement
   baseLinearFootPrice: decimal("base_linear_foot_price", { precision: 10, scale: 2 }),
   baseSquareFootPrice: decimal("base_square_foot_price", { precision: 10, scale: 2 }),
   baseUnitPrice: decimal("base_unit_price", { precision: 10, scale: 2 }),
   
-  // Configuración de costos y márgenes
+  // Cost and margins configuration
   laborHourlyRate: decimal("labor_hourly_rate", { precision: 10, scale: 2 }).notNull(),
   materialCostMultiplier: decimal("material_cost_multiplier", { precision: 5, scale: 2 }).default("1.00").notNull(),
   overheadPercentage: decimal("overhead_percentage", { precision: 5, scale: 2 }).notNull(),
