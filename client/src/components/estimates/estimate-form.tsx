@@ -127,16 +127,16 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
     }
   });
   
-  // Actualizar el monto del ítem al cambiar cantidad o precio unitario
+  // Update the item amount when quantity or unit price changes
   const handleItemChange = (field: keyof EstimateItemValues, value: string | number) => {
     const updatedItem = { ...newItem, [field]: value };
     
-    // Recalcular el monto si cambia la cantidad o el precio unitario
+    // Recalculate the amount if quantity or unit price changes
     if (field === 'quantity' || field === 'unitPrice') {
       const quantity = Number(updatedItem.quantity);
       const unitPrice = Number(updatedItem.unitPrice);
       
-      // Asegurar que son números válidos
+      // Ensure they are valid numbers
       if (!isNaN(quantity) && !isNaN(unitPrice)) {
         // Calcular monto con precisión de 2 decimales
         const amount = quantity * unitPrice;
@@ -182,10 +182,10 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
         notes: "",
       });
       
-      // Recalcular totales
+      // Recalculate totals
       recalculateTotals(updatedItems);
       
-      console.log("Ítem agregado:", validatedItem);
+      console.log("Item added:", validatedItem);
       console.log("Items actuales:", updatedItems);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -209,12 +209,12 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
     recalculateTotals(updatedItems);
   };
   
-  // Recalcular subtotal, impuestos y total
+  // Recalculate subtotal, taxes and total
   const recalculateTotals = (currentItems: EstimateItemValues[]) => {
-    // Calcular el subtotal sumando los montos de todos los items
+    // Calculate subtotal by summing all item amounts
     const subtotal = currentItems.reduce((sum, item) => sum + Number(item.amount), 0);
     
-    // Obtener porcentajes de impuesto y descuento del formulario
+    // Get tax and discount percentages from the form
     const tax = Number(form.getValues("tax") || "0");
     const discount = Number(form.getValues("discount") || "0");
     
