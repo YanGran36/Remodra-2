@@ -18,7 +18,7 @@ export function AchievementOverlay({ achievement, contractorAchievement, reward,
   const [isVisible, setIsVisible] = useState(true);
   const [showConfetti, setShowConfetti] = useState(true);
 
-  // Efecto para auto-cerrar después de 15 segundos si el usuario no interactúa
+  // Effect to auto-close after 15 seconds if the user does not interact
   useEffect(() => {
     const timer = setTimeout(() => {
       handleClose();

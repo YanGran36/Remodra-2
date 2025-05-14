@@ -106,7 +106,7 @@ export default function ServiceEstimateForm({
     }
   });
 
-  // Obtener materiales y opciones para este tipo de servicio
+  // Get materials and options for this service type
   const materials = MATERIALS_BY_SERVICE[serviceType as keyof typeof MATERIALS_BY_SERVICE] || [];
   const options = OPTIONS_BY_SERVICE[serviceType as keyof typeof OPTIONS_BY_SERVICE] || [];
   const serviceLabel = SERVICE_TYPES.find(s => s.value === serviceType)?.label || serviceType;
@@ -213,7 +213,7 @@ export default function ServiceEstimateForm({
       }
     ]);
     
-    // Resetear formulario
+    // Reset form
     customItemForm.reset({
       name: "",
       quantity: "1",
@@ -282,7 +282,7 @@ export default function ServiceEstimateForm({
     
     setMeasurements(newMeasurements);
     
-    // Actualizar materiales según el tipo de servicio
+    // Update materials based on service type
     if (materials.length > 0) {
       // Buscar el primer material (predeterminado)
       const defaultMaterial = materials[0];

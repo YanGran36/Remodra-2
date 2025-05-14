@@ -82,7 +82,7 @@ export default function ScheduleItem({
           )}
           
           {onCreateEstimateClick && contact?.id && (
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-green-700" onClick={onCreateEstimateClick} title="Crear estimado">
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-green-700" onClick={onCreateEstimateClick} title="Create estimate">
               <FileText className="h-4 w-4" />
             </Button>
           )}

@@ -115,22 +115,22 @@ export async function generateSharingContent(
       ${projectData.budget ? `Budget: $${projectData.budget}` : ''}
       ${projectData.status ? `Status: ${projectData.status}` : ''}
       
-      CONFIGURACIÓN DE PERMISOS:
-      - Instaladores: ${settings.installers ? 'Tiene acceso' : 'No tiene acceso'} 
-        (NO debe incluir información de precios o presupuestos)
-      - Clientes: ${settings.clients ? 'Tiene acceso' : 'No tiene acceso'}
-        (Debe incluir cuotas, facturas, documentos y proceso general)
-      - Estimadores/Vendedores: ${settings.estimators ? 'Tiene acceso' : 'No tiene acceso'}
-        (Puede ver TODA la información)
+      PERMISSIONS CONFIGURATION:
+      - Installers: ${settings.installers ? 'Has access' : 'No access'} 
+        (MUST NOT include pricing or budget information)
+      - Clients: ${settings.clients ? 'Has access' : 'No access'}
+        (Should include fees, invoices, documents and general process)
+      - Estimators/Sellers: ${settings.estimators ? 'Has access' : 'No access'}
+        (Can view ALL information)
       
-      Genera tres versiones diferentes del contenido, adaptadas a cada rol,
-      centrándote en lo que es relevante para cada uno y respetando las restricciones de permisos.
+      Generate three different versions of content, adapted to each role,
+      focusing on what is relevant to each one and respecting the permission restrictions.
       
-      Responde en formato JSON con las siguientes claves:
+      Respond in JSON format with the following keys:
       {
-        "installers": "contenido para instaladores",
-        "clients": "contenido para clientes",
-        "estimators": "contenido para estimadores"
+        "installers": "content for installers",
+        "clients": "content for clients",
+        "estimators": "content for estimators"
       }
     `;
 
