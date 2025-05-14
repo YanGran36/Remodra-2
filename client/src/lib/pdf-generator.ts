@@ -1082,7 +1082,7 @@ export async function downloadEstimatePDF(estimate: EstimateData): Promise<void>
     // Use English or Spanish file name based on language setting
     const useSpanish = localStorage.getItem('language') === 'es';
     const fileName = useSpanish 
-      ? `Estimado_${estimate.estimateNumber}.pdf`
+      ? `Estimate_${estimate.estimateNumber}.pdf`
       : `Estimate_${estimate.estimateNumber}.pdf`;
       
     downloadBlob(blob, fileName);
@@ -1114,7 +1114,7 @@ export async function downloadInvoicePDF(invoice: InvoiceData): Promise<void> {
     // Use English or Spanish file name based on language setting
     const useSpanish = localStorage.getItem('language') === 'es';
     const fileName = useSpanish 
-      ? `Factura_${invoice.invoiceNumber}.pdf`
+      ? `Invoice_${invoice.invoiceNumber}.pdf`
       : `Invoice_${invoice.invoiceNumber}.pdf`;
       
     downloadBlob(blob, fileName);
