@@ -56,7 +56,7 @@ import { Separator } from "@/components/ui/separator";
 
 // Esquema de validación para el formulario
 const estimateFormSchema = z.object({
-  clientId: z.coerce.number().min(1, "El cliente es requerido"),
+  clientId: z.coerce.number().min(1, "Client is required"),
   projectId: z.coerce.number().optional().nullable(), // El proyecto es completamente opcional
   estimateNumber: z.string().optional(),
   issueDate: z.date(),

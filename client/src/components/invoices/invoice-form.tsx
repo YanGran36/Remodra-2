@@ -84,7 +84,7 @@ const invoiceItemSchema = z.object({
 // Define schema for invoice
 const invoiceFormSchema = z.object({
   id: z.number().optional(),
-  clientId: z.number({ required_error: "El cliente es requerido" }),
+  clientId: z.number({ required_error: "Client is required" }),
   projectId: z.number().optional().nullable(),
   estimateId: z.number().optional().nullable(),
   invoiceNumber: z.string().min(1, { message: "El número de orden de trabajo es requerido" }),
