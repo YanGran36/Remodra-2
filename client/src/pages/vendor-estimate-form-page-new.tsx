@@ -1350,9 +1350,9 @@ export default function VendorEstimateFormPageNew() {
                 
                 <Card className="md:col-span-3">
                   <CardHeader>
-                    <CardTitle>Notas del trabajo</CardTitle>
+                    <CardTitle>Job Notes</CardTitle>
                     <CardDescription>
-                      Registre observaciones importantes sobre este trabajo
+                      Record important observations about this job
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -1363,7 +1363,7 @@ export default function VendorEstimateFormPageNew() {
                         <FormItem>
                           <FormControl>
                             <Textarea
-                              placeholder="Notas y observaciones sobre el trabajo..."
+                              placeholder="Notes and observations about the job..."
                               className="min-h-[150px]"
                               {...field}
                             />
@@ -1405,7 +1405,7 @@ export default function VendorEstimateFormPageNew() {
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <h3 className="text-sm font-semibold">Cliente:</h3>
+                          <h3 className="text-sm font-semibold">Client:</h3>
                           <p>
                             {watchClientId 
                               ? clients.find((c: any) => c.id.toString() === watchClientId)?.firstName + ' ' + 
@@ -1420,7 +1420,7 @@ export default function VendorEstimateFormPageNew() {
                         </div>
                         
                         <div>
-                          <h3 className="text-sm font-semibold">Proyecto:</h3>
+                          <h3 className="text-sm font-semibold">Project:</h3>
                           <p>
                             {watchProjectId && watchProjectId !== "none"
                               ? projects.find((p: any) => p.id.toString() === watchProjectId)?.title
@@ -1429,11 +1429,11 @@ export default function VendorEstimateFormPageNew() {
                         </div>
                         
                         <div>
-                          <h3 className="text-sm font-semibold">Dificultad:</h3>
+                          <h3 className="text-sm font-semibold">Difficulty:</h3>
                           <p>
-                            {watchDifficulty === "easy" ? "Fácil" :
-                             watchDifficulty === "medium" ? "Media" :
-                             watchDifficulty === "complex" ? "Compleja" : "No especificada"}
+                            {watchDifficulty === "easy" ? "Easy" :
+                             watchDifficulty === "medium" ? "Medium" :
+                             watchDifficulty === "complex" ? "Complex" : "Not specified"}
                           </p>
                         </div>
                       </div>
