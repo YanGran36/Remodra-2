@@ -1048,7 +1048,7 @@ export default function VendorEstimateFormPageNew() {
                     name="serviceType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Tipo de Servicio*</FormLabel>
+                        <FormLabel>Service Type*</FormLabel>
                         <Select
                           value={field.value}
                           onValueChange={field.onChange}
@@ -1079,7 +1079,7 @@ export default function VendorEstimateFormPageNew() {
                     name="difficulty"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Dificultad del Trabajo</FormLabel>
+                        <FormLabel>Job Difficulty</FormLabel>
                         <Select
                           value={field.value}
                           onValueChange={field.onChange}
@@ -1129,21 +1129,21 @@ export default function VendorEstimateFormPageNew() {
                     type="button"
                     onClick={() => setActiveTab("materials")}
                   >
-                    Siguiente: Materiales y Medidas
+                    Next: Materials & Measurements
                   </Button>
                 </CardFooter>
               </Card>
             </TabsContent>
             
-            {/* TAB: Materiales y Medidas */}
+            {/* TAB: Materials & Measurements */}
             <TabsContent value="materials" className="space-y-6 pt-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Columna 1: Materiales */}
+                {/* Column 1: Materials */}
                 <Card className="md:col-span-2">
                   <CardHeader>
-                    <CardTitle>Materiales</CardTitle>
+                    <CardTitle>Materials</CardTitle>
                     <CardDescription>
-                      Agregar los materiales necesarios para este trabajo
+                      Add the necessary materials for this job
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -1383,15 +1383,15 @@ export default function VendorEstimateFormPageNew() {
                       disabled={selectedMaterials.length === 0}
                     >
                       {selectedMaterials.length === 0 
-                        ? "Agregue al menos un material" 
-                        : "Siguiente: Análisis y Creación"}
+                        ? "Add at least one material" 
+                        : "Next: Analysis & Creation"}
                     </Button>
                   </CardFooter>
                 </Card>
               </div>
             </TabsContent>
             
-            {/* TAB: Análisis y Creación */}
+            {/* TAB: Analysis & Creation */}
             <TabsContent value="analysis" className="space-y-6 pt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
