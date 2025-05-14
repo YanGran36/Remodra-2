@@ -470,13 +470,13 @@ export default function VendorEstimateFormPageNew() {
     if (!data.clientId) {
       toast({
         title: "Error",
-        description: "Debe seleccionar un cliente antes de crear un estimado",
+        description: "You must select a client before creating an estimate",
         variant: "destructive",
       });
       return;
     }
     
-    // Verificar que haya materiales seleccionados
+    // Verify that materials have been selected
     if (selectedMaterials.length === 0) {
       toast({
         title: "Error",
@@ -486,7 +486,7 @@ export default function VendorEstimateFormPageNew() {
       return;
     }
 
-    // Preparar los materiales para el estimado
+    // Prepare materials for the estimate
     const items = selectedMaterials.map(material => ({
       description: material.name,
       quantity: material.quantity.toString(),
@@ -517,9 +517,9 @@ export default function VendorEstimateFormPageNew() {
       items
     };
     
-    console.log("Datos del estimado a crear:", estimateData);
+    console.log("Estimate data to create:", estimateData);
     
-    // Enviar petición para crear estimado
+    // Send request to create estimate
     createEstimateMutation.mutate(estimateData);
   };
 
@@ -543,21 +543,21 @@ export default function VendorEstimateFormPageNew() {
     onError: (error: Error) => {
       setIsSubmitting(false);
       toast({
-        title: "Error al crear estimado",
+        title: "Error creating estimate",
         description: error.message,
         variant: "destructive",
       });
     },
   });
   
-  // Crear mutation para facturas
+  // Create mutation for invoices
   const createInvoiceMutation = useMutation({
     mutationFn: async (data: any) => {
       setIsSubmitting(true);
       try {
         // Validar datos mínimos requeridos
         if (!data.clientId) {
-          throw new Error("El ID del cliente es obligatorio");
+          throw new Error("The client ID is required");
         }
         
         // Validar que items sea un array
