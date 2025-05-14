@@ -309,7 +309,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   pdf.setFontSize(12);
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(PRIMARY_COLOR);
-  pdf.text("CLIENTE", PAGE_MARGIN, currentY);
+  pdf.text("CLIENT", PAGE_MARGIN, currentY);
   
   currentY += 8;
   pdf.setFont("helvetica", "normal");
@@ -354,7 +354,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   
   // Status
   pdf.setFont("helvetica", "bold");
-  pdf.text("Estado:", PAGE_WIDTH / 2, currentY);
+  pdf.text("Status:", PAGE_WIDTH / 2, currentY);
   pdf.setFont("helvetica", "normal");
   pdf.text(getStatusText(data.status), PAGE_WIDTH / 2 + 25, currentY);
   currentY += 6;
@@ -684,7 +684,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   pdf.setFontSize(12);
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(PRIMARY_COLOR);
-  pdf.text("CLIENTE", PAGE_MARGIN, currentY);
+  pdf.text("CLIENT", PAGE_MARGIN, currentY);
   
   currentY += 8;
   pdf.setFont("helvetica", "normal");
@@ -729,7 +729,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   
   // Status
   pdf.setFont("helvetica", "bold");
-  pdf.text("Estado:", PAGE_WIDTH / 2, currentY);
+  pdf.text("Status:", PAGE_WIDTH / 2, currentY);
   pdf.setFont("helvetica", "normal");
   pdf.text(getStatusText(data.status), PAGE_WIDTH / 2 + 25, currentY);
   currentY += 6;
