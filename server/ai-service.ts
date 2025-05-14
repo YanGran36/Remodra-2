@@ -53,26 +53,26 @@ export async function analyzeProject(data: ProjectAnalysisRequest): Promise<Proj
       ${data.endDate ? `End date: ${data.endDate}` : ''}
       ${data.notes ? `Additional notes: ${data.notes}` : ''}
       
-      INSTRUCCIONES:
-      1. Genera un resumen conciso de 2-3 frases sobre el proyecto.
-      2. Crea una descripción detallada de 3-4 párrafos que explique el alcance y los objetivos del proyecto.
-      3. Realiza un análisis que incluya:
-         - Puntos clave (5 puntos)
-         - Posibles riesgos (3 puntos)
-         - Recomendaciones (3 puntos)
-         - Evaluación del cronograma (si hay fechas disponibles)
-         - Evaluación del presupuesto (si hay presupuesto disponible)
+      INSTRUCTIONS:
+      1. Generate a concise summary of 2-3 sentences about the project.
+      2. Create a detailed description of 3-4 paragraphs explaining the scope and objectives of the project.
+      3. Perform an analysis that includes:
+         - Key points (5 points)
+         - Potential risks (3 points)
+         - Recommendations (3 points)
+         - Timeline assessment (if dates are available)
+         - Budget assessment (if budget is available)
       
-      Responde en formato JSON con las siguientes claves:
+      Respond in JSON format with the following keys:
       {
-        "summary": "resumen conciso",
-        "description": "descripción detallada",
+        "summary": "concise summary",
+        "description": "detailed description",
         "analysis": {
-          "key_points": ["punto 1", "punto 2", ...],
-          "risks": ["riesgo 1", "riesgo 2", ...],
-          "recommendations": ["recomendación 1", "recomendación 2", ...],
-          "timeline_assessment": "evaluación del cronograma",
-          "budget_assessment": "evaluación del presupuesto"
+          "key_points": ["point 1", "point 2", ...],
+          "risks": ["risk 1", "risk 2", ...],
+          "recommendations": ["recommendation 1", "recommendation 2", ...],
+          "timeline_assessment": "timeline assessment",
+          "budget_assessment": "budget assessment"
         }
       }
     `;
@@ -90,8 +90,8 @@ export async function analyzeProject(data: ProjectAnalysisRequest): Promise<Proj
 
     return JSON.parse(content);
   } catch (error) {
-    console.error("Error en el análisis de IA:", error);
-    throw new Error(`Error en el análisis de IA: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+    console.error("Error in AI analysis:", error);
+    throw new Error(`Error in AI analysis: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
@@ -104,16 +104,16 @@ export async function generateSharingContent(
 ): Promise<SharingContent> {
   try {
     const prompt = `
-      Genera contenido personalizado para compartir información sobre un proyecto de construcción con diferentes roles.
-      Adapta el contenido según los permisos de cada rol. Responde en español.
+      Generate personalized content to share information about a construction project with different roles.
+      Adapt the content according to each role's permissions. Respond in English.
       
-      PROYECTO:
-      Título: ${projectData.title}
-      ${projectData.description ? `Descripción: ${projectData.description}` : ''}
-      ${projectData.aiProjectSummary ? `Resumen IA: ${projectData.aiProjectSummary}` : ''}
-      ${projectData.aiGeneratedDescription ? `Descripción IA: ${projectData.aiGeneratedDescription}` : ''}
-      ${projectData.budget ? `Presupuesto: $${projectData.budget}` : ''}
-      ${projectData.status ? `Estado: ${projectData.status}` : ''}
+      PROJECT:
+      Title: ${projectData.title}
+      ${projectData.description ? `Description: ${projectData.description}` : ''}
+      ${projectData.aiProjectSummary ? `AI Summary: ${projectData.aiProjectSummary}` : ''}
+      ${projectData.aiGeneratedDescription ? `AI Description: ${projectData.aiGeneratedDescription}` : ''}
+      ${projectData.budget ? `Budget: $${projectData.budget}` : ''}
+      ${projectData.status ? `Status: ${projectData.status}` : ''}
       
       CONFIGURACIÓN DE PERMISOS:
       - Instaladores: ${settings.installers ? 'Tiene acceso' : 'No tiene acceso'} 
