@@ -497,7 +497,7 @@ export default function VendorEstimateFormPageNew() {
 
     // Calcular totales
     const subtotal = selectedMaterials.reduce((sum, mat) => sum + (mat.quantity * mat.unitPrice), 0);
-    setTotalAmount(subtotal); // Actualizar el estado de totalAmount
+    setTotalAmount(subtotal); // Update the totalAmount state
     
     // Prepare estimate data
     const estimateData = {
@@ -1036,7 +1036,7 @@ export default function VendorEstimateFormPageNew() {
                           </SelectContent>
                         </Select>
                         <FormDescription>
-                          Asociar este trabajo a un proyecto existente (opcional)
+                          Associate this work with an existing project (optional)
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

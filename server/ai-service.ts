@@ -40,18 +40,18 @@ interface SharingContent {
 export async function analyzeProject(data: ProjectAnalysisRequest): Promise<ProjectAnalysisResponse> {
   try {
     const prompt = `
-      Analiza el siguiente proyecto de construcción y genera un resumen conciso, 
-      una descripción detallada y un análisis completo. Responde en español.
+      Analyze the following construction project and generate a concise summary, 
+      a detailed description and a complete analysis. Response in English.
       
-      PROYECTO:
-      Título: ${data.title}
-      ${data.description ? `Descripción: ${data.description}` : ''}
-      ${data.clientName ? `Cliente: ${data.clientName}` : ''}
-      ${data.budget ? `Presupuesto: $${data.budget}` : ''}
-      ${data.status ? `Estado: ${data.status}` : ''}
-      ${data.startDate ? `Fecha de inicio: ${data.startDate}` : ''}
-      ${data.endDate ? `Fecha de finalización: ${data.endDate}` : ''}
-      ${data.notes ? `Notas adicionales: ${data.notes}` : ''}
+      PROJECT:
+      Title: ${data.title}
+      ${data.description ? `Description: ${data.description}` : ''}
+      ${data.clientName ? `Client: ${data.clientName}` : ''}
+      ${data.budget ? `Budget: $${data.budget}` : ''}
+      ${data.status ? `Status: ${data.status}` : ''}
+      ${data.startDate ? `Start date: ${data.startDate}` : ''}
+      ${data.endDate ? `End date: ${data.endDate}` : ''}
+      ${data.notes ? `Additional notes: ${data.notes}` : ''}
       
       INSTRUCCIONES:
       1. Genera un resumen conciso de 2-3 frases sobre el proyecto.
