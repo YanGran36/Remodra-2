@@ -254,7 +254,7 @@ export default function VendorEstimateFormPageNew() {
     );
   };
   
-  // Función para actualizar la fecha seleccionada y los clientes con citas
+  // Function to update the selected date and clients with appointments
   const updateSelectedDateAndClients = (date: Date) => {
     setSelectedDate(date);
     const clientsForDate = getClientsWithAppointmentsForDate(date);
@@ -310,7 +310,7 @@ export default function VendorEstimateFormPageNew() {
         }
       }
       
-      // Inicialmente, cargar clientes con citas para hoy
+      // Initially, load clients with appointments for today
       const today = new Date();
       updateSelectedDateAndClients(today);
     }
@@ -333,7 +333,7 @@ export default function VendorEstimateFormPageNew() {
     ? projects.filter((project: any) => project.clientId?.toString() === watchClientId)
     : [];
     
-  // Efecto para notificar cuando se carga un cliente automáticamente desde la URL
+  // Effect to notify when a client is automatically loaded from the URL
   useEffect(() => {
     if (clientIdFromUrl && clients.length > 0) {
       const selectedClient = clients.find((c: any) => c.id.toString() === clientIdFromUrl);
@@ -462,11 +462,11 @@ export default function VendorEstimateFormPageNew() {
     });
   };
 
-  // Función para manejar el envío del formulario
+  // Function to handle form submission
   const onSubmit = (data: any) => {
-    console.log("Enviando formulario para crear estimado con datos:", data);
+    console.log("Submitting form to create estimate with data:", data);
     
-    // Verificar que se haya seleccionado un cliente
+    // Verify that a client has been selected
     if (!data.clientId) {
       toast({
         title: "Error",
