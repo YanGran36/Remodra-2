@@ -23,7 +23,7 @@ export interface PdfTemplateConfig {
   showDates?: boolean;
 }
 
-// Tipos para estimados y facturas
+// Types for estimates and invoices
 interface Item {
   description: string;
   quantity: string | number;
@@ -209,7 +209,7 @@ function getStatusText(status: string): string {
     'sent': ['Enviado', 'Sent'],
     'accepted': ['Aceptado', 'Accepted'],
     'rejected': ['Rechazado', 'Rejected'],
-    'converted': ['Convertido a factura', 'Converted to Invoice'],
+    'converted': ['Converted to Invoice', 'Converted to Invoice'],
     'paid': ['Pagado', 'Paid'],
     'partially_paid': ['Parcialmente pagado', 'Partially Paid'],
     'overdue': ['Vencido', 'Overdue'],
@@ -224,7 +224,7 @@ function getStatusText(status: string): string {
 }
 
 /**
- * Genera un PDF a partir de un estimado
+ * Generates a PDF from an estimate
  */
 export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   // Get template settings
@@ -302,7 +302,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   pdf.setDrawColor(220, 220, 220);
   pdf.line(PAGE_MARGIN, 45, PAGE_WIDTH - PAGE_MARGIN, 45);
   
-  // Información del cliente y estimado
+  // Client and estimate information
   let currentY = 55;
   
   // Cliente
@@ -341,7 +341,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
     }
   }
   
-  // Información del estimado (en la misma línea)
+  // Estimate information (on the same line)
   pdf.setFontSize(12);
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(PRIMARY_COLOR);

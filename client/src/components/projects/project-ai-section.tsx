@@ -260,7 +260,7 @@ export default function ProjectAISection({ project, tab }: ProjectAISectionProps
               <div className="space-y-4">
                 <Alert>
                   <Shield className="h-4 w-4" />
-                  <AlertTitle>Políticas de compartición</AlertTitle>
+                  <AlertTitle>Sharing Policies</AlertTitle>
                   <AlertDescription>
                     Configure which roles can access the AI-generated information for this project.
                     This configuration controls who can see automatically generated summaries and descriptions.
@@ -355,7 +355,7 @@ export default function ProjectAISection({ project, tab }: ProjectAISectionProps
                         </TableCell>
                         <TableCell>
                           <span className="text-sm text-muted-foreground">
-                            Acceso completo a toda la información del proyecto
+                            Full access to all project information
                           </span>
                         </TableCell>
                         <TableCell className="text-right">
