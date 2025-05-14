@@ -154,8 +154,8 @@ function getFontFamily(): string {
 
 // Translate text based on current language setting
 function translate(textEs: string, textEn: string): string {
-  const useSpanish = localStorage.getItem('language') === 'es';
-  return useSpanish ? textEs : textEn;
+  // Always return English text regardless of language setting
+  return textEn;
 }
 
 // Check if a template feature is enabled (enabled by default if not specified)
