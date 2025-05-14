@@ -56,7 +56,7 @@ interface ContractorInfo {
   logo?: string;
 }
 
-// Interfaces para los documentos
+// Interfaces for the documents
 interface EstimateData {
   estimateNumber: string;
   status: string;
@@ -96,7 +96,7 @@ interface InvoiceData {
   paymentMethod?: string;
 }
 
-// Configuración general
+// General configuration
 const PAGE_MARGIN = 20;
 const PAGE_WIDTH = 210; // A4 width in mm
 const CONTENT_WIDTH = PAGE_WIDTH - (PAGE_MARGIN * 2);
@@ -298,14 +298,14 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
     pdf.text(`Email: ${data.contractor.email}`, PAGE_WIDTH - PAGE_MARGIN - 80, 35, { align: 'right' });
   }
   
-  // Línea de separación
+  // Separation line
   pdf.setDrawColor(220, 220, 220);
   pdf.line(PAGE_MARGIN, 45, PAGE_WIDTH - PAGE_MARGIN, 45);
   
   // Client and estimate information
   let currentY = 55;
   
-  // Cliente
+  // Client
   pdf.setFontSize(12);
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(PRIMARY_COLOR);
@@ -384,7 +384,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
     currentY += 6;
   }
   
-  // Línea de separación
+  // Separation line
   currentY = Math.max(currentY, 90); // Asegurar que hay suficiente espacio
   pdf.setDrawColor(220, 220, 220);
   pdf.line(PAGE_MARGIN, currentY, PAGE_WIDTH - PAGE_MARGIN, currentY);
@@ -673,14 +673,14 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     pdf.text(`Email: ${data.contractor.email}`, PAGE_WIDTH - PAGE_MARGIN - 80, 35, { align: 'right' });
   }
   
-  // Línea de separación
+  // Separation line
   pdf.setDrawColor(220, 220, 220);
   pdf.line(PAGE_MARGIN, 45, PAGE_WIDTH - PAGE_MARGIN, 45);
   
   // Client and invoice information
   let currentY = 55;
   
-  // Cliente
+  // Client
   pdf.setFontSize(12);
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(PRIMARY_COLOR);
@@ -768,7 +768,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     currentY += 6;
   }
   
-  // Línea de separación
+  // Separation line
   currentY = Math.max(currentY, 90); // Asegurar que hay suficiente espacio
   pdf.setDrawColor(220, 220, 220);
   pdf.line(PAGE_MARGIN, currentY, PAGE_WIDTH - PAGE_MARGIN, currentY);
