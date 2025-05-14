@@ -26,7 +26,7 @@ import {
   BarChart4
 } from "lucide-react";
 
-// Componente de análisis AI
+// AI analysis component
 import AiAnalysisPanel from "@/components/ai/ai-analysis-panel";
 
 // Componentes de Medición Digital
@@ -480,7 +480,7 @@ export default function VendorEstimateFormPageNew() {
     if (selectedMaterials.length === 0) {
       toast({
         title: "Error",
-        description: "Debe agregar al menos un material al estimado",
+        description: "You must add at least one material to the estimate",
         variant: "destructive",
       });
       return;
@@ -523,7 +523,7 @@ export default function VendorEstimateFormPageNew() {
     createEstimateMutation.mutate(estimateData);
   };
 
-  // Crear mutation para estimados
+  // Create mutation for estimates
   const createEstimateMutation = useMutation({
     mutationFn: async (data: any) => {
       setIsSubmitting(true);
@@ -612,7 +612,7 @@ export default function VendorEstimateFormPageNew() {
       return;
     }
     
-    // Preparar los ítems del estimado a partir del análisis
+    // Prepare estimate items from the analysis
     const items = analysisResult.breakdown.materials.items.map(item => ({
       description: item.name,
       quantity: "1",
@@ -630,7 +630,7 @@ export default function VendorEstimateFormPageNew() {
       notes: analysisResult.breakdown.labor.notes || ""
     });
     
-    // Obtener cliente seleccionado
+    // Get selected client
     const selectedClient = clients.find((c: any) => c.id.toString() === watchClientId);
     
     // Prepare estimate data
@@ -829,7 +829,7 @@ export default function VendorEstimateFormPageNew() {
     <div className="container mx-auto py-6 space-y-6">
       <PageHeader 
         title="Formulario Avanzado para Vendedores" 
-        description="Capture datos durante citas y conviértalos en estimados o facturas con ayuda de IA"
+        description="Capture data during appointments and convert them into estimates or invoices with AI assistance"
       />
       
       <div className="flex items-center justify-between">
@@ -913,7 +913,7 @@ export default function VendorEstimateFormPageNew() {
                     </div>
                   </div>
                   
-                  {/* Mostrar clientes con citas como tarjetas clicables */}
+                  {/* Show clients with appointments as clickable cards */}
                   {clientsWithAppointments.length > 0 && (
                     <div className="mb-4">
                       <h3 className="text-sm font-medium mb-2 text-primary">
@@ -1399,7 +1399,7 @@ export default function VendorEstimateFormPageNew() {
                     <CardHeader>
                       <CardTitle>Resumen de Datos Capturados</CardTitle>
                       <CardDescription>
-                        Revise los datos ingresados antes de continuar
+                        Review the entered data before continuing
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -1497,7 +1497,7 @@ export default function VendorEstimateFormPageNew() {
                     }
                     
                     // Make sure the form is submitted correctly
-                    console.log("Haciendo click en Crear Estimado desde Formulario");
+                    console.log("Clicking on Create Estimate from Form");
                     if (selectedMaterials.length === 0) {
                       toast({
                         title: "Atención",
