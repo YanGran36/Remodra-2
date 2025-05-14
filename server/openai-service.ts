@@ -251,14 +251,14 @@ export async function generateJobDescription(params: JobCostAnalysisParams): Pro
         choicesCount: response.choices.length
       });
 
-      // Procesar la respuesta
+      // Process the response
       const content = response.choices[0].message.content;
       if (!content) {
-        console.error("Contenido vacío en la respuesta de OpenAI");
-        throw new Error("No se recibió respuesta de la API de OpenAI");
+        console.error("Empty content in OpenAI response");
+        throw new Error("No response received from OpenAI API");
       }
 
-      console.log("Descripción generada con éxito. Longitud:", content.length);
+      console.log("Description generated successfully. Length:", content.length);
       return content;
     } catch (error: unknown) {
       const openaiError = error as { message?: string };

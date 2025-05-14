@@ -245,10 +245,10 @@ export default function VendorEstimateFormPageNew() {
       .filter((event: any) => event.clientId)
       .map((event: any) => event.clientId.toString());
       
-    // Eliminar duplicados
+    // Remove duplicates
     const uniqueClientIds = Array.from(new Set(clientIds));
     
-    // Encontrar los clientes que corresponden a esos IDs
+    // Find clients corresponding to those IDs
     return clients.filter((client: any) => 
       uniqueClientIds.includes(client.id.toString())
     );
@@ -1456,7 +1456,7 @@ export default function VendorEstimateFormPageNew() {
                       <Accordion type="single" collapsible>
                         <AccordionItem value="materials">
                           <AccordionTrigger>
-                            Materiales ({selectedMaterials.length})
+                            Materials ({selectedMaterials.length})
                           </AccordionTrigger>
                           <AccordionContent>
                             <ul className="space-y-1">
