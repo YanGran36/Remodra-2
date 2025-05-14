@@ -121,7 +121,7 @@ export default function ServiceEstimateForm({
     const existingIndex = selectedMaterials.findIndex(m => m.id === material.id);
     
     if (existingIndex >= 0) {
-      // Actualizar cantidad
+      // Update quantity
       const updatedMaterials = [...selectedMaterials];
       updatedMaterials[existingIndex] = {
         ...updatedMaterials[existingIndex],
@@ -148,7 +148,7 @@ export default function ServiceEstimateForm({
   // Agregar una opción
   const addOption = (option: any, quantity: number) => {
     if (quantity <= 0) {
-      // Eliminar si la cantidad es 0
+      // Remove if quantity is 0
       setSelectedOptions(prev => prev.filter(o => o.id !== option.id));
       return;
     }
@@ -159,7 +159,7 @@ export default function ServiceEstimateForm({
     const existingIndex = selectedOptions.findIndex(o => o.id === option.id);
     
     if (existingIndex >= 0) {
-      // Actualizar cantidad
+      // Update quantity
       const updatedOptions = [...selectedOptions];
       updatedOptions[existingIndex] = {
         ...updatedOptions[existingIndex],
@@ -290,7 +290,7 @@ export default function ServiceEstimateForm({
       if (defaultMaterial) {
         let quantity = 0;
         
-        // Determinar la cantidad según el tipo de unidad del material
+        // Determine quantity based on material unit type
         if (defaultMaterial.unit === 'sq.ft' && newMeasurements.area) {
           // Para materiales que usan pies cuadrados (area)
           quantity = newMeasurements.area;
