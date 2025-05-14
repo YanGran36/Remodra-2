@@ -499,7 +499,7 @@ export default function VendorEstimateFormPageNew() {
     const subtotal = selectedMaterials.reduce((sum, mat) => sum + (mat.quantity * mat.unitPrice), 0);
     setTotalAmount(subtotal); // Actualizar el estado de totalAmount
     
-    // Preparar datos del estimado
+    // Prepare estimate data
     const estimateData = {
       clientId: Number(data.clientId),
       projectId: data.projectId && data.projectId !== "none" ? Number(data.projectId) : null,
@@ -555,7 +555,7 @@ export default function VendorEstimateFormPageNew() {
     mutationFn: async (data: any) => {
       setIsSubmitting(true);
       try {
-        // Validar datos mínimos requeridos
+        // Validate minimum required data
         if (!data.clientId) {
           throw new Error("The client ID is required");
         }
@@ -595,18 +595,18 @@ export default function VendorEstimateFormPageNew() {
       console.error("Error en createInvoiceMutation.onError:", error);
       toast({
         title: "Error creating invoice",
-        description: error.message || "Ocurrió un error inesperado al crear la factura",
+        description: error.message || "An unexpected error occurred when creating the invoice",
         variant: "destructive",
       });
     },
   });
   
-  // Handler para crear estimado desde análisis de IA
+  // Handler to create estimate from AI analysis
   const handleCreateEstimateFromAnalysis = (analysisResult: AiAnalysisResult) => {
     if (!watchClientId) {
       toast({
         title: "Error",
-        description: "Debe seleccionar un cliente antes de crear un estimado",
+        description: "You must select a client before creating an estimate",
         variant: "destructive",
       });
       return;
@@ -633,7 +633,7 @@ export default function VendorEstimateFormPageNew() {
     // Obtener cliente seleccionado
     const selectedClient = clients.find((c: any) => c.id.toString() === watchClientId);
     
-    // Preparar datos del estimado
+    // Prepare estimate data
     const estimateData = {
       clientId: Number(watchClientId),
       projectId: watchProjectId && watchProjectId !== "none" ? Number(watchProjectId) : null,
@@ -655,12 +655,12 @@ export default function VendorEstimateFormPageNew() {
     createEstimateMutation.mutate(estimateData);
   };
   
-  // Handler para crear factura desde análisis de IA
+  // Handler to create invoice from AI analysis
   const handleCreateInvoiceFromAnalysis = (analysisResult: AiAnalysisResult) => {
     if (!watchClientId) {
       toast({
         title: "Error",
-        description: "Debe seleccionar un cliente antes de crear una factura",
+        description: "You must select a client before creating an invoice",
         variant: "destructive",
       });
       return;
@@ -687,7 +687,7 @@ export default function VendorEstimateFormPageNew() {
     // Obtener cliente seleccionado
     const selectedClient = clients.find((c: any) => c.id.toString() === watchClientId);
     
-    // Preparar datos de la factura
+    // Prepare invoice data
     const invoiceData = {
       clientId: Number(watchClientId),
       projectId: watchProjectId && watchProjectId !== "none" ? Number(watchProjectId) : null,
@@ -788,7 +788,7 @@ export default function VendorEstimateFormPageNew() {
     setSelectedMaterials(prev => {
       const newMaterials = prev.filter((_, i) => i !== index);
       
-      // Actualizar el total después de eliminar el material
+      // Update total after removing material
       const newTotal = newMaterials.reduce((sum, mat) => sum + (mat.quantity * mat.unitPrice), 0);
       setTotalAmount(newTotal);
       
