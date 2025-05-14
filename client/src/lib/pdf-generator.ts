@@ -456,7 +456,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
     // Quantity
     pdf.text(String(item.quantity), PAGE_MARGIN + 100, currentY + 5.5);
     
-    // Precio unitario
+    // Unit price
     const unitPriceNumber = typeof item.unitPrice === 'string' 
       ? parseFloat(item.unitPrice) 
       : item.unitPrice;
@@ -559,7 +559,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
     currentY += (termLines.length * 5) + 10;
   }
   
-  // Notas adicionales
+  // Additional notes
   if (data.notes) {
     // Check if we need to add a new page
     if (currentY > 230) {
@@ -570,7 +570,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
     pdf.setFontSize(11);
     pdf.setFont("helvetica", "bold");
     pdf.setTextColor(PRIMARY_COLOR);
-    pdf.text("NOTAS", PAGE_MARGIN, currentY);
+    pdf.text("NOTES", PAGE_MARGIN, currentY);
     
     currentY += 8;
     
@@ -840,7 +840,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     // Quantity
     pdf.text(String(item.quantity), PAGE_MARGIN + 100, currentY + 5.5);
     
-    // Precio unitario
+    // Unit price
     const unitPriceNumber = typeof item.unitPrice === 'string' 
       ? parseFloat(item.unitPrice) 
       : item.unitPrice;
@@ -1010,7 +1010,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     currentY += (termLines.length * 5) + 10;
   }
   
-  // Notas adicionales
+  // Additional notes
   if (data.notes) {
     // Check if we need to add a new page
     if (currentY > 230) {
@@ -1021,7 +1021,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     pdf.setFontSize(11);
     pdf.setFont("helvetica", "bold");
     pdf.setTextColor(PRIMARY_COLOR);
-    pdf.text("NOTAS", PAGE_MARGIN, currentY);
+    pdf.text("NOTES", PAGE_MARGIN, currentY);
     
     currentY += 8;
     
