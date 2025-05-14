@@ -90,7 +90,7 @@ export interface EstimateFormProps {
   projectId?: number;
   onSuccess?: (estimate: any) => void;
   onCancel?: () => void;
-  estimateId?: number; // ID del estimado a editar
+  estimateId?: number; // ID of the estimate to edit
 }
 
 export default function EstimateForm({ clientId, projectId, estimateId, onSuccess, onCancel }: EstimateFormProps) {
@@ -112,7 +112,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
   const [isEditing, setIsEditing] = useState(!!estimateId);
   const [isLoading, setIsLoading] = useState(!!estimateId);
   
-  // Formulario principal del estimado
+  // Main estimate form
   const form = useForm<EstimateFormValues>({
     resolver: zodResolver(estimateFormSchema),
     defaultValues: {
@@ -150,9 +150,9 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
     setNewItem(updatedItem);
   };
   
-  // Agregar ítem a la lista
+  // Add item to the list
   const handleAddItem = () => {
-    // Validar el ítem antes de agregarlo
+    // Validate the item before adding it
     try {
       // Asegurarse de que los valores numéricos sean correctos
       const quantity = Number(newItem.quantity) || 1;
@@ -199,7 +199,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
     }
   };
   
-  // Eliminar ítem de la lista
+  // Remove item from the list
   const handleRemoveItem = (index: number) => {
     const updatedItems = [...items];
     updatedItems.splice(index, 1);
@@ -284,7 +284,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
           console.error("Error loading estimate:", error);
           toast({
             title: "Error",
-            description: "No se pudo cargar el estimado",
+            description: "Could not load the estimate",
             variant: "destructive",
           });
           setIsLoading(false);
@@ -306,7 +306,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
       return;
     }
     
-    // Crear el número de estimado si no existe
+    // Create the estimate number if it does not exist
     if (!data.estimateNumber) {
       const today = new Date();
       const year = today.getFullYear();
