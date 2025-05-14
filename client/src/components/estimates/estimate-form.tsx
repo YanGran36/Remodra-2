@@ -64,7 +64,7 @@ const estimateFormSchema = z.object({
   terms: z.string().optional(),
   notes: z.string().optional(),
   status: z.string().optional(),
-  // Cambiamos los tipos de campos monetarios a string para compatibilidad con el backend
+  // Changed monetary field types to string for backend compatibility
   subtotal: z.string().or(z.number().transform(val => String(val))),
   tax: z.string().or(z.number().transform(val => String(val))),
   discount: z.string().or(z.number().transform(val => String(val))),
@@ -75,9 +75,9 @@ type EstimateFormValues = z.infer<typeof estimateFormSchema>;
 
 // Schema for estimate items
 const estimateItemSchema = z.object({
-  description: z.string().min(1, "La descripción es requerida"),
-  quantity: z.coerce.number().min(1, "La cantidad debe ser al menos 1"),
-  // Convertimos los valores monetarios a string para compatibilidad con el backend
+  description: z.string().min(1, "Description is required"),
+  quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
+  // Convert monetary values to string for backend compatibility
   unitPrice: z.string().or(z.number().transform(val => String(val))),
   amount: z.string().or(z.number().transform(val => String(val))),
   notes: z.string().optional(),
@@ -119,11 +119,11 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
       clientId: clientId || 0,
       projectId: projectId || 0,
       issueDate: new Date(),
-      status: "pending", // Estado predeterminado
-      subtotal: "0", // Convertidos a string para compatibilidad con el backend
-      tax: "0",      // Convertidos a string para compatibilidad con el backend
-      discount: "0", // Convertidos a string para compatibilidad con el backend
-      total: "0",    // Convertidos a string para compatibilidad con el backend
+      status: "pending", // Default status
+      subtotal: "0", // Converted to string for backend compatibility
+      tax: "0",      // Converted to string for backend compatibility
+      discount: "0", // Converted to string for backend compatibility
+      total: "0",    // Converted to string for backend compatibility
     }
   });
   
@@ -320,7 +320,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
       ...data,
       // Si proyecto es 0, enviar null para evitar error de clave foránea
       projectId: data.projectId === 0 ? null : data.projectId,
-      // Si estamos editando, mantener el status actual, si no, establecer como "pending"
+      // If we are editing, maintain the current status, otherwise set as "pending"
       status: isEditing ? form.getValues("status") || "pending" : "pending",
       items: items.map(item => ({
         ...item,
