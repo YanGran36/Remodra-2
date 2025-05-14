@@ -379,7 +379,7 @@ export default function VendorEstimateFormPage() {
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Seleccionar cliente" />
+                              <SelectValue placeholder="Select client" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -391,7 +391,7 @@ export default function VendorEstimateFormPage() {
                           </SelectContent>
                         </Select>
                         <FormDescription>
-                          El cliente para quien se generará este estimado
+                          The client for whom this estimate will be generated
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -411,7 +411,7 @@ export default function VendorEstimateFormPage() {
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Seleccionar proyecto (opcional)" />
+                              <SelectValue placeholder="Select project (optional)" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -424,7 +424,7 @@ export default function VendorEstimateFormPage() {
                           </SelectContent>
                         </Select>
                         <FormDescription>
-                          Asociar este estimado a un proyecto existente (opcional)
+                          Associate this estimate with an existing project (optional)
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -443,7 +443,7 @@ export default function VendorEstimateFormPage() {
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Seleccionar tipo de servicio" />
+                              <SelectValue placeholder="Select service type" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -455,7 +455,7 @@ export default function VendorEstimateFormPage() {
                           </SelectContent>
                         </Select>
                         <FormDescription>
-                          El tipo de servicio que se proporcionará
+                          The type of service that will be provided
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -467,10 +467,10 @@ export default function VendorEstimateFormPage() {
                     name="notes"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Notas</FormLabel>
+                        <FormLabel>Notes</FormLabel>
                         <FormControl>
                           <Textarea 
-                            placeholder="Ingrese notas adicionales sobre el estimado"
+                            placeholder="Enter additional notes about the estimate"
                             {...field}
                             rows={4}
                           />
