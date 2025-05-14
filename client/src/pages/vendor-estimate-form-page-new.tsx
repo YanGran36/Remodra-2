@@ -204,7 +204,7 @@ export default function VendorEstimateFormPageNew() {
     queryKey: ["/api/protected/projects"],
   });
   
-  // Fetch events (Para obtener las citas programadas)
+  // Fetch events (To get scheduled appointments)
   const { data: events = [] } = useQuery<any[]>({
     queryKey: ["/api/protected/events"]
   });
@@ -708,8 +708,8 @@ export default function VendorEstimateFormPageNew() {
     createInvoiceMutation.mutate(invoiceData);
   };
   
-  // Las funciones auxiliares addDays, generateEstimateNumber y generateInvoiceNumber
-  // ya están definidas al inicio del componente, por lo que se omiten aquí.
+  // The helper functions addDays, generateEstimateNumber and generateInvoiceNumber
+  // are already defined at the beginning of the component, so they are omitted here.
   
   // Functions for measurement tools
   const handleMeasurementsChange = (newMeasurements: any[]) => {
@@ -728,8 +728,8 @@ export default function VendorEstimateFormPageNew() {
     }
     
     toast({
-      title: "Medidas actualizadas",
-      description: "Las mediciones han sido registradas correctamente.",
+      title: "Measurements updated",
+      description: "The measurements have been registered correctly.",
     });
   };
   
@@ -737,16 +737,16 @@ export default function VendorEstimateFormPageNew() {
     setScanResults(prev => [...prev, result]);
     
     toast({
-      title: "Escaneo completado",
-      description: "El escaneo se ha completado. Puede usar estas imágenes para tomar medidas precisas.",
+      title: "Scan completed",
+      description: "The scan has been completed. You can use these images to take precise measurements.",
     });
   };
   
-  // Funciones para manipular materiales
+  // Functions for managing materials
   const handleAddMaterial = () => {
     if (!watchMaterialType) {
       toast({
-        title: "Seleccione un material",
+        title: "Select a material",
         description: "You must select a material type to add it.",
         variant: "destructive",
       });
