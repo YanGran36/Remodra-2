@@ -74,7 +74,7 @@ const formatCurrency = (amount: number | string) => {
 // Define schema for invoiceItem
 const invoiceItemSchema = z.object({
   id: z.number().optional(),
-  description: z.string().min(1, { message: "La descripción es requerida" }),
+  description: z.string().min(1, { message: "Description is required" }),
   quantity: z.string().min(1, { message: "La cantidad es requerida" }),
   unitPrice: z.string().min(1, { message: "El precio unitario es requerido" }),
   amount: z.string().min(1, { message: "El monto es requerido" }),
@@ -293,7 +293,7 @@ export default function InvoiceForm({ invoiceToEdit, isOpen, onClose, fromEstima
     },
     onError: (error: Error) => {
       toast({
-        title: "Error al actualizar la orden de trabajo",
+        title: "Error updating the work order",
         description: error.message,
         variant: "destructive",
       });
@@ -557,11 +557,11 @@ export default function InvoiceForm({ invoiceToEdit, isOpen, onClose, fromEstima
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Seleccionar estimado" />
+                              <SelectValue placeholder="Select estimate" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="no_estimate">Sin estimado</SelectItem>
+                            <SelectItem value="no_estimate">No estimate</SelectItem>
                             {estimates?.filter((estimate: any) => 
                               estimate.clientId === parseInt(form.getValues("clientId")?.toString() || "0") &&
                               estimate.status === "accepted"
@@ -589,7 +589,7 @@ export default function InvoiceForm({ invoiceToEdit, isOpen, onClose, fromEstima
                               htmlFor="use-estimate-items"
                               className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                             >
-                              Usar artículos del estimado
+                              Use items from estimate
                             </label>
                           </div>
                         )}
