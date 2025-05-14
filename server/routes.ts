@@ -1605,7 +1605,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Ruta para generar descripción del trabajo con IA
+  // Route to generate job description with AI
   app.post("/api/protected/ai/generate-job-description", async (req, res) => {
     try {
       const { generateJobDescription } = await import("./openai-service");
@@ -1645,14 +1645,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      console.log("Generando descripción para:", params.serviceType);
+      console.log("Generating description for:", params.serviceType);
       const description = await generateJobDescription(params);
-      console.log("Descripción generada con éxito");
+      console.log("Description generated successfully");
       res.json({ description });
     } catch (error) {
-      console.error("Error al generar descripción:", error);
+      console.error("Error generating description:", error);
       res.status(500).json({ 
-        error: "Error al generar la descripción del trabajo", 
+        error: "Error generating job description", 
+        message: (error as Error).message 
+      });
+    }
+  });
+  
+  // Generate professional job description from appointment notes
+  app.post("/api/protected/ai/generate-professional-description", async (req, res) => {
+    try {
+      // Validate the incoming data
+      const params = req.body;
+      
+      if (!params) {
+        return res.status(400).json({ 
+          error: "Missing data", 
+          message: "No data received for description" 
+        });
+      }
+      
+      if (!params.appointmentNotes) {
+        return res.status(400).json({ 
+          error: "Insufficient data", 
+          message: "You must provide appointment notes" 
+        });
+      }
+      
+      console.log("Generating professional description from notes");
+      const result = await generateProfessionalJobDescription(params);
+      console.log("Professional description generated successfully");
+      res.json(result);
+    } catch (error) {
+      console.error("Error generating professional job description:", error);
+      res.status(500).json({ 
+        error: "Error generating professional job description", 
         message: (error as Error).message 
       });
     }

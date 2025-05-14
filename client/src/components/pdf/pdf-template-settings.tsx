@@ -33,6 +33,14 @@ export interface PdfTemplateConfig {
   showNotes: boolean;
   showSignatureLine: boolean;
   showDates: boolean;
+  // Column configuration
+  showColumns: {
+    description: boolean;
+    quantity: boolean;
+    unitPrice: boolean;
+    amount: boolean;
+    notes: boolean;
+  };
 }
 
 // Default configuration
@@ -53,6 +61,13 @@ const defaultConfig: PdfTemplateConfig = {
   showNotes: true,
   showSignatureLine: true,
   showDates: true,
+  showColumns: {
+    description: true,
+    quantity: true,
+    unitPrice: true,
+    amount: true,
+    notes: true
+  }
 };
 
 // Predefined templates
