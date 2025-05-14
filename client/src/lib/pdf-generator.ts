@@ -92,7 +92,7 @@ interface InvoiceData {
   contractor: ContractorInfo;
   projectTitle?: string;
   projectDescription?: string;
-  clientSignature?: string; // Base64 de la firma
+  clientSignature?: string; // Base64 of the signature
   paymentMethod?: string;
 }
 
@@ -477,13 +477,13 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   
   currentY += 5;
   
-  // Check if we need to add a new page para los totales
+  // Check if we need to add a new page for the totals
   if (currentY > 250) {
     pdf.addPage();
     currentY = 20;
   }
   
-  // Alinear totales a la derecha
+  // Align totals to the right
   pdf.setTextColor(60, 60, 60);
   pdf.setFontSize(10);
   
@@ -861,13 +861,13 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   
   currentY += 5;
   
-  // Check if we need to add a new page para los totales
+  // Check if we need to add a new page for the totals
   if (currentY > 250) {
     pdf.addPage();
     currentY = 20;
   }
   
-  // Alinear totales a la derecha
+  // Align totals to the right
   pdf.setTextColor(60, 60, 60);
   pdf.setFontSize(10);
   
@@ -961,7 +961,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     currentY += 8;
     
     try {
-      // Agregar la imagen de la firma
+      // Add the signature image
       pdf.addImage(data.clientSignature, 'PNG', PAGE_MARGIN, currentY, 60, 30);
       
       currentY += 35;
