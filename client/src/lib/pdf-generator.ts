@@ -185,6 +185,19 @@ function isTemplateFeatureEnabled(featureName: keyof TemplateSettings): boolean 
   return true; // Default to enabled
 }
 
+// Check if a specific table column should be displayed
+function isColumnEnabled(columnName: 'description' | 'quantity' | 'unitPrice' | 'amount' | 'notes'): boolean {
+  const settings = getTemplateSettings();
+  if (!settings || !settings.showColumns) return true; // Default to enabled if no settings
+  
+  // If the column is explicitly set to false, don't display it
+  if (settings.showColumns[columnName] === false) {
+    return false;
+  }
+  
+  return true; // Default to enabled
+}
+
 // Formateo de moneda
 const formatCurrency = (amount: number | string) => {
   return new Intl.NumberFormat('en-US', { 
