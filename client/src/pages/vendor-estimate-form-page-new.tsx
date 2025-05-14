@@ -857,25 +857,25 @@ export default function VendorEstimateFormPageNew() {
         <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)} id="vendor-estimate-form">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="information">Información Básica</TabsTrigger>
-              <TabsTrigger value="materials">Materiales y Medidas</TabsTrigger>
-              <TabsTrigger value="analysis">Análisis y Creación</TabsTrigger>
+              <TabsTrigger value="information">Basic Information</TabsTrigger>
+              <TabsTrigger value="materials">Materials & Measurements</TabsTrigger>
+              <TabsTrigger value="analysis">Analysis & Creation</TabsTrigger>
             </TabsList>
             
-            {/* TAB: Información Básica */}
+            {/* TAB: Basic Information */}
             <TabsContent value="information" className="space-y-6 pt-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Cliente y Servicio</CardTitle>
+                  <CardTitle>Client and Service</CardTitle>
                   <CardDescription>
-                    Seleccione el cliente y tipo de servicio para este trabajo
+                    Select the client and service type for this job
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Selector de fecha para filtrar clientes con citas */}
+                  {/* Date selector to filter clients with appointments */}
                   <div className="mb-6 border rounded-lg p-4 bg-muted/30">
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-medium">Filtrar clientes por citas programadas</h3>
+                      <h3 className="text-sm font-medium">Filter clients by scheduled appointments</h3>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
@@ -952,7 +952,7 @@ export default function VendorEstimateFormPageNew() {
                     </div>
                   )}
                   
-                  {/* Cliente */}
+                  {/* Client */}
                   <FormField
                     control={form.control}
                     name="clientId"
@@ -1015,7 +1015,7 @@ export default function VendorEstimateFormPageNew() {
                     name="projectId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Proyecto</FormLabel>
+                        <FormLabel>Project</FormLabel>
                         <Select
                           value={field.value}
                           onValueChange={field.onChange}
@@ -1027,7 +1027,7 @@ export default function VendorEstimateFormPageNew() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="none">Ninguno / Nuevo Proyecto</SelectItem>
+                            <SelectItem value="none">None / New Project</SelectItem>
                             {filteredProjects.map((project: any) => (
                               <SelectItem key={project.id} value={project.id.toString()}>
                                 {project.title}
