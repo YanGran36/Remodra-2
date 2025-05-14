@@ -462,7 +462,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
       : item.unitPrice;
     pdf.text(formatCurrency(unitPriceNumber), PAGE_MARGIN + 125, currentY + 5.5);
     
-    // Monto total
+    // Total amount
     const amountNumber = typeof item.amount === 'string' 
       ? parseFloat(item.amount) 
       : item.amount;
@@ -495,10 +495,10 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   
   currentY += 8;
   
-  // Impuestos (si aplican)
+  // Taxes (if applicable)
   if (data.tax && Number(data.tax) > 0) {
     pdf.setFont("helvetica", "normal");
-    pdf.text(`Impuesto (${data.tax}%):`, PAGE_WIDTH - PAGE_MARGIN - 60, currentY + 5);
+    pdf.text(`Tax (${data.tax}%):`, PAGE_WIDTH - PAGE_MARGIN - 60, currentY + 5);
     
     const taxAmount = parseFloat(String(data.subtotal)) * (parseFloat(String(data.tax)) / 100);
     pdf.setFont("helvetica", "bold");
@@ -507,10 +507,10 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
     currentY += 8;
   }
   
-  // Descuento (si aplica)
+  // Discount (if applicable)
   if (data.discount && Number(data.discount) > 0) {
     pdf.setFont("helvetica", "normal");
-    pdf.text(`Descuento (${data.discount}%):`, PAGE_WIDTH - PAGE_MARGIN - 60, currentY + 5);
+    pdf.text(`Discount (${data.discount}%):`, PAGE_WIDTH - PAGE_MARGIN - 60, currentY + 5);
     
     const discountAmount = parseFloat(String(data.subtotal)) * (parseFloat(String(data.discount)) / 100);
     pdf.setFont("helvetica", "bold");
@@ -846,7 +846,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
       : item.unitPrice;
     pdf.text(formatCurrency(unitPriceNumber), PAGE_MARGIN + 125, currentY + 5.5);
     
-    // Monto total
+    // Total amount
     const amountNumber = typeof item.amount === 'string' 
       ? parseFloat(item.amount) 
       : item.amount;
@@ -879,10 +879,10 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   
   currentY += 8;
   
-  // Impuestos (si aplican)
+  // Taxes (if applicable)
   if (data.tax && Number(data.tax) > 0) {
     pdf.setFont("helvetica", "normal");
-    pdf.text(`Impuesto (${data.tax}%):`, PAGE_WIDTH - PAGE_MARGIN - 60, currentY + 5);
+    pdf.text(`Tax (${data.tax}%):`, PAGE_WIDTH - PAGE_MARGIN - 60, currentY + 5);
     
     const taxAmount = parseFloat(String(data.subtotal)) * (parseFloat(String(data.tax)) / 100);
     pdf.setFont("helvetica", "bold");
@@ -891,10 +891,10 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     currentY += 8;
   }
   
-  // Descuento (si aplica)
+  // Discount (if applicable)
   if (data.discount && Number(data.discount) > 0) {
     pdf.setFont("helvetica", "normal");
-    pdf.text(`Descuento (${data.discount}%):`, PAGE_WIDTH - PAGE_MARGIN - 60, currentY + 5);
+    pdf.text(`Discount (${data.discount}%):`, PAGE_WIDTH - PAGE_MARGIN - 60, currentY + 5);
     
     const discountAmount = parseFloat(String(data.subtotal)) * (parseFloat(String(data.discount)) / 100);
     pdf.setFont("helvetica", "bold");
