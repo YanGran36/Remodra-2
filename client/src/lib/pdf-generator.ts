@@ -361,7 +361,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   
   // Issue date
   pdf.setFont("helvetica", "bold");
-  pdf.text("Fecha de emisión:", PAGE_WIDTH / 2, currentY);
+  pdf.text("Issue date:", PAGE_WIDTH / 2, currentY);
   pdf.setFont("helvetica", "normal");
   pdf.text(formatDate(data.issueDate), PAGE_WIDTH / 2 + 35, currentY);
   currentY += 6;
@@ -405,9 +405,9 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   
   pdf.setTextColor(60, 60, 60);
   pdf.setFontSize(10);
-  pdf.text("Descripción", PAGE_MARGIN + 5, currentY + 5.5);
-  pdf.text("Cant.", PAGE_MARGIN + 100, currentY + 5.5);
-  pdf.text("Precio Unit.", PAGE_MARGIN + 125, currentY + 5.5);
+  pdf.text("Description", PAGE_MARGIN + 5, currentY + 5.5);
+  pdf.text("Qty.", PAGE_MARGIN + 100, currentY + 5.5);
+  pdf.text("Unit Price", PAGE_MARGIN + 125, currentY + 5.5);
   pdf.text("Total", PAGE_MARGIN + 160, currentY + 5.5);
   
   currentY += 8;
@@ -435,9 +435,9 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
       pdf.setTextColor(60, 60, 60);
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "bold");
-      pdf.text("Descripción", PAGE_MARGIN + 5, currentY + 5.5);
-      pdf.text("Cant.", PAGE_MARGIN + 100, currentY + 5.5);
-      pdf.text("Precio Unit.", PAGE_MARGIN + 125, currentY + 5.5);
+      pdf.text("Description", PAGE_MARGIN + 5, currentY + 5.5);
+      pdf.text("Qty.", PAGE_MARGIN + 100, currentY + 5.5);
+      pdf.text("Unit Price", PAGE_MARGIN + 125, currentY + 5.5);
       pdf.text("Total", PAGE_MARGIN + 160, currentY + 5.5);
       
       currentY += 8;
@@ -447,13 +447,13 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
     pdf.setFontSize(9);
     pdf.setFont("helvetica", "normal");
     
-    // Descripción (truncada si es muy larga)
+    // Description (truncated if too long)
     const description = item.description.length > 50 
       ? item.description.substring(0, 50) + "..." 
       : item.description;
     pdf.text(description, PAGE_MARGIN + 5, currentY + 5.5);
     
-    // Cantidad
+    // Quantity
     pdf.text(String(item.quantity), PAGE_MARGIN + 100, currentY + 5.5);
     
     // Precio unitario
@@ -736,7 +736,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   
   // Issue date
   pdf.setFont("helvetica", "bold");
-  pdf.text("Fecha de emisión:", PAGE_WIDTH / 2, currentY);
+  pdf.text("Issue date:", PAGE_WIDTH / 2, currentY);
   pdf.setFont("helvetica", "normal");
   pdf.text(formatDate(data.issueDate), PAGE_WIDTH / 2 + 35, currentY);
   currentY += 6;
@@ -789,9 +789,9 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   
   pdf.setTextColor(60, 60, 60);
   pdf.setFontSize(10);
-  pdf.text("Descripción", PAGE_MARGIN + 5, currentY + 5.5);
-  pdf.text("Cant.", PAGE_MARGIN + 100, currentY + 5.5);
-  pdf.text("Precio Unit.", PAGE_MARGIN + 125, currentY + 5.5);
+  pdf.text("Description", PAGE_MARGIN + 5, currentY + 5.5);
+  pdf.text("Qty.", PAGE_MARGIN + 100, currentY + 5.5);
+  pdf.text("Unit Price", PAGE_MARGIN + 125, currentY + 5.5);
   pdf.text("Total", PAGE_MARGIN + 160, currentY + 5.5);
   
   currentY += 8;
@@ -819,9 +819,9 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
       pdf.setTextColor(60, 60, 60);
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "bold");
-      pdf.text("Descripción", PAGE_MARGIN + 5, currentY + 5.5);
-      pdf.text("Cant.", PAGE_MARGIN + 100, currentY + 5.5);
-      pdf.text("Precio Unit.", PAGE_MARGIN + 125, currentY + 5.5);
+      pdf.text("Description", PAGE_MARGIN + 5, currentY + 5.5);
+      pdf.text("Qty.", PAGE_MARGIN + 100, currentY + 5.5);
+      pdf.text("Unit Price", PAGE_MARGIN + 125, currentY + 5.5);
       pdf.text("Total", PAGE_MARGIN + 160, currentY + 5.5);
       
       currentY += 8;
@@ -831,13 +831,13 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     pdf.setFontSize(9);
     pdf.setFont("helvetica", "normal");
     
-    // Descripción (truncada si es muy larga)
+    // Description (truncated if too long)
     const description = item.description.length > 50 
       ? item.description.substring(0, 50) + "..." 
       : item.description;
     pdf.text(description, PAGE_MARGIN + 5, currentY + 5.5);
     
-    // Cantidad
+    // Quantity
     pdf.text(String(item.quantity), PAGE_MARGIN + 100, currentY + 5.5);
     
     // Precio unitario
