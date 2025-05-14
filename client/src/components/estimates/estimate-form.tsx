@@ -54,7 +54,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 
-// Esquema de validación para el formulario
+// Validation schema for the form
 const estimateFormSchema = z.object({
   clientId: z.coerce.number().min(1, "Client is required"),
   projectId: z.coerce.number().optional().nullable(), // El proyecto es completamente opcional
@@ -73,7 +73,7 @@ const estimateFormSchema = z.object({
 
 type EstimateFormValues = z.infer<typeof estimateFormSchema>;
 
-// Esquema para elementos del estimado
+// Schema for estimate items
 const estimateItemSchema = z.object({
   description: z.string().min(1, "La descripción es requerida"),
   quantity: z.coerce.number().min(1, "La cantidad debe ser al menos 1"),
@@ -173,7 +173,7 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
       const updatedItems = [...items, validatedItem];
       setItems(updatedItems);
       
-      // Limpiar el formulario para un nuevo ítem
+      // Clear the form for a new item
       setNewItem({
         description: "",
         quantity: 1,

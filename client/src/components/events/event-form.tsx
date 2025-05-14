@@ -34,7 +34,7 @@ import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEvents, EventInput } from "@/hooks/use-events";
 
-// Esquema de validación para el formulario
+// Validation schema for the form
 const formSchema = z.object({
   title: z.string().min(3, "El título debe tener al menos 3 caracteres"),
   description: z.string().optional(),

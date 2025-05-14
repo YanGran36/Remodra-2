@@ -32,7 +32,7 @@ import { format } from "date-fns";
 import { Project } from "@/hooks/use-clients";
 import { es } from "date-fns/locale";
 
-// Esquema de validación
+// Validation schema
 const projectFormSchema = z.object({
   title: z.string().min(2, "El título debe tener al menos 2 caracteres"),
   description: z.string().optional().or(z.literal("")),

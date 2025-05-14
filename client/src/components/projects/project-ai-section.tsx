@@ -43,7 +43,7 @@ import {
 } from "@/components/ui/table";
 import { Loader2, Brain, Clock, Shield, FileWarning, HardHat, User, BarChart3 } from "lucide-react";
 
-// Esquema para el formulario de sección de IA
+// Schema for AI section form
 const aiSectionSchema = z.object({
   aiGeneratedDescription: z.string().optional(),
   aiProjectSummary: z.string().optional(),

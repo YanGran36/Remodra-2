@@ -42,7 +42,7 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
-// Esquema de validación con Zod
+// Validation schema with Zod
 const contractorFormSchema = z.object({
   // Información de la empresa
   companyName: z.string().min(2, "El nombre de la empresa debe tener al menos 2 caracteres"),

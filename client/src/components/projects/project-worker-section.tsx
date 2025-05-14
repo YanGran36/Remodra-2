@@ -28,7 +28,7 @@ interface MaterialNeeded {
   unit: string;
 }
 
-// Esquema para el formulario de sección de trabajadores
+// Schema for workers section form
 const workerSectionSchema = z.object({
   workerInstructions: z.string().optional(),
   workerNotes: z.string().optional(),
