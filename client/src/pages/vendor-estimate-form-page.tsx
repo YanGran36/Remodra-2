@@ -324,8 +324,8 @@ export default function VendorEstimateFormPage() {
   return (
     <div className="container mx-auto py-6 space-y-6">
       <PageHeader 
-        title="Formulario de Estimado para Vendedores" 
-        description="Capture rápidamente la información durante citas con clientes para generar estimados precisos"
+        title="Vendor Estimate Form" 
+        description="Quickly capture information during client appointments to generate accurate estimates"
       />
       
       <div className="flex items-center justify-between">

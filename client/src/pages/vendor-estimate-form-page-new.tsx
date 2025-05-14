@@ -828,7 +828,7 @@ export default function VendorEstimateFormPageNew() {
   return (
     <div className="container mx-auto py-6 space-y-6">
       <PageHeader 
-        title="Formulario Avanzado para Vendedores" 
+        title="Advanced Vendor Form" 
         description="Capture data during appointments and convert them into estimates or invoices with AI assistance"
       />
       
