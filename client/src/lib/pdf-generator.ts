@@ -143,7 +143,20 @@ function getTemplateSettings(): TemplateSettings | null {
   try {
     const savedTemplate = localStorage.getItem('pdfTemplateConfig');
     if (savedTemplate) {
-      return JSON.parse(savedTemplate);
+      const settings = JSON.parse(savedTemplate);
+      
+      // Ensure showColumns exists with defaults if not specified
+      if (!settings.showColumns) {
+        settings.showColumns = {
+          description: true,
+          quantity: true,
+          unitPrice: true,
+          amount: true,
+          notes: true
+        };
+      }
+      
+      return settings;
     }
   } catch (e) {
     console.error("Error loading PDF template settings:", e);
@@ -196,6 +209,39 @@ function isColumnEnabled(columnName: 'description' | 'quantity' | 'unitPrice' | 
   }
   
   return true; // Default to enabled
+}
+
+// Function to render table header columns based on settings
+function renderTableHeaderColumns(pdf: jsPDF, currentY: number): { nextColPosition: number } {
+  let colPosition = PAGE_MARGIN + 5;
+  
+  // Always include at least description column no matter what
+  if (isColumnEnabled('description')) {
+    pdf.text("Description", colPosition, currentY + 5.5);
+    colPosition = PAGE_MARGIN + 100;  // Default position for quantity
+  }
+  
+  if (isColumnEnabled('quantity')) {
+    pdf.text("Qty.", colPosition, currentY + 5.5);
+    colPosition += 25;
+  }
+  
+  if (isColumnEnabled('unitPrice')) {
+    pdf.text("Unit Price", colPosition, currentY + 5.5);
+    colPosition += 35;
+  }
+  
+  if (isColumnEnabled('amount')) {
+    pdf.text("Total", colPosition, currentY + 5.5);
+    colPosition += 35;
+  }
+  
+  // Add notes column if enabled
+  if (isColumnEnabled('notes') && isTemplateFeatureEnabled('showItemNotes')) {
+    pdf.text("Notes", colPosition, currentY + 5.5);
+  }
+  
+  return { nextColPosition: colPosition };
 }
 
 // Formateo de moneda
