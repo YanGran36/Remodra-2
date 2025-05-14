@@ -534,8 +534,8 @@ export default function VendorEstimateFormPageNew() {
       setIsSubmitting(false);
       queryClient.invalidateQueries({ queryKey: ["/api/protected/estimates"] });
       toast({
-        title: "¡Estimado creado exitosamente!",
-        description: "El estimado ha sido generado a partir de los datos capturados.",
+        title: "Estimate created successfully!",
+        description: "The estimate has been generated from the captured data.",
       });
       // Redirect to the newly created estimate
       setLocation(`/estimates/${data.id}`);
@@ -651,7 +651,7 @@ export default function VendorEstimateFormPageNew() {
       items
     };
     
-    // Enviar petición para crear estimado
+    // Send request to create estimate
     createEstimateMutation.mutate(estimateData);
   };
   
@@ -704,7 +704,7 @@ export default function VendorEstimateFormPageNew() {
       items
     };
     
-    // Enviar petición para crear factura
+    // Send request to create invoice
     createInvoiceMutation.mutate(invoiceData);
   };
   
