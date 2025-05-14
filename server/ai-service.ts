@@ -35,7 +35,7 @@ interface SharingContent {
 }
 
 /**
- * Analiza un proyecto y genera resúmenes, descripciones y análisis usando IA
+ * Analyzes a project and generates summaries, descriptions, and analysis using AI
  */
 export async function analyzeProject(data: ProjectAnalysisRequest): Promise<ProjectAnalysisResponse> {
   try {

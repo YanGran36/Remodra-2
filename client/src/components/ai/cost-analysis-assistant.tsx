@@ -191,10 +191,10 @@ export default function CostAnalysisAssistant({
       // Mostrar feedback positivo
       toast({
         title: "Descripción generada",
-        description: "Se ha creado la descripción del trabajo exitosamente"
+        description: "Job description has been successfully created"
       });
     } catch (error) {
-      console.error("Error al generar descripción:", error);
+      console.error("Error generating description:", error);
       toast({
         title: "Error al generar descripción",
         description: "Ocurrió un error al procesar la solicitud. Intente nuevamente.",
@@ -229,7 +229,7 @@ export default function CostAnalysisAssistant({
           </span>
         </CardTitle>
         <CardDescription className="text-base">
-          Ingresa los detalles del proyecto para recibir un análisis de costos y recomendaciones basadas en inteligencia artificial
+          Enter project details to receive cost analysis and recommendations based on artificial intelligence
         </CardDescription>
       </CardHeader>
       
@@ -523,7 +523,7 @@ export default function CostAnalysisAssistant({
               <div className="p-3 bg-destructive/10 text-destructive rounded-md text-sm">
                 <div className="font-medium flex items-center">
                   <AlertCircle className="w-4 h-4 mr-2" />
-                  Error en el análisis
+                  Analysis Error
                 </div>
                 <p>{analysisError.message}</p>
               </div>
@@ -653,7 +653,7 @@ export default function CostAnalysisAssistant({
                           
                           <div className="mt-3 text-sm bg-white/80 p-2 rounded border">
                             <p className="text-sm">
-                              <span className="font-semibold">Tu precio recomendado: </span>
+                              <span className="font-semibold">Your recommended price: </span>
                               <span className="font-bold text-primary">{formatCurrency(analysisResult.recommendedTotal)}</span>
                             </p>
                             <p className="text-xs mt-1 text-muted-foreground">{analysisResult.breakdown.competitiveAnalysis.notes}</p>
