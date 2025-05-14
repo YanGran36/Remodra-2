@@ -584,8 +584,8 @@ export default function VendorEstimateFormPageNew() {
       setIsSubmitting(false);
       queryClient.invalidateQueries({ queryKey: ["/api/protected/invoices"] });
       toast({
-        title: "¡Factura creada exitosamente!",
-        description: "La factura ha sido generada a partir de los datos capturados.",
+        title: "Invoice created successfully!",
+        description: "The invoice has been generated from the captured data.",
       });
       // Redirect to the newly created invoice
       setLocation(`/invoices/${data.id}`);
@@ -810,7 +810,7 @@ export default function VendorEstimateFormPageNew() {
     });
   };
   
-  // Propiedades para el panel de análisis de IA
+  // Properties for AI analysis panel
   const aiAnalysisProps = {
     serviceType: watchServiceType,
     materials: selectedMaterials,
@@ -1090,13 +1090,13 @@ export default function VendorEstimateFormPageNew() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="easy">Fácil (terreno plano, acceso sencillo)</SelectItem>
-                            <SelectItem value="medium">Media (algo de complejidad)</SelectItem>
-                            <SelectItem value="complex">Compleja (terreno difícil, problemas de acceso)</SelectItem>
+                            <SelectItem value="easy">Easy (flat terrain, simple access)</SelectItem>
+                            <SelectItem value="medium">Medium (some complexity)</SelectItem>
+                            <SelectItem value="complex">Complex (difficult terrain, access issues)</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormDescription>
-                          La dificultad afectará el análisis de costos y estimaciones
+                          The difficulty will affect cost analysis and estimates
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -1293,7 +1293,7 @@ export default function VendorEstimateFormPageNew() {
                       name="units"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Unidades</FormLabel>
+                          <FormLabel>Units</FormLabel>
                           <FormControl>
                             <Input
                               type="number"
@@ -1369,7 +1369,7 @@ export default function VendorEstimateFormPageNew() {
                             />
                           </FormControl>
                           <FormDescription>
-                            Incluya detalles importantes, preferencias del cliente, etc.
+                            Include important details, client preferences, etc.
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
