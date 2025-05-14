@@ -1500,8 +1500,8 @@ export default function VendorEstimateFormPageNew() {
                     console.log("Clicking on Create Estimate from Form");
                     if (selectedMaterials.length === 0) {
                       toast({
-                        title: "Atención",
-                        description: "Debe agregar al menos un material",
+                        title: "Attention",
+                        description: "You must add at least one material",
                       });
                       return;
                     }
