@@ -13,10 +13,48 @@ import { ColorPicker } from "@/components/ui/color-picker";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Check, Save, Image, FileText, Layout, Palette, Columns, Type, Info, LayoutTemplate, Eye, ArrowLeft, Home } from "lucide-react";
+import { Check, Save, Image, FileText, Layout, Palette, Columns, Type, Info, LayoutTemplate, Eye, ArrowLeft, Home, Loader2 } from "lucide-react";
 
 import { PdfTemplateConfig } from "./pdf-template-settings";
-import { downloadEstimatePDF, downloadInvoicePDF } from "@/lib/pdf-generator";
+
+// Tipos para PDFs
+interface EstimateData {
+  estimateNumber: string;
+  date?: string | Date;
+  issueDate?: Date;
+  expiryDate?: Date;
+  client: Record<string, any>;
+  contractor: Record<string, any>;
+  services: any[];
+  subtotal?: number;
+  tax?: number;
+  taxRate?: number;
+  taxAmount?: number;
+  discount?: number;
+  total: number;
+  notes?: string;
+  status?: string;
+  [key: string]: any;
+}
+
+interface InvoiceData {
+  invoiceNumber: string;
+  date?: string | Date;
+  issueDate?: Date;
+  dueDate?: Date;
+  client: Record<string, any>;
+  contractor: Record<string, any>;
+  services: any[];
+  subtotal?: number;
+  tax?: number;
+  taxRate?: number;
+  taxAmount?: number;
+  discount?: number;
+  total: number;
+  notes?: string;
+  status?: string;
+  [key: string]: any;
+}
 
 // Sample data for previews
 const sampleEstimate = {
@@ -329,57 +367,52 @@ export default function EnhancedPdfTemplateEditor({
   };
 
   // Generate preview
+  // Función personalizada que solo genera el PDF de estimate sin descargarlo
+  const previewEstimatePDF = async (estimate: EstimateData): Promise<Blob> => {
+    try {
+      // Importar la función que genera el PDF
+      const { generateEstimatePDF } = await import('@/lib/pdf-generator');
+      return await generateEstimatePDF(estimate);
+    } catch (error) {
+      console.error("Error previewing estimate PDF:", error);
+      return new Blob([], { type: 'application/pdf' });
+    }
+  };
+  
+  // Función personalizada que solo genera el PDF de invoice sin descargarlo
+  const previewInvoicePDF = async (invoice: InvoiceData): Promise<Blob> => {
+    try {
+      // Importar la función que genera el PDF
+      const { generateInvoicePDF } = await import('@/lib/pdf-generator');
+      return await generateInvoicePDF(invoice);
+    } catch (error) {
+      console.error("Error previewing invoice PDF:", error);
+      return new Blob([], { type: 'application/pdf' });
+    }
+  };
+
   const generatePreview = useCallback(async () => {
     setPreviewLoading(true);
     try {
       // Force localStorage update
       localStorage.setItem('pdfTemplateConfig', JSON.stringify(config));
       
-      // Helper function to generate and display PDF
-      const generateAndDisplayPdf = async (pdfPromise: Promise<Blob>) => {
-        try {
-          const blob = await pdfPromise;
-          if (blob) {
-            // Create an object URL for the blob
-            const url = URL.createObjectURL(blob);
-            const previewFrame = document.getElementById('pdf-preview-frame') as HTMLIFrameElement;
-            if (previewFrame) {
-              previewFrame.src = url;
-            }
-          }
-        } catch (error) {
-          console.error("Error generating PDF:", error);
-          throw error;
-        }
-      };
+      // Generar y mostrar el PDF
+      let blob: Blob;
       
       if (previewType === "estimate") {
-        // Generar un PDF de estimado para vista previa
-        const generateEstimateBlob = async () => {
-          try {
-            const estimateResult = await downloadEstimatePDF(sampleEstimate);
-            return new Blob([estimateResult], { type: 'application/pdf' });
-          } catch (error) {
-            console.error("Error generating estimate PDF:", error);
-            return new Blob([], { type: 'application/pdf' });
-          }
-        };
-        
-        await generateAndDisplayPdf(generateEstimateBlob());
+        blob = await previewEstimatePDF(sampleEstimate);
       } else {
-        // Generar un PDF de factura para vista previa
-        const generateInvoiceBlob = async () => {
-          try {
-            const invoiceResult = await downloadInvoicePDF(sampleInvoice);
-            return new Blob([invoiceResult], { type: 'application/pdf' });
-          } catch (error) {
-            console.error("Error generating invoice PDF:", error);
-            return new Blob([], { type: 'application/pdf' });
-          }
-        };
-        
-        await generateAndDisplayPdf(generateInvoiceBlob());
+        blob = await previewInvoicePDF(sampleInvoice);
       }
+      
+      // Create an object URL for the blob
+      const url = URL.createObjectURL(blob);
+      const previewFrame = document.getElementById('pdf-preview-frame') as HTMLIFrameElement;
+      if (previewFrame) {
+        previewFrame.src = url;
+      }
+      
     } catch (error) {
       console.error("Error generating preview:", error);
       toast({
