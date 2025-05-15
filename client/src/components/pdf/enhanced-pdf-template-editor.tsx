@@ -25,7 +25,8 @@ interface EstimateData {
   expiryDate?: Date;
   client: Record<string, any>;
   contractor: Record<string, any>;
-  services: any[];
+  items?: any[]; // La estructura actual usa 'items' en lugar de 'services'
+  services?: any[]; // Para compatibilidad con versiones anteriores
   subtotal?: number;
   tax?: number;
   taxRate?: number;
@@ -34,6 +35,7 @@ interface EstimateData {
   total: number;
   notes?: string;
   status?: string;
+  terms?: string;
   [key: string]: any;
 }
 
@@ -44,7 +46,8 @@ interface InvoiceData {
   dueDate?: Date;
   client: Record<string, any>;
   contractor: Record<string, any>;
-  services: any[];
+  items?: any[]; // La estructura actual usa 'items' en lugar de 'services'
+  services?: any[]; // Para compatibilidad con versiones anteriores
   subtotal?: number;
   tax?: number;
   taxRate?: number;
@@ -53,7 +56,20 @@ interface InvoiceData {
   total: number;
   notes?: string;
   status?: string;
+  terms?: string;
+  amountPaid?: number;
   [key: string]: any;
+}
+
+// Importación dinámica de funciones PDF para vista previa (no descarga)
+async function getGenerateEstimatePDF() {
+  const pdfModule = await import('@/lib/pdf-generator');
+  return pdfModule.generateEstimatePDF;
+}
+
+async function getGenerateInvoicePDF() {
+  const pdfModule = await import('@/lib/pdf-generator');
+  return pdfModule.generateInvoicePDF;
 }
 
 // Sample data for previews
@@ -370,8 +386,7 @@ export default function EnhancedPdfTemplateEditor({
   // Función personalizada que solo genera el PDF de estimate sin descargarlo
   const previewEstimatePDF = async (estimate: EstimateData): Promise<Blob> => {
     try {
-      // Importar la función que genera el PDF
-      const { generateEstimatePDF } = await import('@/lib/pdf-generator');
+      const generateEstimatePDF = await getGenerateEstimatePDF();
       return await generateEstimatePDF(estimate);
     } catch (error) {
       console.error("Error previewing estimate PDF:", error);
@@ -382,8 +397,7 @@ export default function EnhancedPdfTemplateEditor({
   // Función personalizada que solo genera el PDF de invoice sin descargarlo
   const previewInvoicePDF = async (invoice: InvoiceData): Promise<Blob> => {
     try {
-      // Importar la función que genera el PDF
-      const { generateInvoicePDF } = await import('@/lib/pdf-generator');
+      const generateInvoicePDF = await getGenerateInvoicePDF();
       return await generateInvoicePDF(invoice);
     } catch (error) {
       console.error("Error previewing invoice PDF:", error);
