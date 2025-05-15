@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useLocation, useNavigate } from 'wouter';
+import { useLocation } from 'wouter';
 import EnhancedPdfTemplateEditor from '@/components/pdf/enhanced-pdf-template-editor';
 import { PdfTemplateConfig } from '@/components/pdf/pdf-template-settings';
 import { useToast } from '@/hooks/use-toast';

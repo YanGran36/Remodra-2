@@ -335,21 +335,50 @@ export default function EnhancedPdfTemplateEditor({
       // Force localStorage update
       localStorage.setItem('pdfTemplateConfig', JSON.stringify(config));
       
+      // Helper function to generate and display PDF
+      const generateAndDisplayPdf = async (pdfPromise: Promise<Blob>) => {
+        try {
+          const blob = await pdfPromise;
+          if (blob) {
+            // Create an object URL for the blob
+            const url = URL.createObjectURL(blob);
+            const previewFrame = document.getElementById('pdf-preview-frame') as HTMLIFrameElement;
+            if (previewFrame) {
+              previewFrame.src = url;
+            }
+          }
+        } catch (error) {
+          console.error("Error generating PDF:", error);
+          throw error;
+        }
+      };
+      
       if (previewType === "estimate") {
-        const blob = await downloadEstimatePDF(sampleEstimate);
-        // Create an object URL for the blob
-        const url = URL.createObjectURL(blob);
-        const previewFrame = document.getElementById('pdf-preview-frame') as HTMLIFrameElement;
-        if (previewFrame) {
-          previewFrame.src = url;
-        }
+        // Generar un PDF de estimado para vista previa
+        const generateEstimateBlob = async () => {
+          try {
+            const estimateResult = await downloadEstimatePDF(sampleEstimate);
+            return new Blob([estimateResult], { type: 'application/pdf' });
+          } catch (error) {
+            console.error("Error generating estimate PDF:", error);
+            return new Blob([], { type: 'application/pdf' });
+          }
+        };
+        
+        await generateAndDisplayPdf(generateEstimateBlob());
       } else {
-        const blob = await downloadInvoicePDF(sampleInvoice);
-        const url = URL.createObjectURL(blob);
-        const previewFrame = document.getElementById('pdf-preview-frame') as HTMLIFrameElement;
-        if (previewFrame) {
-          previewFrame.src = url;
-        }
+        // Generar un PDF de factura para vista previa
+        const generateInvoiceBlob = async () => {
+          try {
+            const invoiceResult = await downloadInvoicePDF(sampleInvoice);
+            return new Blob([invoiceResult], { type: 'application/pdf' });
+          } catch (error) {
+            console.error("Error generating invoice PDF:", error);
+            return new Blob([], { type: 'application/pdf' });
+          }
+        };
+        
+        await generateAndDisplayPdf(generateInvoiceBlob());
       }
     } catch (error) {
       console.error("Error generating preview:", error);
@@ -476,7 +505,7 @@ export default function EnhancedPdfTemplateEditor({
                         <Label>Primary Color</Label>
                         <div className="flex items-center space-x-2">
                           <ColorPicker
-                            color={config.colorPrimary}
+                            value={config.colorPrimary}
                             onChange={(color) => updateConfig('colorPrimary', color)}
                           />
                           <Input 
@@ -491,7 +520,7 @@ export default function EnhancedPdfTemplateEditor({
                         <Label>Secondary Color</Label>
                         <div className="flex items-center space-x-2">
                           <ColorPicker
-                            color={config.colorSecondary}
+                            value={config.colorSecondary}
                             onChange={(color) => updateConfig('colorSecondary', color)}
                           />
                           <Input 
