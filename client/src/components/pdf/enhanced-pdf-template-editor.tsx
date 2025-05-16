@@ -14,7 +14,8 @@ import { ColorPicker } from "@/components/ui/color-picker";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Check, Save, Image, FileText, Layout, Palette, Columns, Type, Info, LayoutTemplate, Eye, ArrowLeft, Home, Loader2 } from "lucide-react";
+import { Check, Save, Image, FileText, Layout, Palette, Columns, Type, Info, LayoutTemplate, Eye, ArrowLeft, Home, Loader2, Settings } from "lucide-react";
+import ServicesConfig from "./services-config";
 
 import { PdfTemplateConfig } from "./pdf-template-settings";
 
@@ -546,7 +547,7 @@ export default function EnhancedPdfTemplateEditor({
             </CardHeader>
             <CardContent className="pt-4">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-4 mb-4">
+                <TabsList className="grid w-full grid-cols-5 mb-4">
                   <TabsTrigger value="presets" className="flex items-center gap-1">
                     <LayoutTemplate className="h-4 w-4" />
                     <span className="hidden sm:inline">Presets</span>
@@ -562,6 +563,10 @@ export default function EnhancedPdfTemplateEditor({
                   <TabsTrigger value="columns" className="flex items-center gap-1">
                     <Columns className="h-4 w-4" />
                     <span className="hidden sm:inline">Columns</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="services" className="flex items-center gap-1">
+                    <Settings className="h-4 w-4" />
+                    <span className="hidden sm:inline">Services</span>
                   </TabsTrigger>
                 </TabsList>
                 
