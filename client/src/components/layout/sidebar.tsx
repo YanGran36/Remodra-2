@@ -105,11 +105,7 @@ export default function Sidebar() {
           
           <Link href="/tools-dashboard" className={getLinkClass("/tools-dashboard")}>
             <FileText className="mr-3 h-5 w-5" />
-            <span>Tools Dashboard</span>
-          </Link>
-          <Link href="/pdf-templates" className={getLinkClass("/pdf-templates")}>
-            <Palette className="mr-3 h-5 w-5" />
-            <span>PDF Templates</span>
+            <span>Tools</span>
           </Link>
           <Link href="/ai-assistant" className={getLinkClass("/ai-assistant")}>
             <BotIcon className="mr-3 h-5 w-5" />
