@@ -730,9 +730,9 @@ export default function EnhancedPdfTemplateEditor({
                               <SelectValue placeholder="Select position" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="left">Izquierda</SelectItem>
-                              <SelectItem value="centered">Centrado</SelectItem>
-                              <SelectItem value="right">Derecha</SelectItem>
+                              <SelectItem value="left">Left</SelectItem>
+                              <SelectItem value="centered">Centered</SelectItem>
+                              <SelectItem value="right">Right</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
