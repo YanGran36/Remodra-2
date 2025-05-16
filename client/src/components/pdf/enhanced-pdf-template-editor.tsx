@@ -514,6 +514,10 @@ export default function EnhancedPdfTemplateEditor({
               <Eye className="h-4 w-4 mr-2" />
               Refresh Preview
             </Button>
+            <Button variant="outline" size="sm" onClick={() => window.location.href = "/company-services"}>
+              <Settings className="h-4 w-4 mr-2" />
+              Configurar Servicios
+            </Button>
             <Button onClick={handleSave}>
               <Save className="h-4 w-4 mr-2" />
               Save Template
