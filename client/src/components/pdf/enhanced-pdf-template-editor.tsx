@@ -198,6 +198,7 @@ const presetTemplates = {
     showSignatureLine: true,
     showDates: true,
     showColumns: {
+      service: true,
       description: true,
       quantity: true,
       unitPrice: true,
@@ -222,6 +223,7 @@ const presetTemplates = {
     showSignatureLine: true,
     showDates: true,
     showColumns: {
+      service: true,
       description: true,
       quantity: true,
       unitPrice: true,
@@ -246,6 +248,7 @@ const presetTemplates = {
     showSignatureLine: true,
     showDates: true,
     showColumns: {
+      service: true,
       description: true,
       quantity: true,
       unitPrice: true,
@@ -270,6 +273,7 @@ const presetTemplates = {
     showSignatureLine: true,
     showDates: true,
     showColumns: {
+      service: true,
       description: true,
       quantity: true,
       unitPrice: true,

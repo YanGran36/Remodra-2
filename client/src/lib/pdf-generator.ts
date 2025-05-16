@@ -133,6 +133,7 @@ interface TemplateSettings {
   showSignatureLine: boolean;
   showDates: boolean;
   showColumns: {
+    service: boolean;
     description: boolean;
     quantity: boolean;
     unitPrice: boolean;
@@ -150,12 +151,18 @@ function getTemplateSettings(): TemplateSettings | null {
       // Ensure showColumns exists with defaults if not specified
       if (!settings.showColumns) {
         settings.showColumns = {
+          service: true,
           description: true,
           quantity: true,
           unitPrice: true,
           amount: true,
           notes: true
         };
+      }
+      
+      // Ensure service column exists with default if not specified
+      if (settings.showColumns && settings.showColumns.service === undefined) {
+        settings.showColumns.service = true;
       }
       
       return settings;
@@ -217,10 +224,17 @@ function isColumnEnabled(columnName: 'service' | 'description' | 'quantity' | 'u
 function renderTableHeaderColumns(pdf: jsPDF, currentY: number): { nextColPosition: number } {
   let colPosition = PAGE_MARGIN + 5;
   
-  // Always include at least description column no matter what
+  // Include service column if enabled
+  if (isColumnEnabled('service')) {
+    pdf.text("Service", colPosition, currentY + 5.5);
+    colPosition += 45;  // Allocate space for service column
+  }
+  
+  // Include description column 
   if (isColumnEnabled('description')) {
     pdf.text("Description", colPosition, currentY + 5.5);
-    colPosition = PAGE_MARGIN + 100;  // Default position for quantity
+    // If service column is shown, reduce space for description
+    colPosition += isColumnEnabled('service') ? 55 : 100;
   }
   
   if (isColumnEnabled('quantity')) {
@@ -250,13 +264,23 @@ function renderTableHeaderColumns(pdf: jsPDF, currentY: number): { nextColPositi
 function renderTableDataRow(pdf: jsPDF, item: Item, currentY: number): void {
   let colPosition = PAGE_MARGIN + 5;
   
+  // Service (if enabled and available)
+  if (isColumnEnabled('service')) {
+    const service = item.service && item.service.length > 40
+      ? item.service.substring(0, 37) + "..."
+      : item.service || "";
+    pdf.text(service, colPosition, currentY + 5);
+    colPosition += 45;  // Allocate space for service column
+  }
+  
   // Description (truncated if too long)
   if (isColumnEnabled('description')) {
-    const description = item.description.length > 50 
-      ? item.description.substring(0, 47) + "..." 
+    const description = item.description.length > (isColumnEnabled('service') ? 25 : 50)
+      ? item.description.substring(0, isColumnEnabled('service') ? 22 : 47) + "..." 
       : item.description;
     pdf.text(description, colPosition, currentY + 5);
-    colPosition = PAGE_MARGIN + 100;  // Default position for quantity
+    // If service column is shown, reduce space for description
+    colPosition += isColumnEnabled('service') ? 55 : 100;
   }
   
   // Quantity
