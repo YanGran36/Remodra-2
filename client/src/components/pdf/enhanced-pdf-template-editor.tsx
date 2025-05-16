@@ -240,13 +240,13 @@ export default function EnhancedPdfTemplateEditor({
       enableClientDetails: true,
       enableContractorDetails: true,
       enableWatermark: false,
-      customWatermarkText: "CONFIDENCIAL",
+      customWatermarkText: "CONFIDENTIAL",
       headerImageUrl: "",
       useHeaderImage: false,
       dateFormat: "DD/MM/YYYY",
-      itemsTableTitle: "Servicios",
-      estimateTitle: "PRESUPUESTO",
-      invoiceTitle: "FACTURA",
+      itemsTableTitle: "Services",
+      estimateTitle: "ESTIMATE",
+      invoiceTitle: "INVOICE",
       enableSections: true,
       sectionsPosition: "top",
       primaryColorGradient: true,
@@ -998,7 +998,7 @@ export default function EnhancedPdfTemplateEditor({
                             id="items-table-title" 
                             value={config.itemsTableTitle}
                             onChange={(e) => updateConfig("itemsTableTitle", e.target.value)}
-                            placeholder="Servicios"
+                            placeholder="Services"
                           />
                         </div>
                         
