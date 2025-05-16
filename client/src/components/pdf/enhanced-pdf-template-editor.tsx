@@ -848,37 +848,37 @@ export default function EnhancedPdfTemplateEditor({
                             checked={config.enableContractorDetails}
                             onCheckedChange={(checked) => updateConfig("enableContractorDetails", checked === true)}
                           />
-                          <Label htmlFor="enable-contractor-details" className="text-sm cursor-pointer">Mostrar Detalles del Contratista</Label>
+                          <Label htmlFor="enable-contractor-details" className="text-sm cursor-pointer">Show Contractor Details</Label>
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="logo-position" className="text-xs">Posición del Logo</Label>
+                          <Label htmlFor="logo-position" className="text-xs">Logo Position</Label>
                           <Select 
                             value={config.logoPosition}
                             onValueChange={(value) => updateConfig("logoPosition", value)}
                             disabled={!config.showLogo}
                           >
                             <SelectTrigger id="logo-position">
-                              <SelectValue placeholder="Seleccionar posición" />
+                              <SelectValue placeholder="Select position" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="left">Izquierda</SelectItem>
-                              <SelectItem value="right">Derecha</SelectItem>
-                              <SelectItem value="center">Centro</SelectItem>
+                              <SelectItem value="left">Left</SelectItem>
+                              <SelectItem value="right">Right</SelectItem>
+                              <SelectItem value="center">Center</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="company-info-position" className="text-xs">Posición Info de Empresa</Label>
+                          <Label htmlFor="company-info-position" className="text-xs">Company Info Position</Label>
                           <Select 
                             value={config.companyInfoPosition}
                             onValueChange={(value) => updateConfig("companyInfoPosition", value)}
                           >
                             <SelectTrigger id="company-info-position">
-                              <SelectValue placeholder="Seleccionar posición" />
+                              <SelectValue placeholder="Select position" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="left">Izquierda</SelectItem>
-                              <SelectItem value="right">Derecha</SelectItem>
+                              <SelectItem value="left">Left</SelectItem>
+                              <SelectItem value="right">Right</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
