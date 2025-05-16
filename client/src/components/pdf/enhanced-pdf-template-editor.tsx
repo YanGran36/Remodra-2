@@ -497,21 +497,21 @@ export default function EnhancedPdfTemplateEditor({
                 </TabsList>
 
                 <ScrollArea className="h-[calc(100vh-400px)] mt-4 overflow-y-auto pr-4">
-                  {/* Pestaña de Diseño */}
+                  {/* Design Tab */}
                   <TabsContent value="design" className="space-y-6">
                     <div className="space-y-4">
                       <div>
-                        <Label className="text-base font-medium">Colores</Label>
+                        <Label className="text-base font-medium">Colors</Label>
                         <div className="grid grid-cols-2 gap-4 mt-2">
                           <div className="space-y-2">
-                            <Label htmlFor="color-primary" className="text-xs">Color Principal</Label>
+                            <Label htmlFor="color-primary" className="text-xs">Primary Color</Label>
                             <EnhancedColorPicker 
                               color={config.colorPrimary} 
                               onChange={(color) => updateConfig("colorPrimary", color)}
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="color-secondary" className="text-xs">Color Secundario</Label>
+                            <Label htmlFor="color-secondary" className="text-xs">Secondary Color</Label>
                             <EnhancedColorPicker 
                               color={config.colorSecondary} 
                               onChange={(color) => updateConfig("colorSecondary", color)}
@@ -634,7 +634,7 @@ export default function EnhancedPdfTemplateEditor({
                             />
                           </div>
                           <div className="flex items-center justify-between">
-                            <Label htmlFor="alternate-row-colors" className="text-sm cursor-pointer">Alternar Colores de Filas</Label>
+                            <Label htmlFor="alternate-row-colors" className="text-sm cursor-pointer">Alternate Row Colors</Label>
                             <Switch 
                               id="alternate-row-colors" 
                               checked={config.alternateRowColors}
@@ -642,7 +642,7 @@ export default function EnhancedPdfTemplateEditor({
                             />
                           </div>
                           <div className="flex items-center justify-between">
-                            <Label htmlFor="primary-color-gradient" className="text-sm cursor-pointer">Usar Degradado en Color Principal</Label>
+                            <Label htmlFor="primary-color-gradient" className="text-sm cursor-pointer">Use Gradient for Primary Color</Label>
                             <Switch 
                               id="primary-color-gradient" 
                               checked={config.primaryColorGradient}
@@ -1223,7 +1223,7 @@ export default function EnhancedPdfTemplateEditor({
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
                             <Label htmlFor="secondary-color-opacity" className="text-xs">
-                              Opacidad Color Secundario: {Math.round(config.secondaryColorOpacity * 100)}%
+                              Secondary Color Opacity: {Math.round(config.secondaryColorOpacity * 100)}%
                             </Label>
                             <Badge variant="outline" className="text-xs">
                               {Math.round(config.secondaryColorOpacity * 100)}%
