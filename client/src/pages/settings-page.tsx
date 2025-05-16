@@ -10,7 +10,10 @@ import {
   BellRing,
   CreditCard,
   Globe,
-  Palette
+  Palette,
+  FileText,
+  Eye,
+  Download
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,6 +43,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Sidebar from "@/components/layout/sidebar";
 import MobileSidebar from "@/components/layout/mobile-sidebar";
 import PageHeader from "@/components/shared/page-header";
+import EnhancedPdfTemplateEditor from "@/components/pdf/enhanced-pdf-template-editor";
+import { PdfTemplateConfig } from "@/components/pdf/pdf-template-settings";
 
 const profileFormSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters."),
@@ -70,6 +75,38 @@ export default function SettingsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
+  const [pdfTemplateConfig, setPdfTemplateConfig] = useState<Partial<PdfTemplateConfig> | undefined>(undefined);
+  const [isLoadingPdfConfig, setIsLoadingPdfConfig] = useState(true);
+  
+  // Cargar la configuración guardada de la plantilla PDF
+  useEffect(() => {
+    try {
+      setIsLoadingPdfConfig(true);
+      const savedTemplate = localStorage.getItem('pdfTemplateConfig');
+      if (savedTemplate) {
+        setPdfTemplateConfig(JSON.parse(savedTemplate));
+      }
+    } catch (error) {
+      console.error('Error loading saved PDF template:', error);
+      toast({
+        title: 'Error Loading Template',
+        description: 'There was a problem loading your saved PDF template settings.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoadingPdfConfig(false);
+    }
+  }, [toast]);
+
+  // Función para guardar la configuración de la plantilla PDF
+  const handleSavePdfTemplate = (config: PdfTemplateConfig) => {
+    localStorage.setItem('pdfTemplateConfig', JSON.stringify(config));
+    setPdfTemplateConfig(config);
+    toast({
+      title: 'PDF Template Saved',
+      description: 'Your PDF template configuration has been saved successfully.',
+    });
+  };
 
   // Profile form
   const profileForm = useForm<ProfileFormValues>({
@@ -178,6 +215,10 @@ export default function SettingsPage() {
               <TabsTrigger value="security">
                 <CreditCard className="h-4 w-4 mr-2" />
                 Security
+              </TabsTrigger>
+              <TabsTrigger value="pdf-templates" className="flex items-center">
+                <FileText className="h-4 w-4 mr-2" />
+                PDF Templates
               </TabsTrigger>
               <TabsTrigger value="notifications">
                 <BellRing className="h-4 w-4 mr-2" />
