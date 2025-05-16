@@ -478,47 +478,74 @@ export default function EnhancedPdfTemplateEditor({
 
   return (
     <div className="w-full flex flex-col">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-2">
-          {onBack && (
-            <Button variant="outline" size="sm" onClick={onBack}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
+      <div className="flex flex-col space-y-4 mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            {onBack && (
+              <Button variant="outline" size="sm" onClick={onBack}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
+            )}
+            {onHome && (
+              <Button variant="outline" size="sm" onClick={onHome}>
+                <Home className="h-4 w-4 mr-2" />
+                Home
+              </Button>
+            )}
+            <h2 className="text-2xl font-bold">PDF Template Configuration</h2>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="sm" onClick={generatePreview}>
+              <Eye className="h-4 w-4 mr-2" />
+              Refresh Preview
             </Button>
-          )}
-          {onHome && (
-            <Button variant="outline" size="sm" onClick={onHome}>
-              <Home className="h-4 w-4 mr-2" />
-              Home
+            <Button onClick={handleSave}>
+              <Save className="h-4 w-4 mr-2" />
+              Save Template
             </Button>
-          )}
-          <h2 className="text-2xl font-bold">Enhanced PDF Template Editor</h2>
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" onClick={generatePreview}>
-            <Eye className="h-4 w-4 mr-2" />
-            Refresh Preview
-          </Button>
-          <Button onClick={handleSave}>
-            <Save className="h-4 w-4 mr-2" />
-            Save Template
-          </Button>
+        
+        <div className="flex items-center justify-between">
+          <p className="text-muted-foreground">Configure the appearance of your documents with live preview. Changes update automatically.</p>
+          
+          <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
+            <Button 
+              variant={previewType === "estimate" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setPreviewType("estimate")}
+              className="rounded-md"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Estimate
+            </Button>
+            <Button 
+              variant={previewType === "invoice" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setPreviewType("invoice")}
+              className="rounded-md"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Invoice
+            </Button>
+          </div>
         </div>
       </div>
       
       <div className="grid grid-cols-12 gap-6">
         {/* Left sidebar with settings */}
         <div className="col-span-12 md:col-span-5 lg:col-span-4">
-          <Card className="h-full">
-            <CardHeader>
+          <Card className="h-full shadow-md">
+            <CardHeader className="bg-muted/50 pb-2">
               <CardTitle>Template Settings</CardTitle>
               <CardDescription>
                 Customize your PDF template appearance
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-4">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-4 mb-4">
                   <TabsTrigger value="presets" className="flex items-center gap-1">
                     <LayoutTemplate className="h-4 w-4" />
                     <span className="hidden sm:inline">Presets</span>
@@ -863,36 +890,27 @@ export default function EnhancedPdfTemplateEditor({
         
         {/* Right side with preview */}
         <div className="col-span-12 md:col-span-7 lg:col-span-8">
-          <Card className="h-full">
-            <CardHeader className="pb-2">
+          <Card className="h-full shadow-md">
+            <CardHeader className="bg-muted/50 pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle>Live Preview</CardTitle>
-                <div className="flex items-center space-x-2">
-                  <Select
-                    value={previewType}
-                    onValueChange={(value: "estimate" | "invoice") => setPreviewType(value)}
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select document type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="estimate">Estimate</SelectItem>
-                      <SelectItem value="invoice">Invoice</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div>
+                  <CardTitle>Live Preview</CardTitle>
+                  <CardDescription>
+                    See changes in real-time as you customize your template
+                  </CardDescription>
                 </div>
+                <Badge variant="outline" className="font-normal text-sm">
+                  {previewType === "estimate" ? "Estimate" : "Invoice"} Template
+                </Badge>
               </div>
-              <CardDescription>
-                Live preview of your {previewType}. Changes are applied automatically.
-              </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="relative bg-muted rounded-md" style={{ height: 'calc(100vh - 230px)' }}>
+            <CardContent className="p-3">
+              <div className="relative rounded-lg border shadow-inner" style={{ height: 'calc(100vh - 220px)', backgroundColor: 'white' }}>
                 {previewLoading && (
-                  <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-10">
-                    <div className="flex flex-col items-center space-y-2">
-                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-                      <span>Generating preview...</span>
+                  <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-10 backdrop-blur-sm">
+                    <div className="flex flex-col items-center space-y-3 bg-card p-6 rounded-lg shadow-lg">
+                      <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                      <span className="font-medium">Generating preview...</span>
                     </div>
                   </div>
                 )}
@@ -900,8 +918,7 @@ export default function EnhancedPdfTemplateEditor({
                   id="pdf-preview-frame"
                   key={previewKey}
                   title="PDF Preview"
-                  className="w-full h-full rounded-md border"
-                  style={{ backgroundColor: 'white' }}
+                  className="w-full h-full rounded-md"
                 />
               </div>
             </CardContent>
