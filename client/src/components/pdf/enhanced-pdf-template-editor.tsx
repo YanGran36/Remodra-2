@@ -587,11 +587,11 @@ export default function EnhancedPdfTemplateEditor({
                       <Separator />
                       
                       <div>
-                        <Label className="text-base font-medium">Estilo y Formato</Label>
+                        <Label className="text-base font-medium">Style and Format</Label>
                         <div className="space-y-4 mt-2">
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                              <Label htmlFor="header-style" className="text-xs">Estilo de Encabezado</Label>
+                              <Label htmlFor="header-style" className="text-xs">Header Style</Label>
                               <Select 
                                 value={config.headerStyle}
                                 onValueChange={(value) => updateConfig("headerStyle", value)}
@@ -608,7 +608,7 @@ export default function EnhancedPdfTemplateEditor({
                               </Select>
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor="table-border-style" className="text-xs">Estilo de Bordes de Tabla</Label>
+                              <Label htmlFor="table-border-style" className="text-xs">Table Border Style</Label>
                               <Select 
                                 value={config.tableBorderStyle}
                                 onValueChange={(value) => updateConfig("tableBorderStyle", value)}
@@ -1121,10 +1121,10 @@ export default function EnhancedPdfTemplateEditor({
                   {/* Pestaña Avanzada */}
                   <TabsContent value="advanced" className="space-y-6">
                     <div>
-                      <Label className="text-base font-medium">Ajustes Avanzados</Label>
+                      <Label className="text-base font-medium">Advanced Settings</Label>
                       <div className="space-y-4 mt-2">
                         <div className="space-y-2">
-                          <Label htmlFor="text-size" className="text-xs">Tamaño de Texto</Label>
+                          <Label htmlFor="text-size" className="text-xs">Text Size</Label>
                           <Select 
                             value={config.textSize}
                             onValueChange={(value) => updateConfig("textSize", value)}
@@ -1164,7 +1164,7 @@ export default function EnhancedPdfTemplateEditor({
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
                             <Label htmlFor="font-size-heading" className="text-xs">
-                              Tamaño Fuente Título: {config.fontSizeHeading}px
+                              Heading Font Size: {config.fontSizeHeading}px
                             </Label>
                             <Badge variant="outline" className="text-xs">
                               {config.fontSizeHeading}px
@@ -1183,7 +1183,7 @@ export default function EnhancedPdfTemplateEditor({
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
                             <Label htmlFor="font-size-subheading" className="text-xs">
-                              Tamaño Fuente Subtítulo: {config.fontSizeSubheading}px
+                              Subheading Font Size: {config.fontSizeSubheading}px
                             </Label>
                             <Badge variant="outline" className="text-xs">
                               {config.fontSizeSubheading}px
@@ -1202,7 +1202,7 @@ export default function EnhancedPdfTemplateEditor({
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
                             <Label htmlFor="font-size-body" className="text-xs">
-                              Tamaño Fuente Texto: {config.fontSizeBody}px
+                              Body Font Size: {config.fontSizeBody}px
                             </Label>
                             <Badge variant="outline" className="text-xs">
                               {config.fontSizeBody}px
