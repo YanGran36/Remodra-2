@@ -759,7 +759,7 @@ export default function EnhancedPdfTemplateEditor({
                               checked={config.showLogo}
                               onCheckedChange={(checked) => updateConfig("showLogo", checked === true)}
                             />
-                            <Label htmlFor="show-logo" className="text-sm cursor-pointer">Mostrar Logo</Label>
+                            <Label htmlFor="show-logo" className="text-sm cursor-pointer">Show Logo</Label>
                           </div>
                           <div className="flex items-center space-x-2">
                             <Checkbox 
@@ -767,7 +767,7 @@ export default function EnhancedPdfTemplateEditor({
                               checked={config.showTax}
                               onCheckedChange={(checked) => updateConfig("showTax", checked === true)}
                             />
-                            <Label htmlFor="show-tax" className="text-sm cursor-pointer">Mostrar Impuestos</Label>
+                            <Label htmlFor="show-tax" className="text-sm cursor-pointer">Show Taxes</Label>
                           </div>
                           <div className="flex items-center space-x-2">
                             <Checkbox 
@@ -987,13 +987,13 @@ export default function EnhancedPdfTemplateEditor({
                     </div>
                   </TabsContent>
 
-                  {/* Pestaña de Columnas */}
+                  {/* Columns Tab */}
                   <TabsContent value="columns" className="space-y-6">
                     <div>
-                      <Label className="text-base font-medium">Tabla de Servicios/Productos</Label>
+                      <Label className="text-base font-medium">Services/Products Table</Label>
                       <div className="space-y-3 mt-2">
                         <div className="space-y-2">
-                          <Label htmlFor="items-table-title" className="text-xs">Título de la Tabla</Label>
+                          <Label htmlFor="items-table-title" className="text-xs">Table Title</Label>
                           <Input 
                             id="items-table-title" 
                             value={config.itemsTableTitle}
@@ -1118,7 +1118,7 @@ export default function EnhancedPdfTemplateEditor({
                     </div>
                   </TabsContent>
 
-                  {/* Pestaña Avanzada */}
+                  {/* Advanced Tab */}
                   <TabsContent value="advanced" className="space-y-6">
                     <div>
                       <Label className="text-base font-medium">Advanced Settings</Label>
