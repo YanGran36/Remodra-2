@@ -435,23 +435,20 @@ export default function EnhancedPdfTemplateEditor({
         blob = await previewInvoicePDF(sampleInvoice);
       }
       
-      // Convert the PDF blob to an image using a canvas
-      // Esto resolverá el problema de bloqueo de Chrome al mostrar PDFs en iframes
+      // Create a data URL from the blob para visualizar el PDF
       try {
-        // Create a data URL from the blob
         const pdfUrl = URL.createObjectURL(blob);
         
-        // Update the iframe with the explicit PDF URL
-        const previewFrame = document.getElementById('pdf-preview-frame') as HTMLIFrameElement;
+        // Usar object en lugar de iframe para mejorar compatibilidad
+        const previewFrame = document.getElementById('pdf-preview-frame') as HTMLObjectElement;
         if (previewFrame) {
-          // Use a different approach to display PDF content
-          previewFrame.src = pdfUrl;
-          previewFrame.style.width = "100%";
-          previewFrame.style.height = "100%";
-          previewFrame.style.border = "none";
+          // Almacenar primero la URL en un atributo personalizado
+          previewFrame.setAttribute('data-src', pdfUrl);
+          // Luego establecer la propiedad data
+          previewFrame.data = pdfUrl;
         }
       } catch (imgError) {
-        console.error("Error displaying PDF:", imgError);
+        console.error("Error al mostrar el PDF:", imgError);
       }
       
     } catch (error) {
@@ -920,21 +917,33 @@ export default function EnhancedPdfTemplateEditor({
                     </div>
                   </div>
                 )}
-                <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-md border border-gray-200">
+                <div className="w-full h-full bg-gray-100 rounded-md border border-gray-200 overflow-hidden">
                   {previewLoading ? (
-                    <div className="flex flex-col items-center gap-2">
+                    <div className="flex flex-col items-center justify-center h-full gap-2">
                       <Loader2 className="h-8 w-8 animate-spin text-primary" />
                       <p className="text-sm text-muted-foreground">Generando vista previa...</p>
                     </div>
                   ) : (
-                    <iframe 
+                    <object 
                       id="pdf-preview-frame"
                       key={previewKey}
-                      title="PDF Preview"
-                      className="w-full h-full rounded-md"
-                      sandbox="allow-same-origin"
-                      allow="fullscreen"
-                    />
+                      data={typeof window !== 'undefined' ? 
+                            document.getElementById('pdf-preview-frame')?.getAttribute('data-src') || '' : ''}
+                      type="application/pdf"
+                      className="w-full h-full"
+                    >
+                      <div className="flex flex-col items-center justify-center h-full p-4 text-center">
+                        <p className="text-gray-600 mb-4">No se puede mostrar el PDF directamente.</p>
+                        <Button 
+                          variant="outline" 
+                          onClick={generatePreview}
+                          className="flex items-center"
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          Actualizar Vista Previa
+                        </Button>
+                      </div>
+                    </object>
                   )}
                 </div>
               </div>

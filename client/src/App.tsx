@@ -18,10 +18,6 @@ import EstimatesPage from "@/pages/estimates-page";
 import EstimateCreatePage from "@/pages/estimate-create-page";
 import EstimateDetailPage from "@/pages/estimate-detail-page";
 import EstimatePrintPage from "@/pages/estimate-print-page";
-import PdfTemplatePage from "@/pages/pdf-template-page";
-import PdfTemplateGallery from "@/pages/pdf-template-gallery";
-import PdfTemplatePageNew from "@/pages/pdf-template-page-new";
-import PdfTemplateLuxury from "@/pages/pdf-template-luxury";
 import PdfTemplateEditorPage from "@/pages/pdf-template-editor-page";
 import CompanyServicesPage from "@/pages/company-services-page";
 import ToolsDashboard from "@/pages/tools-dashboard";
@@ -76,15 +72,11 @@ function Router() {
       <ProtectedRoute path="/ai-assistant" component={AIAssistantPage} />
       <ProtectedRoute path="/price-configurations" component={PriceConfigurationsPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
-      <ProtectedRoute path="/pdf-templates" component={PdfTemplatePage} />
       <ProtectedRoute path="/tools-dashboard" component={ToolsDashboard} />
       <ProtectedRoute path="/admin-dashboard" component={AdminDashboard} />
       <ProtectedRoute path="/admin-architectural" component={AdminDashboardArchitectural} />
       <ProtectedRoute path="/super-admin" component={SuperAdminDashboard} />
       <ProtectedRoute path="/super-admin/add-contractor" component={SuperAdminAddContractor} />
-      <ProtectedRoute path="/pdf-template" component={PdfTemplatePageNew} />
-      <ProtectedRoute path="/pdf-template-gallery" component={PdfTemplateGallery} />
-      <ProtectedRoute path="/pdf-template-luxury" component={PdfTemplateLuxury} />
       <ProtectedRoute path="/pdf-template-editor" component={PdfTemplateEditorPage} />
       <ProtectedRoute path="/company-services" component={CompanyServicesPage} />
       {/* Ruta de Google Sheets eliminada */}
