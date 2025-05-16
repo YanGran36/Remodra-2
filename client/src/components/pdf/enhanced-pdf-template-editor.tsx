@@ -377,7 +377,7 @@ export default function EnhancedPdfTemplateEditor({
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `presupuesto-ejemplo-${Date.now()}.pdf`;
+        a.download = `estimate-example-${Date.now()}.pdf`;
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -395,8 +395,8 @@ export default function EnhancedPdfTemplateEditor({
       }
       
       toast({
-        title: "PDF Descargado",
-        description: `El PDF de ${previewType === "estimate" ? "presupuesto" : "factura"} ha sido descargado.`
+        title: "PDF Downloaded",
+        description: `The ${previewType === "estimate" ? "estimate" : "invoice"} PDF has been downloaded.`
       });
     } catch (error) {
       console.error("Error downloading preview:", error);
@@ -961,7 +961,7 @@ export default function EnhancedPdfTemplateEditor({
                               <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
                               <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
                               <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
-                              <SelectItem value="DD de MMMM, YYYY">DD of Month, YYYY</SelectItem>
+                              <SelectItem value="DD of MMMM, YYYY">DD of Month, YYYY</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
