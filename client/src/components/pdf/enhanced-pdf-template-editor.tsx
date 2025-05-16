@@ -1253,7 +1253,7 @@ export default function EnhancedPdfTemplateEditor({
                           
                           {config.enableWatermark && (
                             <div className="space-y-2 mt-2">
-                              <Label htmlFor="watermark-text" className="text-xs">Texto de Marca de Agua</Label>
+                              <Label htmlFor="watermark-text" className="text-xs">Watermark Text</Label>
                               <Input 
                                 id="watermark-text" 
                                 value={config.customWatermarkText}
@@ -1268,7 +1268,7 @@ export default function EnhancedPdfTemplateEditor({
                         
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <Label htmlFor="use-header-image" className="text-sm cursor-pointer">Usar Imagen en Encabezado</Label>
+                            <Label htmlFor="use-header-image" className="text-sm cursor-pointer">Use Header Image</Label>
                             <Switch 
                               id="use-header-image" 
                               checked={config.useHeaderImage}
@@ -1278,12 +1278,12 @@ export default function EnhancedPdfTemplateEditor({
                           
                           {config.useHeaderImage && (
                             <div className="space-y-2 mt-2">
-                              <Label htmlFor="header-image-url" className="text-xs">URL de Imagen de Encabezado</Label>
+                              <Label htmlFor="header-image-url" className="text-xs">Header Image URL</Label>
                               <Input 
                                 id="header-image-url" 
                                 value={config.headerImageUrl}
                                 onChange={(e) => updateConfig("headerImageUrl", e.target.value)}
-                                placeholder="https://ejemplo.com/imagen.jpg"
+                                placeholder="https://example.com/image.jpg"
                               />
                             </div>
                           )}
@@ -1292,7 +1292,7 @@ export default function EnhancedPdfTemplateEditor({
                         <Separator />
                         
                         <div className="space-y-2">
-                          <Label htmlFor="custom-css" className="text-xs">CSS Personalizado</Label>
+                          <Label htmlFor="custom-css" className="text-xs">Custom CSS</Label>
                           <div className="border rounded-md">
                             <textarea
                               id="custom-css"
@@ -1300,11 +1300,11 @@ export default function EnhancedPdfTemplateEditor({
                               value={config.customCSS}
                               onChange={(e) => updateConfig("customCSS", e.target.value)}
                               className="w-full p-2 text-sm font-mono resize-y rounded-md focus:ring-2 focus:ring-primary focus:outline-none bg-background"
-                              placeholder="/* CSS personalizado aquí */"
+                              placeholder="/* Custom CSS here */"
                             />
                           </div>
                           <p className="text-xs text-muted-foreground mt-1">
-                            Agregar estilos CSS personalizados para ajustes avanzados.
+                            Add custom CSS styles for advanced adjustments.
                           </p>
                         </div>
                       </div>
