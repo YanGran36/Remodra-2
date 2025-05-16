@@ -86,14 +86,16 @@ const sampleEstimate = {
   notes: "Please contact us if you have any questions about this estimate.",
   items: [
     {
-      description: "Professional Service - Basic Package",
+      service: "Basic Package",
+      description: "Professional consultation service with comprehensive setup",
       quantity: 1,
       unitPrice: 500,
       amount: 500,
       notes: "Includes basic consultation and setup"
     },
     {
-      description: "Additional Support Hours",
+      service: "Support Hours",
+      description: "Additional technical support and maintenance",
       quantity: 5,
       unitPrice: 50,
       amount: 250,
@@ -139,14 +141,16 @@ const sampleInvoice = {
   notes: "Thank you for your business!",
   items: [
     {
-      description: "Professional Service - Basic Package",
+      service: "Basic Package",
+      description: "Professional consultation service with comprehensive setup",
       quantity: 1,
       unitPrice: 500,
       amount: 500,
       notes: "Service provided on " + new Date().toLocaleDateString()
     },
     {
-      description: "Additional Support Hours",
+      service: "Support Hours",
+      description: "Additional technical support and maintenance",
       quantity: 5,
       unitPrice: 50,
       amount: 250,
@@ -298,6 +302,7 @@ const presetTemplates = {
     showSignatureLine: true,
     showDates: true,
     showColumns: {
+      service: true,
       description: true,
       quantity: true,
       unitPrice: true,
@@ -326,6 +331,7 @@ const defaultConfig: PdfTemplateConfig = {
   showSignatureLine: true,
   showDates: true,
   showColumns: {
+    service: true,
     description: true,
     quantity: true,
     unitPrice: true,
