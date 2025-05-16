@@ -668,24 +668,24 @@ export default function EnhancedPdfTemplateEditor({
                                   <SelectValue placeholder="Select size" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="letter">Carta (8.5" x 11")</SelectItem>
+                                  <SelectItem value="letter">Letter (8.5" x 11")</SelectItem>
                                   <SelectItem value="a4">A4 (210 x 297 mm)</SelectItem>
                                   <SelectItem value="legal">Legal (8.5" x 14")</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor="page-orientation" className="text-xs">Orientación</Label>
+                              <Label htmlFor="page-orientation" className="text-xs">Orientation</Label>
                               <Select 
                                 value={config.pageOrientation}
                                 onValueChange={(value) => updateConfig("pageOrientation", value)}
                               >
                                 <SelectTrigger id="page-orientation">
-                                  <SelectValue placeholder="Seleccionar orientación" />
+                                  <SelectValue placeholder="Select orientation" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="portrait">Vertical</SelectItem>
-                                  <SelectItem value="landscape">Horizontal</SelectItem>
+                                  <SelectItem value="portrait">Portrait</SelectItem>
+                                  <SelectItem value="landscape">Landscape</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -721,13 +721,13 @@ export default function EnhancedPdfTemplateEditor({
                           </div>
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="document-title-position" className="text-xs">Posición del Título</Label>
+                          <Label htmlFor="document-title-position" className="text-xs">Title Position</Label>
                           <Select 
                             value={config.documentTitle}
                             onValueChange={(value) => updateConfig("documentTitle", value)}
                           >
                             <SelectTrigger id="document-title-position">
-                              <SelectValue placeholder="Seleccionar posición" />
+                              <SelectValue placeholder="Select position" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="left">Izquierda</SelectItem>
