@@ -525,7 +525,7 @@ export default function EnhancedPdfTemplateEditor({
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="color-accent" className="text-xs">Color de Acento</Label>
+                            <Label htmlFor="color-accent" className="text-xs">Accent Color</Label>
                             <EnhancedColorPicker 
                               color={config.colorAccent} 
                               onChange={(color) => updateConfig("colorAccent", color)}
@@ -546,7 +546,7 @@ export default function EnhancedPdfTemplateEditor({
                               onValueChange={(value) => updateConfig("fontHeading", value)}
                             >
                               <SelectTrigger id="font-heading">
-                                <SelectValue placeholder="Seleccionar fuente" />
+                                <SelectValue placeholder="Select font" />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="'Inter', sans-serif">Inter (Sans-serif)</SelectItem>
@@ -567,7 +567,7 @@ export default function EnhancedPdfTemplateEditor({
                               onValueChange={(value) => updateConfig("fontBody", value)}
                             >
                               <SelectTrigger id="font-body">
-                                <SelectValue placeholder="Seleccionar fuente" />
+                                <SelectValue placeholder="Select font" />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="'Inter', sans-serif">Inter (Sans-serif)</SelectItem>
