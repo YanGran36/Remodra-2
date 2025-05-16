@@ -42,6 +42,28 @@ export interface PdfTemplateConfig {
     amount: boolean;
     notes: boolean;
   };
+  // Column titles
+  columnTitles?: {
+    service?: string;
+    description?: string;
+    quantity?: string;
+    unitPrice?: string;
+    amount?: string;
+    notes?: string;
+  };
+  // Other options for enhanced template
+  documentTitle?: string;
+  colorText?: string;
+  colorAccent?: string;
+  fontHeading?: string;
+  fontBody?: string;
+  showLogo?: boolean;
+  showTax?: boolean;
+  showDiscount?: boolean;
+  showSignature?: boolean;
+  footerText?: string;
+  logoPosition?: string;
+  companyInfoPosition?: string;
 }
 
 // Default configuration

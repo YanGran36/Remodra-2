@@ -257,11 +257,13 @@ export default function EnhancedPdfTemplateEditor({
       fontSizeFooter: 10,
       documentTitleUppercase: true,
       columnTitles: {
-        description: "Descripción",
-        quantity: "Cantidad",
-        unitPrice: "Precio Unitario",
-        unit: "Unidad",
-        amount: "Importe"
+        service: "Service",
+        description: "Description",
+        quantity: "Quantity",
+        unitPrice: "Unit Price",
+        unit: "Unit",
+        amount: "Amount",
+        notes: "Notes"
       },
       enableSectionTitles: true,
       showEstimateFooterNotes: true,
@@ -538,7 +540,7 @@ export default function EnhancedPdfTemplateEditor({
                         <Label className="text-base font-medium">Tipografía</Label>
                         <div className="grid grid-cols-2 gap-4 mt-2">
                           <div className="space-y-2">
-                            <Label htmlFor="font-heading" className="text-xs">Fuente de Títulos</Label>
+                            <Label htmlFor="font-heading" className="text-xs">Heading Font</Label>
                             <Select 
                               value={config.fontHeading}
                               onValueChange={(value) => updateConfig("fontHeading", value)}
@@ -1049,64 +1051,64 @@ export default function EnhancedPdfTemplateEditor({
                         <Separator />
                         
                         <div className="space-y-2">
-                          <Label className="text-xs">Títulos de Columnas</Label>
+                          <Label className="text-xs">Column Titles</Label>
                           <div className="space-y-3 mt-2">
-                            {config.showItemDescription && (
+                            {config.showColumns?.description && (
                               <div className="space-y-1">
-                                <Label htmlFor="col-description" className="text-xs">Título para Descripción</Label>
+                                <Label htmlFor="col-description" className="text-xs">Title for Description</Label>
                                 <Input 
                                   id="col-description" 
-                                  value={config.columnTitles.description}
-                                  onChange={(e) => updateConfig("columnTitles", { ...config.columnTitles, description: e.target.value })}
-                                  placeholder="Descripción"
+                                  value={config.columnTitles?.description || ""}
+                                  onChange={(e) => updateConfig("columnTitles", { ...(config.columnTitles || {}), description: e.target.value })}
+                                  placeholder="Description"
                                 />
                               </div>
                             )}
                             
-                            {config.showItemQuantity && (
+                            {config.showColumns?.quantity && (
                               <div className="space-y-1">
-                                <Label htmlFor="col-quantity" className="text-xs">Título para Cantidad</Label>
+                                <Label htmlFor="col-quantity" className="text-xs">Title for Quantity</Label>
                                 <Input 
                                   id="col-quantity" 
-                                  value={config.columnTitles.quantity}
-                                  onChange={(e) => updateConfig("columnTitles", { ...config.columnTitles, quantity: e.target.value })}
-                                  placeholder="Cantidad"
+                                  value={config.columnTitles?.quantity || ""}
+                                  onChange={(e) => updateConfig("columnTitles", { ...(config.columnTitles || {}), quantity: e.target.value })}
+                                  placeholder="Quantity"
                                 />
                               </div>
                             )}
                             
-                            {config.showItemUnitPrice && (
+                            {config.showColumns?.unitPrice && (
                               <div className="space-y-1">
-                                <Label htmlFor="col-unit-price" className="text-xs">Título para Precio Unitario</Label>
+                                <Label htmlFor="col-unit-price" className="text-xs">Title for Unit Price</Label>
                                 <Input 
                                   id="col-unit-price" 
-                                  value={config.columnTitles.unitPrice}
-                                  onChange={(e) => updateConfig("columnTitles", { ...config.columnTitles, unitPrice: e.target.value })}
-                                  placeholder="Precio Unitario"
+                                  value={config.columnTitles?.unitPrice || ""}
+                                  onChange={(e) => updateConfig("columnTitles", { ...(config.columnTitles || {}), unitPrice: e.target.value })}
+                                  placeholder="Unit Price"
                                 />
                               </div>
                             )}
                             
-                            {config.showItemUnit && (
+                            {config.showColumns?.notes && (
                               <div className="space-y-1">
-                                <Label htmlFor="col-unit" className="text-xs">Título para Unidad</Label>
+                                <Label htmlFor="col-unit" className="text-xs">Title for Notes</Label>
                                 <Input 
-                                  id="col-unit" 
-                                  value={config.columnTitles.unit}
-                                  onChange={(e) => updateConfig("columnTitles", { ...config.columnTitles, unit: e.target.value })}
-                                  placeholder="Unidad"
+                                  id="col-notes" 
+                                  value={config.columnTitles?.notes || ""}
+                                  onChange={(e) => updateConfig("columnTitles", { ...(config.columnTitles || {}), notes: e.target.value })}
+                                  placeholder="Notes"
                                 />
                               </div>
                             )}
                             
-                            {config.showItemAmount && (
+                            {config.showColumns?.amount && (
                               <div className="space-y-1">
-                                <Label htmlFor="col-amount" className="text-xs">Título para Importe</Label>
+                                <Label htmlFor="col-amount" className="text-xs">Title for Amount</Label>
                                 <Input 
                                   id="col-amount" 
-                                  value={config.columnTitles.amount}
-                                  onChange={(e) => updateConfig("columnTitles", { ...config.columnTitles, amount: e.target.value })}
-                                  placeholder="Importe"
+                                  value={config.columnTitles?.amount || ""}
+                                  onChange={(e) => updateConfig("columnTitles", { ...(config.columnTitles || {}), amount: e.target.value })}
+                                  placeholder="Amount"
                                 />
                               </div>
                             )}
