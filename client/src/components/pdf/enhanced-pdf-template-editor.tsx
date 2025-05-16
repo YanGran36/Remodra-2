@@ -888,7 +888,7 @@ export default function EnhancedPdfTemplateEditor({
                     <Separator />
 
                     <div>
-                      <Label className="text-base font-medium">Secciones Específicas</Label>
+                      <Label className="text-base font-medium">Specific Sections</Label>
                       <div className="space-y-3 mt-2">
                         <div className="flex items-center space-x-2">
                           <Checkbox 
@@ -896,7 +896,7 @@ export default function EnhancedPdfTemplateEditor({
                             checked={config.enableEstimateDateField}
                             onCheckedChange={(checked) => updateConfig("enableEstimateDateField", checked === true)}
                           />
-                          <Label htmlFor="enable-estimate-date-field" className="text-sm cursor-pointer">Mostrar Fecha en Presupuestos</Label>
+                          <Label htmlFor="enable-estimate-date-field" className="text-sm cursor-pointer">Show Date in Estimates</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox 
@@ -904,7 +904,7 @@ export default function EnhancedPdfTemplateEditor({
                             checked={config.enableEstimateExpiry}
                             onCheckedChange={(checked) => updateConfig("enableEstimateExpiry", checked === true)}
                           />
-                          <Label htmlFor="enable-estimate-expiry" className="text-sm cursor-pointer">Fecha de Expiración en Presupuestos</Label>
+                          <Label htmlFor="enable-estimate-expiry" className="text-sm cursor-pointer">Expiration Date in Estimates</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox 
@@ -912,7 +912,7 @@ export default function EnhancedPdfTemplateEditor({
                             checked={config.enableInvoiceDueDate}
                             onCheckedChange={(checked) => updateConfig("enableInvoiceDueDate", checked === true)}
                           />
-                          <Label htmlFor="enable-invoice-due-date" className="text-sm cursor-pointer">Fecha de Vencimiento en Facturas</Label>
+                          <Label htmlFor="enable-invoice-due-date" className="text-sm cursor-pointer">Due Date in Invoices</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox 
@@ -920,7 +920,7 @@ export default function EnhancedPdfTemplateEditor({
                             checked={config.enableSections}
                             onCheckedChange={(checked) => updateConfig("enableSections", checked === true)}
                           />
-                          <Label htmlFor="enable-sections" className="text-sm cursor-pointer">Habilitar Secciones</Label>
+                          <Label htmlFor="enable-sections" className="text-sm cursor-pointer">Enable Sections</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox 
@@ -929,7 +929,7 @@ export default function EnhancedPdfTemplateEditor({
                             onCheckedChange={(checked) => updateConfig("enableSectionTitles", checked === true)}
                             disabled={!config.enableSections}
                           />
-                          <Label htmlFor="enable-section-titles" className="text-sm cursor-pointer">Mostrar Títulos de Sección</Label>
+                          <Label htmlFor="enable-section-titles" className="text-sm cursor-pointer">Show Section Titles</Label>
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="sections-position" className="text-xs">Posición de Secciones</Label>
