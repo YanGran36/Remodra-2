@@ -775,7 +775,7 @@ export default function EnhancedPdfTemplateEditor({
                               checked={config.showDiscount}
                               onCheckedChange={(checked) => updateConfig("showDiscount", checked === true)}
                             />
-                            <Label htmlFor="show-discount" className="text-sm cursor-pointer">Mostrar Descuento</Label>
+                            <Label htmlFor="show-discount" className="text-sm cursor-pointer">Show Discount</Label>
                           </div>
                           <div className="flex items-center space-x-2">
                             <Checkbox 
@@ -783,7 +783,7 @@ export default function EnhancedPdfTemplateEditor({
                               checked={config.showSignature}
                               onCheckedChange={(checked) => updateConfig("showSignature", checked === true)}
                             />
-                            <Label htmlFor="show-signature" className="text-sm cursor-pointer">Mostrar Firma</Label>
+                            <Label htmlFor="show-signature" className="text-sm cursor-pointer">Show Signature</Label>
                           </div>
                           <div className="flex items-center space-x-2">
                             <Checkbox 
@@ -791,7 +791,7 @@ export default function EnhancedPdfTemplateEditor({
                               checked={config.showNotes}
                               onCheckedChange={(checked) => updateConfig("showNotes", checked === true)}
                             />
-                            <Label htmlFor="show-notes" className="text-sm cursor-pointer">Mostrar Notas</Label>
+                            <Label htmlFor="show-notes" className="text-sm cursor-pointer">Show Notes</Label>
                           </div>
                           <div className="flex items-center space-x-2">
                             <Checkbox 
