@@ -799,7 +799,7 @@ export default function EnhancedPdfTemplateEditor({
                               checked={config.showTerms}
                               onCheckedChange={(checked) => updateConfig("showTerms", checked === true)}
                             />
-                            <Label htmlFor="show-terms" className="text-sm cursor-pointer">Mostrar Términos</Label>
+                            <Label htmlFor="show-terms" className="text-sm cursor-pointer">Show Terms</Label>
                           </div>
                           <div className="flex items-center space-x-2">
                             <Checkbox 
@@ -807,7 +807,7 @@ export default function EnhancedPdfTemplateEditor({
                               checked={config.showFooter}
                               onCheckedChange={(checked) => updateConfig("showFooter", checked === true)}
                             />
-                            <Label htmlFor="show-footer" className="text-sm cursor-pointer">Mostrar Pie de Página</Label>
+                            <Label htmlFor="show-footer" className="text-sm cursor-pointer">Show Footer</Label>
                           </div>
                           <div className="flex items-center space-x-2">
                             <Checkbox 
@@ -815,7 +815,7 @@ export default function EnhancedPdfTemplateEditor({
                               checked={config.showEstimateFooterNotes}
                               onCheckedChange={(checked) => updateConfig("showEstimateFooterNotes", checked === true)}
                             />
-                            <Label htmlFor="show-estimate-footer-notes" className="text-sm cursor-pointer">Notas de Presupuesto</Label>
+                            <Label htmlFor="show-estimate-footer-notes" className="text-sm cursor-pointer">Estimate Notes</Label>
                           </div>
                           <div className="flex items-center space-x-2">
                             <Checkbox 
@@ -823,7 +823,7 @@ export default function EnhancedPdfTemplateEditor({
                               checked={config.showInvoiceFooterNotes}
                               onCheckedChange={(checked) => updateConfig("showInvoiceFooterNotes", checked === true)}
                             />
-                            <Label htmlFor="show-invoice-footer-notes" className="text-sm cursor-pointer">Notas de Factura</Label>
+                            <Label htmlFor="show-invoice-footer-notes" className="text-sm cursor-pointer">Invoice Notes</Label>
                           </div>
                         </div>
                       </div>
@@ -832,7 +832,7 @@ export default function EnhancedPdfTemplateEditor({
                     <Separator />
 
                     <div>
-                      <Label className="text-base font-medium">Información Cliente/Contratista</Label>
+                      <Label className="text-base font-medium">Client/Contractor Information</Label>
                       <div className="space-y-3 mt-2">
                         <div className="flex items-center space-x-2">
                           <Checkbox 
@@ -840,7 +840,7 @@ export default function EnhancedPdfTemplateEditor({
                             checked={config.enableClientDetails}
                             onCheckedChange={(checked) => updateConfig("enableClientDetails", checked === true)}
                           />
-                          <Label htmlFor="enable-client-details" className="text-sm cursor-pointer">Mostrar Detalles del Cliente</Label>
+                          <Label htmlFor="enable-client-details" className="text-sm cursor-pointer">Show Client Details</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox 
