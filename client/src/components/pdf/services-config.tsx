@@ -39,10 +39,18 @@ export default function ServicesConfig({ contractorId, onSave }: ServicesConfigP
       const response = await fetch(`/api/contractor/${contractorId}/services`);
       if (response.ok) {
         const data = await response.json();
-        setServices(data);
+        setServices(Array.isArray(data) ? data : []);
       } else {
-        console.error("Error loading services:", await response.text());
-        // Si hay error, usar servicios de ejemplo
+        // Si hay error en la respuesta, mostrar error detallado
+        let errorText = "Error desconocido";
+        try {
+          errorText = await response.text();
+        } catch {
+          // Si no podemos leer la respuesta, usamos el mensaje genérico
+        }
+        console.error("Error loading services:", errorText);
+        
+        // Usar servicios de ejemplo si no se pueden cargar del servidor
         setServices([
           {
             id: "1",
@@ -69,6 +77,30 @@ export default function ServicesConfig({ contractorId, onSave }: ServicesConfigP
       }
     } catch (error) {
       console.error("Error loading services:", error);
+      // Si hay un error de red o cualquier otro error, usar servicios de ejemplo
+      setServices([
+        {
+          id: "1",
+          name: "Instalación de paneles solares",
+          description: "Instalación completa de sistema solar",
+          pricePerUnit: 250,
+          unit: "panel"
+        },
+        {
+          id: "2",
+          name: "Mantenimiento HVAC",
+          description: "Servicio de mantenimiento para sistemas de aire acondicionado",
+          pricePerUnit: 95,
+          unit: "hora"
+        },
+        {
+          id: "3",
+          name: "Pintura de interiores",
+          description: "Pintura de alta calidad para interiores",
+          pricePerUnit: 3,
+          unit: "pies²"
+        }
+      ]);
     } finally {
       setIsLoading(false);
     }
