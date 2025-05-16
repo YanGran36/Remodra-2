@@ -1,24 +1,24 @@
 import React from 'react';
 import { useToast } from '@/hooks/use-toast';
-import EnhancedPdfTemplateEditor from '@/components/pdf/enhanced-pdf-template-editor';
+import SimplifiedPdfTemplateEditor from '@/components/pdf/simplified-pdf-template-editor';
 import { useLocation } from 'wouter';
 import { Helmet } from 'react-helmet-async';
 
 /**
- * Página para editar plantillas de PDF (Presupuestos y Facturas)
- * Esta es la única página de edición de plantillas que debe usarse en la aplicación.
+ * PDF Template Editor Page for Estimates and Invoices
+ * This is the only template editing page that should be used in the application.
  */
 export default function PdfTemplateEditorPage() {
   const { toast } = useToast();
   const [_, navigate] = useLocation();
 
   const handleSave = (config: any) => {
-    // Guardar configuración y mostrar toast de éxito
+    // Save configuration and show success toast
     localStorage.setItem('pdfTemplateConfig', JSON.stringify(config));
     
     toast({
-      title: 'Configuración guardada',
-      description: 'La plantilla ha sido guardada correctamente.',
+      title: 'Configuration Saved',
+      description: 'The template has been saved successfully.',
     });
   };
 
@@ -33,11 +33,11 @@ export default function PdfTemplateEditorPage() {
   return (
     <>
       <Helmet>
-        <title>Editor de Plantillas PDF | ContractorHub</title>
-        <meta name="description" content="Personaliza tus plantillas de presupuestos y facturas con opciones avanzadas de diseño" />
+        <title>PDF Template Editor | ContractorHub</title>
+        <meta name="description" content="Customize your estimate and invoice templates with design options" />
       </Helmet>
       
-      <EnhancedPdfTemplateEditor 
+      <SimplifiedPdfTemplateEditor 
         onSave={handleSave} 
         onBack={handleBack}
         onHome={handleNavToServices}
