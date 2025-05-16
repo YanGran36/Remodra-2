@@ -442,27 +442,27 @@ export default function EnhancedPdfTemplateEditor({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               {onBack && (
-                <Button variant="outline" size="icon" onClick={onBack} title="Volver">
+                <Button variant="outline" size="icon" onClick={onBack} title="Back">
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
               )}
-              <CardTitle className="text-2xl">Editor de Plantillas PDF</CardTitle>
+              <CardTitle className="text-2xl">PDF Template Editor</CardTitle>
             </div>
             <div className="flex items-center gap-3">
               {onHome && (
                 <Button variant="outline" size="sm" onClick={onHome} className="flex items-center">
                   <Settings className="h-4 w-4 mr-2" />
-                  Configurar Servicios
+                  Configure Services
                 </Button>
               )}
               <Button variant="default" size="sm" onClick={handleSave} className="flex items-center">
                 <Save className="h-4 w-4 mr-2" />
-                Guardar Configuración
+                Save Configuration
               </Button>
             </div>
           </div>
           <CardDescription>
-            Personaliza la apariencia de tus presupuestos y facturas con opciones avanzadas.
+            Customize the appearance of your estimates and invoices with these settings.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -471,26 +471,26 @@ export default function EnhancedPdfTemplateEditor({
         <div className="col-span-1 lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle className="text-xl">Opciones de Personalización</CardTitle>
+              <CardTitle className="text-xl">Customization Options</CardTitle>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="design" value={activeTab} onValueChange={(value) => setActiveTab(value)}>
                 <TabsList className="grid grid-cols-4 w-full">
                   <TabsTrigger value="design" className="flex items-center">
                     <Palette className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">Diseño</span>
+                    <span className="hidden sm:inline">Design</span>
                   </TabsTrigger>
                   <TabsTrigger value="content" className="flex items-center">
                     <FileText className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">Contenido</span>
+                    <span className="hidden sm:inline">Content</span>
                   </TabsTrigger>
                   <TabsTrigger value="columns" className="flex items-center">
                     <Columns className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">Columnas</span>
+                    <span className="hidden sm:inline">Columns</span>
                   </TabsTrigger>
                   <TabsTrigger value="advanced" className="flex items-center">
                     <Settings className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">Avanzado</span>
+                    <span className="hidden sm:inline">Advanced</span>
                   </TabsTrigger>
                 </TabsList>
 
@@ -1318,22 +1318,22 @@ export default function EnhancedPdfTemplateEditor({
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-xl">Vista Previa de Documento</CardTitle>
+                <CardTitle className="text-xl">Document Preview</CardTitle>
                 <Select
                   value={previewType}
                   onValueChange={(value: "estimate" | "invoice") => setPreviewType(value)}
                 >
                   <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Tipo de documento" />
+                    <SelectValue placeholder="Document type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="estimate">Presupuesto</SelectItem>
-                    <SelectItem value="invoice">Factura</SelectItem>
+                    <SelectItem value="estimate">Estimate</SelectItem>
+                    <SelectItem value="invoice">Invoice</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <CardDescription>
-                Esta es una previsualización de cómo se verá tu {previewType === "estimate" ? "presupuesto" : "factura"}.
+                This is a preview of how your {previewType === "estimate" ? "estimate" : "invoice"} will look.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -1346,15 +1346,15 @@ export default function EnhancedPdfTemplateEditor({
                   {previewLoading ? (
                     <div className="flex flex-col items-center justify-center h-full gap-2">
                       <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                      <p className="text-sm text-muted-foreground">Generando vista previa...</p>
+                      <p className="text-sm text-muted-foreground">Generating preview...</p>
                     </div>
                   ) : (
                     <div id="pdf-preview-container" className="flex flex-col items-center justify-center h-full text-center p-6">
                       <div className="mb-6 text-muted-foreground">
                         <FileText className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                        <h3 className="text-xl font-medium mb-2">Vista Previa de PDF</h3>
+                        <h3 className="text-xl font-medium mb-2">PDF Preview</h3>
                         <p className="max-w-md">
-                          Haz clic en el botón para generar una vista previa del PDF con la configuración actual.
+                          Click the button below to generate a PDF preview with current settings.
                         </p>
                       </div>
                       
@@ -1362,10 +1362,10 @@ export default function EnhancedPdfTemplateEditor({
                         <Button 
                           variant="default" 
                           onClick={generatePreview}
-                          className="shadow-lg flex items-center"
+                          className="flex items-center"
                         >
                           <Eye className="mr-2 h-4 w-4" />
-                          Generar Vista Previa
+                          Generate Preview
                         </Button>
                       </div>
                     </div>
