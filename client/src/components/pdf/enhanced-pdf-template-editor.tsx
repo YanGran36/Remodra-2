@@ -1019,7 +1019,7 @@ export default function EnhancedPdfTemplateEditor({
                                 checked={config.showItemQuantity}
                                 onCheckedChange={(checked) => updateConfig("showItemQuantity", checked === true)}
                               />
-                              <Label htmlFor="show-item-quantity" className="text-sm cursor-pointer">Cantidad</Label>
+                              <Label htmlFor="show-item-quantity" className="text-sm cursor-pointer">Quantity</Label>
                             </div>
                             <div className="flex items-center space-x-2">
                               <Checkbox 
@@ -1027,7 +1027,7 @@ export default function EnhancedPdfTemplateEditor({
                                 checked={config.showItemUnitPrice}
                                 onCheckedChange={(checked) => updateConfig("showItemUnitPrice", checked === true)}
                               />
-                              <Label htmlFor="show-item-unit-price" className="text-sm cursor-pointer">Precio Unitario</Label>
+                              <Label htmlFor="show-item-unit-price" className="text-sm cursor-pointer">Unit Price</Label>
                             </div>
                             <div className="flex items-center space-x-2">
                               <Checkbox 
@@ -1035,7 +1035,7 @@ export default function EnhancedPdfTemplateEditor({
                                 checked={config.showItemUnit}
                                 onCheckedChange={(checked) => updateConfig("showItemUnit", checked === true)}
                               />
-                              <Label htmlFor="show-item-unit" className="text-sm cursor-pointer">Unidad</Label>
+                              <Label htmlFor="show-item-unit" className="text-sm cursor-pointer">Unit</Label>
                             </div>
                             <div className="flex items-center space-x-2">
                               <Checkbox 
@@ -1043,7 +1043,7 @@ export default function EnhancedPdfTemplateEditor({
                                 checked={config.showItemAmount}
                                 onCheckedChange={(checked) => updateConfig("showItemAmount", checked === true)}
                               />
-                              <Label htmlFor="show-item-amount" className="text-sm cursor-pointer">Importe</Label>
+                              <Label htmlFor="show-item-amount" className="text-sm cursor-pointer">Amount</Label>
                             </div>
                           </div>
                         </div>
@@ -1243,7 +1243,7 @@ export default function EnhancedPdfTemplateEditor({
                         
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <Label htmlFor="enable-watermark" className="text-sm cursor-pointer">Habilitar Marca de Agua</Label>
+                            <Label htmlFor="enable-watermark" className="text-sm cursor-pointer">Enable Watermark</Label>
                             <Switch 
                               id="enable-watermark" 
                               checked={config.enableWatermark}
