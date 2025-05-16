@@ -1130,12 +1130,12 @@ export default function EnhancedPdfTemplateEditor({
                             onValueChange={(value) => updateConfig("textSize", value)}
                           >
                             <SelectTrigger id="text-size">
-                              <SelectValue placeholder="Seleccionar tamaño" />
+                              <SelectValue placeholder="Select size" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="small">Pequeño</SelectItem>
-                              <SelectItem value="medium">Mediano</SelectItem>
-                              <SelectItem value="large">Grande</SelectItem>
+                              <SelectItem value="small">Small</SelectItem>
+                              <SelectItem value="medium">Medium</SelectItem>
+                              <SelectItem value="large">Large</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -1143,7 +1143,7 @@ export default function EnhancedPdfTemplateEditor({
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
                             <Label htmlFor="line-height" className="text-xs">
-                              Altura de Línea: {config.lineHeight}
+                              Line Height: {config.lineHeight}
                             </Label>
                             <Badge variant="outline" className="text-xs">
                               {config.lineHeight}
