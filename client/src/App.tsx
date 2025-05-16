@@ -23,6 +23,7 @@ import PdfTemplateGallery from "@/pages/pdf-template-gallery";
 import PdfTemplatePageNew from "@/pages/pdf-template-page-new";
 import PdfTemplateLuxury from "@/pages/pdf-template-luxury";
 import PdfTemplateEditorPage from "@/pages/pdf-template-editor-page";
+import CompanyServicesPage from "@/pages/company-services-page";
 import ToolsDashboard from "@/pages/tools-dashboard";
 import PremiumEstimatePage from "@/pages/premium-estimate-page";
 import VendorEstimateFormPage from "@/pages/vendor-estimate-form-page";
@@ -85,6 +86,7 @@ function Router() {
       <ProtectedRoute path="/pdf-template-gallery" component={PdfTemplateGallery} />
       <ProtectedRoute path="/pdf-template-luxury" component={PdfTemplateLuxury} />
       <ProtectedRoute path="/pdf-template-editor" component={PdfTemplateEditorPage} />
+      <ProtectedRoute path="/company-services" component={CompanyServicesPage} />
       {/* Ruta de Google Sheets eliminada */}
       <Route path="/auth" component={AuthPage} />
       <Route path="/public/estimates/:id" component={PublicEstimateView} />
