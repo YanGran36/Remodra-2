@@ -439,16 +439,25 @@ export default function EnhancedPdfTemplateEditor({
       try {
         const pdfUrl = URL.createObjectURL(blob);
         
-        // Usar object en lugar de iframe para mejorar compatibilidad
-        const previewFrame = document.getElementById('pdf-preview-frame') as HTMLObjectElement;
+        // Usar embed para mostrar el PDF
+        const previewFrame = document.getElementById('pdf-preview-frame') as HTMLEmbedElement;
         if (previewFrame) {
-          // Almacenar primero la URL en un atributo personalizado
-          previewFrame.setAttribute('data-src', pdfUrl);
-          // Luego establecer la propiedad data
-          previewFrame.data = pdfUrl;
+          previewFrame.src = pdfUrl;
+        }
+        
+        // Ocultar el botón de vista previa si el PDF se cargó correctamente
+        const previewButton = document.querySelector('#pdf-container + div');
+        if (previewButton) {
+          (previewButton as HTMLElement).style.display = 'none';
         }
       } catch (imgError) {
         console.error("Error al mostrar el PDF:", imgError);
+        
+        // Mostrar el botón de vista previa si hay error
+        const previewButton = document.querySelector('#pdf-container + div');
+        if (previewButton) {
+          (previewButton as HTMLElement).style.display = 'block';
+        }
       }
       
     } catch (error) {
@@ -924,26 +933,26 @@ export default function EnhancedPdfTemplateEditor({
                       <p className="text-sm text-muted-foreground">Generando vista previa...</p>
                     </div>
                   ) : (
-                    <object 
-                      id="pdf-preview-frame"
-                      key={previewKey}
-                      data={typeof window !== 'undefined' ? 
-                            document.getElementById('pdf-preview-frame')?.getAttribute('data-src') || '' : ''}
-                      type="application/pdf"
-                      className="w-full h-full"
-                    >
-                      <div className="flex flex-col items-center justify-center h-full p-4 text-center">
-                        <p className="text-gray-600 mb-4">No se puede mostrar el PDF directamente.</p>
+                    <>
+                      <div id="pdf-container" className="w-full h-full">
+                        <embed 
+                          id="pdf-preview-frame"
+                          type="application/pdf"
+                          className="w-full h-full border-0"
+                          key={previewKey}
+                        />
+                      </div>
+                      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
                         <Button 
-                          variant="outline" 
+                          variant="default" 
                           onClick={generatePreview}
-                          className="flex items-center"
+                          className="shadow-lg flex items-center"
                         >
                           <Eye className="mr-2 h-4 w-4" />
-                          Actualizar Vista Previa
+                          Generar Vista Previa
                         </Button>
                       </div>
-                    </object>
+                    </>
                   )}
                 </div>
               </div>
