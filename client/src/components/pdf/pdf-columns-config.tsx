@@ -34,6 +34,19 @@ export default function PdfColumnsConfig({ config, onChange }: PdfColumnsConfigP
         <div className="grid grid-cols-2 gap-4">
           <FormItem className="flex flex-row items-center space-x-3 space-y-0">
             <Checkbox 
+              id="service-column"
+              checked={config.showColumns.service}
+              onCheckedChange={(checked) => 
+                handleColumnToggle('service', checked as boolean)
+              }
+            />
+            <FormLabel htmlFor="service-column" className="font-normal cursor-pointer">
+              Service
+            </FormLabel>
+          </FormItem>
+          
+          <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+            <Checkbox 
               id="description-column"
               checked={config.showColumns.description}
               onCheckedChange={(checked) => 

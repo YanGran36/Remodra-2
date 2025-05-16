@@ -35,6 +35,7 @@ export interface PdfTemplateConfig {
   showDates: boolean;
   // Column configuration
   showColumns: {
+    service: boolean;
     description: boolean;
     quantity: boolean;
     unitPrice: boolean;
