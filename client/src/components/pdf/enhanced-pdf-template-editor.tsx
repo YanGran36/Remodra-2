@@ -537,7 +537,7 @@ export default function EnhancedPdfTemplateEditor({
                       <Separator />
 
                       <div>
-                        <Label className="text-base font-medium">Tipografía</Label>
+                        <Label className="text-base font-medium">Typography</Label>
                         <div className="grid grid-cols-2 gap-4 mt-2">
                           <div className="space-y-2">
                             <Label htmlFor="font-heading" className="text-xs">Heading Font</Label>
@@ -561,7 +561,7 @@ export default function EnhancedPdfTemplateEditor({
                             </Select>
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="font-body" className="text-xs">Fuente de Cuerpo</Label>
+                            <Label htmlFor="font-body" className="text-xs">Body Font</Label>
                             <Select 
                               value={config.fontBody}
                               onValueChange={(value) => updateConfig("fontBody", value)}
@@ -655,11 +655,11 @@ export default function EnhancedPdfTemplateEditor({
                       <Separator />
                       
                       <div>
-                        <Label className="text-base font-medium">Tamaño y Orientación</Label>
+                        <Label className="text-base font-medium">Size and Orientation</Label>
                         <div className="space-y-4 mt-2">
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                              <Label htmlFor="page-size" className="text-xs">Tamaño de Página</Label>
+                              <Label htmlFor="page-size" className="text-xs">Page Size</Label>
                               <Select 
                                 value={config.pageSize}
                                 onValueChange={(value) => updateConfig("pageSize", value)}
@@ -698,25 +698,25 @@ export default function EnhancedPdfTemplateEditor({
                   {/* Pestaña de Contenido */}
                   <TabsContent value="content" className="space-y-6">
                     <div>
-                      <Label className="text-base font-medium">Título del Documento</Label>
+                      <Label className="text-base font-medium">Document Title</Label>
                       <div className="space-y-4 mt-2">
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label htmlFor="estimate-title" className="text-xs">Título de Presupuesto</Label>
+                            <Label htmlFor="estimate-title" className="text-xs">Estimate Title</Label>
                             <Input 
                               id="estimate-title" 
                               value={config.estimateTitle}
                               onChange={(e) => updateConfig("estimateTitle", e.target.value)}
-                              placeholder="PRESUPUESTO"
+                              placeholder="ESTIMATE"
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="invoice-title" className="text-xs">Título de Factura</Label>
+                            <Label htmlFor="invoice-title" className="text-xs">Invoice Title</Label>
                             <Input 
                               id="invoice-title" 
                               value={config.invoiceTitle}
                               onChange={(e) => updateConfig("invoiceTitle", e.target.value)}
-                              placeholder="FACTURA"
+                              placeholder="INVOICE"
                             />
                           </div>
                         </div>
