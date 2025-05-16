@@ -597,13 +597,13 @@ export default function EnhancedPdfTemplateEditor({
                                 onValueChange={(value) => updateConfig("headerStyle", value)}
                               >
                                 <SelectTrigger id="header-style">
-                                  <SelectValue placeholder="Seleccionar estilo" />
+                                  <SelectValue placeholder="Select style" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="gradient">Degradado</SelectItem>
-                                  <SelectItem value="solid">Color Sólido</SelectItem>
-                                  <SelectItem value="minimal">Minimalista</SelectItem>
-                                  <SelectItem value="bordered">Con Borde</SelectItem>
+                                  <SelectItem value="gradient">Gradient</SelectItem>
+                                  <SelectItem value="solid">Solid Color</SelectItem>
+                                  <SelectItem value="minimal">Minimalist</SelectItem>
+                                  <SelectItem value="bordered">Bordered</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -614,19 +614,19 @@ export default function EnhancedPdfTemplateEditor({
                                 onValueChange={(value) => updateConfig("tableBorderStyle", value)}
                               >
                                 <SelectTrigger id="table-border-style">
-                                  <SelectValue placeholder="Seleccionar estilo" />
+                                  <SelectValue placeholder="Select style" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="full">Bordes Completos</SelectItem>
-                                  <SelectItem value="horizontal">Solo Horizontales</SelectItem>
-                                  <SelectItem value="outer">Solo Exteriores</SelectItem>
-                                  <SelectItem value="none">Sin Bordes</SelectItem>
+                                  <SelectItem value="full">Full Borders</SelectItem>
+                                  <SelectItem value="horizontal">Horizontal Only</SelectItem>
+                                  <SelectItem value="outer">Outer Only</SelectItem>
+                                  <SelectItem value="none">No Borders</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
                           </div>
                           <div className="flex items-center justify-between">
-                            <Label htmlFor="rounded-corners" className="text-sm cursor-pointer">Bordes Redondeados</Label>
+                            <Label htmlFor="rounded-corners" className="text-sm cursor-pointer">Rounded Corners</Label>
                             <Switch 
                               id="rounded-corners" 
                               checked={config.roundedCorners}
@@ -665,7 +665,7 @@ export default function EnhancedPdfTemplateEditor({
                                 onValueChange={(value) => updateConfig("pageSize", value)}
                               >
                                 <SelectTrigger id="page-size">
-                                  <SelectValue placeholder="Seleccionar tamaño" />
+                                  <SelectValue placeholder="Select size" />
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="letter">Carta (8.5" x 11")</SelectItem>
