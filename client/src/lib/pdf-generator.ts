@@ -22,6 +22,7 @@ export interface PdfTemplateConfig {
   showSignatureLine?: boolean;
   showDates?: boolean;
   showColumns?: {
+    service?: boolean;
     description?: boolean;
     quantity?: boolean;
     unitPrice?: boolean;
@@ -32,6 +33,7 @@ export interface PdfTemplateConfig {
 
 // Types for estimates and invoices
 interface Item {
+  service?: string;
   description: string;
   quantity: string | number;
   unitPrice: string | number;
@@ -199,7 +201,7 @@ function isTemplateFeatureEnabled(featureName: keyof TemplateSettings): boolean 
 }
 
 // Check if a specific table column should be displayed
-function isColumnEnabled(columnName: 'description' | 'quantity' | 'unitPrice' | 'amount' | 'notes'): boolean {
+function isColumnEnabled(columnName: 'service' | 'description' | 'quantity' | 'unitPrice' | 'amount' | 'notes'): boolean {
   const settings = getTemplateSettings();
   if (!settings || !settings.showColumns) return true; // Default to enabled if no settings
   

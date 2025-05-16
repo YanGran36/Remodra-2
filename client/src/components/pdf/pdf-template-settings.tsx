@@ -63,6 +63,7 @@ const defaultConfig: PdfTemplateConfig = {
   showSignatureLine: true,
   showDates: true,
   showColumns: {
+    service: true,
     description: true,
     quantity: true,
     unitPrice: true,
@@ -79,6 +80,10 @@ const templates = {
     tableStyle: 'bordered',
     colorPrimary: "#0f766e",
     colorSecondary: "#2563eb",
+    showColumns: {
+      ...defaultConfig.showColumns,
+      service: true
+    }
   },
   minimal: {
     ...defaultConfig,
@@ -88,6 +93,10 @@ const templates = {
     showItemNotes: false,
     colorPrimary: "#1e293b",
     colorSecondary: "#64748b",
+    showColumns: {
+      ...defaultConfig.showColumns,
+      service: true
+    }
   },
   elegant: {
     ...defaultConfig,
@@ -95,6 +104,10 @@ const templates = {
     tableStyle: 'striped',
     colorPrimary: "#6d28d9",
     colorSecondary: "#4f46e5",
+    showColumns: {
+      ...defaultConfig.showColumns,
+      service: true
+    }
   },
 };
 
@@ -345,6 +358,17 @@ export default function PdfTemplateSettings({
                   
                   <h3 className="text-base font-medium mt-6">Table Columns</h3>
                   <div className="space-y-2 mt-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="showColumnsService" className="cursor-pointer">
+                        Service Column
+                      </Label>
+                      <Switch 
+                        id="showColumnsService" 
+                        checked={config.showColumns.service} 
+                        onCheckedChange={value => updateConfig('showColumns', {...config.showColumns, service: value})} 
+                      />
+                    </div>
+                    
                     <div className="flex items-center justify-between">
                       <Label htmlFor="showColumnsDescription" className="cursor-pointer">
                         Description Column
