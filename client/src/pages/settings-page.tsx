@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Settings, 
   User, 
@@ -200,11 +200,13 @@ export default function SettingsPage() {
       
       <main className="flex-1 overflow-y-auto bg-gray-50">
         <div className="p-6">
-          <PageHeader 
-            title="Settings" 
-            description="Manage your account settings and preferences" 
-            icon={<Settings className="h-6 w-6 mr-2" />}
-          />
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center">
+              <Settings className="h-6 w-6 mr-2" />
+              Settings
+            </h1>
+            <p className="text-gray-600">Manage your account settings and preferences</p>
+          </div>
 
           <Tabs defaultValue="profile" className="space-y-4">
             <TabsList>
@@ -502,6 +504,31 @@ export default function SettingsPage() {
                       Two-factor authentication will be available in a future update.
                     </AlertDescription>
                   </Alert>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            {/* PDF Templates Tab */}
+            <TabsContent value="pdf-templates" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>PDF Template Configuration</CardTitle>
+                  <CardDescription>
+                    Customize your PDF templates for estimates, invoices and other documents
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {isLoadingPdfConfig ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                      <span className="ml-3">Loading template configuration...</span>
+                    </div>
+                  ) : (
+                    <EnhancedPdfTemplateEditor
+                      initialConfig={pdfTemplateConfig}
+                      onSave={handleSavePdfTemplate}
+                    />
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
