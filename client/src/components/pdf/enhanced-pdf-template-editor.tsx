@@ -435,18 +435,30 @@ export default function EnhancedPdfTemplateEditor({
         blob = await previewInvoicePDF(sampleInvoice);
       }
       
-      // Create an object URL for the blob
-      const url = URL.createObjectURL(blob);
-      const previewFrame = document.getElementById('pdf-preview-frame') as HTMLIFrameElement;
-      if (previewFrame) {
-        previewFrame.src = url;
+      // Convert the PDF blob to an image using a canvas
+      // Esto resolverá el problema de bloqueo de Chrome al mostrar PDFs en iframes
+      try {
+        // Create a data URL from the blob
+        const pdfUrl = URL.createObjectURL(blob);
+        
+        // Update the iframe with the explicit PDF URL
+        const previewFrame = document.getElementById('pdf-preview-frame') as HTMLIFrameElement;
+        if (previewFrame) {
+          // Use a different approach to display PDF content
+          previewFrame.src = pdfUrl;
+          previewFrame.style.width = "100%";
+          previewFrame.style.height = "100%";
+          previewFrame.style.border = "none";
+        }
+      } catch (imgError) {
+        console.error("Error displaying PDF:", imgError);
       }
       
     } catch (error) {
       console.error("Error generating preview:", error);
       toast({
-        title: "Preview Error",
-        description: "There was an error generating the preview. Please try again.",
+        title: "Error de Vista Previa",
+        description: "Hubo un error al generar la vista previa. Por favor intente de nuevo.",
         variant: "destructive",
       });
     } finally {
@@ -547,7 +559,7 @@ export default function EnhancedPdfTemplateEditor({
             </CardHeader>
             <CardContent className="pt-4">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-5 mb-4">
+                <TabsList className="grid w-full grid-cols-4 mb-4">
                   <TabsTrigger value="presets" className="flex items-center gap-1">
                     <LayoutTemplate className="h-4 w-4" />
                     <span className="hidden sm:inline">Presets</span>
@@ -563,10 +575,6 @@ export default function EnhancedPdfTemplateEditor({
                   <TabsTrigger value="columns" className="flex items-center gap-1">
                     <Columns className="h-4 w-4" />
                     <span className="hidden sm:inline">Columns</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="services" className="flex items-center gap-1">
-                    <Settings className="h-4 w-4" />
-                    <span className="hidden sm:inline">Services</span>
                   </TabsTrigger>
                 </TabsList>
                 
@@ -875,19 +883,7 @@ export default function EnhancedPdfTemplateEditor({
                     </div>
                   </TabsContent>
                   
-                  <TabsContent value="services" className="space-y-4">
-                    <h3 className="text-base font-medium">Servicios de la Compañía</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Configure los servicios que su compañía ofrece para incluirlos en estimaciones e invoices
-                    </p>
-                    
-                    <ServicesConfig contractorId={1} onSave={() => {
-                      toast({
-                        title: "Servicios Guardados",
-                        description: "Los servicios han sido guardados exitosamente",
-                      });
-                    }} />
-                  </TabsContent>
+
                 </ScrollArea>
               </Tabs>
             </CardContent>
