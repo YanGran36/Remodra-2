@@ -874,6 +874,20 @@ export default function EnhancedPdfTemplateEditor({
                       </div>
                     </div>
                   </TabsContent>
+                  
+                  <TabsContent value="services" className="space-y-4">
+                    <h3 className="text-base font-medium">Servicios de la Compañía</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Configure los servicios que su compañía ofrece para incluirlos en estimaciones e invoices
+                    </p>
+                    
+                    <ServicesConfig contractorId={1} onSave={() => {
+                      toast({
+                        title: "Servicios Guardados",
+                        description: "Los servicios han sido guardados exitosamente",
+                      });
+                    }} />
+                  </TabsContent>
                 </ScrollArea>
               </Tabs>
             </CardContent>
@@ -906,12 +920,23 @@ export default function EnhancedPdfTemplateEditor({
                     </div>
                   </div>
                 )}
-                <iframe 
-                  id="pdf-preview-frame"
-                  key={previewKey}
-                  title="PDF Preview"
-                  className="w-full h-full rounded-md"
-                />
+                <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-md border border-gray-200">
+                  {previewLoading ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <p className="text-sm text-muted-foreground">Generando vista previa...</p>
+                    </div>
+                  ) : (
+                    <iframe 
+                      id="pdf-preview-frame"
+                      key={previewKey}
+                      title="PDF Preview"
+                      className="w-full h-full rounded-md"
+                      sandbox="allow-same-origin"
+                      allow="fullscreen"
+                    />
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
