@@ -10,6 +10,7 @@ export default function PdfTemplateEditorPage() {
   const { toast } = useToast();
   const [initialConfig, setInitialConfig] = useState<Partial<PdfTemplateConfig> | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTemplate, setActiveTemplate] = useState('default');
 
   // Load saved template on initial render
   useEffect(() => {
@@ -62,7 +63,15 @@ export default function PdfTemplateEditorPage() {
         <title>PDF Template Editor | ContractorHub</title>
         <meta name="description" content="Configure and customize your PDF templates for estimates, invoices and other documents. Preview changes in real-time." />
       </Helmet>
-      <div className="container mx-auto py-4">
+      
+      <div className="container mx-auto py-6">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold mb-2">PDF Template Configuration</h1>
+          <p className="text-muted-foreground">
+            Create professional looking documents by customizing your PDF templates with instant preview.
+          </p>
+        </div>
+        
         <EnhancedPdfTemplateEditor
           initialConfig={initialConfig}
           onSave={handleSave}
