@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { EnhancedColorPicker } from "@/components/ui/enhanced-color-picker";
 import { ColorPicker } from "@/components/ui/color-picker";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
@@ -588,34 +589,20 @@ export default function EnhancedPdfTemplateEditor({
                   
                   <TabsContent value="style" className="space-y-4">
                     <div className="space-y-4">
-                      <div className="space-y-1.5">
-                        <Label>Primary Color</Label>
-                        <div className="flex items-center space-x-2">
-                          <ColorPicker
-                            value={config.colorPrimary}
-                            onChange={(color) => updateConfig('colorPrimary', color)}
-                          />
-                          <Input 
-                            value={config.colorPrimary}
-                            onChange={(e) => updateConfig('colorPrimary', e.target.value)}
-                            className="flex-1"
-                          />
-                        </div>
+                      <div className="space-y-3">
+                        <EnhancedColorPicker
+                          value={config.colorPrimary}
+                          onChange={(color) => updateConfig('colorPrimary', color)}
+                          color={config.colorPrimary}
+                        />
                       </div>
                       
-                      <div className="space-y-1.5">
-                        <Label>Secondary Color</Label>
-                        <div className="flex items-center space-x-2">
-                          <ColorPicker
-                            value={config.colorSecondary}
-                            onChange={(color) => updateConfig('colorSecondary', color)}
-                          />
-                          <Input 
-                            value={config.colorSecondary}
-                            onChange={(e) => updateConfig('colorSecondary', e.target.value)}
-                            className="flex-1"
-                          />
-                        </div>
+                      <div className="space-y-3">
+                        <EnhancedColorPicker
+                          value={config.colorSecondary}
+                          onChange={(color) => updateConfig('colorSecondary', color)}
+                          color={config.colorSecondary}
+                        />
                       </div>
                       
                       <div className="space-y-1.5">
