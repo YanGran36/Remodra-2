@@ -221,7 +221,7 @@ export default function EnhancedPdfTemplateEditor({
       roundedCorners: true,
       alternateRowColors: true,
       showFooter: true,
-      footerText: "Gracias por su preferencia",
+      footerText: "Thank you for your business",
       tableBorderStyle: "full",
       headerStyle: "gradient",
       pageSize: "letter",
@@ -695,7 +695,7 @@ export default function EnhancedPdfTemplateEditor({
                     </div>
                   </TabsContent>
 
-                  {/* Pestaña de Contenido */}
+                  {/* Content Tab */}
                   <TabsContent value="content" className="space-y-6">
                     <div>
                       <Label className="text-base font-medium">Document Title</Label>
@@ -737,7 +737,7 @@ export default function EnhancedPdfTemplateEditor({
                           </Select>
                         </div>
                         <div className="flex items-center justify-between">
-                          <Label htmlFor="document-title-uppercase" className="text-sm cursor-pointer">Título en Mayúsculas</Label>
+                          <Label htmlFor="document-title-uppercase" className="text-sm cursor-pointer">Uppercase Title</Label>
                           <Switch 
                             id="document-title-uppercase" 
                             checked={config.documentTitleUppercase}
@@ -979,7 +979,7 @@ export default function EnhancedPdfTemplateEditor({
                             id="footer-text" 
                             value={config.footerText}
                             onChange={(e) => updateConfig("footerText", e.target.value)}
-                            placeholder="Gracias por su preferencia"
+                            placeholder="Thank you for your business"
                             disabled={!config.showFooter}
                           />
                         </div>
@@ -1258,7 +1258,7 @@ export default function EnhancedPdfTemplateEditor({
                                 id="watermark-text" 
                                 value={config.customWatermarkText}
                                 onChange={(e) => updateConfig("customWatermarkText", e.target.value)}
-                                placeholder="CONFIDENCIAL"
+                                placeholder="CONFIDENTIAL"
                               />
                             </div>
                           )}
