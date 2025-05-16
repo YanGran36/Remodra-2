@@ -385,6 +385,9 @@ export default function EnhancedPdfTemplateEditor({
     const template = presetTemplates[templateName];
     setConfig({ ...config, ...template });
     
+    // Update localStorage immediately to ensure preview is updated
+    localStorage.setItem('pdfTemplateConfig', JSON.stringify({ ...config, ...template }));
+    
     toast({
       title: "Template Applied",
       description: `The ${templateName} template has been applied.`,
