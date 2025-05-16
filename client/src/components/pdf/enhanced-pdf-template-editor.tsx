@@ -961,7 +961,7 @@ export default function EnhancedPdfTemplateEditor({
                               <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
                               <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
                               <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
-                              <SelectItem value="DD de MMMM, YYYY">DD de Mes, YYYY</SelectItem>
+                              <SelectItem value="DD de MMMM, YYYY">DD of Month, YYYY</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
