@@ -932,30 +932,30 @@ export default function EnhancedPdfTemplateEditor({
                           <Label htmlFor="enable-section-titles" className="text-sm cursor-pointer">Show Section Titles</Label>
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="sections-position" className="text-xs">Posición de Secciones</Label>
+                          <Label htmlFor="sections-position" className="text-xs">Sections Position</Label>
                           <Select 
                             value={config.sectionsPosition}
                             onValueChange={(value) => updateConfig("sectionsPosition", value)}
                             disabled={!config.enableSections}
                           >
                             <SelectTrigger id="sections-position">
-                              <SelectValue placeholder="Seleccionar posición" />
+                              <SelectValue placeholder="Select position" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="top">Superior</SelectItem>
-                              <SelectItem value="left">Barra Lateral</SelectItem>
+                              <SelectItem value="top">Top</SelectItem>
+                              <SelectItem value="left">Sidebar</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="date-format" className="text-xs">Formato de Fecha</Label>
+                          <Label htmlFor="date-format" className="text-xs">Date Format</Label>
                           <Select 
                             value={config.dateFormat}
                             onValueChange={(value) => updateConfig("dateFormat", value)}
                           >
                             <SelectTrigger id="date-format">
-                              <SelectValue placeholder="Seleccionar formato" />
+                              <SelectValue placeholder="Select format" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
@@ -1003,7 +1003,7 @@ export default function EnhancedPdfTemplateEditor({
                         </div>
                         
                         <div className="space-y-2">
-                          <Label className="text-xs">Columnas Visibles</Label>
+                          <Label className="text-xs">Visible Columns</Label>
                           <div className="grid grid-cols-2 gap-3 mt-1">
                             <div className="flex items-center space-x-2">
                               <Checkbox 
@@ -1011,7 +1011,7 @@ export default function EnhancedPdfTemplateEditor({
                                 checked={config.showItemDescription}
                                 onCheckedChange={(checked) => updateConfig("showItemDescription", checked === true)}
                               />
-                              <Label htmlFor="show-item-description" className="text-sm cursor-pointer">Descripción</Label>
+                              <Label htmlFor="show-item-description" className="text-sm cursor-pointer">Description</Label>
                             </div>
                             <div className="flex items-center space-x-2">
                               <Checkbox 
