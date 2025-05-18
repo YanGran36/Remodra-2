@@ -142,10 +142,12 @@ interface TemplateSettings {
   };
 }
 
-function getTemplateSettings(): TemplateSettings | null {
+function getTemplateSettings(): TemplateSettings {
   try {
     const savedTemplate = localStorage.getItem('pdfTemplateConfig');
     if (savedTemplate) {
+      console.log("PDF created with template settings:", JSON.parse(savedTemplate));
+      
       const settings = JSON.parse(savedTemplate);
       
       // Ensure showColumns exists with defaults if not specified
@@ -170,7 +172,33 @@ function getTemplateSettings(): TemplateSettings | null {
   } catch (e) {
     console.error("Error loading PDF template settings:", e);
   }
-  return null;
+  
+  // Return default template settings if no saved template found
+  return {
+    colorPrimary: "#0f766e",
+    colorSecondary: "#2563eb",
+    fontMain: "helvetica",
+    headerStyle: 'gradient',
+    tableStyle: 'bordered',
+    showHeader: true,
+    showFooter: true,
+    showItemDetails: true,
+    showItemNotes: true,
+    showProjectDetails: true,
+    showClientDetails: true,
+    showTerms: true,
+    showNotes: true,
+    showSignatureLine: true,
+    showDates: true,
+    showColumns: {
+      service: true,
+      description: true,
+      quantity: true,
+      unitPrice: true,
+      amount: true,
+      notes: true
+    }
+  };
 }
 
 // Get current active color settings
