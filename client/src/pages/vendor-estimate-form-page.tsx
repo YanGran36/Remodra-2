@@ -101,8 +101,9 @@ import {
   getServiceLabel
 } from "@/lib/service-options";
 
-// Importar componente de formulario especializado por servicio
+// Importar componentes de formulario especializados
 import ServiceEstimateForm from "@/components/estimates/service-estimate-form";
+import { ServiceItemSelector } from "@/components/estimates/service-item-selector";
 
 // Define el esquema de validación del formulario
 const formSchema = z.object({
@@ -434,25 +435,14 @@ export default function VendorEstimateFormPage() {
                     control={form.control}
                     name="serviceType"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="space-y-1">
                         <FormLabel>Service Type*</FormLabel>
-                        <Select
-                          value={field.value}
-                          onValueChange={field.onChange}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select service type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {SERVICE_TYPES.map((service) => (
-                              <SelectItem key={service.value} value={service.value}>
-                                {service.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <FormControl>
+                          <ServiceItemSelector
+                            value={field.value}
+                            onChange={field.onChange}
+                          />
+                        </FormControl>
                         <FormDescription>
                           The type of service that will be provided
                         </FormDescription>
