@@ -357,7 +357,11 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
                                 phone: "(123) 456-7890", // Use your actual phone
                                 address: "123 Business St", // Use your actual address
                               },
-                              items: estimate.items || []
+                              items: (estimate.items || []).map(item => ({
+                                ...item,
+                                // Incluir el tipo de servicio en cada item
+                                service: item.service || "General Service"
+                              }))
                             };
                             
                             // Generate and download the PDF
