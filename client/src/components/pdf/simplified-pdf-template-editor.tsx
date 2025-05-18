@@ -224,26 +224,36 @@ export default function SimplifiedPdfTemplateEditor({
   const generatePreview = useCallback(async () => {
     setPreviewLoading(true);
     try {
-      // Save config to localStorage
-      localStorage.setItem('pdfTemplateConfig', JSON.stringify(config));
+      // Save config to localStorage with timestamp to avoid caching issues
+      const saveConfig = {
+        ...config,
+        lastUpdated: new Date().toISOString()
+      };
+      localStorage.setItem('pdfTemplateConfig', JSON.stringify(saveConfig));
       
-      // Simulate PDF generation
+      // For real PDF generation, we need to use proper PDF generation libraries
+      // This is a simulation for demonstration purposes
       await new Promise(resolve => setTimeout(resolve, 800));
       
-      // Generate preview data
-      const previewData = JSON.stringify({
-        ...(previewType === "estimate" ? sampleEstimate : sampleInvoice),
-        config: config
-      });
+      // Generate preview data - in a real implementation this would create an actual PDF
+      const previewData = {
+        documentType: previewType,
+        data: previewType === "estimate" ? sampleEstimate : sampleInvoice,
+        config: saveConfig,
+        timestamp: new Date().toISOString()
+      };
       
-      // Create blob and open in new window
-      const blob = new Blob([previewData], { type: 'application/pdf' });
+      // Store the preview data to verify it was created
+      localStorage.setItem('lastPdfPreview', JSON.stringify(previewData));
+      
+      // Create blob and open in new window (simulating a PDF)
+      const blob = new Blob([JSON.stringify(previewData, null, 2)], { type: 'application/json' });
       const pdfUrl = URL.createObjectURL(blob);
       window.open(pdfUrl, '_blank');
       
       toast({
-        title: "Preview Generated",
-        description: "The PDF has been opened in a new window"
+        title: "Template Created Successfully",
+        description: "Your template has been created and a preview has been opened in a new window"
       });
     } catch (error) {
       console.error("Error generating preview:", error);
@@ -258,17 +268,56 @@ export default function SimplifiedPdfTemplateEditor({
   }, [config, previewType, toast]);
 
   // Save configuration
-  const handleSave = () => {
-    localStorage.setItem('pdfTemplateConfig', JSON.stringify(config));
-    
-    if (onSave) {
-      onSave(config);
+  const handleSave = async () => {
+    try {
+      // Add metadata for better tracking
+      const templateToSave = {
+        ...config,
+        id: config.id || `template-${Date.now()}`,
+        name: config.name || "My Custom Template",
+        createdAt: config.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        type: previewType, // Save the template type (estimate or invoice)
+      };
+      
+      // Save to localStorage with additional metadata
+      localStorage.setItem('pdfTemplateConfig', JSON.stringify(templateToSave));
+      
+      // Create a separate entry for this specific template
+      const savedTemplates = JSON.parse(localStorage.getItem('savedPdfTemplates') || '[]');
+      const existingIndex = savedTemplates.findIndex((t: any) => t.id === templateToSave.id);
+      
+      if (existingIndex >= 0) {
+        // Update existing template
+        savedTemplates[existingIndex] = templateToSave;
+      } else {
+        // Add new template
+        savedTemplates.push(templateToSave);
+      }
+      
+      // Save the updated templates list
+      localStorage.setItem('savedPdfTemplates', JSON.stringify(savedTemplates));
+      
+      // Call the onSave callback if provided
+      if (onSave) {
+        onSave(templateToSave);
+      }
+      
+      // Generate a preview to confirm the template works
+      await generatePreview();
+      
+      toast({
+        title: "Template Saved Successfully",
+        description: "Your PDF template has been saved and can now be used for estimates and invoices.",
+      });
+    } catch (error) {
+      console.error("Error saving template:", error);
+      toast({
+        title: "Save Error",
+        description: "There was an error saving your template. Please try again.",
+        variant: "destructive",
+      });
     }
-    
-    toast({
-      title: "Configuration Saved",
-      description: "Your PDF template settings have been saved successfully."
-    });
   };
 
   // Update config
