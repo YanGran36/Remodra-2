@@ -224,36 +224,256 @@ export default function SimplifiedPdfTemplateEditor({
   const generatePreview = useCallback(async () => {
     setPreviewLoading(true);
     try {
-      // Save config to localStorage with timestamp to avoid caching issues
-      const saveConfig = {
-        ...config,
-        lastUpdated: new Date().toISOString()
-      };
-      localStorage.setItem('pdfTemplateConfig', JSON.stringify(saveConfig));
+      // Save config to localStorage
+      localStorage.setItem('pdfTemplateConfig', JSON.stringify(config));
       
-      // For real PDF generation, we need to use proper PDF generation libraries
-      // This is a simulation for demonstration purposes
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // For simplicity, let's generate a visual representation of the PDF using HTML
+      const previewWindow = window.open('', '_blank');
       
-      // Generate preview data - in a real implementation this would create an actual PDF
-      const previewData = {
-        documentType: previewType,
-        data: previewType === "estimate" ? sampleEstimate : sampleInvoice,
-        config: saveConfig,
-        timestamp: new Date().toISOString()
-      };
+      if (!previewWindow) {
+        throw new Error("Unable to open preview window. Please allow popups for this site.");
+      }
       
-      // Store the preview data to verify it was created
-      localStorage.setItem('lastPdfPreview', JSON.stringify(previewData));
+      // Create a simple HTML preview that matches the style of a real PDF
+      const previewType = "estimate"; // Default to estimate preview
+      const pdfData = previewType === "estimate" ? sampleEstimate : sampleInvoice;
       
-      // Create blob and open in new window (simulating a PDF)
-      const blob = new Blob([JSON.stringify(previewData, null, 2)], { type: 'application/json' });
-      const pdfUrl = URL.createObjectURL(blob);
-      window.open(pdfUrl, '_blank');
+      // Apply the template configuration
+      const primaryColor = config.colorPrimary || "#0f766e";
+      const secondaryColor = config.colorSecondary || "#2563eb";
+      
+      // Create a sample PDF preview HTML
+      previewWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>${previewType.toUpperCase()} Preview</title>
+            <style>
+              body { 
+                font-family: ${config.fontMain || 'Arial, sans-serif'}; 
+                margin: 0; 
+                padding: 20px;
+                color: #333;
+              }
+              .pdf-container {
+                max-width: 800px;
+                margin: 0 auto;
+                border: 1px solid #ddd;
+                padding: 40px;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+              }
+              .header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 30px;
+                ${config.headerStyle === 'gradient' ? 'background: linear-gradient(to right, #f7fafc, #edf2f7); padding: 20px;' : ''}
+              }
+              .title {
+                color: ${primaryColor};
+                font-size: 28px;
+                font-weight: bold;
+                margin: 0;
+              }
+              .company-info {
+                font-size: 14px;
+              }
+              .info-sections {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 30px;
+              }
+              .info-section {
+                width: 48%;
+              }
+              .section-title {
+                color: ${primaryColor};
+                font-size: 16px;
+                font-weight: bold;
+                margin-bottom: 10px;
+              }
+              table {
+                width: 100%;
+                border-collapse: ${config.tableStyle === 'bordered' ? 'collapse' : 'separate'};
+                margin-bottom: 30px;
+              }
+              th {
+                background-color: ${primaryColor};
+                color: white;
+                text-align: left;
+                padding: 10px;
+              }
+              td {
+                padding: 10px;
+                border-bottom: 1px solid #ddd;
+              }
+              ${config.tableStyle === 'striped' ? 'tr:nth-child(even) { background-color: #f9f9f9; }' : ''}
+              ${config.tableStyle === 'bordered' ? 'th, td { border: 1px solid #ddd; }' : ''}
+              .totals {
+                margin-left: auto;
+                width: 40%;
+                margin-bottom: 30px;
+              }
+              .total-row {
+                display: flex;
+                justify-content: space-between;
+                padding: 5px 0;
+              }
+              .grand-total {
+                font-weight: bold;
+                border-top: 2px solid ${primaryColor};
+                padding-top: 5px;
+              }
+              .footer {
+                margin-top: 50px;
+                border-top: 1px solid #ddd;
+                padding-top: 20px;
+                font-size: 12px;
+              }
+              .signature-line {
+                margin-top: 40px;
+                border-top: 1px solid #000;
+                width: 200px;
+                padding-top: 5px;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="pdf-container">
+              <!-- Header -->
+              <div class="header">
+                <div>
+                  <h1 class="title">ESTIMATE</h1>
+                  <p>Estimate #${pdfData.estimateNumber}</p>
+                </div>
+                <div class="company-info">
+                  <strong>${pdfData.contractor.businessName}</strong><br>
+                  ${pdfData.contractor.address || ''}<br>
+                  ${pdfData.contractor.phone || ''}<br>
+                  ${pdfData.contractor.email || ''}
+                </div>
+              </div>
+              
+              <!-- Info Sections -->
+              <div class="info-sections">
+                <!-- Client Section -->
+                ${config.showClientDetails ? `
+                <div class="info-section">
+                  <div class="section-title">BILL TO</div>
+                  <p>
+                    ${pdfData.client.firstName} ${pdfData.client.lastName}<br>
+                    ${pdfData.client.address || ''}<br>
+                    ${pdfData.client.city ? pdfData.client.city + ', ' : ''}${pdfData.client.state || ''} ${pdfData.client.zipCode || ''}<br>
+                    ${pdfData.client.email || ''}<br>
+                    ${pdfData.client.phone || ''}
+                  </p>
+                </div>` : ''}
+                
+                <!-- Details Section -->
+                <div class="info-section">
+                  <div class="section-title">ESTIMATE DETAILS</div>
+                  <p>
+                    <strong>Date:</strong> ${new Date(pdfData.issueDate).toLocaleDateString()}<br>
+                    ${pdfData.expiryDate ? `<strong>Expiration:</strong> ${new Date(pdfData.expiryDate).toLocaleDateString()}<br>` : ''}
+                    <strong>Status:</strong> ${pdfData.status.toUpperCase()}<br>
+                    ${pdfData.projectTitle ? `<strong>Project:</strong> ${pdfData.projectTitle}<br>` : ''}
+                  </p>
+                </div>
+              </div>
+              
+              <!-- Items Table -->
+              ${config.showItemDetails ? `
+              <table>
+                <thead>
+                  <tr>
+                    ${config.showColumns?.service ? '<th>Service</th>' : ''}
+                    ${config.showColumns?.description ? '<th>Description</th>' : ''}
+                    ${config.showColumns?.quantity ? '<th>Qty</th>' : ''}
+                    ${config.showColumns?.unitPrice ? '<th>Rate</th>' : ''}
+                    ${config.showColumns?.amount ? '<th>Amount</th>' : ''}
+                    ${config.showItemNotes && config.showColumns?.notes ? '<th>Notes</th>' : ''}
+                  </tr>
+                </thead>
+                <tbody>
+                  ${pdfData.items.map((item, i) => `
+                    <tr>
+                      ${config.showColumns?.service ? `<td>${item.service || ''}</td>` : ''}
+                      ${config.showColumns?.description ? `<td>${item.description}</td>` : ''}
+                      ${config.showColumns?.quantity ? `<td>${item.quantity}</td>` : ''}
+                      ${config.showColumns?.unitPrice ? `<td>$${Number(item.unitPrice).toFixed(2)}</td>` : ''}
+                      ${config.showColumns?.amount ? `<td>$${Number(item.amount).toFixed(2)}</td>` : ''}
+                      ${config.showItemNotes && config.showColumns?.notes ? `<td>${item.notes || ''}</td>` : ''}
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>` : ''}
+              
+              <!-- Totals -->
+              <div class="totals">
+                <div class="total-row">
+                  <span>Subtotal:</span>
+                  <span>$${Number(pdfData.subtotal).toFixed(2)}</span>
+                </div>
+                ${pdfData.tax ? `
+                <div class="total-row">
+                  <span>Tax:</span>
+                  <span>$${Number(pdfData.tax).toFixed(2)}</span>
+                </div>` : ''}
+                ${pdfData.discount ? `
+                <div class="total-row">
+                  <span>Discount:</span>
+                  <span>-$${Number(pdfData.discount).toFixed(2)}</span>
+                </div>` : ''}
+                <div class="total-row grand-total">
+                  <span>Total:</span>
+                  <span>$${Number(pdfData.total).toFixed(2)}</span>
+                </div>
+              </div>
+              
+              <!-- Terms & Notes -->
+              ${config.showTerms && pdfData.terms ? `
+              <div>
+                <div class="section-title">NOTE TO CUSTOMER</div>
+                <p>${pdfData.terms}</p>
+              </div>` : ''}
+              
+              ${config.showNotes && pdfData.notes ? `
+              <div>
+                <div class="section-title">NOTES</div>
+                <p>${pdfData.notes}</p>
+              </div>` : ''}
+              
+              <!-- Signature Line -->
+              ${config.showSignatureLine ? `
+              <div>
+                <p><strong>Please sign to accept this estimate:</strong></p>
+                <div style="display: flex; justify-content: space-between; width: 80%;">
+                  <div>
+                    <div class="signature-line"></div>
+                    <p>Date</p>
+                  </div>
+                  <div>
+                    <div class="signature-line"></div>
+                    <p>Signature</p>
+                  </div>
+                </div>
+              </div>` : ''}
+              
+              <!-- Footer -->
+              ${config.showFooter ? `
+              <div class="footer">
+                <p>Thank you for your business!</p>
+              </div>` : ''}
+            </div>
+          </body>
+        </html>
+      `);
+      
+      previewWindow.document.close();
       
       toast({
-        title: "Template Created Successfully",
-        description: "Your template has been created and a preview has been opened in a new window"
+        title: "Preview Generated",
+        description: "Your template preview has been generated in a new window"
       });
     } catch (error) {
       console.error("Error generating preview:", error);
@@ -273,11 +493,12 @@ export default function SimplifiedPdfTemplateEditor({
       // Add metadata for better tracking
       const templateToSave = {
         ...config,
-        id: config.id || `template-${Date.now()}`,
-        name: config.name || "My Custom Template",
-        createdAt: config.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        type: previewType, // Save the template type (estimate or invoice)
+        // Add metadata fields that aren't in the PdfTemplateConfig type
+        templateId: `template-${Date.now()}`,
+        templateName: "My Custom Template",
+        templateCreatedAt: new Date().toISOString(),
+        templateUpdatedAt: new Date().toISOString(),
+        templateType: previewType, // Save the template type (estimate or invoice)
       };
       
       // Save to localStorage with additional metadata
