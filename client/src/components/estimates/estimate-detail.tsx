@@ -328,12 +328,49 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
 
                       <Button
                         variant="outline"
-                        onClick={() => {
-                          // Implement PDF functionality
-                          toast({
-                            title: "Feature in development",
-                            description: "PDF generation functionality will be implemented soon.",
-                          });
+                        onClick={async () => {
+                          try {
+                            // Import the PDF generation function
+                            const { downloadEstimatePDF } = await import("@/lib/pdf-generator");
+                            
+                            // Convert estimate data to the format expected by the PDF generator
+                            const pdfEstimate = {
+                              ...estimate,
+                              estimateNumber: estimate.estimateNumber || `EST-${estimate.id}`,
+                              client: {
+                                firstName: estimate.client?.firstName || "",
+                                lastName: estimate.client?.lastName || "",
+                                email: estimate.client?.email,
+                                phone: estimate.client?.phone,
+                                address: estimate.client?.address,
+                                city: estimate.client?.city,
+                                state: estimate.client?.state,
+                                zipCode: estimate.client?.zipCode
+                              },
+                              contractor: {
+                                businessName: "Your Business Name", // Use your actual business name
+                                email: "contact@yourbusiness.com", // Use your actual email
+                                phone: "(123) 456-7890", // Use your actual phone
+                                address: "123 Business St", // Use your actual address
+                              },
+                              items: estimate.items || []
+                            };
+                            
+                            // Generate and download the PDF
+                            await downloadEstimatePDF(pdfEstimate);
+                            
+                            toast({
+                              title: "PDF Generated",
+                              description: "The estimate PDF has been downloaded."
+                            });
+                          } catch (error) {
+                            console.error("Error generating PDF:", error);
+                            toast({
+                              title: "PDF Generation Failed",
+                              description: "There was an error generating the PDF. Please try again.",
+                              variant: "destructive"
+                            });
+                          }
                         }}
                       >
                         <Printer className="h-4 w-4 mr-2" />
