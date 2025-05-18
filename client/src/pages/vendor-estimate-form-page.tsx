@@ -250,7 +250,13 @@ export default function VendorEstimateFormPage() {
     }
     
     // Build items array for the estimate
-    const items = [];
+    const items: Array<{
+      description: string;
+      quantity: string;
+      unitPrice: string;
+      amount: string;
+      notes?: string;
+    }> = [];
     
     // Add items from specialized form
     estimateItems.forEach(item => {

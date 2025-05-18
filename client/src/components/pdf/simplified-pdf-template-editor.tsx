@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ColorPicker } from "@/components/ui/color-picker";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -798,7 +798,7 @@ export default function SimplifiedPdfTemplateEditor({
                               id="colorPrimary"
                               type="text"
                               value={config.colorPrimary || "#0f766e"}
-                              onChange={(e) => updateConfig("colorPrimary", e.target.value)}
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateConfig("colorPrimary", e.target.value)}
                               className="w-32"
                             />
                           </div>
@@ -815,7 +815,7 @@ export default function SimplifiedPdfTemplateEditor({
                               id="colorSecondary"
                               type="text"
                               value={config.colorSecondary || "#2563eb"}
-                              onChange={(e) => updateConfig("colorSecondary", e.target.value)}
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateConfig("colorSecondary", e.target.value)}
                               className="w-32"
                             />
                           </div>
