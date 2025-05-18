@@ -373,7 +373,7 @@ export default function EnhancedPdfTemplateEditor({
       if (previewType === "estimate") {
         blob = await previewEstimatePDF(sampleEstimate);
         
-        // Crear enlace de descarga
+        // Create download link
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -384,11 +384,11 @@ export default function EnhancedPdfTemplateEditor({
       } else {
         blob = await previewInvoicePDF(sampleInvoice);
         
-        // Crear enlace de descarga
+        // Create download link
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `factura-ejemplo-${Date.now()}.pdf`;
+        a.download = `invoice-example-${Date.now()}.pdf`;
         document.body.appendChild(a);
         a.click();
         a.remove();

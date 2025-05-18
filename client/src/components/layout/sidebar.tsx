@@ -96,17 +96,12 @@ export default function Sidebar() {
             <span>Time Clock</span>
           </Link>
           
-          {/* Tools section with divider for better organization */}
+          {/* Additional tools section with divider */}
           <div className="mt-2 mb-2 px-3">
             <div className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold">
-              Tools
+              Additional
             </div>
           </div>
-          
-          <Link href="/tools-dashboard" className={getLinkClass("/tools-dashboard")}>
-            <FileText className="mr-3 h-5 w-5" />
-            <span>Tools</span>
-          </Link>
           <Link href="/ai-assistant" className={getLinkClass("/ai-assistant")}>
             <BotIcon className="mr-3 h-5 w-5" />
             <span>AI Assistant</span>
