@@ -789,20 +789,36 @@ export default function SimplifiedPdfTemplateEditor({
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="colorPrimary" className="text-sm">Primary Color</Label>
-                          <ColorPicker 
-                            id="colorPrimary"
-                            color={config.colorPrimary} 
-                            onChange={(color) => updateConfig("colorPrimary", color)} 
-                          />
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-6 h-6 rounded-md border"
+                              style={{ backgroundColor: config.colorPrimary || "#0f766e" }}
+                            />
+                            <Input 
+                              id="colorPrimary"
+                              type="text"
+                              value={config.colorPrimary || "#0f766e"}
+                              onChange={(e) => updateConfig("colorPrimary", e.target.value)}
+                              className="w-32"
+                            />
+                          </div>
                         </div>
                         
                         <div className="space-y-2">
                           <Label htmlFor="colorSecondary" className="text-sm">Secondary Color</Label>
-                          <ColorPicker 
-                            id="colorSecondary"
-                            color={config.colorSecondary} 
-                            onChange={(color) => updateConfig("colorSecondary", color)} 
-                          />
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-6 h-6 rounded-md border"
+                              style={{ backgroundColor: config.colorSecondary || "#2563eb" }}
+                            />
+                            <Input 
+                              id="colorSecondary"
+                              type="text"
+                              value={config.colorSecondary || "#2563eb"}
+                              onChange={(e) => updateConfig("colorSecondary", e.target.value)}
+                              className="w-32"
+                            />
+                          </div>
                         </div>
                       </div>
                       

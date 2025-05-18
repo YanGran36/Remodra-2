@@ -75,6 +75,10 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="sr-only">Loading Estimate</DialogTitle>
+            <DialogDescription className="sr-only">Please wait while we load the estimate data</DialogDescription>
+          </DialogHeader>
           <div className="flex justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
           </div>
