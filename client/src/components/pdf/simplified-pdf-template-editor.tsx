@@ -235,19 +235,16 @@ export default function SimplifiedPdfTemplateEditor({
       }
       
       // Create a simple HTML preview that matches the style of a real PDF
-      const previewType = "estimate"; // Default to estimate preview
-      const pdfData = previewType === "estimate" ? sampleEstimate : sampleInvoice;
-      
       // Apply the template configuration
       const primaryColor = config.colorPrimary || "#0f766e";
       const secondaryColor = config.colorSecondary || "#2563eb";
       
-      // Create a sample PDF preview HTML
+      // Create a sample PDF preview HTML based on the example PDF
       previewWindow.document.write(`
         <!DOCTYPE html>
         <html>
           <head>
-            <title>${previewType.toUpperCase()} Preview</title>
+            <title>ESTIMATE Preview</title>
             <style>
               body { 
                 font-family: ${config.fontMain || 'Arial, sans-serif'}; 
@@ -263,56 +260,85 @@ export default function SimplifiedPdfTemplateEditor({
                 box-shadow: 0 0 10px rgba(0,0,0,0.1);
               }
               .header {
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
-                margin-bottom: 30px;
-                ${config.headerStyle === 'gradient' ? 'background: linear-gradient(to right, #f7fafc, #edf2f7); padding: 20px;' : ''}
+                margin-bottom: 40px;
               }
               .title {
                 color: ${primaryColor};
                 font-size: 28px;
                 font-weight: bold;
-                margin: 0;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                margin-bottom: 20px;
               }
               .company-info {
-                font-size: 14px;
+                margin-bottom: 40px;
               }
-              .info-sections {
+              .company-name {
+                font-size: 18px;
+                font-weight: bold;
+                margin-bottom: 5px;
+              }
+              .company-contact {
+                font-size: 14px;
+                margin-bottom: 5px;
+              }
+              .bill-ship {
                 display: flex;
                 justify-content: space-between;
                 margin-bottom: 30px;
               }
-              .info-section {
+              .bill-to, .ship-to {
                 width: 48%;
               }
-              .section-title {
-                color: ${primaryColor};
+              h3 {
+                font-size: 16px;
+                margin-top: 0;
+                margin-bottom: 10px;
+              }
+              .details {
+                margin-bottom: 30px;
+              }
+              .details-title {
                 font-size: 16px;
                 font-weight: bold;
                 margin-bottom: 10px;
               }
+              .details-grid {
+                display: grid;
+                grid-template-columns: auto auto auto;
+                gap: 10px;
+              }
+              .details-label {
+                font-weight: bold;
+              }
               table {
                 width: 100%;
-                border-collapse: ${config.tableStyle === 'bordered' ? 'collapse' : 'separate'};
+                border-collapse: collapse;
                 margin-bottom: 30px;
               }
               th {
-                background-color: ${primaryColor};
-                color: white;
+                background-color: ${config.tableStyle === 'minimal' ? 'transparent' : '#f3f4f6'};
+                color: #333;
                 text-align: left;
-                padding: 10px;
+                padding: 12px 15px;
+                border-bottom: 2px solid #ddd;
+                font-weight: bold;
               }
               td {
-                padding: 10px;
+                padding: 12px 15px;
                 border-bottom: 1px solid #ddd;
+                vertical-align: top;
               }
-              ${config.tableStyle === 'striped' ? 'tr:nth-child(even) { background-color: #f9f9f9; }' : ''}
-              ${config.tableStyle === 'bordered' ? 'th, td { border: 1px solid #ddd; }' : ''}
-              .totals {
+              .description-cell {
+                width: 50%;
+              }
+              .amount-column {
+                text-align: right;
+              }
+              .total-section {
                 margin-left: auto;
                 width: 40%;
-                margin-bottom: 30px;
+                text-align: right;
               }
               .total-row {
                 display: flex;
@@ -322,148 +348,170 @@ export default function SimplifiedPdfTemplateEditor({
               .grand-total {
                 font-weight: bold;
                 border-top: 2px solid ${primaryColor};
-                padding-top: 5px;
+                padding-top: 10px;
+                margin-top: 5px;
+              }
+              .notes {
+                margin-top: 30px;
+                padding: 20px;
+                background-color: #f9f9f9;
+                border-radius: 5px;
+              }
+              .notes-title {
+                font-weight: bold;
+                margin-bottom: 10px;
+              }
+              .signature-section {
+                margin-top: 50px;
+                display: flex;
+                justify-content: space-between;
+              }
+              .signature-line {
+                border-top: 1px solid #000;
+                width: 200px;
+                margin-top: 40px;
               }
               .footer {
                 margin-top: 50px;
-                border-top: 1px solid #ddd;
-                padding-top: 20px;
+                text-align: center;
                 font-size: 12px;
-              }
-              .signature-line {
-                margin-top: 40px;
-                border-top: 1px solid #000;
-                width: 200px;
-                padding-top: 5px;
+                color: #666;
               }
             </style>
           </head>
           <body>
             <div class="pdf-container">
-              <!-- Header -->
+              <!-- Header with title -->
               <div class="header">
-                <div>
-                  <h1 class="title">ESTIMATE</h1>
-                  <p>Estimate #${pdfData.estimateNumber}</p>
+                <div class="title">ESTIMATE</div>
+              </div>
+              
+              <!-- Company Info -->
+              <div class="company-info">
+                <div class="company-name">Barba Construction</div>
+                <div class="company-contact">barbaconstruct@gmail.com</div>
+                <div class="company-contact">5910 Preston Hwy</div>
+                <div class="company-contact">Louisville, KY 40219</div>
+                <div class="company-contact">+1 (502) 338-3720</div>
+              </div>
+              
+              <!-- Bill To / Ship To -->
+              <div class="bill-ship">
+                <div class="bill-to">
+                  <h3>Bill to</h3>
+                  <div>Yerley Fonseca</div>
+                  <div>6014 Crossbeak Ct</div>
+                  <div>Louisville, Kentucky 40229</div>
                 </div>
-                <div class="company-info">
-                  <strong>${pdfData.contractor.businessName}</strong><br>
-                  ${pdfData.contractor.address || ''}<br>
-                  ${pdfData.contractor.phone || ''}<br>
-                  ${pdfData.contractor.email || ''}
+                <div class="ship-to">
+                  <h3>Ship to</h3>
+                  <div>Yerley Fonseca</div>
+                  <div>6014 Crossbeak Ct</div>
+                  <div>Louisville, Kentucky 40229</div>
                 </div>
               </div>
               
-              <!-- Info Sections -->
-              <div class="info-sections">
-                <!-- Client Section -->
-                ${config.showClientDetails ? `
-                <div class="info-section">
-                  <div class="section-title">BILL TO</div>
-                  <p>
-                    ${pdfData.client.firstName} ${pdfData.client.lastName}<br>
-                    ${pdfData.client.address || ''}<br>
-                    ${pdfData.client.city ? pdfData.client.city + ', ' : ''}${pdfData.client.state || ''} ${pdfData.client.zipCode || ''}<br>
-                    ${pdfData.client.email || ''}<br>
-                    ${pdfData.client.phone || ''}
-                  </p>
-                </div>` : ''}
-                
-                <!-- Details Section -->
-                <div class="info-section">
-                  <div class="section-title">ESTIMATE DETAILS</div>
-                  <p>
-                    <strong>Date:</strong> ${new Date(pdfData.issueDate).toLocaleDateString()}<br>
-                    ${pdfData.expiryDate ? `<strong>Expiration:</strong> ${new Date(pdfData.expiryDate).toLocaleDateString()}<br>` : ''}
-                    <strong>Status:</strong> ${pdfData.status.toUpperCase()}<br>
-                    ${pdfData.projectTitle ? `<strong>Project:</strong> ${pdfData.projectTitle}<br>` : ''}
-                  </p>
+              <!-- Estimate details -->
+              <div class="details">
+                <div class="details-title">Estimate details</div>
+                <div class="details-grid">
+                  <div class="details-label">Estimate no.:</div>
+                  <div>2141</div>
+                  <div></div>
+                  
+                  <div class="details-label">Estimate date:</div>
+                  <div>05/07/2025</div>
+                  <div></div>
+                  
+                  <div class="details-label">Expiration date:</div>
+                  <div>06/07/2025</div>
+                  <div></div>
                 </div>
               </div>
               
               <!-- Items Table -->
-              ${config.showItemDetails ? `
               <table>
                 <thead>
                   <tr>
-                    ${config.showColumns?.service ? '<th>Service</th>' : ''}
-                    ${config.showColumns?.description ? '<th>Description</th>' : ''}
-                    ${config.showColumns?.quantity ? '<th>Qty</th>' : ''}
-                    ${config.showColumns?.unitPrice ? '<th>Rate</th>' : ''}
-                    ${config.showColumns?.amount ? '<th>Amount</th>' : ''}
-                    ${config.showItemNotes && config.showColumns?.notes ? '<th>Notes</th>' : ''}
+                    <th>#</th>
+                    <th>Product or service</th>
+                    <th>SKU</th>
+                    <th class="description-cell">Description</th>
+                    <th>Qty</th>
+                    <th class="amount-column">Rate</th>
+                    <th class="amount-column">Amount</th>
                   </tr>
                 </thead>
                 <tbody>
-                  ${pdfData.items.map((item, i) => `
-                    <tr>
-                      ${config.showColumns?.service ? `<td>${item.service || ''}</td>` : ''}
-                      ${config.showColumns?.description ? `<td>${item.description}</td>` : ''}
-                      ${config.showColumns?.quantity ? `<td>${item.quantity}</td>` : ''}
-                      ${config.showColumns?.unitPrice ? `<td>$${Number(item.unitPrice).toFixed(2)}</td>` : ''}
-                      ${config.showColumns?.amount ? `<td>$${Number(item.amount).toFixed(2)}</td>` : ''}
-                      ${config.showItemNotes && config.showColumns?.notes ? `<td>${item.notes || ''}</td>` : ''}
-                    </tr>
-                  `).join('')}
+                  <tr>
+                    <td>1.</td>
+                    <td>Deck</td>
+                    <td></td>
+                    <td class="description-cell">Construction of a 16x17 all-wood deck with a shingle roof, waterproof laminate flooring, and all sides fully enclosed...</td>
+                    <td>1</td>
+                    <td class="amount-column">$19,500.00</td>
+                    <td class="amount-column">$19,500.00</td>
+                  </tr>
+                  <tr>
+                    <td>2.</td>
+                    <td>Fence</td>
+                    <td></td>
+                    <td class="description-cell">Installation of 159 feet of 6-foot-high fence using black metal sheets, providing a sleek, modern, and durable appearance...</td>
+                    <td>1</td>
+                    <td class="amount-column">$6,880.00</td>
+                    <td class="amount-column">$6,880.00</td>
+                  </tr>
+                  <tr>
+                    <td>3.</td>
+                    <td>Demolition</td>
+                    <td></td>
+                    <td class="description-cell">Demolition and removal of 159 feet of existing fence, including dismantling of all posts, panels, and hardware...</td>
+                    <td>1</td>
+                    <td class="amount-column">$500.00</td>
+                    <td class="amount-column">$500.00</td>
+                  </tr>
                 </tbody>
-              </table>` : ''}
+              </table>
               
               <!-- Totals -->
-              <div class="totals">
-                <div class="total-row">
-                  <span>Subtotal:</span>
-                  <span>$${Number(pdfData.subtotal).toFixed(2)}</span>
-                </div>
-                ${pdfData.tax ? `
-                <div class="total-row">
-                  <span>Tax:</span>
-                  <span>$${Number(pdfData.tax).toFixed(2)}</span>
-                </div>` : ''}
-                ${pdfData.discount ? `
-                <div class="total-row">
-                  <span>Discount:</span>
-                  <span>-$${Number(pdfData.discount).toFixed(2)}</span>
-                </div>` : ''}
+              <div class="total-section">
                 <div class="total-row grand-total">
                   <span>Total:</span>
-                  <span>$${Number(pdfData.total).toFixed(2)}</span>
+                  <span>$26,880.00</span>
                 </div>
               </div>
               
-              <!-- Terms & Notes -->
-              ${config.showTerms && pdfData.terms ? `
-              <div>
-                <div class="section-title">NOTE TO CUSTOMER</div>
-                <p>${pdfData.terms}</p>
-              </div>` : ''}
+              <!-- Notes Section -->
+              <div class="notes">
+                <div class="notes-title">Note to customer</div>
+                <p>
+                  To begin services a 50% deposit is required and the remaining 50%
+                  must be pay upon completion. The price in this invoice includes labor
+                  and materials. There is a 2.9% fee plus 25 cents per transaction if
+                  you decide to make a payment trough QuickBooks or pay with
+                  debit/credit card.
+                </p>
+                <p>Please provide your signature accepting the terms below.</p>
+                <p>Signature: ______________________</p>
+                <p>Signature: ______________________</p>
+              </div>
               
-              ${config.showNotes && pdfData.notes ? `
-              <div>
-                <div class="section-title">NOTES</div>
-                <p>${pdfData.notes}</p>
-              </div>` : ''}
-              
-              <!-- Signature Line -->
-              ${config.showSignatureLine ? `
-              <div>
-                <p><strong>Please sign to accept this estimate:</strong></p>
-                <div style="display: flex; justify-content: space-between; width: 80%;">
-                  <div>
-                    <div class="signature-line"></div>
-                    <p>Date</p>
-                  </div>
-                  <div>
-                    <div class="signature-line"></div>
-                    <p>Signature</p>
-                  </div>
-                </div>
-              </div>` : ''}
-              
-              <!-- Footer -->
-              ${config.showFooter ? `
+              <!-- Thank you message -->
               <div class="footer">
-                <p>Thank you for your business!</p>
-              </div>` : ''}
+                <p>Thank you for your business.</p>
+              </div>
+              
+              <!-- Signature area -->
+              <div class="signature-section">
+                <div>
+                  <div class="signature-line"></div>
+                  <p>Accepted date</p>
+                </div>
+                <div>
+                  <div class="signature-line"></div>
+                  <p>Accepted by</p>
+                </div>
+              </div>
             </div>
           </body>
         </html>
@@ -490,42 +538,13 @@ export default function SimplifiedPdfTemplateEditor({
   // Save configuration
   const handleSave = async () => {
     try {
-      // Add metadata for better tracking
-      const templateToSave = {
-        ...config,
-        // Add metadata fields that aren't in the PdfTemplateConfig type
-        templateId: `template-${Date.now()}`,
-        templateName: "My Custom Template",
-        templateCreatedAt: new Date().toISOString(),
-        templateUpdatedAt: new Date().toISOString(),
-        templateType: previewType, // Save the template type (estimate or invoice)
-      };
-      
-      // Save to localStorage with additional metadata
-      localStorage.setItem('pdfTemplateConfig', JSON.stringify(templateToSave));
-      
-      // Create a separate entry for this specific template
-      const savedTemplates = JSON.parse(localStorage.getItem('savedPdfTemplates') || '[]');
-      const existingIndex = savedTemplates.findIndex((t: any) => t.id === templateToSave.id);
-      
-      if (existingIndex >= 0) {
-        // Update existing template
-        savedTemplates[existingIndex] = templateToSave;
-      } else {
-        // Add new template
-        savedTemplates.push(templateToSave);
-      }
-      
-      // Save the updated templates list
-      localStorage.setItem('savedPdfTemplates', JSON.stringify(savedTemplates));
+      // Just save the config as-is without adding any extra fields
+      localStorage.setItem('pdfTemplateConfig', JSON.stringify(config));
       
       // Call the onSave callback if provided
       if (onSave) {
-        onSave(templateToSave);
+        onSave(config);
       }
-      
-      // Generate a preview to confirm the template works
-      await generatePreview();
       
       toast({
         title: "Template Saved Successfully",
