@@ -1180,13 +1180,42 @@ export default function VendorServiceEstimatePage() {
                       )}
                     </Button>
                     
-                    {showAiAnalysis && aiAnalysisResult && (
+                    {showAiAnalysis && (
                       <Card className="border-primary/20 mt-4">
                         <CardHeader className="pb-2">
                           <CardTitle className="text-lg">AI Analysis Results</CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <AiAnalysisPanel analysisResult={aiAnalysisResult} />
+                          {/* Si ya tenemos un resultado del análisis, lo usamos, si no mostramos el panel interactivo */}
+                          {aiAnalysisResult ? (
+                            <div className="space-y-4">
+                              <div className="rounded-md bg-slate-50 p-4 dark:bg-slate-900">
+                                <div className="flex items-center justify-between">
+                                  <h3 className="text-lg font-semibold">Total Recomendado</h3>
+                                  <span className="text-xl font-bold">${aiAnalysisResult.recommendedTotal.toFixed(2)}</span>
+                                </div>
+                                <div className="space-y-2 mt-4">
+                                  <h3 className="font-semibold">Recomendaciones</h3>
+                                  <ul className="list-disc pl-5 space-y-1">
+                                    {aiAnalysisResult.breakdown.recommendations.map((rec, i) => (
+                                      <li key={i} className="text-sm">{rec}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <AiAnalysisPanel 
+                              serviceType={selectedServiceTypes[0] || ""}
+                              materials={selectedItems.map(item => ({
+                                name: item.name,
+                                quantity: item.quantity,
+                                unit: item.unit,
+                                unitPrice: item.unitPrice
+                              }))}
+                              onCreateEstimate={(result) => setAiAnalysisResult(result)}
+                            />
+                          )}
                         </CardContent>
                       </Card>
                     )}
@@ -1203,7 +1232,7 @@ export default function VendorServiceEstimatePage() {
                   <Button 
                     type="button" 
                     disabled={isSubmitting || selectedItems.length === 0}
-                    className="min-w-[140px]"
+                    className="min-w-[160px] bg-green-600 hover:bg-green-700 text-white"
                     onClick={() => {
                       // Llamar manualmente a onSubmit para crear el estimado
                       form.handleSubmit(onSubmit)();
@@ -1221,6 +1250,9 @@ export default function VendorServiceEstimatePage() {
                       </>
                     )}
                   </Button>
+                  <div className="mt-2 text-xs text-muted-foreground italic">
+                    Note: Estimate will only be created when you click this button
+                  </div>
                 </CardFooter>
               </Card>
             </TabsContent>
