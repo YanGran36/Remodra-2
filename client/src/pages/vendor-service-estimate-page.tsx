@@ -474,12 +474,15 @@ export default function VendorServiceEstimatePage() {
 
       <Form {...form}>
         <form onSubmit={(e) => {
-          // Solo procesamos el formulario si se hace clic en un botón de tipo submit
-          const submitter = e.nativeEvent.submitter;
-          if (submitter && submitter.type === "submit") {
+          // Siempre prevenir el envío automático del formulario
+          e.preventDefault();
+          
+          // Solo procesamos el formulario cuando se hace clic en el botón de submit en la última pestaña
+          const target = e.target as HTMLFormElement;
+          const activeElement = document.activeElement as HTMLButtonElement;
+          
+          if (activeElement && activeElement.type === "submit" && activeElement.innerText.includes("Create Estimate")) {
             form.handleSubmit(onSubmit)(e);
-          } else {
-            e.preventDefault();
           }
         }} className="space-y-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -744,7 +747,8 @@ export default function VendorServiceEstimatePage() {
                                             </div>
                                             <Button 
                                               size="sm" 
-                                              variant="outline" 
+                                              variant="outline"
+                                              type="button" 
                                               onClick={(e) => {
                                                 e.preventDefault();
                                                 e.stopPropagation();
@@ -775,7 +779,8 @@ export default function VendorServiceEstimatePage() {
                                             </div>
                                             <Button 
                                               size="sm" 
-                                              variant="outline" 
+                                              variant="outline"
+                                              type="button" 
                                               onClick={(e) => {
                                                 e.preventDefault();
                                                 e.stopPropagation();
