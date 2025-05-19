@@ -421,9 +421,16 @@ export default function VendorServiceEstimatePage() {
       // Crear estimado
       await createEstimateMutation.mutateAsync(estimateData, {
         onSuccess: (newEstimate) => {
+          // Obtener los detalles del cliente desde los datos
+          const clientDetails = clients?.find(c => c.id === data.clientId);
+          const clientName = clientDetails 
+            ? `${clientDetails.firstName} ${clientDetails.lastName}` 
+            : "Client";
+          
           toast({
-            title: "Estimate Created",
-            description: `Estimate ${newEstimate.estimateNumber} has been successfully created.`,
+            title: "Estimate Created Successfully",
+            description: `Estimate ${newEstimate.estimateNumber} for ${clientName} has been created with ${selectedItems.length} items totaling $${totalAmount.toFixed(2)}`,
+            className: "bg-green-50 border-green-200",
           });
           
           // Redirigir a la página de detalles del estimado
@@ -433,8 +440,9 @@ export default function VendorServiceEstimatePage() {
           console.error("Error creating estimate:", error);
           toast({
             title: "Error Creating Estimate",
-            description: "There was an error creating the estimate. Please try again.",
+            description: "There was an error creating the estimate. Please verify all information is correct and try again. If the problem persists, contact support.",
             variant: "destructive",
+            duration: 6000, // Mostrar por más tiempo para que el usuario lo vea
           });
         }
       });
