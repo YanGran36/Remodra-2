@@ -314,6 +314,11 @@ export default function EstimateCreateServicePage() {
         ...data,
         // Si el proyecto es 0, enviar null para evitar error de clave foránea
         projectId: data.projectId === 0 ? null : data.projectId,
+        // Convertir valores numéricos a strings para el API
+        subtotal: data.subtotal.toString(),
+        tax: data.tax.toString(),
+        discount: data.discount.toString(),
+        total: data.total.toString(),
         // Convertir items seleccionados al formato esperado por la API
         items: selectedItems.map(item => ({
           service: item.service,

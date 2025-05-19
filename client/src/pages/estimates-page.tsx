@@ -264,20 +264,20 @@ export default function EstimatesPage() {
                 
                 <div className="flex gap-2">
                   <Button 
-                    onClick={() => setLocation("/estimates/new")} 
+                    onClick={() => setLocation("/estimates/create-service")} 
                     size="sm"
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    New Estimate
+                    Create Estimate
                   </Button>
                   
                   <Button 
-                    onClick={() => setLocation("/estimates/create-service")} 
+                    onClick={() => setLocation("/vendor-estimate-form")}
                     variant="secondary" 
                     size="sm"
                   >
                     <FileText className="h-4 w-4 mr-2" />
-                    Create Service Estimate
+                    Vendor Estimate
                   </Button>
                   
                   <Button variant="outline" size="sm">
