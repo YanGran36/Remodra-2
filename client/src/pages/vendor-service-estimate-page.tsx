@@ -1201,9 +1201,13 @@ export default function VendorServiceEstimatePage() {
                     Previous
                   </Button>
                   <Button 
-                    type="submit" 
+                    type="button" 
                     disabled={isSubmitting || selectedItems.length === 0}
                     className="min-w-[140px]"
+                    onClick={() => {
+                      // Llamar manualmente a onSubmit para crear el estimado
+                      form.handleSubmit(onSubmit)();
+                    }}
                   >
                     {isSubmitting ? (
                       <>
