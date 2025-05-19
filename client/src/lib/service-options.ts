@@ -8,6 +8,16 @@ export const SERVICE_TYPES = [
   { value: "gutters", label: "Gutters", icon: "gutters" }
 ];
 
+// Define labor rates by service type
+export const LABOR_RATES_BY_SERVICE = {
+  roof: { hourlyRate: 65, baseHours: 8 },
+  siding: { hourlyRate: 55, baseHours: 6 },
+  deck: { hourlyRate: 60, baseHours: 10 },
+  fence: { hourlyRate: 50, baseHours: 6 },
+  windows: { hourlyRate: 70, baseHours: 4 },
+  gutters: { hourlyRate: 45, baseHours: 5 }
+};
+
 // Define materials by service type
 export const MATERIALS_BY_SERVICE = {
   roof: [

@@ -142,6 +142,7 @@ export default function VendorServiceEstimatePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [totalAmount, setTotalAmount] = useState(0);
+  const [laborItems, setLaborItems] = useState<{service: string, hours: number, rate: number, total: number}[]>([]);
   
   // Estados para herramientas de medición
   const [isDigitalMeasurementOpen, setIsDigitalMeasurementOpen] = useState(false);
@@ -297,9 +298,37 @@ export default function VendorServiceEstimatePage() {
     recalculateTotal(updatedItems);
   };
 
-  // Calcular el total del estimado
+  // Actualizar un ítem de mano de obra
+  const updateLaborItem = (service: string, hours: number, rate: number, total: number) => {
+    setLaborItems(prevItems => {
+      // Verificar si ya existe un ítem para este servicio
+      const existingIndex = prevItems.findIndex(item => item.service === service);
+      
+      if (existingIndex >= 0) {
+        // Actualizar el ítem existente
+        const updatedItems = [...prevItems];
+        updatedItems[existingIndex] = { service, hours, rate, total };
+        return updatedItems;
+      } else {
+        // Añadir nuevo ítem
+        return [...prevItems, { service, hours, rate, total }];
+      }
+    });
+    
+    // Recalcular el total después de actualizar los ítems de mano de obra
+    setTimeout(() => recalculateTotal(selectedItems), 0);
+  };
+
+  // Calcular el total del estimado incluyendo mano de obra
   const recalculateTotal = (items: SelectedItem[]) => {
-    const subtotal = items.reduce((sum, item) => sum + item.total, 0);
+    // Calcular subtotal de materiales y opciones
+    const materialsSubtotal = items.reduce((sum, item) => sum + item.total, 0);
+    
+    // Calcular subtotal de mano de obra
+    const laborSubtotal = laborItems.reduce((sum, item) => sum + item.total, 0);
+    
+    // Subtotal combinado
+    const subtotal = materialsSubtotal + laborSubtotal;
     
     // Actualizar valores en el formulario
     form.setValue("subtotal", subtotal);
@@ -312,6 +341,15 @@ export default function VendorServiceEstimatePage() {
     
     form.setValue("total", total);
     setTotalAmount(total);
+    
+    console.log("Total recalculado:", { 
+      materialsSubtotal, 
+      laborSubtotal, 
+      subtotal, 
+      taxRate, 
+      discountAmount, 
+      total 
+    });
   };
 
   // Preparar datos para análisis de IA
@@ -510,12 +548,121 @@ export default function VendorServiceEstimatePage() {
       <Form {...form}>
         <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="client">Client</TabsTrigger>
               <TabsTrigger value="services">Services</TabsTrigger>
+              <TabsTrigger value="labor">Labor</TabsTrigger>
               <TabsTrigger value="measurement">Measurements</TabsTrigger>
               <TabsTrigger value="summary">Summary & Analysis</TabsTrigger>
             </TabsList>
+            
+            {/* New TAB: Labor Costs */}
+            <TabsContent value="labor" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Labor Costs</CardTitle>
+                  <CardDescription>
+                    Add labor costs for each service type
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* Solo mostrar servicios que hayan sido seleccionados */}
+                    {selectedServiceTypes.length > 0 ? (
+                      <div className="space-y-6">
+                        {selectedServiceTypes.map(serviceType => {
+                          // Obtener la tarifa laboral para este tipo de servicio
+                          const laborRate = LABOR_RATES_BY_SERVICE[serviceType as keyof typeof LABOR_RATES_BY_SERVICE];
+                          // Buscar si ya existe un item de labor para este servicio
+                          const existingLaborItem = laborItems.find(item => item.service === serviceType);
+                          
+                          return (
+                            <div key={serviceType} className="border p-4 rounded-md">
+                              <div className="flex justify-between items-center mb-4">
+                                <h3 className="font-semibold text-lg">{getServiceLabel(serviceType)}</h3>
+                                <Badge variant="outline">Labor</Badge>
+                              </div>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                <div>
+                                  <Label htmlFor={`${serviceType}-hours`}>Hours</Label>
+                                  <Input 
+                                    id={`${serviceType}-hours`}
+                                    type="number"
+                                    placeholder="Hours"
+                                    defaultValue={existingLaborItem?.hours || laborRate.baseHours}
+                                    min={1}
+                                    onChange={(e) => {
+                                      const hours = parseInt(e.target.value) || laborRate.baseHours;
+                                      const rate = existingLaborItem?.rate || laborRate.hourlyRate;
+                                      const total = hours * rate;
+                                      
+                                      // Actualizar o añadir item de labor
+                                      updateLaborItem(serviceType, hours, rate, total);
+                                    }}
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor={`${serviceType}-rate`}>Hourly Rate ($)</Label>
+                                  <Input 
+                                    id={`${serviceType}-rate`}
+                                    type="number"
+                                    placeholder="Rate"
+                                    defaultValue={existingLaborItem?.rate || laborRate.hourlyRate}
+                                    min={0}
+                                    step={5}
+                                    onChange={(e) => {
+                                      const rate = parseInt(e.target.value) || laborRate.hourlyRate;
+                                      const hours = existingLaborItem?.hours || laborRate.baseHours;
+                                      const total = hours * rate;
+                                      
+                                      // Actualizar o añadir item de labor
+                                      updateLaborItem(serviceType, hours, rate, total);
+                                    }}
+                                  />
+                                </div>
+                                <div>
+                                  <Label>Total</Label>
+                                  <div className="h-10 px-3 py-2 border rounded-md bg-muted/30 flex items-center">
+                                    ${existingLaborItem?.total || (laborRate.baseHours * laborRate.hourlyRate)}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center p-8 text-center border rounded-md border-dashed">
+                        <AlertTriangle className="h-10 w-10 text-amber-500 mb-2" />
+                        <h3 className="text-lg font-semibold mb-1">No Services Selected</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Please select at least one service type in the Services tab before adding labor costs.
+                        </p>
+                        <Button variant="secondary" size="sm" onClick={() => setActiveTab("services")}>
+                          Go to Services Tab
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-between">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setActiveTab("services")}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => setActiveTab("measurement")}
+                  >
+                    Next: Measurements
+                  </Button>
+                </CardFooter>
+              </Card>
+            </TabsContent>
             
             {/* TAB: Client Information */}
             <TabsContent value="client" className="space-y-6">
