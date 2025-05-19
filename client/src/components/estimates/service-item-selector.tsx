@@ -80,9 +80,13 @@ export function ServiceItemSelector({ value, onChange }: ServiceItemSelectorProp
               <CardContent 
                 className="p-4 cursor-pointer"
                 onClick={(e) => {
+                  // Prevenir cualquier acción del formulario
                   e.preventDefault();
                   e.stopPropagation();
-                  onChange(service.value);
+                  // Solo llamar al onChange si es un click directo (no propagado)
+                  if (e.currentTarget === e.target || e.currentTarget.contains(e.target as Node)) {
+                    onChange(service.value);
+                  }
                 }}
               >
                 <div 

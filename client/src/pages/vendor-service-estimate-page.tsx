@@ -473,18 +473,7 @@ export default function VendorServiceEstimatePage() {
       </div>
 
       <Form {...form}>
-        <form onSubmit={(e) => {
-          // Siempre prevenir el envío automático del formulario
-          e.preventDefault();
-          
-          // Solo procesamos el formulario cuando se hace clic en el botón de submit en la última pestaña
-          const target = e.target as HTMLFormElement;
-          const activeElement = document.activeElement as HTMLButtonElement;
-          
-          if (activeElement && activeElement.type === "submit" && activeElement.innerText.includes("Create Estimate")) {
-            form.handleSubmit(onSubmit)(e);
-          }
-        }} className="space-y-6">
+        <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="client">Client</TabsTrigger>
