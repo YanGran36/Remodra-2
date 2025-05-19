@@ -473,7 +473,15 @@ export default function VendorServiceEstimatePage() {
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={(e) => {
+          // Solo procesamos el formulario si se hace clic en un botón de tipo submit
+          const submitter = e.nativeEvent.submitter;
+          if (submitter && submitter.type === "submit") {
+            form.handleSubmit(onSubmit)(e);
+          } else {
+            e.preventDefault();
+          }
+        }} className="space-y-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="client">Client</TabsTrigger>
