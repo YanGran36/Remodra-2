@@ -319,38 +319,53 @@ export default function VendorServiceEstimatePage() {
     setTimeout(() => recalculateTotal(selectedItems), 0);
   };
 
-  // Calcular el total del estimado incluyendo mano de obra
-  const recalculateTotal = (items: SelectedItem[]) => {
-    // Calcular subtotal de materiales y opciones
-    const materialsSubtotal = items.reduce((sum, item) => sum + item.total, 0);
-    
-    // Calcular subtotal de mano de obra
-    const laborSubtotal = laborItems.reduce((sum, item) => sum + item.total, 0);
-    
-    // Subtotal combinado
-    const subtotal = materialsSubtotal + laborSubtotal;
-    
-    // Actualizar valores en el formulario
-    form.setValue("subtotal", subtotal);
-    
-    const taxRate = form.getValues("tax") || 0;
-    const discountAmount = form.getValues("discount") || 0;
-    
-    const taxAmount = (subtotal * taxRate) / 100;
-    const total = subtotal + taxAmount - discountAmount;
-    
-    form.setValue("total", total);
-    setTotalAmount(total);
-    
-    console.log("Total recalculado:", { 
-      materialsSubtotal, 
-      laborSubtotal, 
-      subtotal, 
-      taxRate, 
-      discountAmount, 
-      total 
-    });
-  };
+  // Definición de las tarifas de mano de obra por tipo de servicio
+const LABOR_RATES_BY_SERVICE: Record<string, number> = {
+  'roofing': 50,
+  'siding': 45,
+  'windows': 40,
+  'gutters': 35,
+  'painting': 30,
+  'flooring': 35,
+  'electrical': 55,
+  'plumbing': 60,
+  'hvac': 65,
+  'landscaping': 40,
+  'general': 45
+};
+
+// Calcular el total del estimado incluyendo mano de obra
+const recalculateTotal = (items: SelectedItem[]) => {
+  // Calcular subtotal de materiales y opciones
+  const materialsSubtotal = items.reduce((sum, item) => sum + item.total, 0);
+  
+  // Calcular subtotal de mano de obra
+  const laborSubtotal = laborItems.reduce((sum, item) => sum + item.total, 0);
+  
+  // Subtotal combinado
+  const subtotal = materialsSubtotal + laborSubtotal;
+  
+  // Actualizar valores en el formulario
+  form.setValue("subtotal", subtotal);
+  
+  const taxRate = form.getValues("tax") || 0;
+  const discountAmount = form.getValues("discount") || 0;
+  
+  const taxAmount = (subtotal * taxRate) / 100;
+  const total = subtotal + taxAmount - discountAmount;
+  
+  form.setValue("total", total);
+  setTotalAmount(total);
+  
+  console.log("Total recalculado:", { 
+    materialsSubtotal, 
+    laborSubtotal, 
+    subtotal, 
+    taxRate, 
+    discountAmount, 
+    total 
+  });
+};
 
   // Preparar datos para análisis de IA
   const runAiAnalysis = async () => {
@@ -412,8 +427,10 @@ export default function VendorServiceEstimatePage() {
     return () => subscription.unsubscribe();
   }, [form, selectedItems]);
 
-  // Manejar envío del formulario
+  // Manejar envío del formulario - NO autosubmit
   const onSubmit = async (data: EstimateFormValues) => {
+    // Esta función NO se ejecutará automáticamente al hacer clic en botones dentro del formulario
+    // Solo se llamará cuando se haga clic en el botón "Create Estimate"
     if (selectedItems.length === 0) {
       toast({
         title: "Cannot create estimate",

@@ -35,6 +35,11 @@ const formatCurrency = (amount: number): string => {
 };
 
 export function ServiceItemSelector({ value, onChange }: ServiceItemSelectorProps) {
+  // Función para prevenir el envío del formulario al hacer clic en botones
+  const preventFormSubmission = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
   const [expandedDetails, setExpandedDetails] = useState<string | null>(null);
 
   const toggleDetails = (serviceId: string) => {
