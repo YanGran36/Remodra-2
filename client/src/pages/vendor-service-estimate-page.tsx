@@ -665,7 +665,10 @@ export default function VendorServiceEstimatePage() {
                             transition-all relative overflow-hidden border-2 cursor-pointer
                             ${isSelected ? "border-primary shadow-lg" : "border-transparent hover:border-primary/20"}
                           `}
-                          onClick={() => toggleServiceType(service.value)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            toggleServiceType(service.value);
+                          }}
                         >
                           {isSelected && (
                             <div className="absolute top-2 right-2 bg-primary text-white rounded-full p-1 z-10">
@@ -735,6 +738,7 @@ export default function VendorServiceEstimatePage() {
                                               size="sm" 
                                               variant="outline" 
                                               onClick={(e) => {
+                                                e.preventDefault();
                                                 e.stopPropagation();
                                                 addMaterial(serviceType, material.id);
                                               }}
@@ -765,6 +769,7 @@ export default function VendorServiceEstimatePage() {
                                               size="sm" 
                                               variant="outline" 
                                               onClick={(e) => {
+                                                e.preventDefault();
                                                 e.stopPropagation();
                                                 addOption(serviceType, option.id);
                                               }}

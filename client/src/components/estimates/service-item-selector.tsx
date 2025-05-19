@@ -79,7 +79,11 @@ export function ServiceItemSelector({ value, onChange }: ServiceItemSelectorProp
               
               <CardContent 
                 className="p-4 cursor-pointer"
-                onClick={() => onChange(service.value)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onChange(service.value);
+                }}
               >
                 <div 
                   className="w-full h-1.5 rounded-full mb-3"
