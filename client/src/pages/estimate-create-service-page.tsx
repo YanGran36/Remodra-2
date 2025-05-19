@@ -115,7 +115,8 @@ export default function EstimateCreateServicePage() {
   const [totalAmount, setTotalAmount] = useState(0);
 
   // Hooks para datos
-  const { data: clients = [], isLoading: isLoadingClients } = useClients();
+  const clientsData = useClients();
+  const clients = clientsData.clients || [];
   const { createEstimateMutation } = useEstimates();
   
   // Formulario con react-hook-form y zod
@@ -140,7 +141,7 @@ export default function EstimateCreateServicePage() {
   // Efectos para actualizar el estado inicial
   useEffect(() => {
     if (clientIdParam && clients.length > 0) {
-      const selectedClient = clients.find(client => client.id === clientIdParam);
+      const selectedClient = clients.find((client: any) => client.id === clientIdParam);
       if (selectedClient) {
         form.setValue("clientId", clientIdParam);
       }
