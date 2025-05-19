@@ -35,7 +35,8 @@ import {
   CalendarIcon, 
   Loader2,
   Ruler,
-  Scan
+  Scan,
+  AlertTriangle
 } from "lucide-react";
 
 // UI Components
@@ -48,6 +49,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { 
   Select, 
   SelectContent, 
@@ -320,18 +322,18 @@ export default function VendorServiceEstimatePage() {
   };
 
   // Definición de las tarifas de mano de obra por tipo de servicio
-const LABOR_RATES_BY_SERVICE: Record<string, number> = {
-  'roofing': 50,
-  'siding': 45,
-  'windows': 40,
-  'gutters': 35,
-  'painting': 30,
-  'flooring': 35,
-  'electrical': 55,
-  'plumbing': 60,
-  'hvac': 65,
-  'landscaping': 40,
-  'general': 45
+const LABOR_RATES_BY_SERVICE: Record<string, { baseHours: number, hourlyRate: number }> = {
+  'roofing': { baseHours: 8, hourlyRate: 50 },
+  'siding': { baseHours: 8, hourlyRate: 45 },
+  'windows': { baseHours: 4, hourlyRate: 40 },
+  'gutters': { baseHours: 4, hourlyRate: 35 },
+  'painting': { baseHours: 6, hourlyRate: 30 },
+  'flooring': { baseHours: 6, hourlyRate: 35 },
+  'electrical': { baseHours: 4, hourlyRate: 55 },
+  'plumbing': { baseHours: 4, hourlyRate: 60 },
+  'hvac': { baseHours: 6, hourlyRate: 65 },
+  'landscaping': { baseHours: 8, hourlyRate: 40 },
+  'general': { baseHours: 6, hourlyRate: 45 }
 };
 
 // Calcular el total del estimado incluyendo mano de obra
@@ -589,7 +591,8 @@ const recalculateTotal = (items: SelectedItem[]) => {
                       <div className="space-y-6">
                         {selectedServiceTypes.map(serviceType => {
                           // Obtener la tarifa laboral para este tipo de servicio
-                          const laborRate = LABOR_RATES_BY_SERVICE[serviceType as keyof typeof LABOR_RATES_BY_SERVICE];
+                          // Obtener la tarifa laboral con valores predeterminados por si acaso
+                          const laborRate = LABOR_RATES_BY_SERVICE[serviceType as keyof typeof LABOR_RATES_BY_SERVICE] || { baseHours: 4, hourlyRate: 45 };
                           // Buscar si ya existe un item de labor para este servicio
                           const existingLaborItem = laborItems.find(item => item.service === serviceType);
                           
@@ -602,7 +605,7 @@ const recalculateTotal = (items: SelectedItem[]) => {
                               
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                 <div>
-                                  <Label htmlFor={`${serviceType}-hours`}>Hours</Label>
+                                  <div className="text-sm font-medium mb-2">Hours</div>
                                   <Input 
                                     id={`${serviceType}-hours`}
                                     type="number"
@@ -620,7 +623,7 @@ const recalculateTotal = (items: SelectedItem[]) => {
                                   />
                                 </div>
                                 <div>
-                                  <Label htmlFor={`${serviceType}-rate`}>Hourly Rate ($)</Label>
+                                  <div className="text-sm font-medium mb-2">Hourly Rate ($)</div>
                                   <Input 
                                     id={`${serviceType}-rate`}
                                     type="number"
@@ -639,7 +642,7 @@ const recalculateTotal = (items: SelectedItem[]) => {
                                   />
                                 </div>
                                 <div>
-                                  <Label>Total</Label>
+                                  <div className="text-sm font-medium mb-2">Total</div>
                                   <div className="h-10 px-3 py-2 border rounded-md bg-muted/30 flex items-center">
                                     ${existingLaborItem?.total || (laborRate.baseHours * laborRate.hourlyRate)}
                                   </div>
