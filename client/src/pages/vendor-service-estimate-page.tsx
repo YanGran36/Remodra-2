@@ -423,9 +423,10 @@ export default function VendorServiceEstimatePage() {
         onSuccess: (newEstimate) => {
           // Obtener los detalles del cliente desde los datos
           const clientDetails = clients?.find(c => c.id === data.clientId);
-          const clientName = clientDetails 
-            ? `${clientDetails.firstName} ${clientDetails.lastName}` 
-            : "Client";
+          let clientName = "Client";
+          if (clientDetails && clientDetails.firstName) {
+            clientName = `${clientDetails.firstName} ${clientDetails.lastName || ""}`.trim();
+          }
           
           toast({
             title: "Estimate Created Successfully",
@@ -433,8 +434,34 @@ export default function VendorServiceEstimatePage() {
             className: "bg-green-50 border-green-200",
           });
           
-          // Redirigir a la página de detalles del estimado
-          setLocation(`/estimates/${newEstimate.id}`);
+          // Mostrar diálogo de confirmación para ir a los detalles o crear otro estimado
+          const confirmed = window.confirm(
+            `Estimate ${newEstimate.estimateNumber} created successfully! \n\nDo you want to view the estimate details now? \n\nClick 'OK' to view the estimate or 'Cancel' to create another estimate.`
+          );
+          
+          if (confirmed) {
+            // Redirigir a la página de detalles del estimado
+            setLocation(`/estimates/${newEstimate.id}`);
+          } else {
+            // Reiniciar el formulario para crear otro estimado
+            form.reset({
+              clientId: 0,
+              projectId: 0,
+              issueDate: new Date(),
+              expiryDate: new Date(new Date().setDate(new Date().getDate() + 30)),
+              status: "pending",
+              subtotal: 0,
+              tax: 0,
+              discount: 0,
+              total: 0,
+              notes: "",
+              terms: "Standard terms and conditions apply."
+            });
+            setSelectedItems([]);
+            setSelectedServiceTypes([]);
+            setTotalAmount(0);
+            setActiveTab("client");
+          }
         },
         onError: (error) => {
           console.error("Error creating estimate:", error);
