@@ -15,11 +15,31 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, PencilIcon, SaveIcon } from "lucide-react";
+import { ArrowLeft, PencilIcon, SaveIcon, PlusIcon, Home } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+// Tipos definidos para evitar errores de tipado
+interface Service {
+  id: string;
+  name: string;
+  serviceType: string;
+  unitPrice: number;
+  unit: string;
+  laborRate: number;
+  laborMethod: string;
+}
+
+interface Material {
+  id: string;
+  name: string;
+  category: string;
+  unitPrice: number;
+  unit: string;
+  supplier: string;
+}
+
 // Datos predefinidos
-const defaultServices = [
+const defaultServices: Service[] = [
   {
     id: 'fence',
     name: 'Instalación de Cerca',
@@ -49,7 +69,7 @@ const defaultServices = [
   }
 ];
 
-const defaultMaterials = [
+const defaultMaterials: Material[] = [
   {
     id: 'fence-wood',
     name: 'Madera para Cerca',
@@ -77,16 +97,30 @@ const defaultMaterials = [
 ];
 
 const PricingConfigPage = () => {
-  const [services, setServices] = useState(defaultServices);
-  const [materials, setMaterials] = useState(defaultMaterials);
-  const [editingService, setEditingService] = useState(null);
-  const [editingMaterial, setEditingMaterial] = useState(null);
+  const [services, setServices] = useState<Service[]>(defaultServices);
+  const [materials, setMaterials] = useState<Material[]>(defaultMaterials);
+  const [editingService, setEditingService] = useState<Service | null>(null);
+  const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   // Para editar un servicio
-  const handleEditService = (service) => {
+  const handleEditService = (service: Service) => {
     setEditingService({...service});
+  };
+
+  // Para añadir un nuevo servicio
+  const handleAddService = () => {
+    const newService: Service = {
+      id: `service-${Date.now()}`,
+      name: 'Nuevo Servicio',
+      serviceType: 'otro',
+      unitPrice: 0,
+      unit: 'ft',
+      laborRate: 0,
+      laborMethod: 'by_length',
+    };
+    setEditingService(newService);
   };
 
   // Para guardar cambios en un servicio
@@ -94,24 +128,41 @@ const PricingConfigPage = () => {
     if (!editingService) return;
 
     setIsLoading(true);
-    // Simular una petición a la API
     setTimeout(() => {
-      const updatedServices = services.map(service => 
-        service.id === editingService.id ? editingService : service
-      );
-      setServices(updatedServices);
+      if (services.find(s => s.id === editingService.id)) {
+        const updatedServices = services.map(service => 
+          service.id === editingService.id ? editingService : service
+        );
+        setServices(updatedServices);
+      } else {
+        setServices([...services, editingService]);
+      }
+      
       setEditingService(null);
       setIsLoading(false);
       toast({
-        title: "Servicio actualizado",
+        title: "Servicio guardado",
         description: "Los precios se han actualizado correctamente"
       });
     }, 500);
   };
 
   // Para editar un material
-  const handleEditMaterial = (material) => {
+  const handleEditMaterial = (material: Material) => {
     setEditingMaterial({...material});
+  };
+
+  // Para añadir un nuevo material
+  const handleAddMaterial = () => {
+    const newMaterial: Material = {
+      id: `material-${Date.now()}`,
+      name: 'Nuevo Material',
+      category: 'fence',
+      unitPrice: 0,
+      unit: 'ft',
+      supplier: '',
+    };
+    setEditingMaterial(newMaterial);
   };
 
   // Para guardar cambios en un material
@@ -119,16 +170,20 @@ const PricingConfigPage = () => {
     if (!editingMaterial) return;
 
     setIsLoading(true);
-    // Simular una petición a la API
     setTimeout(() => {
-      const updatedMaterials = materials.map(material => 
-        material.id === editingMaterial.id ? editingMaterial : material
-      );
-      setMaterials(updatedMaterials);
+      if (materials.find(m => m.id === editingMaterial.id)) {
+        const updatedMaterials = materials.map(material => 
+          material.id === editingMaterial.id ? editingMaterial : material
+        );
+        setMaterials(updatedMaterials);
+      } else {
+        setMaterials([...materials, editingMaterial]);
+      }
+      
       setEditingMaterial(null);
       setIsLoading(false);
       toast({
-        title: "Material actualizado",
+        title: "Material guardado",
         description: "Los precios se han actualizado correctamente"
       });
     }, 500);
@@ -141,20 +196,21 @@ const PricingConfigPage = () => {
         <meta name="description" content="Configuración centralizada de precios" />
       </Helmet>
 
-      <div className="flex items-center space-x-4 mb-6">
-        <Link href="/dashboard">
-          <a className="flex items-center text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Volver al Dashboard
-          </a>
-        </Link>
-      </div>
-
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">Configuración de Precios</h1>
-        <p className="text-muted-foreground">
-          Administra los precios de servicios y materiales para toda tu empresa
-        </p>
+      {/* Barra de navegación superior */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b pb-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Configuración de Precios</h1>
+          <p className="text-muted-foreground">
+            Administra los precios de servicios y materiales para toda tu empresa
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" asChild>
+            <Link href="/dashboard">
+              <Home className="mr-2 h-4 w-4" /> Dashboard
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="services" className="space-y-6">
@@ -165,11 +221,16 @@ const PricingConfigPage = () => {
 
         <TabsContent value="services">
           <Card>
-            <CardHeader>
-              <CardTitle>Precios de Servicios</CardTitle>
-              <CardDescription>
-                Configura las tarifas base para todos tus servicios
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Precios de Servicios</CardTitle>
+                <CardDescription>
+                  Configura las tarifas base para todos tus servicios
+                </CardDescription>
+              </div>
+              <Button onClick={handleAddService}>
+                <PlusIcon className="mr-2 h-4 w-4" /> Añadir Servicio
+              </Button>
             </CardHeader>
             <CardContent>
               <Table>
@@ -205,7 +266,11 @@ const PricingConfigPage = () => {
               
               {editingService && (
                 <div className="mt-6 border rounded-lg p-4">
-                  <h3 className="text-lg font-medium mb-4">Editar Servicio</h3>
+                  <h3 className="text-lg font-medium mb-4">
+                    {services.find(s => s.id === editingService.id) 
+                      ? 'Editar Servicio' 
+                      : 'Añadir Nuevo Servicio'}
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div className="space-y-2">
                       <Label htmlFor="service-name">Nombre del Servicio</Label>
@@ -229,7 +294,10 @@ const PricingConfigPage = () => {
                         id="unit-price"
                         type="number" 
                         value={editingService.unitPrice}
-                        onChange={(e) => setEditingService({...editingService, unitPrice: parseFloat(e.target.value) || 0})}
+                        onChange={(e) => setEditingService({
+                          ...editingService, 
+                          unitPrice: parseFloat(e.target.value) || 0
+                        })}
                       />
                     </div>
                     <div className="space-y-2">
@@ -254,7 +322,10 @@ const PricingConfigPage = () => {
                         id="labor-rate"
                         type="number" 
                         value={editingService.laborRate}
-                        onChange={(e) => setEditingService({...editingService, laborRate: parseFloat(e.target.value) || 0})}
+                        onChange={(e) => setEditingService({
+                          ...editingService, 
+                          laborRate: parseFloat(e.target.value) || 0
+                        })}
                       />
                     </div>
                     <div className="space-y-2">
@@ -301,11 +372,16 @@ const PricingConfigPage = () => {
 
         <TabsContent value="materials">
           <Card>
-            <CardHeader>
-              <CardTitle>Precios de Materiales</CardTitle>
-              <CardDescription>
-                Configura los precios de los materiales para todos los proyectos
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Precios de Materiales</CardTitle>
+                <CardDescription>
+                  Configura los precios de los materiales para todos los proyectos
+                </CardDescription>
+              </div>
+              <Button onClick={handleAddMaterial}>
+                <PlusIcon className="mr-2 h-4 w-4" /> Añadir Material
+              </Button>
             </CardHeader>
             <CardContent>
               <Table>
@@ -341,7 +417,11 @@ const PricingConfigPage = () => {
               
               {editingMaterial && (
                 <div className="mt-6 border rounded-lg p-4">
-                  <h3 className="text-lg font-medium mb-4">Editar Material</h3>
+                  <h3 className="text-lg font-medium mb-4">
+                    {materials.find(m => m.id === editingMaterial.id) 
+                      ? 'Editar Material' 
+                      : 'Añadir Nuevo Material'}
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div className="space-y-2">
                       <Label htmlFor="material-name">Nombre del Material</Label>
@@ -366,6 +446,7 @@ const PricingConfigPage = () => {
                           <SelectItem value="gutters">Canaletas</SelectItem>
                           <SelectItem value="windows">Ventanas</SelectItem>
                           <SelectItem value="deck">Deck</SelectItem>
+                          <SelectItem value="otro">Otro</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -375,7 +456,10 @@ const PricingConfigPage = () => {
                         id="material-price"
                         type="number" 
                         value={editingMaterial.unitPrice}
-                        onChange={(e) => setEditingMaterial({...editingMaterial, unitPrice: parseFloat(e.target.value) || 0})}
+                        onChange={(e) => setEditingMaterial({
+                          ...editingMaterial, 
+                          unitPrice: parseFloat(e.target.value) || 0
+                        })}
                       />
                     </div>
                     <div className="space-y-2">
