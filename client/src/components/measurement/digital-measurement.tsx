@@ -8,16 +8,28 @@ import { Slider } from "@/components/ui/slider";
 import { Upload, Pencil, Ruler, Maximize, Square, Save, FileImage, Camera, Undo, Redo, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+interface Point {
+  x: number;
+  y: number;
+}
+
 interface Measurement {
   id: string;
-  startX: number;
-  startY: number;
-  endX: number;
-  endY: number;
-  length: number; // in pixels
-  realLength: number; // in real-world unit (feet, meters, etc.)
-  unit: string;
+  type: 'line' | 'area' | 'perimeter';
+  points: Point[];
+  length?: number; // in pixels for lines
+  area?: number; // in square units for areas
+  perimeter?: number; // in pixels for perimeter
+  realLength?: number; // in real-world unit (feet, meters, etc.)
+  realArea?: number; // in square real-world units (sq feet, sq meters)
+  realPerimeter?: number; // in real-world units for perimeter
+  unit: string; 
   label: string;
+  serviceType?: string; // tipo de servicio asociado (roofing, siding, etc.)
+  materialType?: string; // tipo de material para calcular costos
+  costEstimate?: number; // estimación de costo basado en medidas y tipo de servicio
+  color?: string; // Color para visualización
+  notes?: string; // Notas adicionales sobre la medición
 }
 
 interface DigitalMeasurementProps {
@@ -28,6 +40,74 @@ interface DigitalMeasurementProps {
   canvasWidth?: number;
   canvasHeight?: number;
 }
+
+// Definir tarifas por tipo de servicio y unidad de medida
+const SERVICE_RATES = {
+  roofing: { rate: 5.5, unit: 'sqft' }, // $5.5 por pie cuadrado
+  siding: { rate: 8.0, unit: 'sqft' }, // $8.0 por pie cuadrado
+  windows: { rate: 45.0, unit: 'ft' }, // $45 por pie lineal de marco
+  gutters: { rate: 12.0, unit: 'ft' }, // $12 por pie lineal
+  painting: { rate: 3.0, unit: 'sqft' }, // $3 por pie cuadrado
+  flooring: { rate: 6.0, unit: 'sqft' }, // $6 por pie cuadrado
+  electrical: { rate: 15.0, unit: 'ft' }, // $15 por pie lineal (cableado)
+  plumbing: { rate: 25.0, unit: 'ft' }, // $25 por pie lineal de tubería
+  hvac: { rate: 10.0, unit: 'sqft' }, // $10 por pie cuadrado de área
+  landscaping: { rate: 4.5, unit: 'sqft' } // $4.5 por pie cuadrado
+};
+
+// Factores de costo para diferentes materiales
+const MATERIAL_FACTORS = {
+  standard: 1.0,
+  premium: 1.5,
+  luxury: 2.5,
+  economy: 0.8
+};
+
+const COLOR_PALETTE = [
+  "#FF5722", // Naranja
+  "#2196F3", // Azul
+  "#4CAF50", // Verde
+  "#9C27B0", // Morado
+  "#F44336", // Rojo
+  "#009688", // Verde azulado
+  "#3F51B5", // Índigo
+  "#FFEB3B", // Amarillo
+  "#795548", // Marrón
+  "#607D8B"  // Gris azulado
+];
+
+// Servicio calculador de costos
+const calculateCost = (
+  measurement: Measurement,
+  serviceType: string,
+  materialType: string = 'standard'
+): number => {
+  if (!measurement || !serviceType) return 0;
+  
+  const service = SERVICE_RATES[serviceType as keyof typeof SERVICE_RATES];
+  if (!service) return 0;
+  
+  const materialFactor = MATERIAL_FACTORS[materialType as keyof typeof MATERIAL_FACTORS] || 1.0;
+  
+  // Determinar qué valor usar según el tipo de servicio
+  let measureValue = 0;
+  if (service.unit === 'sqft' && measurement.realArea) {
+    // Servicios basados en área (techos, pisos, etc.)
+    measureValue = measurement.realArea;
+  } else if (service.unit === 'ft' && measurement.realLength) {
+    // Servicios basados en longitud (ventanas, canaletas, etc.)
+    measureValue = measurement.realLength;
+  } else if (service.unit === 'ft' && measurement.realPerimeter) {
+    // Servicios basados en perímetro
+    measureValue = measurement.realPerimeter;
+  }
+  
+  // Calcular costo base
+  const baseCost = measureValue * service.rate;
+  
+  // Aplicar factor de material
+  return baseCost * materialFactor;
+};
 
 export default function DigitalMeasurement({
   initialScale = 1,
@@ -46,6 +126,8 @@ export default function DigitalMeasurement({
     }
     return [];
   });
+  
+  // Estados de la herramienta
   const [activeTool, setActiveTool] = useState<string>("line");
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentMeasurement, setCurrentMeasurement] = useState<Partial<Measurement> | null>(null);
@@ -53,8 +135,17 @@ export default function DigitalMeasurement({
   const [activeTab, setActiveTab] = useState("draw");
   const [backgroundImage, setBackgroundImage] = useState<HTMLImageElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Estados para calibración y preferencias
   const [calibrationMode, setCalibrationMode] = useState(false);
   const [calibrationLength, setCalibrationLength] = useState<number>(10); // Default 10 feet
+  const [selectedServiceType, setSelectedServiceType] = useState<string>("roofing");
+  const [selectedMaterialType, setSelectedMaterialType] = useState<string>("standard");
+  const [selectedMeasurement, setSelectedMeasurement] = useState<string | null>(null);
+  
+  // Estados para dibujo de áreas
+  const [polyPoints, setPolyPoints] = useState<Point[]>([]);
+  const [isDrawingPoly, setIsDrawingPoly] = useState(false);
   
   // Initialize the canvas
   useEffect(() => {
@@ -95,7 +186,12 @@ export default function DigitalMeasurement({
     if (isDrawing && currentMeasurement) {
       drawCurrentMeasurement(ctx);
     }
-  }, [measurements, isDrawing, currentMeasurement, backgroundImage]);
+    
+    // Dibujar polígono en progreso
+    if (isDrawingPoly && polyPoints.length > 0) {
+      drawPolyInProgress(ctx);
+    }
+  }, [measurements, isDrawing, currentMeasurement, backgroundImage, isDrawingPoly, polyPoints]);
   
   // Notify parent component when measurements change
   useEffect(() => {

@@ -98,6 +98,7 @@ import {
 
 // Digital Measurement Components
 import DigitalMeasurement from "@/components/measurement/digital-measurement";
+import AdvancedMeasurement from "@/components/measurement/advanced-measurement";
 import LiDARScanner from "@/components/measurement/lidar-scanner";
 
 // Definición del esquema de validación para el formulario
