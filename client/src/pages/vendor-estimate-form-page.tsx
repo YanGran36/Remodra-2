@@ -98,8 +98,13 @@ import {
   MATERIALS_BY_SERVICE, 
   OPTIONS_BY_SERVICE,
   SERVICE_INFO,
-  getServiceLabel
+  getServiceLabel,
+  getMaterialWithConfiguredPrice,
+  getServiceBasePrice
 } from "@/lib/service-options";
+
+// Importar hook de precios centralizados
+import { usePricing } from '@/hooks/use-pricing';
 
 // Importar componentes de formulario especializados
 import ServiceEstimateForm from "@/components/estimates/service-estimate-form";
