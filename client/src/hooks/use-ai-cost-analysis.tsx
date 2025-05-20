@@ -58,8 +58,15 @@ export interface AiAnalysisResult {
       lowRange: number;
       highRange: number;
       notes: string;
+      marketPosition?: string;
     };
     potentialIssues: string[];
+    salesPoints?: string[];
+    objectionHandling?: string[];
+    premiumUpgrades?: string[];
+    closingStrategy?: string;
+    testimonialTemplates?: string[];
+    presentationTips?: string[];
   };
   summary: string;
 }

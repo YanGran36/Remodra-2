@@ -47,7 +47,7 @@ export default function AiAnalysisPanel({
 }: AiAnalysisPanelProps) {
   const [analysisResult, setAnalysisResult] = useState<AiAnalysisResult | null>(null);
   const [jobDescription, setJobDescription] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<string>("analysis");
+  const [activeTab, setActiveTab] = useState<string>("sales");
   
   const { toast } = useToast();
   const { 
