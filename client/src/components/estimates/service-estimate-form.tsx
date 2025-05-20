@@ -111,10 +111,33 @@ export default function ServiceEstimateForm({
     }
   });
 
+  // Usar nuestro hook de precios centralizados
+  const { services, materials: configuredMaterials, isLoading: pricesLoading } = usePricing();
+  
   // Get materials and options for this service type
-  const materials = MATERIALS_BY_SERVICE[serviceType as keyof typeof MATERIALS_BY_SERVICE] || [];
+  const defaultMaterials = MATERIALS_BY_SERVICE[serviceType as keyof typeof MATERIALS_BY_SERVICE] || [];
   const options = OPTIONS_BY_SERVICE[serviceType as keyof typeof OPTIONS_BY_SERVICE] || [];
   const serviceLabel = SERVICE_TYPES.find(s => s.value === serviceType)?.label || serviceType;
+  
+  // Combinar los materiales predeterminados con los precios configurados
+  const materials = defaultMaterials.map(material => {
+    // Buscar si existe un precio configurado para este material
+    const configuredMaterial = configuredMaterials.find(m => 
+      m.id === material.id || (m.category === serviceType && m.name.includes(material.name))
+    );
+    
+    // Si existe, actualizar el precio
+    if (configuredMaterial) {
+      return {
+        ...material,
+        unitPrice: configuredMaterial.unitPrice,
+        unit: configuredMaterial.unit
+      };
+    }
+    
+    // Si no, usar el predeterminado
+    return material;
+  });
 
   // Agregar un material
   const addMaterial = (material: any, quantity: number) => {
