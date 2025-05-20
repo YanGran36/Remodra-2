@@ -153,6 +153,9 @@ export default function VendorServiceEstimatePage() {
   const [laborItems, setLaborItems] = useState<{service: string, hours: number, rate: number, total: number}[]>([]);
   const [laborSubtotal, setLaborSubtotal] = useState(0);
   
+  // Usar nuestro hook de precios centralizados
+  const { services, materials: configuredMaterials, isLoading: pricesLoading } = usePricing();
+  
   // Estados para herramientas de medición
   const [isDigitalMeasurementOpen, setIsDigitalMeasurementOpen] = useState(false);
   const [isLidarScannerOpen, setIsLidarScannerOpen] = useState(false);
@@ -210,7 +213,16 @@ export default function VendorServiceEstimatePage() {
 
   // Manejar adición de un material al estimado
   const addMaterial = (serviceType: string, materialId: string) => {
-    const material = getMaterial(serviceType, materialId);
+    // Intentar obtener el material con los precios configurados
+    let material = null;
+    
+    // Usar la nueva función que busca en los precios configurados primero
+    if (configuredMaterials.length > 0) {
+      material = getMaterialWithConfiguredPrice(serviceType, materialId, configuredMaterials);
+    } else {
+      material = getMaterial(serviceType, materialId);
+    }
+    
     if (!material) return;
     
     // Verificar si ya existe
