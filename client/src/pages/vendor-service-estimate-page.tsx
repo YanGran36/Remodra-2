@@ -21,8 +21,13 @@ import {
   SERVICE_INFO,
   getServiceLabel,
   getMaterial,
-  getOption
+  getOption,
+  getMaterialWithConfiguredPrice,
+  getServiceBasePrice
 } from "@/lib/service-options";
+
+// Importar hook de precios centralizados
+import { usePricing } from '@/hooks/use-pricing';
 
 // Icons
 import { 

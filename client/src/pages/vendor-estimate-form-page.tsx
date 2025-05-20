@@ -148,6 +148,9 @@ export default function VendorEstimateFormPage() {
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // Usar nuestro hook de precios centralizados
+  const { services, materials: configuredMaterials, isLoading: pricesLoading } = usePricing();
+  
   // Estados para herramientas de medición
   const [isDigitalMeasurementOpen, setIsDigitalMeasurementOpen] = useState(false);
   const [isLidarScannerOpen, setIsLidarScannerOpen] = useState(false);
