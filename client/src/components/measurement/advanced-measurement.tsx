@@ -621,6 +621,9 @@ export default function AdvancedMeasurement({
     let newMeasurement: Measurement;
     const measurementColor = COLOR_PALETTE[measurements.length % COLOR_PALETTE.length];
     
+    // Usar servicio de las opciones del componente principal, si está disponible
+    const currentServiceType = selectedServiceType;
+    
     if (activeTool === 'line' && points.length === 2) {
       // Línea: calcular longitud
       const pixelLength = distance(points[0], points[1]);
@@ -632,7 +635,8 @@ export default function AdvancedMeasurement({
         type: 'line',
         points: [],
         realLength: realLength,
-        unit
+        unit,
+        label: ''
       }, selectedServiceType, selectedMaterialType, serviceRates, calculationOptions);
       
       newMeasurement = {
@@ -663,7 +667,8 @@ export default function AdvancedMeasurement({
         points: [],
         realArea: realArea,
         realPerimeter: realPerimeter,
-        unit
+        unit,
+        label: ''
       }, selectedServiceType, selectedMaterialType, serviceRates, calculationOptions);
       
       newMeasurement = {
@@ -687,6 +692,16 @@ export default function AdvancedMeasurement({
       const pixelPerimeter = calculatePerimeter(points);
       const realPerimeter = pixelPerimeter / scale;
       
+      // Calcular el costo considerando el tipo de servicio y material
+      const costEstimate = calculateCost({
+        id: Date.now().toString(),
+        type: 'perimeter',
+        points: [],
+        realPerimeter: realPerimeter,
+        unit,
+        label: ''
+      }, selectedServiceType, selectedMaterialType, serviceRates, calculationOptions);
+      
       newMeasurement = {
         id: Date.now().toString(),
         type: 'perimeter',
@@ -697,7 +712,8 @@ export default function AdvancedMeasurement({
         label: `${formatNumber(realPerimeter)} ${unit}`,
         color: measurementColor,
         serviceType: selectedServiceType,
-        materialType: selectedMaterialType
+        materialType: selectedMaterialType,
+        costEstimate: costEstimate
       };
     }
     else {
@@ -709,7 +725,9 @@ export default function AdvancedMeasurement({
       newMeasurement.costEstimate = calculateCost(
         newMeasurement, 
         selectedServiceType, 
-        selectedMaterialType
+        selectedMaterialType,
+        serviceRates,
+        calculationOptions
       );
     }
     

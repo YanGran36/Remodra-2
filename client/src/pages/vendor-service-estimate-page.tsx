@@ -146,6 +146,7 @@ export default function VendorServiceEstimatePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [totalAmount, setTotalAmount] = useState(0);
   const [laborItems, setLaborItems] = useState<{service: string, hours: number, rate: number, total: number}[]>([]);
+  const [laborSubtotal, setLaborSubtotal] = useState(0);
   
   // Estados para herramientas de medición
   const [isDigitalMeasurementOpen, setIsDigitalMeasurementOpen] = useState(false);
