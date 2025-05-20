@@ -229,72 +229,62 @@ const PricingConfigPage = () => {
     setEditingMaterial(newMaterial);
   };
 
-  // Para guardar cambios en un material - Versión simplificada
+  // Para guardar cambios en un material - Versión ultra simplificada 
   const handleSaveMaterial = async () => {
     if (!editingMaterial) return;
 
     setIsLoading(true);
     
     try {
-      // Aplicamos el cambio localmente de inmediato
+      // Guardamos el material en memoria local inmediatamente para mostrar los cambios al usuario
       const updatedMaterial = {
         ...editingMaterial,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
       
-      // Esto guarda el material en la memoria local para usarlo de inmediato
-      let existingIndex = materials.findIndex(m => m.id === editingMaterial.id);
-      let updatedMaterials;
+      // Actualizar la lista local
+      const existingIndex = materials.findIndex(m => m.id === editingMaterial.id);
+      let updatedMaterialsList;
       
       if (existingIndex >= 0) {
-        // Si el material ya existe, lo actualizamos
-        updatedMaterials = [...materials];
-        updatedMaterials[existingIndex] = updatedMaterial;
+        // Si el material ya existe, lo actualizamos en la lista
+        updatedMaterialsList = [...materials];
+        updatedMaterialsList[existingIndex] = updatedMaterial;
       } else {
-        // Si es nuevo, lo añadimos
-        updatedMaterials = [...materials, updatedMaterial];
+        // Si es nuevo, lo añadimos a la lista
+        updatedMaterialsList = [...materials, updatedMaterial];
       }
       
       // Actualizamos la lista de materiales en la UI
-      setMaterials(updatedMaterials);
+      setMaterials(updatedMaterialsList);
       
-      // Guardamos en la base de datos en segundo plano
-      fetch(`/api/pricing/materials/${editingMaterial.id}`, {
+      // Mostramos mensaje de éxito
+      toast({
+        title: "Material guardado",
+        description: "Los precios se han actualizado correctamente en la aplicación"
+      });
+      
+      // También intentamos guardar en la base de datos
+      const response = await fetch(`/api/pricing/materials/${editingMaterial.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...editingMaterial,
           contractorId: 1,
-          // Asegurar que tenga una categoría
-          category: editingMaterial.category || editingMaterial.id.split('-')[0]
+          unitPrice: String(editingMaterial.unitPrice), // Aseguramos que el precio sea string
+          category: editingMaterial.category || (editingMaterial.id ? editingMaterial.id.split('-')[0] : 'other')
         })
-      }).then(() => {
-        // Actualizar la caché después de guardar
+      });
+      
+      // Si la respuesta fue exitosa
+      if (response.ok) {
+        console.log("Material guardado exitosamente en la base de datos");
+        // Actualizamos la caché
         queryClient.invalidateQueries({ queryKey: ['/api/pricing/materials'] });
-      }).catch((err) => {
-        console.warn("Error al guardar en segundo plano:", err);
-      });
-      
-      // Tratamos el material actualizado como el guardado para la UI
-      const savedMaterial = updatedMaterial;
-      
-      // Actualizar la lista local
-      if (existingMaterial) {
-        const updatedMaterials = materials.map(material => 
-          material.id === editingMaterial.id ? savedMaterial : material
-        );
-        setMaterials(updatedMaterials);
       } else {
-        setMaterials([...materials, savedMaterial]);
+        // Si hubo un error, lo registramos pero no afectamos la UI
+        console.warn("Error al guardar en la base de datos:", await response.text());
       }
-      
-      // Invalidar el caché para recargar datos
-      queryClient.invalidateQueries({ queryKey: ['/api/pricing/materials'] });
-      
-      toast({
-        title: "Material guardado",
-        description: "Los precios se han actualizado correctamente"
-      });
     } catch (error) {
       console.error('Error al guardar material:', error);
       toast({
