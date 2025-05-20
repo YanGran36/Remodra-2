@@ -1143,12 +1143,34 @@ const recalculateTotal = (items: SelectedItem[]) => {
                             <h4 className="font-semibold text-sm mb-2">Saved Measurements</h4>
                             <div className="border rounded-md divide-y">
                               {measurements.map((measurement, index) => (
-                                <div key={index} className="p-2 text-sm">
-                                  <div className="flex justify-between">
-                                    <span>{measurement.type}</span>
-                                    <span className="font-semibold">{measurement.value} {measurement.unit}</span>
+                                <div key={index} className="p-2 text-sm border-b last:border-0">
+                                  <div className="flex justify-between items-center">
+                                    <div className="flex items-center space-x-2">
+                                      <div className="w-3 h-3 rounded-full" 
+                                           style={{ backgroundColor: measurement.color || "#FF5722" }}></div>
+                                      <span className="font-medium capitalize">
+                                        {measurement.type === 'line' ? 'Line' : 
+                                         measurement.type === 'area' ? 'Area' : 
+                                         measurement.type === 'perimeter' ? 'Perimeter' : 'Measurement'} {index + 1}
+                                      </span>
+                                    </div>
+                                    <span className="font-semibold">{measurement.label || 
+                                      (measurement.realLength ? 
+                                        `${measurement.realLength.toFixed(2)} ${measurement.unit}` : 
+                                        measurement.realArea ? 
+                                        `${measurement.realArea.toFixed(2)} ${measurement.unit}²` : 
+                                        '')}</span>
                                   </div>
-                                  <p className="text-xs text-muted-foreground">{measurement.note}</p>
+                                  {measurement.serviceType && (
+                                    <div className="mt-1 flex justify-between text-xs text-muted-foreground">
+                                      <span>Service: {measurement.serviceType}</span>
+                                      {measurement.costEstimate && (
+                                        <span className="text-primary font-medium">
+                                          Est. cost: ${measurement.costEstimate.toFixed(2)}
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
                               ))}
                             </div>
