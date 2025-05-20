@@ -1249,6 +1249,24 @@ const recalculateTotal = (items: SelectedItem[]) => {
                       canvasHeight={600}
                       showCostEstimates={true}
                       initialMeasurements={measurements}
+                      // Pasar el tipo de servicio seleccionado en el estimado principal
+                      defaultServiceType={serviceType}
+                      // Opciones de cálculo flexible para diferentes compañías
+                      calculationOptions={{
+                        // Precios personalizados por servicio
+                        servicePrices: {
+                          roofing: { rate: 6.5, unit: 'sqft', label: 'Roofing' },
+                          siding: { rate: 8.75, unit: 'sqft', label: 'Siding' },
+                          fence: { rate: 28.0, unit: 'ft', label: 'Fence' },
+                          deck: { rate: 35.0, unit: 'sqft', label: 'Deck' },
+                          gutters: { rate: 12.0, unit: 'ft', label: 'Gutters' },
+                          windows: { rate: 45.0, unit: 'ft', label: 'Windows' }
+                        },
+                        // Método de cálculo para labor (por área, por longitud, etc.)
+                        laborCalculationMethod: 'by_measurement', // otras opciones: 'hourly', 'fixed'
+                        // Factor para labor basado en complejidad
+                        laborFactor: 0.35 // 35% del costo de material
+                      }}
                       onMeasurementsChange={(newMeasurements) => {
                         setMeasurements(newMeasurements);
                         
@@ -1267,6 +1285,16 @@ const recalculateTotal = (items: SelectedItem[]) => {
                         const totalCost = newMeasurements.reduce((sum, m) => sum + (m.costEstimate || 0), 0);
                         if (totalCost > 0) {
                           console.log(`Total cost estimate: $${totalCost.toFixed(2)}`);
+                          
+                          // Si hay costo estimado, actualizar labor y materiales
+                          const materialsCost = totalCost * 0.65; // 65% materiales
+                          const laborCost = totalCost * 0.35; // 35% labor
+                          
+                          // Actualizar laborSubtotal para estimados más precisos
+                          setLaborSubtotal(Math.round(laborCost));
+                          
+                          // También podríamos crear automáticamente un ítem de material 
+                          // basado en las medidas, pero lo dejamos a elección del usuario
                         }
                       }} 
                     />
