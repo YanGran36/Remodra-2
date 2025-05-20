@@ -1,7 +1,7 @@
 import { Express } from 'express';
 import { db } from '../../db';
 import { servicePricing, materialPricing } from '@shared/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 /**
  * Registra las rutas para la gestión de precios centralizados
