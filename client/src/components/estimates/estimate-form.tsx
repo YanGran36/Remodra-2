@@ -3,12 +3,20 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Plus, Trash2, Loader2, Save, Edit } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Trash2, Loader2, Save, Edit, Tool } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useEstimates } from "@/hooks/use-estimates";
 import { useClients } from "@/hooks/use-clients";
 import { useProjects } from "@/hooks/use-projects";
 import { formatCurrency } from "@/lib/utils";
+import { 
+  SERVICE_TYPES, 
+  MATERIALS_BY_SERVICE, 
+  SERVICE_INFO, 
+  LABOR_RATES_BY_SERVICE,
+  getMaterial,
+  getServiceLabel
+} from "@/lib/service-options";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -102,6 +110,11 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
     amount: "0",
     notes: "",
   });
+  
+  // Track whether this is a material or labor item
+  const [itemType, setItemType] = useState<"material" | "labor" | "other">("material");
+  const [selectedService, setSelectedService] = useState<string>("");
+  const [selectedMaterial, setSelectedMaterial] = useState<string>("");
   
   const { toast } = useToast();
   const { createEstimateMutation, updateEstimateMutation, getEstimate } = useEstimates();
