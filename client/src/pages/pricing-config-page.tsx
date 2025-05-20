@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Helmet } from "react-helmet-async";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,6 +17,9 @@ import {
 } from "@/components/ui/table";
 import { ArrowLeft, PencilIcon, SaveIcon, PlusIcon, Home } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { usePricing } from "@/hooks/use-pricing";
 
 // Tipos definidos para evitar errores de tipado
 interface Service {
