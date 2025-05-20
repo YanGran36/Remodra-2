@@ -119,8 +119,60 @@ export default function ServiceEstimateForm({
   const options = OPTIONS_BY_SERVICE[serviceType as keyof typeof OPTIONS_BY_SERVICE] || [];
   const serviceLabel = SERVICE_TYPES.find(s => s.value === serviceType)?.label || serviceType;
   
-  // Combinar los materiales predeterminados con los precios configurados
+  // Función para cargar los precios actualizados desde la API
+  const [latestMaterialPrices, setLatestMaterialPrices] = useState<any[]>([]);
+  
+  // Efecto para cargar precios actualizados desde la API cada vez que se carga el componente
+  useEffect(() => {
+    const fetchLatestPrices = async () => {
+      try {
+        const response = await fetch('/api/pricing/materials');
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Precios actualizados directamente desde la API:", data);
+          
+          if (Array.isArray(data)) {
+            setLatestMaterialPrices(data);
+          }
+        }
+      } catch (error) {
+        console.error("Error al cargar precios actualizados:", error);
+      }
+    };
+    
+    fetchLatestPrices();
+  }, [serviceType]); // Recargar cada vez que cambia el tipo de servicio
+  
+  // Combinar los materiales predeterminados con los precios más actualizados
   const materials = defaultMaterials.map(material => {
+    // Primero intentamos encontrar el material en los datos recién cargados de la API
+    let latestPrice = null;
+    if (latestMaterialPrices.length > 0) {
+      latestPrice = latestMaterialPrices.find((m: any) => 
+        m.id_string === material.id || 
+        m.material_id === material.id || 
+        m.code === material.id
+      );
+    }
+    
+    // Si encontramos un precio actualizado, usarlo
+    if (latestPrice) {
+      console.log(`PRECIO ACTUALIZADO para ${material.id}:`, 
+        typeof latestPrice.unit_price === 'string' 
+          ? parseFloat(latestPrice.unit_price) 
+          : latestPrice.unit_price
+      );
+      
+      return {
+        ...material,
+        unitPrice: typeof latestPrice.unit_price === 'string' 
+          ? parseFloat(latestPrice.unit_price) 
+          : latestPrice.unit_price,
+        unit: latestPrice.unit || material.unit
+      };
+    }
+    
+    // Si no encontramos en los datos actualizados, buscar en los configurados del contexto
     // Asegurarse de que configuredMaterials sea un array
     const materialsArray = Array.isArray(configuredMaterials) ? configuredMaterials : [];
     
@@ -137,8 +189,6 @@ export default function ServiceEstimateForm({
         m.name.includes(material.name)
       );
     }
-    
-    console.log(`Material encontrado para ${material.id}:`, configuredMaterial);
     
     // Si existe, actualizar el precio
     if (configuredMaterial) {
