@@ -267,6 +267,11 @@ export const materialPricing = pgTable("material_pricing", {
   description: text("description"),
   category: text("category").notNull(), // fence, roof, etc. (para asociar con tipo de servicio)
   
+  // Campos de identificación adicionales para mapear a los materiales del estimado
+  code: text("code"), // Código original (wood_fence, vinyl_fence, etc.)
+  materialId: text("material_id"), // ID alternativo para búsqueda
+  idString: text("id_string"), // Otra forma de guardar el ID como string
+  
   // Precios y unidades
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
   unit: text("unit").notNull(), // ft, sqft, box, unit, etc.

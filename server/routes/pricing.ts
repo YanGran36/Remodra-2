@@ -246,45 +246,130 @@ export function registerPricingRoutes(app: Express) {
       
       // Si no hay materiales configurados, devolver datos predeterminados
       if (materials.length === 0) {
-        // Datos iniciales para materiales comunes
+        // Datos iniciales para materiales comunes con los IDs exactos que se usan en los estimados
         const defaultMaterials = [
+          // Materiales para cercas (fence)
           {
-            id: 'fence-wood',
-            name: 'Madera para Cerca',
+            id: 'wood_fence',
+            name: 'Wood Fence',
             description: 'Madera tratada para construcción de cercas',
             category: 'fence',
-            unitPrice: 22,
-            unit: 'ft',
+            unitPrice: 0,
+            unit: 'ln.ft',
             supplier: 'Lumber Yard',
             status: 'active'
           },
           {
-            id: 'fence-metal',
-            name: 'Postes Metálicos',
-            description: 'Postes metálicos para soporte de cercas',
+            id: 'vinyl_fence',
+            name: 'Vinyl Fence',
+            description: 'Cercas de vinilo duraderas',
             category: 'fence',
-            unitPrice: 35,
-            unit: 'unit',
+            unitPrice: 0,
+            unit: 'ln.ft',
+            supplier: 'Modern Materials',
+            status: 'active'
+          },
+          {
+            id: 'chain_link',
+            name: 'Chain Link Fence',
+            description: 'Cercas de malla ciclónica',
+            category: 'fence',
+            unitPrice: 0,
+            unit: 'ln.ft',
             supplier: 'Metal Supply Co.',
             status: 'active'
           },
           {
-            id: 'roofing-shingles',
-            name: 'Tejas Asfálticas',
+            id: 'aluminum_fence',
+            name: 'Aluminum Fence',
+            description: 'Cercas de aluminio elegantes',
+            category: 'fence',
+            unitPrice: 0,
+            unit: 'ln.ft',
+            supplier: 'Metal Supply Co.',
+            status: 'active'
+          },
+          {
+            id: 'fence_gate',
+            name: 'Fence Gate',
+            description: 'Puertas para cercas residenciales',
+            category: 'fence',
+            unitPrice: 0,
+            unit: 'unit',
+            supplier: 'Hardware Supply',
+            status: 'active'
+          },
+          {
+            id: 'post_caps',
+            name: 'Post Caps',
+            description: 'Tapas decorativas para postes',
+            category: 'fence',
+            unitPrice: 0,
+            unit: 'unit',
+            supplier: 'Hardware Supply',
+            status: 'active'
+          },
+          
+          // Materiales para techos (roof)
+          {
+            id: 'asphalt_shingles',
+            name: 'Asphalt Shingles',
             description: 'Tejas asfálticas estándar',
             category: 'roof',
-            unitPrice: 5.2,
-            unit: 'sqft',
+            unitPrice: 0,
+            unit: 'sq.ft',
             supplier: 'Roofing Supply',
             status: 'active'
           },
           {
-            id: 'gutters-aluminum',
-            name: 'Canaletas de Aluminio',
+            id: 'metal_roofing',
+            name: 'Metal Roofing',
+            description: 'Láminas de metal para techos',
+            category: 'roof',
+            unitPrice: 0,
+            unit: 'sq.ft',
+            supplier: 'Metal Supply Co.',
+            status: 'active'
+          },
+          {
+            id: 'tile_roofing',
+            name: 'Tile Roofing',
+            description: 'Tejas de cerámica para techos',
+            category: 'roof',
+            unitPrice: 0,
+            unit: 'sq.ft',
+            supplier: 'Premium Materials',
+            status: 'active'
+          },
+          
+          // Materiales para canaletas (gutters)
+          {
+            id: 'aluminum_gutters',
+            name: 'Aluminum Gutters',
             description: 'Canaletas de aluminio de 5 pulgadas',
             category: 'gutters',
-            unitPrice: 5,
-            unit: 'ft',
+            unitPrice: 0,
+            unit: 'ln.ft',
+            supplier: 'Gutter Supply',
+            status: 'active'
+          },
+          {
+            id: 'vinyl_gutters',
+            name: 'Vinyl Gutters',
+            description: 'Canaletas de vinilo resistentes',
+            category: 'gutters',
+            unitPrice: 0,
+            unit: 'ln.ft',
+            supplier: 'Modern Materials',
+            status: 'active'
+          },
+          {
+            id: 'downspouts',
+            name: 'Downspouts',
+            description: 'Tubos de bajada para canaletas',
+            category: 'gutters',
+            unitPrice: 0,
+            unit: 'unit',
             supplier: 'Gutter Supply',
             status: 'active'
           }
@@ -346,25 +431,40 @@ export function registerPricingRoutes(app: Express) {
     try {
       const { id } = req.params;
       
-      // Buscar el material por su ID de cadena (ej: fence-wood)
+      // Buscar material exactamente por el ID que se pasa
       const materials = await db
         .select()
         .from(materialPricing)
         .where(eq(materialPricing.contractorId, req.user.id));
       
-      // Buscar un material existente que tenga este ID como valor de 'code' o 'name'
-      const existingMaterial = materials.find(m => 
-        (m.id && m.id.toString() === id) || 
-        (m.code === id) || 
-        (m.category === req.body.category && m.name && m.name.toLowerCase().includes(id.toLowerCase()))
+      // Primero buscar por ID exacto entre code, materialId o idString
+      let existingMaterial = materials.find(m => 
+        m.code === id || 
+        (m.materialId && m.materialId === id) || 
+        (m.idString && m.idString === id)
       );
       
+      // Si no lo encontramos así, buscar por nombre
+      if (!existingMaterial) {
+        existingMaterial = materials.find(m => 
+          m.name === req.body.name || 
+          (m.category === req.body.category && m.name?.toLowerCase().includes(id.toLowerCase()))
+        );
+      }
+      
+      // Preparar los datos de actualización con los campos correctos
       const updateData = { 
         ...req.body,
         contractorId: req.user.id,
-        category: req.body.category || id.split('-')[0], // Extraer categoría del ID si no está definida
+        category: req.body.category,
+        // Asegurarse de guardar el ID original para poder identificarlo luego
+        code: id,
+        materialId: id,
+        idString: id,
         updatedAt: new Date()
       };
+      
+      console.log(`Material a actualizar/crear: ${id}`, updateData);
       
       if (existingMaterial) {
         // Si existe, actualizar
@@ -374,12 +474,12 @@ export function registerPricingRoutes(app: Express) {
           .where(eq(materialPricing.id, existingMaterial.id))
           .returning();
         
+        console.log('Material actualizado exitosamente en la base de datos');
         res.json(updatedMaterial);
       } else {
         // Si no existe, crear uno nuevo
         const newData = {
           ...updateData,
-          code: id, // Guardar el ID original como código
           createdAt: new Date()
         };
         
