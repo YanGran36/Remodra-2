@@ -129,71 +129,45 @@ export function usePricing() {
     retry: 0,
   });
 
-  // Consulta para materiales - Sin caché para siempre obtener los datos más recientes
+  // Consulta para materiales con valores predeterminados en cero
   const { 
     data: materialPrices, 
     isLoading: materialsLoading,
-    error: materialsError,
-    refetch: refetchMaterials
+    error: materialsError
   } = useQuery({
     queryKey: ['/api/pricing/materials'],
     queryFn: async () => {
-      try {
-        // Hacemos una petición directa sin usar caché
-        const response = await fetch('/api/pricing/materials', {
-          method: 'GET',
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
-          }
-        });
-        
-        if (!response.ok) throw new Error('Error al cargar materiales');
-        const data = await response.json();
-        
-        // Si hay datos, los procesamos
-        if (data && Array.isArray(data) && data.length > 0) {
-          console.log('Precios de materiales cargados de la base de datos:', data);
-          // Procesamos las entradas para asegurar que tengan los tipos correctos
-          return data.map((item: any) => ({
-            ...item,
-            id: String(item.id),
-            unitPrice: typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice,
-          }));
+      // Valores reseteados a cero para que el usuario pueda editarlos
+      return [
+        {
+          id: 'fence-wood',
+          name: 'Madera para Cerca',
+          category: 'fence',
+          unitPrice: 0, // Precio reseteado a cero
+          unit: 'ft',
+          supplier: 'Lumber Yard',
+        },
+        {
+          id: 'fence-metal',
+          name: 'Postes Metálicos',
+          category: 'fence',
+          unitPrice: 0, // Precio reseteado a cero
+          unit: 'unit',
+          supplier: 'Metal Supply Co.',
+        },
+        {
+          id: 'roofing-shingles',
+          name: 'Tejas Asfálticas',
+          category: 'roof',
+          unitPrice: 0, // Precio reseteado a cero
+          unit: 'sqft',
+          supplier: 'Roofing Supply',
         }
-        
-        // Si no hay datos, usamos valores predeterminados, pero con el precio actualizado para la madera
-        return [
-          {
-            id: 'fence-wood',
-            name: 'Madera para Cerca',
-            category: 'fence',
-            unitPrice: 25, // Valor actualizado directo
-            unit: 'ft',
-            supplier: 'Lumber Yard',
-          },
-          ...defaultMaterials.filter(m => m.id !== 'fence-wood')
-        ];
-      } catch (error) {
-        console.error('Error loading materials:', error);
-        // En caso de error, usamos valores predeterminados con el precio actualizado de madera
-        return [
-          {
-            id: 'fence-wood',
-            name: 'Madera para Cerca',
-            category: 'fence',
-            unitPrice: 25, // Valor actualizado directo
-            unit: 'ft',
-            supplier: 'Lumber Yard',
-          },
-          ...defaultMaterials.filter(m => m.id !== 'fence-wood')
-        ];
-      }
+      ];
     },
-    // Desactivamos caché para siempre obtener los valores más recientes
-    staleTime: 0,
-    cacheTime: 0,
-    retry: 2,
+    // Evitamos recargas innecesarias
+    staleTime: Infinity,
+    retry: 0,
   });
 
   // Funciones de utilidad para obtener precios por tipo o categoria
