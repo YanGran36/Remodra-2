@@ -232,7 +232,54 @@ export const propertyMeasurements = pgTable("property_measurements", {
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
 
-// Price configuration by contractor
+// NUEVO: Servicios con precios estandarizados por contratista
+export const servicePricing = pgTable("service_pricing", {
+  id: serial("id").primaryKey(),
+  contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
+  
+  // Datos de servicio
+  name: text("name").notNull(),
+  serviceType: text("service_type").notNull(), // fence, roof, gutters, windows, etc.
+  description: text("description"),
+  
+  // Precios y unidades
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  unit: text("unit").notNull(), // ft, sqft, unit, etc.
+  
+  // Configuración de mano de obra
+  laborRate: decimal("labor_rate", { precision: 10, scale: 2 }),
+  laborCalculationMethod: text("labor_calculation_method").default("by_length"), // by_area, by_length, hourly, fixed
+  
+  // Metadatos
+  status: text("status").default("active").notNull(), // active, inactive
+  isDefault: boolean("is_default").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+// NUEVO: Materiales con precios estandarizados por contratista
+export const materialPricing = pgTable("material_pricing", {
+  id: serial("id").primaryKey(),
+  contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
+  
+  // Datos de material
+  name: text("name").notNull(),
+  description: text("description"),
+  category: text("category").notNull(), // fence, roof, etc. (para asociar con tipo de servicio)
+  
+  // Precios y unidades
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  unit: text("unit").notNull(), // ft, sqft, box, unit, etc.
+  
+  // Metadatos
+  supplier: text("supplier"),
+  status: text("status").default("active").notNull(), // active, inactive
+  isDefault: boolean("is_default").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+// Configuración de precios global por contratista (configuración general)
 export const priceConfigurations = pgTable("price_configurations", {
   id: serial("id").primaryKey(),
   contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
@@ -274,6 +321,8 @@ export const contractorsRelations = relations(contractors, ({ many }) => ({
   followUps: many(followUps),
   propertyMeasurements: many(propertyMeasurements),
   priceConfigurations: many(priceConfigurations),
+  servicePricing: many(servicePricing),
+  materialPricing: many(materialPricing),
   achievementProgress: many(contractorAchievements),
   streaks: many(contractorStreaks),
   // Referencia a Google Sheets eliminada
