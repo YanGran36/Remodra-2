@@ -383,7 +383,7 @@ export default function AdvancedMeasurement({
     ctx.lineWidth = 2;
     
     // Dibujar líneas entre puntos
-    if (tempPoints.length > 1) {
+    if (tempPoints.length >= 1) {
       ctx.beginPath();
       ctx.moveTo(tempPoints[0].x, tempPoints[0].y);
       
@@ -391,8 +391,12 @@ export default function AdvancedMeasurement({
         ctx.lineTo(tempPoints[i].x, tempPoints[i].y);
       }
       
+      // Si hay una medición temporal activa (cursor moviéndose), dibujar línea al cursor
+      if (isDrawing && tempMeasurement && activeTool === 'line') {
+        ctx.lineTo(tempMeasurement.x, tempMeasurement.y);
+      }
       // Si estamos dibujando un área o perímetro, mostrar línea hasta el primer punto para cerrar
-      if ((activeTool === 'area' || activeTool === 'perimeter') && tempPoints.length > 2) {
+      else if ((activeTool === 'area' || activeTool === 'perimeter') && tempPoints.length > 2) {
         ctx.lineTo(tempPoints[0].x, tempPoints[0].y);
       }
       
@@ -405,6 +409,20 @@ export default function AdvancedMeasurement({
       ctx.arc(point.x, point.y, index === 0 ? 6 : 4, 0, Math.PI * 2);
       ctx.fill();
     });
+    
+    // Mostrar distancia en tiempo real mientras se mueve el cursor (solo para líneas)
+    if (isDrawing && tempMeasurement && activeTool === 'line' && tempPoints.length >= 1) {
+      const lastPoint = tempPoints[tempPoints.length - 1];
+      const midX = (lastPoint.x + tempMeasurement.x) / 2;
+      const midY = (lastPoint.y + tempMeasurement.y) / 2;
+      
+      drawLabel(
+        ctx, 
+        [midX, midY], 
+        `${formatNumber(tempMeasurement.distance)} ${unit}`, 
+        "#FF5722"
+      );
+    }
     
     // Si es una línea con dos puntos, mostrar medida temporal
     if (activeTool === 'line' && tempPoints.length === 2) {
@@ -478,6 +496,45 @@ export default function AdvancedMeasurement({
     };
   };
   
+  // Variable para rastrear si se está mostrando una medición temporal
+  const [tempMeasurement, setTempMeasurement] = useState<{x: number, y: number, distance: number} | null>(null);
+  
+  // Manejar movimiento del ratón sobre el canvas
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDrawing || tempPoints.length === 0) return;
+    
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    // Mostrar medida temporal mientras se mueve el cursor
+    if (tempPoints.length > 0) {
+      const startPoint = tempPoints[tempPoints.length - 1];
+      const pixelDistance = distance(startPoint, {x, y});
+      const realDistance = pixelDistance / scale;
+      
+      setTempMeasurement({x, y, distance: realDistance});
+      
+      // Se redibujará en el siguiente frame de animación
+    }
+  };
+  
+  // Manejar doble clic en el canvas
+  const handleDoubleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (activeTool === 'line' || activeTool === 'area' || activeTool === 'perimeter') {
+      if (tempPoints.length >= 2) {
+        // Finalizar la medición actual con doble clic
+        finalizeMeasurement(tempPoints);
+        setTempPoints([]);
+        setTempMeasurement(null);
+        setIsDrawing(false);
+      }
+    }
+  };
+  
   // Manejar clic en el canvas
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -502,16 +559,16 @@ export default function AdvancedMeasurement({
     
     // Si estamos usando herramientas de dibujo
     if (['line', 'area', 'perimeter'].includes(activeTool)) {
-      // Para líneas, solo necesitamos dos puntos
+      setIsDrawing(true);
+      
+      // Para líneas, acumular puntos hasta el doble clic
       if (activeTool === 'line') {
         if (tempPoints.length === 0) {
           // Primer punto
           setTempPoints([{ x, y }]);
-        } else if (tempPoints.length === 1) {
-          // Segundo punto - completar la línea
-          const newPoints = [...tempPoints, { x, y }];
-          finalizeMeasurement(newPoints);
-          setTempPoints([]);
+        } else {
+          // Agregar otro punto - continuamos hasta doble clic
+          setTempPoints([...tempPoints, { x, y }]);
         }
       } 
       // Para áreas y perímetros, acumular puntos hasta que se cierre o finalice
@@ -521,6 +578,7 @@ export default function AdvancedMeasurement({
           // Cerrar el polígono
           finalizeMeasurement(tempPoints);
           setTempPoints([]);
+          setIsDrawing(false);
         } else {
           // Agregar un nuevo punto
           setTempPoints([...tempPoints, { x, y }]);
