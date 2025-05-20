@@ -839,14 +839,14 @@ export default function AdvancedMeasurement({
   };
   
   return (
-    <Card className="w-full max-w-4xl mx-auto">
+    <Card className="w-full max-w-4xl mx-auto overflow-auto">
       <CardHeader>
         <CardTitle>Advanced Digital Measurement</CardTitle>
         <CardDescription>
           Upload an image and take precise measurements for accurate cost estimates.
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-y-auto max-h-[80vh]">
         <Tabs defaultValue="draw" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="draw">Measure</TabsTrigger>

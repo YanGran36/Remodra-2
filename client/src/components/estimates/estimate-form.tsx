@@ -645,12 +645,41 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
                   </div>
                   <div className="col-span-2">
                     <FormLabel>Quantity</FormLabel>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={newItem.quantity}
-                      onChange={(e) => handleItemChange('quantity', e.target.value)}
-                    />
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        type="number"
+                        min="1"
+                        value={newItem.quantity}
+                        onChange={(e) => handleItemChange('quantity', e.target.value)}
+                        className="w-full"
+                      />
+                      <div className="flex items-center space-x-1">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 px-2"
+                          onClick={() => {
+                            const currentQty = Number(newItem.quantity) || 1;
+                            handleItemChange('quantity', Math.max(1, currentQty - 1));
+                          }}
+                        >
+                          -
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 px-2"
+                          onClick={() => {
+                            const currentQty = Number(newItem.quantity) || 1;
+                            handleItemChange('quantity', currentQty + 1);
+                          }}
+                        >
+                          +
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                   <div className="col-span-2">
                     <FormLabel>Unit Price</FormLabel>
