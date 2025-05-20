@@ -172,7 +172,11 @@ export default function AdvancedMeasurement({
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
     
     if (backgroundImage) {
+      // Draw background image with proper scaling to fit
       ctx.drawImage(backgroundImage, 0, 0, canvasWidth, canvasHeight);
+    } else {
+      // If no background, draw a simple house outline in the center to help visualize
+      drawSimpleHouseOutline(ctx);
     }
     
     // Draw all measurements
@@ -186,6 +190,88 @@ export default function AdvancedMeasurement({
     
     // Draw real-time measurement distances
     drawRealTimeDistances(ctx);
+  };
+  
+  // Draw a simple house outline to help with visualization when no background image is available
+  const drawSimpleHouseOutline = (ctx: CanvasRenderingContext2D) => {
+    const centerX = canvasWidth / 2;
+    const centerY = canvasHeight / 2;
+    const houseWidth = canvasWidth * 0.5;
+    const houseHeight = canvasHeight * 0.4;
+    
+    // Draw house body (rectangle)
+    ctx.beginPath();
+    ctx.rect(
+      centerX - houseWidth / 2,
+      centerY - houseHeight / 2 + 30,
+      houseWidth,
+      houseHeight
+    );
+    ctx.strokeStyle = "#aaaaaa";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // Draw roof (triangle)
+    ctx.beginPath();
+    ctx.moveTo(centerX - houseWidth / 2, centerY - houseHeight / 2 + 30);
+    ctx.lineTo(centerX, centerY - houseHeight / 2 - 40);
+    ctx.lineTo(centerX + houseWidth / 2, centerY - houseHeight / 2 + 30);
+    ctx.closePath();
+    ctx.strokeStyle = "#aaaaaa";
+    ctx.stroke();
+    
+    // Draw door
+    ctx.beginPath();
+    ctx.rect(
+      centerX - 20,
+      centerY + houseHeight / 2 - 40,
+      40,
+      70
+    );
+    ctx.strokeStyle = "#aaaaaa";
+    ctx.stroke();
+    
+    // Draw window
+    ctx.beginPath();
+    ctx.rect(
+      centerX - houseWidth / 2 + 40,
+      centerY - 20,
+      50,
+      40
+    );
+    ctx.strokeStyle = "#aaaaaa";
+    ctx.stroke();
+    
+    // Add label
+    ctx.font = "14px Arial";
+    ctx.fillStyle = "#666666";
+    ctx.textAlign = "center";
+    ctx.fillText("House", centerX, centerY + houseHeight / 2 + 30);
+    
+    // Add a scale indicator at the bottom
+    const scaleLineLength = 100;
+    const scaleText = `${Math.round(scaleLineLength / scale)} ${unit}`;
+    
+    ctx.beginPath();
+    ctx.moveTo(centerX - scaleLineLength / 2, canvasHeight - 40);
+    ctx.lineTo(centerX + scaleLineLength / 2, canvasHeight - 40);
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // Draw small vertical ticks at each end
+    ctx.beginPath();
+    ctx.moveTo(centerX - scaleLineLength / 2, canvasHeight - 45);
+    ctx.lineTo(centerX - scaleLineLength / 2, canvasHeight - 35);
+    ctx.moveTo(centerX + scaleLineLength / 2, canvasHeight - 45);
+    ctx.lineTo(centerX + scaleLineLength / 2, canvasHeight - 35);
+    ctx.stroke();
+    
+    // Add scale text
+    ctx.font = "12px Arial";
+    ctx.fillStyle = "#000000";
+    ctx.textAlign = "center";
+    ctx.fillText(scaleText, centerX, canvasHeight - 20);
   };
   
   // Function to draw real-time distances during measurement

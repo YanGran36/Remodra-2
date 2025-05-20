@@ -338,16 +338,84 @@ const LABOR_RATES_BY_SERVICE: Record<string, { baseHours: number, hourlyRate: nu
   'general': { baseHours: 6, hourlyRate: 45 }
 };
 
-// Calcular el total del estimado incluyendo mano de obra
+// Calcular el total del estimado incluyendo mano de obra y mediciones
 const recalculateTotal = (items: SelectedItem[]) => {
-  // Calcular subtotal de materiales y opciones
+  // Calcular subtotal de materiales y opciones de los ítems seleccionados manualmente
   const materialsSubtotal = items.reduce((sum, item) => sum + item.total, 0);
   
-  // Calcular subtotal de mano de obra
-  const laborSubtotal = laborItems.reduce((sum, item) => sum + item.total, 0);
+  // Calcular costos adicionales basados en las mediciones
+  let measurementMaterialsCost = 0;
+  let measurementLaborCost = 0;
+  
+  // Aplicar cálculos basados en mediciones reales
+  measurements.forEach(measurement => {
+    // Para cercas, usar mediciones lineales (length)
+    if (measurement.type === 'line' && measurement.realLength && selectedServiceTypes.includes('fence')) {
+      const fenceMaterialRate = 35; // Precio por pie lineal de material de cerca
+      const fenceLaborRate = 22;    // Precio por pie lineal de instalación
+      
+      // Calcular costo de materiales
+      measurementMaterialsCost += measurement.realLength * fenceMaterialRate;
+      
+      // Calcular costo de mano de obra
+      measurementLaborCost += measurement.realLength * fenceLaborRate;
+      
+      console.log(`Fence calculation - Length: ${measurement.realLength}ft, Materials: $${measurementMaterialsCost}, Labor: $${measurementLaborCost}`);
+    } 
+    // Para techos y pisos, usar mediciones de área
+    else if (measurement.type === 'area' && measurement.realArea) {
+      if (selectedServiceTypes.includes('roof') || selectedServiceTypes.includes('roofing')) {
+        const roofingMaterialRate = 5.5; // Precio por pie cuadrado de material de techo
+        const roofingLaborRate = 3.2;    // Precio por pie cuadrado de instalación
+        
+        // Calcular costo de materiales
+        measurementMaterialsCost += measurement.realArea * roofingMaterialRate;
+        
+        // Calcular costo de mano de obra
+        measurementLaborCost += measurement.realArea * roofingLaborRate;
+        
+        console.log(`Roofing calculation - Area: ${measurement.realArea}sqft, Materials: $${measurementMaterialsCost}, Labor: $${measurementLaborCost}`);
+      }
+      else if (selectedServiceTypes.includes('flooring')) {
+        const flooringMaterialRate = 4.8; // Precio por pie cuadrado de material de piso
+        const flooringLaborRate = 2.7;    // Precio por pie cuadrado de instalación
+        
+        // Calcular costo de materiales
+        measurementMaterialsCost += measurement.realArea * flooringMaterialRate;
+        
+        // Calcular costo de mano de obra
+        measurementLaborCost += measurement.realArea * flooringLaborRate;
+        
+        console.log(`Flooring calculation - Area: ${measurement.realArea}sqft, Materials: $${measurementMaterialsCost}, Labor: $${measurementLaborCost}`);
+      }
+    }
+    // Para perímetros (como molduras, acabados, etc.)
+    else if (measurement.type === 'perimeter' && measurement.realPerimeter) {
+      const trimMaterialRate = 3.2; // Precio por pie lineal de moldura/acabado
+      const trimLaborRate = 2.5;    // Precio por pie lineal de instalación
+      
+      // Calcular costo de materiales
+      measurementMaterialsCost += measurement.realPerimeter * trimMaterialRate;
+      
+      // Calcular costo de mano de obra
+      measurementLaborCost += measurement.realPerimeter * trimLaborRate;
+      
+      console.log(`Trim calculation - Perimeter: ${measurement.realPerimeter}ft, Materials: $${measurementMaterialsCost}, Labor: $${measurementLaborCost}`);
+    }
+  });
+  
+  // Calcular subtotal de mano de obra (manual + basada en mediciones)
+  const manualLaborSubtotal = laborItems.reduce((sum, item) => sum + item.total, 0);
+  const totalLaborSubtotal = manualLaborSubtotal + measurementLaborCost;
+  
+  // Actualizar subtotal de mano de obra para mostrar
+  setLaborSubtotal(totalLaborSubtotal);
+  
+  // Total de materiales (items seleccionados + basados en mediciones)
+  const totalMaterialsSubtotal = materialsSubtotal + measurementMaterialsCost;
   
   // Subtotal combinado
-  const subtotal = materialsSubtotal + laborSubtotal;
+  const subtotal = totalMaterialsSubtotal + totalLaborSubtotal;
   
   // Actualizar valores en el formulario
   form.setValue("subtotal", subtotal);
@@ -362,8 +430,10 @@ const recalculateTotal = (items: SelectedItem[]) => {
   setTotalAmount(total);
   
   console.log("Total recalculado:", { 
-    materialsSubtotal, 
-    laborSubtotal, 
+    materialsSubtotal: totalMaterialsSubtotal, 
+    laborSubtotal: totalLaborSubtotal, 
+    measurementMaterialsCost,
+    measurementLaborCost,
     subtotal, 
     taxRate, 
     discountAmount, 
