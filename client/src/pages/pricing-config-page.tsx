@@ -335,7 +335,7 @@ const PricingConfigPage = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/dashboard">
+          <Link href="/">
             <Button variant="outline">
               <Home className="mr-2 h-4 w-4" /> Dashboard
             </Button>
