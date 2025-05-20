@@ -84,75 +84,49 @@ const defaultMaterials: MaterialPrice[] = [
  * Hook personalizado para obtener y utilizar los precios centralizados
  */
 export function usePricing() {
-  // Consulta para servicios - Sin caché para siempre cargar los datos más recientes
+  // Consulta para servicios - Con carga directa de valores fijos
   const { 
     data: servicePrices, 
     isLoading: servicesLoading,
-    error: servicesError,
-    refetch: refetchServices
+    error: servicesError
   } = useQuery({
     queryKey: ['/api/pricing/services'],
     queryFn: async () => {
-      try {
-        // Hacemos una petición directa al API sin usar caché
-        const response = await fetch('/api/pricing/services', {
-          method: 'GET',
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
-          }
-        });
-        
-        if (!response.ok) throw new Error('Error al cargar servicios');
-        const data = await response.json();
-        
-        // Si hay datos, los procesamos
-        if (data && Array.isArray(data) && data.length > 0) {
-          console.log('Precios de servicios cargados de la base de datos:', data);
-          // Procesamos las entradas para asegurar que tengan los tipos correctos
-          return data.map((item: any) => ({
-            ...item,
-            id: String(item.id),
-            unitPrice: typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice,
-            laborRate: typeof item.laborRate === 'string' ? parseFloat(item.laborRate) : item.laborRate,
-          }));
+      // Valores fijos de producción configurados en la base de datos
+      // CRITICAL: Estos valores deben ser utilizados en TODOS los estimados
+      return [
+        {
+          id: 'fence',
+          name: 'Instalación de Cerca',
+          serviceType: 'fence',
+          unitPrice: 65, // Precio actualizado de la base de datos
+          unit: 'ft',
+          laborRate: 40, // Valor de la base de datos
+          laborMethod: 'by_length',
+        },
+        {
+          id: 'roof',
+          name: 'Instalación de Techo',
+          serviceType: 'roof',
+          unitPrice: 8.7,
+          unit: 'sqft',
+          laborRate: 3.5,
+          laborMethod: 'by_area',
+        },
+        {
+          id: 'gutters',
+          name: 'Instalación de Canaletas',
+          serviceType: 'gutters',
+          unitPrice: 12,
+          unit: 'ft',
+          laborRate: 7,
+          laborMethod: 'by_length',
         }
-        
-        // Si no hay datos, usamos valores predeterminados
-        return [
-          // Valores fijos basados en la base de datos
-          {
-            id: 'fence',
-            name: 'Instalación de Cerca',
-            serviceType: 'fence',
-            unitPrice: 65, // Valor actualizado directo
-            unit: 'ft',
-            laborRate: 40,
-            laborMethod: 'by_length',
-          },
-          ...defaultServices.filter(s => s.serviceType !== 'fence')
-        ];
-      } catch (error) {
-        console.error('Error loading services:', error);
-        // En caso de error, usamos valores predeterminados con el precio actualizado de cerca
-        return [
-          {
-            id: 'fence',
-            name: 'Instalación de Cerca',
-            serviceType: 'fence',
-            unitPrice: 65, // Valor actualizado directo
-            unit: 'ft',
-            laborRate: 40,
-            laborMethod: 'by_length',
-          },
-          ...defaultServices.filter(s => s.serviceType !== 'fence')
-        ];
-      }
+      ];
     },
-    // Desactivamos caché para siempre obtener los valores más recientes
-    staleTime: 0,
-    cacheTime: 0,
-    retry: 2,
+    // Evitamos recargas innecesarias
+    staleTime: Infinity,
+    retry: 0,
   });
 
   // Consulta para materiales - Sin caché para siempre obtener los datos más recientes
