@@ -499,18 +499,41 @@ export default function ServiceEstimateForm({
                       <div>
                         <h4 className="font-medium">{material.name}</h4>
                         <p className="text-sm text-muted-foreground">
-                          ${material.unitPrice.toFixed(2)} / {material.unit === 'sq.ft' ? 'pie²' : material.unit === 'ln.ft' ? 'pie lineal' : 'unidad'}
+                          / {material.unit === 'sq.ft' ? 'pie²' : material.unit === 'ln.ft' ? 'pie lineal' : 'unidad'}
                         </p>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Input 
-                          className="w-20 text-right"
-                          type="number"
-                          min="0"
-                          step="1"
-                          value={selectedMaterials.find(m => m.id === material.id)?.quantity || ''}
-                          onChange={(e) => addMaterial(material, Number(e.target.value))}
-                        />
+                        <div className="mr-2">
+                          <Label htmlFor={`price-${material.id}`} className="text-xs text-muted-foreground">Precio</Label>
+                          <Input 
+                            id={`price-${material.id}`}
+                            className="w-20 text-right"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            defaultValue={material.unitPrice.toFixed(2)}
+                            onChange={(e) => {
+                              const newPrice = Number(e.target.value);
+                              const materialCopy = {...material, unitPrice: newPrice};
+                              const existingMaterial = selectedMaterials.find(m => m.id === material.id);
+                              if (existingMaterial) {
+                                addMaterial(materialCopy, existingMaterial.quantity);
+                              }
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor={`qty-${material.id}`} className="text-xs text-muted-foreground">Cant.</Label>
+                          <Input 
+                            id={`qty-${material.id}`}
+                            className="w-20 text-right"
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={selectedMaterials.find(m => m.id === material.id)?.quantity || ''}
+                            onChange={(e) => addMaterial(material, Number(e.target.value))}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -529,18 +552,41 @@ export default function ServiceEstimateForm({
                       <div>
                         <h4 className="font-medium">{option.name}</h4>
                         <p className="text-sm text-muted-foreground">
-                          ${option.unitPrice.toFixed(2)} / {option.unit === 'sq.ft' ? 'pie²' : option.unit === 'ln.ft' ? 'pie lineal' : 'unidad'}
+                          / {option.unit === 'sq.ft' ? 'pie²' : option.unit === 'ln.ft' ? 'pie lineal' : 'unidad'}
                         </p>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Input 
-                          className="w-20 text-right"
-                          type="number"
-                          min="0"
-                          step="1"
-                          value={selectedOptions.find(o => o.id === option.id)?.quantity || ''}
-                          onChange={(e) => addOption(option, Number(e.target.value))}
-                        />
+                        <div className="mr-2">
+                          <Label htmlFor={`price-${option.id}`} className="text-xs text-muted-foreground">Precio</Label>
+                          <Input 
+                            id={`price-${option.id}`}
+                            className="w-20 text-right"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            defaultValue={option.unitPrice.toFixed(2)}
+                            onChange={(e) => {
+                              const newPrice = Number(e.target.value);
+                              const optionCopy = {...option, unitPrice: newPrice};
+                              const existingOption = selectedOptions.find(o => o.id === option.id);
+                              if (existingOption) {
+                                addOption(optionCopy, existingOption.quantity);
+                              }
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor={`qty-${option.id}`} className="text-xs text-muted-foreground">Cant.</Label>
+                          <Input 
+                            id={`qty-${option.id}`}
+                            className="w-20 text-right"
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={selectedOptions.find(o => o.id === option.id)?.quantity || ''}
+                            onChange={(e) => addOption(option, Number(e.target.value))}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -641,7 +687,7 @@ export default function ServiceEstimateForm({
             {/* Sección de mano de obra */}
             <div className="pt-4">
               <h4 className="font-medium mb-4">Mano de obra</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="labor-hours">Horas estimadas</Label>
                   <Input 
