@@ -100,12 +100,32 @@ const defaultMaterials: Material[] = [
 ];
 
 const PricingConfigPage = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // Usar nuestro hook de precios para obtener datos del servidor
+  const { 
+    services: configuredServices, 
+    materials: configuredMaterials, 
+    isLoading: isLoadingPrices 
+  } = usePricing();
+  
   const [services, setServices] = useState<Service[]>(defaultServices);
   const [materials, setMaterials] = useState<Material[]>(defaultMaterials);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  
+  // Cargar datos del servidor cuando estén disponibles
+  useEffect(() => {
+    if (configuredServices && configuredServices.length > 0) {
+      setServices(configuredServices);
+    }
+    
+    if (configuredMaterials && configuredMaterials.length > 0) {
+      setMaterials(configuredMaterials);
+    }
+  }, [configuredServices, configuredMaterials]);
 
   // Para editar un servicio
   const handleEditService = (service: Service) => {
@@ -127,27 +147,77 @@ const PricingConfigPage = () => {
   };
 
   // Para guardar cambios en un servicio
-  const handleSaveService = () => {
+  const handleSaveService = async () => {
     if (!editingService) return;
 
     setIsLoading(true);
-    setTimeout(() => {
-      if (services.find(s => s.id === editingService.id)) {
+    
+    try {
+      let savedService;
+      
+      // Verificar si es una actualización o creación
+      const existingService = services.find(s => s.id === editingService.id);
+      
+      if (existingService && !existingService.id.startsWith('service-')) {
+        // Actualizar servicio existente
+        const response = await apiRequest(
+          'PUT', 
+          `/api/pricing/services/${existingService.id}`, 
+          editingService
+        );
+        
+        if (!response.ok) {
+          throw new Error('Error al actualizar el servicio');
+        }
+        
+        savedService = await response.json();
+      } else {
+        // Crear nuevo servicio
+        const response = await apiRequest(
+          'POST', 
+          '/api/pricing/services', 
+          {
+            ...editingService,
+            // Eliminar el id temporal para que el servidor genere uno nuevo
+            id: editingService.id.startsWith('service-') ? undefined : editingService.id
+          }
+        );
+        
+        if (!response.ok) {
+          throw new Error('Error al crear el servicio');
+        }
+        
+        savedService = await response.json();
+      }
+      
+      // Actualizar la lista local
+      if (existingService) {
         const updatedServices = services.map(service => 
-          service.id === editingService.id ? editingService : service
+          service.id === editingService.id ? savedService : service
         );
         setServices(updatedServices);
       } else {
-        setServices([...services, editingService]);
+        setServices([...services, savedService]);
       }
       
-      setEditingService(null);
-      setIsLoading(false);
+      // Invalidar el caché para recargar datos
+      queryClient.invalidateQueries({ queryKey: ['/api/pricing/services'] });
+      
       toast({
         title: "Servicio guardado",
         description: "Los precios se han actualizado correctamente"
       });
-    }, 500);
+    } catch (error) {
+      console.error('Error al guardar servicio:', error);
+      toast({
+        title: "Error al guardar",
+        description: "No se pudieron guardar los cambios. Intente nuevamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setEditingService(null);
+      setIsLoading(false);
+    }
   };
 
   // Para editar un material
@@ -169,27 +239,77 @@ const PricingConfigPage = () => {
   };
 
   // Para guardar cambios en un material
-  const handleSaveMaterial = () => {
+  const handleSaveMaterial = async () => {
     if (!editingMaterial) return;
 
     setIsLoading(true);
-    setTimeout(() => {
-      if (materials.find(m => m.id === editingMaterial.id)) {
+    
+    try {
+      let savedMaterial;
+      
+      // Verificar si es una actualización o creación
+      const existingMaterial = materials.find(m => m.id === editingMaterial.id);
+      
+      if (existingMaterial && !existingMaterial.id.startsWith('material-')) {
+        // Actualizar material existente
+        const response = await apiRequest(
+          'PUT', 
+          `/api/pricing/materials/${existingMaterial.id}`, 
+          editingMaterial
+        );
+        
+        if (!response.ok) {
+          throw new Error('Error al actualizar el material');
+        }
+        
+        savedMaterial = await response.json();
+      } else {
+        // Crear nuevo material
+        const response = await apiRequest(
+          'POST', 
+          '/api/pricing/materials', 
+          {
+            ...editingMaterial,
+            // Eliminar el id temporal para que el servidor genere uno nuevo
+            id: editingMaterial.id.startsWith('material-') ? undefined : editingMaterial.id
+          }
+        );
+        
+        if (!response.ok) {
+          throw new Error('Error al crear el material');
+        }
+        
+        savedMaterial = await response.json();
+      }
+      
+      // Actualizar la lista local
+      if (existingMaterial) {
         const updatedMaterials = materials.map(material => 
-          material.id === editingMaterial.id ? editingMaterial : material
+          material.id === editingMaterial.id ? savedMaterial : material
         );
         setMaterials(updatedMaterials);
       } else {
-        setMaterials([...materials, editingMaterial]);
+        setMaterials([...materials, savedMaterial]);
       }
       
-      setEditingMaterial(null);
-      setIsLoading(false);
+      // Invalidar el caché para recargar datos
+      queryClient.invalidateQueries({ queryKey: ['/api/pricing/materials'] });
+      
       toast({
         title: "Material guardado",
         description: "Los precios se han actualizado correctamente"
       });
-    }, 500);
+    } catch (error) {
+      console.error('Error al guardar material:', error);
+      toast({
+        title: "Error al guardar",
+        description: "No se pudieron guardar los cambios. Intente nuevamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setEditingMaterial(null);
+      setIsLoading(false);
+    }
   };
 
   return (

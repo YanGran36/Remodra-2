@@ -23,6 +23,7 @@ import {
   getMaterial,
   getOption,
   getMaterialWithConfiguredPrice,
+  getOptionWithConfiguredPrice,
   getServiceBasePrice
 } from "@/lib/service-options";
 
@@ -263,10 +264,45 @@ export default function VendorServiceEstimatePage() {
     // Intentar obtener la opción con los precios configurados
     let option = null;
     
-    // Usar la nueva función que busca en los precios configurados primero
+    // Buscar opción usando los precios configurados
     if (configuredMaterials.length > 0) {
-      option = getOptionWithConfiguredPrice(serviceType, optionId, configuredMaterials);
-    } else {
+      // Buscar primero por ID exacto
+      const configuredOption = configuredMaterials.find(m => 
+        m.id === optionId && m.category === serviceType
+      );
+      
+      if (configuredOption) {
+        option = {
+          id: configuredOption.id,
+          name: configuredOption.name,
+          unit: configuredOption.unit,
+          unitPrice: configuredOption.unitPrice
+        };
+      } else {
+        // Si no encontramos por ID, buscar por nombre
+        const defaultOption = getOption(serviceType, optionId);
+        if (defaultOption) {
+          const matchingOption = configuredMaterials.find(m => 
+            m.category === serviceType && 
+            m.name.toLowerCase().includes(defaultOption.name.toLowerCase())
+          );
+          
+          if (matchingOption) {
+            option = {
+              id: matchingOption.id,
+              name: matchingOption.name,
+              unit: matchingOption.unit,
+              unitPrice: matchingOption.unitPrice
+            };
+          } else {
+            option = defaultOption;
+          }
+        }
+      }
+    } 
+    
+    // Si no tenemos precios configurados o no encontramos coincidencia, usar la opción por defecto
+    if (!option) {
       option = getOption(serviceType, optionId);
     }
     
