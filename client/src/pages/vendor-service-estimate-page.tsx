@@ -216,13 +216,17 @@ export default function VendorServiceEstimatePage() {
     // Intentar obtener el material con los precios configurados
     let material = null;
     
+    // Asegurarse de que configuredMaterials sea un array
+    const materialsArray = Array.isArray(configuredMaterials) ? configuredMaterials : [];
+    
     // Usar la nueva función que busca en los precios configurados primero
-    if (configuredMaterials.length > 0) {
-      material = getMaterialWithConfiguredPrice(serviceType, materialId, configuredMaterials);
+    if (materialsArray.length > 0) {
+      material = getMaterialWithConfiguredPrice(serviceType, materialId, materialsArray);
     } else {
       material = getMaterial(serviceType, materialId);
     }
     
+    console.log(`Material agregado: ${materialId} para servicio ${serviceType}`, material);
     if (!material) return;
     
     // Verificar si ya existe
@@ -263,10 +267,13 @@ export default function VendorServiceEstimatePage() {
     // Intentar obtener la opción con los precios configurados
     let option = null;
     
+    // Asegurarse de que configuredMaterials sea un array
+    const materialsArray = Array.isArray(configuredMaterials) ? configuredMaterials : [];
+    
     // Buscar opción usando los precios configurados
-    if (configuredMaterials.length > 0) {
+    if (materialsArray.length > 0) {
       // Buscar primero por ID exacto
-      const configuredOption = configuredMaterials.find(m => 
+      const configuredOption = materialsArray.find((m: any) => 
         m.id === optionId && m.category === serviceType
       );
       
@@ -281,8 +288,9 @@ export default function VendorServiceEstimatePage() {
         // Si no encontramos por ID, buscar por nombre
         const defaultOption = getOption(serviceType, optionId);
         if (defaultOption) {
-          const matchingOption = configuredMaterials.find(m => 
+          const matchingOption = materialsArray.find((m: any) => 
             m.category === serviceType && 
+            m.name && 
             m.name.toLowerCase().includes(defaultOption.name.toLowerCase())
           );
           

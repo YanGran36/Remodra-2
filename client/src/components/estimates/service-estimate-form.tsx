@@ -275,13 +275,21 @@ export default function ServiceEstimateForm({
   
   // Inicializar tarifa de mano de obra desde la configuración central de precios
   useEffect(() => {
+    // Asegurarse de que services es un array
+    const servicesArray = Array.isArray(services) ? services : [];
+    
     // Buscar en los servicios configurados primero
-    const configuredService = services.find((s: {serviceType: string, laborRate?: number}) => 
-      s.serviceType === serviceType
+    const configuredService = servicesArray.find((s: any) => 
+      s.serviceType === serviceType || s.id === serviceType
     );
     
-    if (configuredService && configuredService.laborRate) {
-      setLaborRate(configuredService.laborRate);
+    if (configuredService && configuredService.laborRate !== undefined) {
+      const numericRate = typeof configuredService.laborRate === 'string' 
+        ? parseFloat(configuredService.laborRate) 
+        : configuredService.laborRate;
+      
+      setLaborRate(numericRate);
+      console.log(`Tarifa de mano de obra para ${serviceType}:`, numericRate);
       return;
     }
     
