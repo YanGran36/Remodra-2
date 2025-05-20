@@ -510,45 +510,7 @@ export default function AdvancedMeasurement({
     };
   };
   
-  // Variable para rastrear si se está mostrando una medición temporal
-  const [tempMeasurement, setTempMeasurement] = useState<{x: number, y: number, distance: number} | null>(null);
-  
-  // Manejar movimiento del ratón sobre el canvas
-  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    // Mostrar medida temporal mientras se mueve el cursor durante el dibujo
-    if (isDrawing && tempPoints.length > 0 && activeTool === 'line') {
-      const startPoint = tempPoints[tempPoints.length - 1];
-      const pixelDistance = distance(startPoint, {x, y});
-      const realDistance = pixelDistance / scale;
-      
-      setTempMeasurement({x, y, distance: realDistance});
-      
-      // Forzar redibujado
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        drawCanvas(ctx);
-      }
-    }
-  };
-  
-  // Manejar doble clic en el canvas
-  const handleDoubleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (activeTool === 'line' || activeTool === 'area' || activeTool === 'perimeter') {
-      if (tempPoints.length >= 2) {
-        // Finalizar la medición actual con doble clic
-        finalizeMeasurement(tempPoints);
-        setTempPoints([]);
-        setTempMeasurement(null);
-        setIsDrawing(false);
-      }
-    }
+
   };
   
   // Manejar clic en el canvas
