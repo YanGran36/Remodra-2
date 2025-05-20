@@ -84,7 +84,7 @@ const defaultMaterials: MaterialPrice[] = [
  * Hook personalizado para obtener y utilizar los precios centralizados
  */
 export function usePricing() {
-  // Consulta para servicios
+  // Consulta para servicios - Con manejo mejorado de caché
   const { 
     data: servicePrices, 
     isLoading: servicesLoading,
@@ -95,15 +95,30 @@ export function usePricing() {
       try {
         const response = await apiRequest('GET', '/api/pricing/services');
         if (!response.ok) throw new Error('Error al cargar servicios');
-        return await response.json();
+        const data = await response.json();
+        // Si hay datos, los retornamos
+        if (data && Array.isArray(data) && data.length > 0) {
+          // Procesamos las entradas para asegurar que tengan los tipos correctos
+          return data.map((item: any) => ({
+            ...item,
+            id: String(item.id),
+            unitPrice: typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice,
+            laborRate: typeof item.laborRate === 'string' ? parseFloat(item.laborRate) : item.laborRate,
+          }));
+        }
+        // Si no hay datos, retornamos los valores predeterminados
+        return defaultServices;
       } catch (error) {
         console.error('Error loading services:', error);
         return defaultServices;
       }
-    }
+    },
+    // Mantenemos los datos en caché por más tiempo para evitar recargas frecuentes
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    retry: 2,
   });
 
-  // Consulta para materiales
+  // Consulta para materiales - Con manejo mejorado de caché
   const { 
     data: materialPrices, 
     isLoading: materialsLoading,
@@ -114,12 +129,26 @@ export function usePricing() {
       try {
         const response = await apiRequest('GET', '/api/pricing/materials');
         if (!response.ok) throw new Error('Error al cargar materiales');
-        return await response.json();
+        const data = await response.json();
+        // Si hay datos, los retornamos
+        if (data && Array.isArray(data) && data.length > 0) {
+          // Procesamos las entradas para asegurar que tengan los tipos correctos
+          return data.map((item: any) => ({
+            ...item,
+            id: String(item.id),
+            unitPrice: typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice,
+          }));
+        }
+        // Si no hay datos, retornamos los valores predeterminados
+        return defaultMaterials;
       } catch (error) {
         console.error('Error loading materials:', error);
         return defaultMaterials;
       }
-    }
+    },
+    // Mantenemos los datos en caché por más tiempo para evitar recargas frecuentes
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    retry: 2,
   });
 
   // Funciones de utilidad para obtener precios por tipo o categoria

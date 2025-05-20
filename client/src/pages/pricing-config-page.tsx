@@ -110,19 +110,26 @@ const PricingConfigPage = () => {
     isLoading: isLoadingPrices 
   } = usePricing();
   
-  const [services, setServices] = useState<Service[]>(defaultServices);
-  const [materials, setMaterials] = useState<Material[]>(defaultMaterials);
+  // Inicializamos con los datos predeterminados o configurados, lo que sea más apropiado
+  const [services, setServices] = useState<Service[]>(
+    configuredServices && configuredServices.length > 0 ? configuredServices : defaultServices
+  );
+  const [materials, setMaterials] = useState<Material[]>(
+    configuredMaterials && configuredMaterials.length > 0 ? configuredMaterials : defaultMaterials
+  );
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Cargar datos del servidor cuando estén disponibles
+  // Cargar datos del servidor cuando estén disponibles o cambien
   useEffect(() => {
     if (configuredServices && configuredServices.length > 0) {
+      console.log('Cargando servicios configurados:', configuredServices);
       setServices(configuredServices);
     }
     
     if (configuredMaterials && configuredMaterials.length > 0) {
+      console.log('Cargando materiales configurados:', configuredMaterials);
       setMaterials(configuredMaterials);
     }
   }, [configuredServices, configuredMaterials]);
