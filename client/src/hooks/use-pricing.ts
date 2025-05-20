@@ -91,199 +91,58 @@ export function usePricing() {
     error: servicesError
   } = useQuery({
     queryKey: ['/api/pricing/services'],
-    queryFn: async () => {
-      // Valores reseteados a cero para que el usuario pueda editarlos
-      // CRITICAL: Estos valores deben ser utilizados en TODOS los estimados
-      return [
-        {
-          id: 'fence',
-          name: 'Instalación de Cerca',
-          serviceType: 'fence',
-          unitPrice: 0, // Precio reseteado a cero
-          unit: 'ft',
-          laborRate: 0, // Precio reseteado a cero
-          laborMethod: 'by_length',
-        },
-        {
-          id: 'roof',
-          name: 'Instalación de Techo',
-          serviceType: 'roof',
-          unitPrice: 0, // Precio reseteado a cero
-          unit: 'sqft',
-          laborRate: 0, // Precio reseteado a cero
-          laborMethod: 'by_area',
-        },
-        {
-          id: 'gutters',
-          name: 'Instalación de Canaletas',
-          serviceType: 'gutters',
-          unitPrice: 0, // Precio reseteado a cero
-          unit: 'ft',
-          laborRate: 0, // Precio reseteado a cero
-          laborMethod: 'by_length',
-        }
-      ];
-    },
-    // Evitamos recargas innecesarias
-    staleTime: Infinity,
-    retry: 0,
+    // Ahora usamos los valores reales de la API en lugar de valores hardcodeados
+    retry: 1,
   });
 
-  // Consulta para materiales con valores predeterminados en cero
+  // Consulta para materiales con valores directamente de la API
   const { 
     data: materialPrices, 
     isLoading: materialsLoading,
     error: materialsError
   } = useQuery({
     queryKey: ['/api/pricing/materials'],
-    queryFn: async () => {
-      // Valores reseteados a cero para que el usuario pueda editarlos
-      return [
-        // Materiales para cercas (fence) - Con los mismos IDs que se usan en los estimados
-        {
-          id: 'wood_fence',
-          name: 'Wood Fence',
-          category: 'fence',
-          unitPrice: 0,
-          unit: 'ln.ft',
-          supplier: 'Lumber Yard',
-        },
-        {
-          id: 'vinyl_fence',
-          name: 'Vinyl Fence',
-          category: 'fence',
-          unitPrice: 0,
-          unit: 'ln.ft',
-          supplier: 'Modern Materials',
-        },
-        {
-          id: 'chain_link',
-          name: 'Chain Link Fence',
-          category: 'fence',
-          unitPrice: 0,
-          unit: 'ln.ft',
-          supplier: 'Metal Supply Co.',
-        },
-        {
-          id: 'aluminum_fence',
-          name: 'Aluminum Fence',
-          category: 'fence',
-          unitPrice: 0,
-          unit: 'ln.ft',
-          supplier: 'Metal Supply Co.',
-        },
-        {
-          id: 'fence_gate',
-          name: 'Fence Gate',
-          category: 'fence',
-          unitPrice: 0,
-          unit: 'unit',
-          supplier: 'Hardware Supply',
-        },
-        {
-          id: 'post_caps',
-          name: 'Post Caps',
-          category: 'fence',
-          unitPrice: 0,
-          unit: 'unit',
-          supplier: 'Hardware Supply',
-        },
-        
-        // Materiales para techos (roof)
-        {
-          id: 'asphalt_shingles',
-          name: 'Asphalt Shingles',
-          category: 'roof',
-          unitPrice: 0,
-          unit: 'sq.ft',
-          supplier: 'Roofing Supply',
-        },
-        {
-          id: 'metal_roofing',
-          name: 'Metal Roofing',
-          category: 'roof',
-          unitPrice: 0,
-          unit: 'sq.ft',
-          supplier: 'Metal Supply Co.',
-        },
-        {
-          id: 'tile_roofing',
-          name: 'Tile Roofing',
-          category: 'roof',
-          unitPrice: 0,
-          unit: 'sq.ft',
-          supplier: 'Premium Materials',
-        },
-        
-        // Materiales para canaletas (gutters)
-        {
-          id: 'aluminum_gutters',
-          name: 'Aluminum Gutters',
-          category: 'gutters',
-          unitPrice: 0,
-          unit: 'ln.ft',
-          supplier: 'Gutter Supply',
-        },
-        {
-          id: 'vinyl_gutters',
-          name: 'Vinyl Gutters',
-          category: 'gutters',
-          unitPrice: 0,
-          unit: 'ln.ft',
-          supplier: 'Modern Materials',
-        },
-        {
-          id: 'downspouts',
-          name: 'Downspouts',
-          category: 'gutters',
-          unitPrice: 0,
-          unit: 'unit',
-          supplier: 'Gutter Supply',
-        }
-      ];
-    },
-    // Evitamos recargas innecesarias
-    staleTime: Infinity,
-    retry: 0,
+    // Usar directamente los valores de la API
+    retry: 1,
   });
 
   // Funciones de utilidad para obtener precios por tipo o categoria
   const getServicePrice = (serviceType: string): ServicePrice | undefined => {
-    if (!servicePrices) return defaultServices.find(s => s.serviceType === serviceType);
+    // Asegurarse de que servicePrices es un array y no un objeto vacío
+    const services = Array.isArray(servicePrices) ? servicePrices : defaultServices;
     
     // Buscar primero por tipo de servicio (más confiable)
-    const serviceByType = servicePrices.find((service: ServicePrice) => 
+    const serviceByType = services.find((service: any) => 
       service.serviceType === serviceType
     );
     
     if (serviceByType) return serviceByType;
     
     // Si no encuentra por tipo, intentar por ID (como fallback)
-    return servicePrices.find((service: ServicePrice) => 
+    return services.find((service: any) => 
       String(service.id) === serviceType
     );
   };
 
   const getMaterialPrice = (category: string, materialId?: string): MaterialPrice | undefined => {
-    if (!materialPrices) {
-      if (materialId) {
-        return defaultMaterials.find(m => m.id === materialId);
-      }
-      return defaultMaterials.find(m => m.category === category);
-    }
+    // Asegurarse de que materialPrices es un array y no un objeto vacío
+    const materials = Array.isArray(materialPrices) ? materialPrices : defaultMaterials;
     
     // Si hay un ID específico, buscar primero por él
     if (materialId) {
+      console.log("Material configurado encontrado:", materialId, 
+        materials.find((m: any) => String(m.id) === materialId)?.unitPrice);
+      
       // Buscar por ID exacto o por nombre que contenga el ID
-      const exactMatch = materialPrices.find((material: MaterialPrice) => 
+      const exactMatch = materials.find((material: any) => 
         String(material.id) === materialId
       );
       
       if (exactMatch) return exactMatch;
       
       // Buscar por nombre que contenga el ID
-      const nameMatch = materialPrices.find((material: MaterialPrice) => 
-        material.name.toLowerCase().includes(materialId.toLowerCase()) && 
+      const nameMatch = materials.find((material: any) => 
+        material.name?.toLowerCase().includes(materialId.toLowerCase()) && 
         material.category === category
       );
       
@@ -291,16 +150,17 @@ export function usePricing() {
     }
     
     // Buscar el primer material de la categoría correcta
-    return materialPrices.find((material: MaterialPrice) => 
+    return materials.find((material: any) => 
       material.category === category
     );
   };
 
   const getMaterialsByCategory = (category: string): MaterialPrice[] => {
-    if (!materialPrices) return defaultMaterials.filter(m => m.category === category);
+    // Asegurarse de que materialPrices es un array y no un objeto vacío
+    const materials = Array.isArray(materialPrices) ? materialPrices : defaultMaterials;
     
     // Asegurarse de que devolvemos al menos un material por categoría
-    const materialsInCategory = materialPrices.filter((material: MaterialPrice) => 
+    const materialsInCategory = materials.filter((material: any) => 
       material.category === category
     );
     
