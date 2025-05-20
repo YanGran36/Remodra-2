@@ -92,34 +92,34 @@ export function usePricing() {
   } = useQuery({
     queryKey: ['/api/pricing/services'],
     queryFn: async () => {
-      // Valores fijos de producción configurados en la base de datos
+      // Valores reseteados a cero para que el usuario pueda editarlos
       // CRITICAL: Estos valores deben ser utilizados en TODOS los estimados
       return [
         {
           id: 'fence',
           name: 'Instalación de Cerca',
           serviceType: 'fence',
-          unitPrice: 65, // Precio actualizado de la base de datos
+          unitPrice: 0, // Precio reseteado a cero
           unit: 'ft',
-          laborRate: 40, // Valor de la base de datos
+          laborRate: 0, // Precio reseteado a cero
           laborMethod: 'by_length',
         },
         {
           id: 'roof',
           name: 'Instalación de Techo',
           serviceType: 'roof',
-          unitPrice: 8.7,
+          unitPrice: 0, // Precio reseteado a cero
           unit: 'sqft',
-          laborRate: 3.5,
+          laborRate: 0, // Precio reseteado a cero
           laborMethod: 'by_area',
         },
         {
           id: 'gutters',
           name: 'Instalación de Canaletas',
           serviceType: 'gutters',
-          unitPrice: 12,
+          unitPrice: 0, // Precio reseteado a cero
           unit: 'ft',
-          laborRate: 7,
+          laborRate: 0, // Precio reseteado a cero
           laborMethod: 'by_length',
         }
       ];
