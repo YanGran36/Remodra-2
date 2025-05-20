@@ -122,15 +122,29 @@ const PricingConfigPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   
   // Cargar datos del servidor cuando estén disponibles o cambien
+  // Esta función es CRÍTICA ya que sincroniza los datos de la base de datos 
+  // con los que se muestran en la interfaz
   useEffect(() => {
+    // Cuando los datos son cargados de la API, forzamos la actualización de la interfaz
     if (configuredServices && configuredServices.length > 0) {
-      console.log('Cargando servicios configurados:', configuredServices);
-      setServices(configuredServices);
+      console.log('Actualizando precios de servicios desde la base de datos:', configuredServices);
+      // Aseguramos que los precios se muestren correctamente convirtiéndolos a número
+      const processedServices = configuredServices.map(service => ({
+        ...service,
+        unitPrice: typeof service.unitPrice === 'string' ? parseFloat(service.unitPrice) : service.unitPrice,
+        laborRate: typeof service.laborRate === 'string' ? parseFloat(service.laborRate) : service.laborRate
+      }));
+      setServices(processedServices);
     }
     
     if (configuredMaterials && configuredMaterials.length > 0) {
-      console.log('Cargando materiales configurados:', configuredMaterials);
-      setMaterials(configuredMaterials);
+      console.log('Actualizando precios de materiales desde la base de datos:', configuredMaterials);
+      // Aseguramos que los precios se muestren correctamente convirtiéndolos a número
+      const processedMaterials = configuredMaterials.map(material => ({
+        ...material,
+        unitPrice: typeof material.unitPrice === 'string' ? parseFloat(material.unitPrice) : material.unitPrice
+      }));
+      setMaterials(processedMaterials);
     }
   }, [configuredServices, configuredMaterials]);
 
