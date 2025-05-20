@@ -418,9 +418,10 @@ export default function AdvancedMeasurement({
         
         // Solo mostramos la longitud total, sin costos para evitar confusiones
         ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-        ctx.fillRect(canvasWidth - 160, canvasHeight - 80, 150, 30);
+        ctx.fillRect(canvasWidth - 250, canvasHeight - 80, 230, 30);
         ctx.fillStyle = "#ffffff";
-        ctx.fillText("Medición completada", canvasWidth - 20, canvasHeight - 65);
+        ctx.textAlign = "right";
+        ctx.fillText(`Longitud total: ${formatNumber(scaledTotalDistance)} ${unit}`, canvasWidth - 20, canvasHeight - 65);
       }
     }
   };
