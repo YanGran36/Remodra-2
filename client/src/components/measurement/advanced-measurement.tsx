@@ -67,6 +67,13 @@ interface Measurement {
   notes?: string; // Notas adicionales sobre la medición
 }
 
+// Interfaz para opciones de cálculo
+interface CalculationOptions {
+  servicePrices?: Record<string, { rate: number, unit: string, label: string }>;
+  laborCalculationMethod?: 'by_measurement' | 'hourly' | 'fixed';
+  laborFactor?: number;
+}
+
 interface AdvancedMeasurementProps {
   initialScale?: number;
   unit?: string;
@@ -75,6 +82,8 @@ interface AdvancedMeasurementProps {
   canvasWidth?: number;
   canvasHeight?: number;
   showCostEstimates?: boolean;
+  defaultServiceType?: string;
+  calculationOptions?: CalculationOptions;
 }
 
 // Definir tarifas por tipo de servicio y unidad de medida
@@ -113,15 +122,18 @@ const COLOR_PALETTE = [
   "#607D8B"  // Gris azulado
 ];
 
-// Función para calcular el costo basado en medidas y tipo de servicio
+// Función para calcular el costo basado en medidas y tipo de servicio, con opciones flexibles
 const calculateCost = (
   measurement: Measurement,
   serviceType: string,
-  materialType: string = 'standard'
+  materialType: string = 'standard',
+  serviceRates: Record<string, { rate: number, unit: string, label: string }>,
+  calcOptions?: CalculationOptions
 ): number => {
   if (!measurement || !serviceType) return 0;
   
-  const service = SERVICE_RATES[serviceType as keyof typeof SERVICE_RATES];
+  // Usar tarifas personalizadas por servicio
+  const service = serviceRates[serviceType as keyof typeof serviceRates];
   if (!service) return 0;
   
   const materialFactor = MATERIAL_FACTORS[materialType as keyof typeof MATERIAL_FACTORS]?.factor || 1.0;
@@ -131,19 +143,40 @@ const calculateCost = (
   if (service.unit === 'sqft' && measurement.realArea) {
     // Servicios basados en área (techos, pisos, etc.)
     measureValue = measurement.realArea;
-  } else if (service.unit === 'ft' && measurement.realLength) {
-    // Servicios basados en longitud (ventanas, canaletas, etc.)
-    measureValue = measurement.realLength;
-  } else if (service.unit === 'ft' && measurement.realPerimeter) {
-    // Servicios basados en perímetro
-    measureValue = measurement.realPerimeter;
+  } else if (service.unit === 'ft' && (measurement.realLength || measurement.realPerimeter)) {
+    // Servicios basados en longitud o perímetro (ventanas, canaletas, vallas, etc.)
+    measureValue = measurement.realLength || measurement.realPerimeter || 0;
   }
   
-  // Calcular costo base
-  const baseCost = measureValue * service.rate;
+  // Calcular costo base para materiales
+  const materialsCost = measureValue * service.rate * materialFactor;
   
-  // Aplicar factor de material
-  return baseCost * materialFactor;
+  // Calcular costo de labor basado en el método seleccionado
+  let laborCost = 0;
+  const laborMethod = calcOptions?.laborCalculationMethod || 'by_measurement';
+  const laborFactor = calcOptions?.laborFactor || 0.35; // 35% por defecto
+  
+  if (laborMethod === 'by_measurement') {
+    // Calcular labor como porcentaje del costo de materiales
+    laborCost = materialsCost * laborFactor;
+  } else if (laborMethod === 'hourly') {
+    // Calcular labor por hora - estimación basada en medición
+    // Por ejemplo, para techos: 1 hora por cada 100 sqft, para vallas: 1 hora por cada 20 pies
+    const hoursEstimated = service.unit === 'sqft' 
+      ? measureValue / 100  // 1 hora por cada 100 pies cuadrados
+      : measureValue / 20;  // 1 hora por cada 20 pies lineales
+    
+    const hourlyRate = 45; // $45/hora valor estándar, podría ser configurable
+    laborCost = hoursEstimated * hourlyRate;
+  } else if (laborMethod === 'fixed') {
+    // Tarifa fija para labor
+    laborCost = service.unit === 'sqft' 
+      ? measureValue * 2.5  // $2.50 por pie cuadrado
+      : measureValue * 15;  // $15 por pie lineal
+  }
+  
+  // Retornar costo total (materiales + labor)
+  return materialsCost + laborCost;
 };
 
 // Función para calcular el área de un polígono usando el algoritmo de Shoelace
@@ -195,17 +228,22 @@ export default function AdvancedMeasurement({
   initialMeasurements = [],
   canvasWidth = 800,
   canvasHeight = 600,
-  showCostEstimates = true
+  showCostEstimates = true,
+  defaultServiceType = "roofing",
+  calculationOptions
 }: AdvancedMeasurementProps) {
   const { toast } = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  
+  // Usar tarifas personalizadas si se proporcionan, sino usar las predeterminadas
+  const serviceRates = calculationOptions?.servicePrices || SERVICE_RATES;
   
   // Estados principales
   const [measurements, setMeasurements] = useState<Measurement[]>(initialMeasurements);
   const [activeTool, setActiveTool] = useState<string>("line");
   const [activeTab, setActiveTab] = useState("draw");
   const [scale, setScale] = useState<number>(initialScale); // píxeles por unidad
-  const [selectedServiceType, setSelectedServiceType] = useState<string>("roofing");
+  const [selectedServiceType, setSelectedServiceType] = useState<string>(defaultServiceType);
   const [selectedMaterialType, setSelectedMaterialType] = useState<string>("standard");
   
   // Estados para dibujo
@@ -588,6 +626,15 @@ export default function AdvancedMeasurement({
       const pixelLength = distance(points[0], points[1]);
       const realLength = pixelLength / scale;
       
+      // Calcular el costo considerando el tipo de servicio y material
+      const costEstimate = calculateCost({
+        id: '',
+        type: 'line',
+        points: [],
+        realLength: realLength,
+        unit
+      }, selectedServiceType, selectedMaterialType, serviceRates, calculationOptions);
+      
       newMeasurement = {
         id: Date.now().toString(),
         type: 'line',
@@ -598,7 +645,8 @@ export default function AdvancedMeasurement({
         label: `${formatNumber(realLength)} ${unit}`,
         color: measurementColor,
         serviceType: selectedServiceType,
-        materialType: selectedMaterialType
+        materialType: selectedMaterialType,
+        costEstimate: costEstimate
       };
     } 
     else if (activeTool === 'area' && points.length >= 3) {
@@ -607,6 +655,16 @@ export default function AdvancedMeasurement({
       const pixelPerimeter = calculatePerimeter(points);
       const realArea = pixelArea / (scale * scale);
       const realPerimeter = pixelPerimeter / scale;
+      
+      // Calcular el costo considerando el tipo de servicio y material
+      const costEstimate = calculateCost({
+        id: '',
+        type: 'area',
+        points: [],
+        realArea: realArea,
+        realPerimeter: realPerimeter,
+        unit
+      }, selectedServiceType, selectedMaterialType, serviceRates, calculationOptions);
       
       newMeasurement = {
         id: Date.now().toString(),
@@ -620,7 +678,8 @@ export default function AdvancedMeasurement({
         label: `${formatNumber(realArea)} ${unit}²`,
         color: measurementColor,
         serviceType: selectedServiceType,
-        materialType: selectedMaterialType
+        materialType: selectedMaterialType,
+        costEstimate: costEstimate
       };
     }
     else if (activeTool === 'perimeter' && points.length >= 3) {

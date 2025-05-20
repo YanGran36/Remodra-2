@@ -1249,8 +1249,8 @@ const recalculateTotal = (items: SelectedItem[]) => {
                       canvasHeight={600}
                       showCostEstimates={true}
                       initialMeasurements={measurements}
-                      // Pasar el tipo de servicio seleccionado en el estimado principal
-                      defaultServiceType={serviceType}
+                      // Pasar los tipos de servicio seleccionados en el estimado principal
+                      defaultServiceType={selectedServiceTypes.length > 0 ? selectedServiceTypes[0] : "roofing"}
                       // Opciones de cálculo flexible para diferentes compañías
                       calculationOptions={{
                         // Precios personalizados por servicio
