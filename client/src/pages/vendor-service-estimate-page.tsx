@@ -1188,7 +1188,25 @@ const recalculateTotal = (items: SelectedItem[]) => {
                                         </div>
                                       </td>
                                       <td className="p-3 text-right">
-                                        ${item.unitPrice.toFixed(2)}/{item.unit}
+                                        <Input
+                                          type="number"
+                                          min="0"
+                                          step="0.01"
+                                          className="w-20 text-right"
+                                          value={item.unitPrice}
+                                          onChange={(e) => {
+                                            const newPrice = parseFloat(e.target.value) || 0;
+                                            const updatedItems = [...selectedItems];
+                                            updatedItems[index] = {
+                                              ...updatedItems[index],
+                                              unitPrice: newPrice,
+                                              total: updatedItems[index].quantity * newPrice
+                                            };
+                                            setSelectedItems(updatedItems);
+                                            recalculateTotal(updatedItems);
+                                          }}
+                                        />
+                                        /{item.unit}
                                       </td>
                                       <td className="p-3 text-right font-medium">
                                         ${item.total.toFixed(2)}
