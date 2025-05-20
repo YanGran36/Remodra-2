@@ -381,6 +381,9 @@ export default function AdvancedMeasurement({
     }
   };
   
+  // Variable para rastrear medición temporal mientras se mueve el cursor
+  const [tempMeasurement, setTempMeasurement] = useState<{x: number, y: number, distance: number} | null>(null);
+  
   // Dibujar puntos temporales durante el dibujo
   const drawTempPoints = (ctx: CanvasRenderingContext2D) => {
     if (tempPoints.length === 0) return;
@@ -447,17 +450,6 @@ export default function AdvancedMeasurement({
         // Dibujar etiqueta con la medida
         drawLabel(ctx, [midX, midY], `${formatNumber(realLength)} ${unit}`, "#FF5722");
       }
-    }
-  }
-      const pixelLength = distance(start, end);
-      const realLength = pixelLength / scale;
-      
-      // Calcular posición para la etiqueta
-      const midX = (start.x + end.x) / 2;
-      const midY = (start.y + end.y) / 2;
-      
-      // Dibujar etiqueta temporal
-      drawLabel(ctx, [midX, midY], `${formatNumber(realLength)} ${unit}`, "#FF5722");
     }
     
     // Si es un área o perímetro con al menos 3 puntos, mostrar área/perímetro temporal
