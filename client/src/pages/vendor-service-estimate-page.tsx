@@ -260,7 +260,16 @@ export default function VendorServiceEstimatePage() {
 
   // Manejar adición de una opción al estimado
   const addOption = (serviceType: string, optionId: string) => {
-    const option = getOption(serviceType, optionId);
+    // Intentar obtener la opción con los precios configurados
+    let option = null;
+    
+    // Usar la nueva función que busca en los precios configurados primero
+    if (configuredMaterials.length > 0) {
+      option = getOptionWithConfiguredPrice(serviceType, optionId, configuredMaterials);
+    } else {
+      option = getOption(serviceType, optionId);
+    }
+    
     if (!option) return;
     
     // Verificar si ya existe
