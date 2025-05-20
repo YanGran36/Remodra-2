@@ -62,8 +62,15 @@ export interface JobCostAnalysisResult {
       lowRange: number;
       highRange: number;
       notes: string;
+      marketPosition: string;
     };
     potentialIssues: string[];
+    salesPoints: string[];
+    objectionHandling: string[];
+    premiumUpgrades: string[];
+    closingStrategy: string;
+    testimonialTemplates: string[];
+    presentationTips: string[];
   };
   summary: string;
 }
@@ -83,7 +90,7 @@ export async function analyzeJobCost(params: JobCostAnalysisParams): Promise<Job
 
     // Prepare the data to send to the API
     const prompt = `
-    You are an expert cost analysis consultant for construction contractors. Analyze the following job details and provide a detailed cost estimate and analysis. Return your response ONLY in JSON format to facilitate processing by a computer system.
+    You are an expert sales consultant for professional contractors with 20+ years of experience selling high-end contracting services. Analyze the following job details and provide a sales-focused analysis with market comparison and professional selling points. Return your response ONLY in JSON format to facilitate processing by a computer system.
 
     JOB INFORMATION:
     - Service type: ${params.serviceType}
@@ -97,12 +104,14 @@ export async function analyzeJobCost(params: JobCostAnalysisParams): Promise<Job
     ${params.additionalInfo ? `- Additional information: ${params.additionalInfo}` : ''}
 
     INSTRUCTIONS:
-    1. Analyze the provided material costs and suggest adjustments if necessary.
-    2. Estimate labor costs based on the estimated hours (if provided) or on typical requirements for this type of work.
-    3. Calculate typical overhead expenses and profit margins for this type of contractor.
-    4. Provide a competitive analysis of low, medium, and high ranges of what other contractors might charge.
-    5. Identify potential issues or hidden costs that could arise.
-    6. Provide recommendations to optimize costs without sacrificing quality.
+    1. Analyze the cost and pricing strategy for this project from a sales perspective.
+    2. Compare this price to market rates (low, average, premium) and provide specific positioning guidance.
+    3. Provide 3-5 professional selling points based on the service and materials that highlight value over price.
+    4. Include 2-3 specific objection handling strategies for this type of service and price point.
+    5. Suggest 2-3 premium upgrades or add-ons that could increase the project value.
+    6. Recommend a specific closing strategy that fits this particular service and price point.
+    7. Include 2-3 customer testimonial templates that would be effective for this type of project.
+    8. Give specific advice on how to present the quote to maximize chances of acceptance.
 
     Please provide your response in JSON FORMAT ONLY with the following structure:
     {
@@ -138,9 +147,16 @@ export async function analyzeJobCost(params: JobCostAnalysisParams): Promise<Job
         "competitiveAnalysis": {
           "lowRange": number,
           "highRange": number,
-          "notes": "string"
+          "notes": "string",
+          "marketPosition": "string"
         },
-        "potentialIssues": ["string"]
+        "potentialIssues": ["string"],
+        "salesPoints": ["string"],
+        "objectionHandling": ["string"],
+        "premiumUpgrades": ["string"],
+        "closingStrategy": "string",
+        "testimonialTemplates": ["string"],
+        "presentationTips": ["string"]
       },
       "summary": "string"
     }

@@ -194,9 +194,10 @@ export default function AiAnalysisPanel({
             </div>
           ) : (
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="analysis">Análisis</TabsTrigger>
                 <TabsTrigger value="breakdown">Desglose</TabsTrigger>
+                <TabsTrigger value="sales">Ventas Pro</TabsTrigger>
                 <TabsTrigger value="description">Descripción</TabsTrigger>
               </TabsList>
               
@@ -320,6 +321,104 @@ export default function AiAnalysisPanel({
                       </div>
                       <p className="text-sm mt-2">{analysisResult.breakdown.competitiveAnalysis.notes}</p>
                     </div>
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="sales" className="space-y-4 pt-4">
+                {analysisResult.breakdown.competitiveAnalysis && (
+                  <div className="rounded-md bg-slate-50 p-4 dark:bg-slate-900">
+                    <h3 className="font-semibold flex items-center gap-2">
+                      <DollarSign className="h-4 w-4" /> 
+                      Posicionamiento de Mercado
+                    </h3>
+                    <div className="mb-2">
+                      <div className="flex justify-between my-2">
+                        <span className="text-sm">Rango de precios del mercado:</span>
+                        <span className="text-sm font-semibold">
+                          {formatCurrency(analysisResult.breakdown.competitiveAnalysis.lowRange)} - {formatCurrency(analysisResult.breakdown.competitiveAnalysis.highRange)}
+                        </span>
+                      </div>
+                      <Progress 
+                        value={((analysisResult.recommendedTotal - analysisResult.breakdown.competitiveAnalysis.lowRange) / 
+                          (analysisResult.breakdown.competitiveAnalysis.highRange - analysisResult.breakdown.competitiveAnalysis.lowRange)) * 100} 
+                        className="h-2"
+                      />
+                      <div className="flex justify-between text-xs mt-1">
+                        <span>Económico</span>
+                        <span>Promedio</span>
+                        <span>Premium</span>
+                      </div>
+                    </div>
+                    {analysisResult.breakdown.competitiveAnalysis.marketPosition && (
+                      <div className="mt-3 p-2 bg-primary/10 rounded-md text-sm">
+                        <p><strong>Posición en el mercado:</strong> {analysisResult.breakdown.competitiveAnalysis.marketPosition}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {analysisResult.breakdown.salesPoints && analysisResult.breakdown.salesPoints.length > 0 && (
+                  <div className="rounded-md bg-slate-50 p-4 dark:bg-slate-900">
+                    <h3 className="font-semibold mb-2">Puntos Clave de Venta</h3>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {analysisResult.breakdown.salesPoints.map((point, index) => (
+                        <li key={index} className="text-sm">{point}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {analysisResult.breakdown.objectionHandling && analysisResult.breakdown.objectionHandling.length > 0 && (
+                  <div className="rounded-md bg-slate-50 p-4 dark:bg-slate-900">
+                    <h3 className="font-semibold mb-2">Cómo Manejar Objeciones</h3>
+                    <ul className="list-disc pl-5 space-y-2">
+                      {analysisResult.breakdown.objectionHandling.map((strategy, index) => (
+                        <li key={index} className="text-sm">{strategy}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {analysisResult.breakdown.premiumUpgrades && analysisResult.breakdown.premiumUpgrades.length > 0 && (
+                  <div className="rounded-md bg-slate-50 p-4 dark:bg-slate-900">
+                    <h3 className="font-semibold mb-2">Mejoras Premium Sugeridas</h3>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {analysisResult.breakdown.premiumUpgrades.map((upgrade, index) => (
+                        <li key={index} className="text-sm">{upgrade}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {analysisResult.breakdown.closingStrategy && (
+                  <div className="rounded-md bg-slate-50 p-4 dark:bg-slate-900">
+                    <h3 className="font-semibold mb-2">Estrategia de Cierre</h3>
+                    <p className="text-sm">{analysisResult.breakdown.closingStrategy}</p>
+                  </div>
+                )}
+
+                {analysisResult.breakdown.testimonialTemplates && analysisResult.breakdown.testimonialTemplates.length > 0 && (
+                  <div className="rounded-md bg-slate-50 p-4 dark:bg-slate-900">
+                    <h3 className="font-semibold mb-2">Plantillas de Testimonios</h3>
+                    <div className="space-y-3">
+                      {analysisResult.breakdown.testimonialTemplates.map((template, index) => (
+                        <div key={index} className="text-sm italic border-l-2 border-primary/30 pl-3 py-1">
+                          "{template}"
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {analysisResult.breakdown.presentationTips && analysisResult.breakdown.presentationTips.length > 0 && (
+                  <div className="rounded-md bg-slate-50 p-4 dark:bg-slate-900">
+                    <h3 className="font-semibold mb-2">Consejos para Presentar el Presupuesto</h3>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {analysisResult.breakdown.presentationTips.map((tip, index) => (
+                        <li key={index} className="text-sm">{tip}</li>
+                      ))}
+                    </ul>
                   </div>
                 )}
               </TabsContent>
