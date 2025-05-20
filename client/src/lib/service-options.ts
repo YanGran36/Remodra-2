@@ -235,36 +235,47 @@ export function getOption(serviceType: string, optionId: string) {
 export function getOptionWithConfiguredPrice(
   serviceType: string, 
   optionId: string, 
-  configuredMaterials: MaterialPrice[]
+  configuredMaterials: MaterialPrice[] | undefined
 ) {
-  // Primero buscamos en los materiales configurados que puedan ser opciones
-  let configuredOption = configuredMaterials.find(m => 
-    m.id === optionId && m.category === serviceType
-  );
+  // Protección contra materiales no definidos
+  if (!configuredMaterials || configuredMaterials.length === 0) {
+    return getOption(serviceType, optionId);
+  }
+  
+  try {
+    // Primero buscamos en los materiales configurados que puedan ser opciones
+    let configuredOption = configuredMaterials.find(m => 
+      m.id === optionId && m.category === serviceType
+    );
 
-  // Búsqueda alternativa por nombre
-  if (!configuredOption) {
-    const defaultOption = getOption(serviceType, optionId);
-    if (defaultOption) {
-      configuredOption = configuredMaterials.find(m => 
-        m.category === serviceType && 
-        m.name.toLowerCase().includes(defaultOption.name.toLowerCase())
-      );
+    // Búsqueda alternativa por nombre
+    if (!configuredOption) {
+      const defaultOption = getOption(serviceType, optionId);
+      if (defaultOption) {
+        configuredOption = configuredMaterials.find(m => 
+          m.category === serviceType && 
+          m.name && defaultOption.name && 
+          m.name.toLowerCase().includes(defaultOption.name.toLowerCase())
+        );
+      }
     }
+    
+    // Si encontramos un precio configurado, lo usamos
+    if (configuredOption) {
+      console.log('Opción configurada encontrada:', configuredOption.name, configuredOption.unitPrice);
+      return {
+        id: configuredOption.id || optionId,
+        name: configuredOption.name || 'Opción',
+        unit: configuredOption.unit || 'unit',
+        unitPrice: configuredOption.unitPrice || 0
+      };
+    }
+  } catch (error) {
+    console.warn('Error al buscar precio configurado:', error);
+    // En caso de error, no fallamos, simplemente devolvemos la opción por defecto
   }
   
-  // Si encontramos un precio configurado, lo usamos
-  if (configuredOption) {
-    console.log('Opción configurada encontrada:', configuredOption.name, configuredOption.unitPrice);
-    return {
-      id: configuredOption.id,
-      name: configuredOption.name,
-      unit: configuredOption.unit,
-      unitPrice: configuredOption.unitPrice
-    };
-  }
-  
-  // Si no, usamos el predeterminado
+  // Si no hay configuración o hubo un error, usamos el predeterminado
   return getOption(serviceType, optionId);
 }
 
