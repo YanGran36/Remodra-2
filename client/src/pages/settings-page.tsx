@@ -13,7 +13,8 @@ import {
   Palette,
   FileText,
   Eye,
-  Download
+  Download,
+  DollarSign
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -229,6 +230,10 @@ export default function SettingsPage() {
               <TabsTrigger value="appearance">
                 <Palette className="h-4 w-4 mr-2" />
                 Appearance
+              </TabsTrigger>
+              <TabsTrigger value="pricing" className="flex items-center">
+                <DollarSign className="h-4 w-4 mr-2" />
+                Pricing Configuration
               </TabsTrigger>
             </TabsList>
             
@@ -640,6 +645,34 @@ export default function SettingsPage() {
                 <CardFooter>
                   <Button>Save Appearance Settings</Button>
                 </CardFooter>
+              </Card>
+            </TabsContent>
+
+            {/* Pricing Configuration Tab */}
+            <TabsContent value="pricing" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Pricing Configuration</CardTitle>
+                  <CardDescription>
+                    Configure your pricing for all services and materials in one place. These prices will be used in all estimates.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="mb-4">
+                    <Button variant="outline" onClick={() => window.location.href = '/pricing-config'}>
+                      <DollarSign className="h-4 w-4 mr-2" />
+                      Go to Pricing Configuration Page
+                    </Button>
+                  </div>
+                  <Alert>
+                    <FileText className="h-4 w-4" />
+                    <AlertTitle>Important</AlertTitle>
+                    <AlertDescription>
+                      All prices configured in the Pricing Configuration page will be used automatically in all estimates and invoices.
+                      Make sure your prices are accurate before creating estimates for clients.
+                    </AlertDescription>
+                  </Alert>
+                </CardContent>
               </Card>
             </TabsContent>
           </Tabs>
