@@ -259,13 +259,10 @@ export default function AdvancedMeasurement({
   // Referencia para input de archivos
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Inicializar canvas y dibujar
-  useEffect(() => {
+  // Función para dibujar todo el canvas
+  const drawCanvas = (ctx: CanvasRenderingContext2D) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
     
     // Limpiar canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -298,6 +295,17 @@ export default function AdvancedMeasurement({
     if (tempPoints.length > 0) {
       drawTempPoints(ctx);
     }
+  };
+  
+  // Inicializar canvas y dibujar
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    drawCanvas(ctx);
   }, [measurements, tempPoints, backgroundImage, selectedMeasurement]);
   
   // Notificar al componente padre cuando cambien las mediciones
@@ -424,9 +432,23 @@ export default function AdvancedMeasurement({
       );
     }
     
-    // Si es una línea con dos puntos, mostrar medida temporal
-    if (activeTool === 'line' && tempPoints.length === 2) {
-      const [start, end] = tempPoints;
+    // Mostrar distancias entre puntos existentes
+    if (tempPoints.length >= 2 && activeTool === 'line') {
+      for (let i = 1; i < tempPoints.length; i++) {
+        const start = tempPoints[i-1];
+        const end = tempPoints[i];
+        const pixelLength = distance(start, end);
+        const realLength = pixelLength / scale;
+        
+        // Calcular posición para la etiqueta
+        const midX = (start.x + end.x) / 2;
+        const midY = (start.y + end.y) / 2;
+        
+        // Dibujar etiqueta con la medida
+        drawLabel(ctx, [midX, midY], `${formatNumber(realLength)} ${unit}`, "#FF5722");
+      }
+    }
+  }
       const pixelLength = distance(start, end);
       const realLength = pixelLength / scale;
       
