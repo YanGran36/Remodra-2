@@ -745,10 +745,11 @@ const recalculateTotal = (items: SelectedItem[]) => {
                                     id={`${serviceType}-hours`}
                                     type="number"
                                     placeholder="Hours"
-                                    defaultValue={existingLaborItem?.hours || laborRate.baseHours}
-                                    min={1}
+                                    value={existingLaborItem?.hours || laborRate.baseHours}
+                                    min={0}
+                                    step="0.5"
                                     onChange={(e) => {
-                                      const hours = parseInt(e.target.value) || laborRate.baseHours;
+                                      const hours = parseFloat(e.target.value) || 0;
                                       const rate = existingLaborItem?.rate || laborRate.hourlyRate;
                                       const total = hours * rate;
                                       
@@ -763,11 +764,11 @@ const recalculateTotal = (items: SelectedItem[]) => {
                                     id={`${serviceType}-rate`}
                                     type="number"
                                     placeholder="Rate"
-                                    defaultValue={existingLaborItem?.rate || laborRate.hourlyRate}
+                                    value={existingLaborItem?.rate || laborRate.hourlyRate}
                                     min={0}
-                                    step={5}
+                                    step="0.01"
                                     onChange={(e) => {
-                                      const rate = parseInt(e.target.value) || laborRate.hourlyRate;
+                                      const rate = parseFloat(e.target.value) || 0;
                                       const hours = existingLaborItem?.hours || laborRate.baseHours;
                                       const total = hours * rate;
                                       
