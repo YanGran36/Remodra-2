@@ -338,102 +338,104 @@ const LABOR_RATES_BY_SERVICE: Record<string, { baseHours: number, hourlyRate: nu
   'general': { baseHours: 6, hourlyRate: 45 }
 };
 
-// Calcular el total del estimado incluyendo mano de obra y mediciones
+// Calcular el total del estimado en base al servicio y mediciones
 const recalculateTotal = (items: SelectedItem[]) => {
-  // Calcular subtotal de materiales y opciones de los ítems seleccionados manualmente
-  const materialsSubtotal = items.reduce((sum, item) => sum + item.total, 0);
+  // Variables para cálculos
+  let materialsSubtotal = 0;
+  let laborSubtotal = 0;
+  let subtotal = 0;
   
-  // Calcular costos adicionales basados en las mediciones
-  let measurementMaterialsCost = 0;
-  let measurementLaborCost = 0;
+  // PASO 1: Obtener datos de las mediciones
+  const measurementData = {
+    length: 0,    // Longitud total en pies lineales
+    area: 0,      // Área total en pies cuadrados
+    perimeter: 0  // Perímetro total en pies lineales
+  };
   
-  // Aplicar cálculos basados en mediciones reales
+  // Recopilar todas las mediciones según su tipo
   measurements.forEach(measurement => {
-    // Para cercas, usar mediciones lineales (length)
-    if (measurement.type === 'line' && measurement.realLength && selectedServiceTypes.includes('fence')) {
-      const fenceMaterialRate = 35; // Precio por pie lineal de material de cerca
-      const fenceLaborRate = 22;    // Precio por pie lineal de instalación
-      
-      // Calcular costo de materiales
-      measurementMaterialsCost += measurement.realLength * fenceMaterialRate;
-      
-      // Calcular costo de mano de obra
-      measurementLaborCost += measurement.realLength * fenceLaborRate;
-      
-      console.log(`Fence calculation - Length: ${measurement.realLength}ft, Materials: $${measurementMaterialsCost}, Labor: $${measurementLaborCost}`);
+    if (measurement.type === 'line' && measurement.realLength) {
+      measurementData.length += measurement.realLength;
     } 
-    // Para techos y pisos, usar mediciones de área
     else if (measurement.type === 'area' && measurement.realArea) {
-      if (selectedServiceTypes.includes('roof') || selectedServiceTypes.includes('roofing')) {
-        const roofingMaterialRate = 5.5; // Precio por pie cuadrado de material de techo
-        const roofingLaborRate = 3.2;    // Precio por pie cuadrado de instalación
-        
-        // Calcular costo de materiales
-        measurementMaterialsCost += measurement.realArea * roofingMaterialRate;
-        
-        // Calcular costo de mano de obra
-        measurementLaborCost += measurement.realArea * roofingLaborRate;
-        
-        console.log(`Roofing calculation - Area: ${measurement.realArea}sqft, Materials: $${measurementMaterialsCost}, Labor: $${measurementLaborCost}`);
-      }
-      else if (selectedServiceTypes.includes('flooring')) {
-        const flooringMaterialRate = 4.8; // Precio por pie cuadrado de material de piso
-        const flooringLaborRate = 2.7;    // Precio por pie cuadrado de instalación
-        
-        // Calcular costo de materiales
-        measurementMaterialsCost += measurement.realArea * flooringMaterialRate;
-        
-        // Calcular costo de mano de obra
-        measurementLaborCost += measurement.realArea * flooringLaborRate;
-        
-        console.log(`Flooring calculation - Area: ${measurement.realArea}sqft, Materials: $${measurementMaterialsCost}, Labor: $${measurementLaborCost}`);
-      }
+      measurementData.area += measurement.realArea;
     }
-    // Para perímetros (como molduras, acabados, etc.)
     else if (measurement.type === 'perimeter' && measurement.realPerimeter) {
-      const trimMaterialRate = 3.2; // Precio por pie lineal de moldura/acabado
-      const trimLaborRate = 2.5;    // Precio por pie lineal de instalación
-      
-      // Calcular costo de materiales
-      measurementMaterialsCost += measurement.realPerimeter * trimMaterialRate;
-      
-      // Calcular costo de mano de obra
-      measurementLaborCost += measurement.realPerimeter * trimLaborRate;
-      
-      console.log(`Trim calculation - Perimeter: ${measurement.realPerimeter}ft, Materials: $${measurementMaterialsCost}, Labor: $${measurementLaborCost}`);
+      measurementData.perimeter += measurement.realPerimeter;
     }
   });
   
-  // Calcular subtotal de mano de obra (manual + basada en mediciones)
-  const manualLaborSubtotal = laborItems.reduce((sum, item) => sum + item.total, 0);
-  const totalLaborSubtotal = manualLaborSubtotal + measurementLaborCost;
+  // PASO 2: Aplicar tarifas según el servicio seleccionado
+  // Esto usa valores predeterminados simplificados sin mostrarlos al usuario
+  if (selectedServiceTypes.includes('fence')) {
+    // Para cercas, usamos principalmente longitud (pies lineales)
+    if (measurementData.length > 0) {
+      // Estos valores serán ajustados por el usuario más adelante
+      const baseRate = 57; // Tasa combinada (materiales + labor) por pie lineal
+      subtotal += measurementData.length * baseRate;
+      
+      // Solo para propósitos de seguimiento interno
+      console.log(`Cerca - Longitud: ${measurementData.length}ft, Base calculada: $${measurementData.length * baseRate}`);
+    }
+  } 
+  else if (selectedServiceTypes.includes('roof') || selectedServiceTypes.includes('roofing')) {
+    // Para techos, usamos área (pies cuadrados)
+    if (measurementData.area > 0) {
+      const baseRate = 8.7; // Tasa combinada (materiales + labor) por pie cuadrado
+      subtotal += measurementData.area * baseRate;
+      
+      console.log(`Techo - Área: ${measurementData.area}sqft, Base calculada: $${measurementData.area * baseRate}`);
+    }
+  }
+  else if (selectedServiceTypes.includes('flooring')) {
+    // Para pisos, usamos área (pies cuadrados)
+    if (measurementData.area > 0) {
+      const baseRate = 7.5; // Tasa combinada (materiales + labor) por pie cuadrado
+      subtotal += measurementData.area * baseRate;
+      
+      console.log(`Piso - Área: ${measurementData.area}sqft, Base calculada: $${measurementData.area * baseRate}`);
+    }
+  }
+  else if (selectedServiceTypes.includes('windows')) {
+    // Para ventanas, usamos área o conteo
+    if (measurementData.area > 0) {
+      const baseRate = 40; // Tasa combinada por pie cuadrado
+      subtotal += measurementData.area * baseRate;
+      
+      console.log(`Ventanas - Área: ${measurementData.area}sqft, Base calculada: $${measurementData.area * baseRate}`);
+    }
+  }
+  else if (selectedServiceTypes.includes('gutters')) {
+    // Para canaletas, usamos longitud (pies lineales)
+    if (measurementData.length > 0) {
+      const baseRate = 12; // Tasa combinada por pie lineal
+      subtotal += measurementData.length * baseRate;
+      
+      console.log(`Canaletas - Longitud: ${measurementData.length}ft, Base calculada: $${measurementData.length * baseRate}`);
+    }
+  }
   
-  // Actualizar subtotal de mano de obra para mostrar
-  setLaborSubtotal(totalLaborSubtotal);
+  // PASO 3: Considerar ítems seleccionados manualmente (opcionales)
+  // Estos son materiales o opciones adicionales específicas
+  const itemsTotal = items.reduce((sum, item) => sum + item.total, 0);
+  subtotal += itemsTotal;
   
-  // Total de materiales (items seleccionados + basados en mediciones)
-  const totalMaterialsSubtotal = materialsSubtotal + measurementMaterialsCost;
-  
-  // Subtotal combinado
-  const subtotal = totalMaterialsSubtotal + totalLaborSubtotal;
-  
-  // Actualizar valores en el formulario
-  form.setValue("subtotal", subtotal);
-  
+  // PASO 4: Aplicar impuestos y descuentos
   const taxRate = form.getValues("tax") || 0;
   const discountAmount = form.getValues("discount") || 0;
   
   const taxAmount = (subtotal * taxRate) / 100;
   const total = subtotal + taxAmount - discountAmount;
   
+  // PASO 5: Actualizar formulario y estado
+  form.setValue("subtotal", subtotal);
   form.setValue("total", total);
   setTotalAmount(total);
   
+  // Para debugging
   console.log("Total recalculado:", { 
-    materialsSubtotal: totalMaterialsSubtotal, 
-    laborSubtotal: totalLaborSubtotal, 
-    measurementMaterialsCost,
-    measurementLaborCost,
+    medidas: measurementData,
+    itemsAdicionales: itemsTotal,
     subtotal, 
     taxRate, 
     discountAmount, 

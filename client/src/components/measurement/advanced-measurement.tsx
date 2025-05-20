@@ -416,18 +416,11 @@ export default function AdvancedMeasurement({
         // Log measurement for debugging and to help with calculation
         console.log("Measurements updated - Total Area: 0 sqft, Total Length: " + scaledTotalDistance + " ft");
         
-        // Estimate cost if applicable
-        if (showCostEstimates && selectedServiceType === 'fence') {
-          const estimatedCost = scaledTotalDistance * 35; // Simple cost estimation
-          console.log("Total cost estimate: $" + estimatedCost.toFixed(2));
-          
-          // Display cost estimate
-          const costLabel = `Est. Cost: $${estimatedCost.toFixed(2)}`;
-          ctx.fillStyle = "rgba(0, 100, 0, 0.7)";
-          ctx.fillRect(canvasWidth - 160, canvasHeight - 80, 150, 30);
-          ctx.fillStyle = "#ffffff";
-          ctx.fillText(costLabel, canvasWidth - 20, canvasHeight - 65);
-        }
+        // Solo mostramos la longitud total, sin costos para evitar confusiones
+        ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+        ctx.fillRect(canvasWidth - 160, canvasHeight - 80, 150, 30);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText("Medición completada", canvasWidth - 20, canvasHeight - 65);
       }
     }
   };
