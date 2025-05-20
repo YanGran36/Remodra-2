@@ -501,8 +501,6 @@ export default function AdvancedMeasurement({
   
   // Manejar movimiento del ratón sobre el canvas
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing || tempPoints.length === 0) return;
-    
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -510,15 +508,19 @@ export default function AdvancedMeasurement({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    // Mostrar medida temporal mientras se mueve el cursor
-    if (tempPoints.length > 0) {
+    // Mostrar medida temporal mientras se mueve el cursor durante el dibujo
+    if (isDrawing && tempPoints.length > 0 && activeTool === 'line') {
       const startPoint = tempPoints[tempPoints.length - 1];
       const pixelDistance = distance(startPoint, {x, y});
       const realDistance = pixelDistance / scale;
       
       setTempMeasurement({x, y, distance: realDistance});
       
-      // Se redibujará en el siguiente frame de animación
+      // Forzar redibujado
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        drawCanvas(ctx);
+      }
     }
   };
   
@@ -1210,6 +1212,8 @@ export default function AdvancedMeasurement({
             height={canvasHeight}
             className="w-full h-auto bg-white cursor-crosshair"
             onClick={handleCanvasClick}
+            onMouseMove={handleMouseMove}
+            onDoubleClick={handleDoubleClick}
           />
         </div>
         
