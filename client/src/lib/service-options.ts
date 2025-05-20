@@ -189,13 +189,31 @@ export function getMaterialWithConfiguredPrice(
   materialId: string, 
   configuredMaterials: MaterialPrice[]
 ) {
-  // Primero buscamos en los materiales configurados
-  const configuredMaterial = configuredMaterials.find(m => 
-    m.id === materialId || (m.category === serviceType && m.id.includes(materialId))
+  // Primero buscamos en los materiales configurados por coincidencia exacta de ID
+  let configuredMaterial = configuredMaterials.find(m => 
+    m.id === materialId
   );
+
+  // Si no encontramos coincidencia exacta, buscamos por categoría y nombre similar
+  if (!configuredMaterial) {
+    configuredMaterial = configuredMaterials.find(m => 
+      m.category === serviceType && 
+      (m.name.toLowerCase().includes(materialId.replace(/_/g, ' ')) || 
+       materialId.includes(m.id))
+    );
+  }
+
+  // Búsqueda final por categoría
+  if (!configuredMaterial) {
+    configuredMaterial = configuredMaterials.find(m => 
+      m.category === serviceType &&
+      m.name.toLowerCase().includes(getMaterial(serviceType, materialId)?.name.toLowerCase() || '')
+    );
+  }
   
   // Si encontramos un precio configurado, lo usamos
   if (configuredMaterial) {
+    console.log('Material configurado encontrado:', configuredMaterial.name, configuredMaterial.unitPrice);
     return {
       id: configuredMaterial.id,
       name: configuredMaterial.name,
@@ -211,6 +229,43 @@ export function getMaterialWithConfiguredPrice(
 export function getOption(serviceType: string, optionId: string) {
   const options = OPTIONS_BY_SERVICE[serviceType as keyof typeof OPTIONS_BY_SERVICE] || [];
   return options.find(o => o.id === optionId);
+}
+
+// Versión que usa precios configurados para opciones
+export function getOptionWithConfiguredPrice(
+  serviceType: string, 
+  optionId: string, 
+  configuredMaterials: MaterialPrice[]
+) {
+  // Primero buscamos en los materiales configurados que puedan ser opciones
+  let configuredOption = configuredMaterials.find(m => 
+    m.id === optionId && m.category === serviceType
+  );
+
+  // Búsqueda alternativa por nombre
+  if (!configuredOption) {
+    const defaultOption = getOption(serviceType, optionId);
+    if (defaultOption) {
+      configuredOption = configuredMaterials.find(m => 
+        m.category === serviceType && 
+        m.name.toLowerCase().includes(defaultOption.name.toLowerCase())
+      );
+    }
+  }
+  
+  // Si encontramos un precio configurado, lo usamos
+  if (configuredOption) {
+    console.log('Opción configurada encontrada:', configuredOption.name, configuredOption.unitPrice);
+    return {
+      id: configuredOption.id,
+      name: configuredOption.name,
+      unit: configuredOption.unit,
+      unitPrice: configuredOption.unitPrice
+    };
+  }
+  
+  // Si no, usamos el predeterminado
+  return getOption(serviceType, optionId);
 }
 
 export function getServiceInfo(serviceType: string) {
