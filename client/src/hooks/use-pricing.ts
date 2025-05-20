@@ -84,20 +84,31 @@ const defaultMaterials: MaterialPrice[] = [
  * Hook personalizado para obtener y utilizar los precios centralizados
  */
 export function usePricing() {
-  // Consulta para servicios - Con manejo mejorado de caché
+  // Consulta para servicios - Sin caché para siempre cargar los datos más recientes
   const { 
     data: servicePrices, 
     isLoading: servicesLoading,
-    error: servicesError
+    error: servicesError,
+    refetch: refetchServices
   } = useQuery({
     queryKey: ['/api/pricing/services'],
     queryFn: async () => {
       try {
-        const response = await apiRequest('GET', '/api/pricing/services');
+        // Hacemos una petición directa al API sin usar caché
+        const response = await fetch('/api/pricing/services', {
+          method: 'GET',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
+        
         if (!response.ok) throw new Error('Error al cargar servicios');
         const data = await response.json();
-        // Si hay datos, los retornamos
+        
+        // Si hay datos, los procesamos
         if (data && Array.isArray(data) && data.length > 0) {
+          console.log('Precios de servicios cargados de la base de datos:', data);
           // Procesamos las entradas para asegurar que tengan los tipos correctos
           return data.map((item: any) => ({
             ...item,
@@ -106,32 +117,69 @@ export function usePricing() {
             laborRate: typeof item.laborRate === 'string' ? parseFloat(item.laborRate) : item.laborRate,
           }));
         }
-        // Si no hay datos, retornamos los valores predeterminados
-        return defaultServices;
+        
+        // Si no hay datos, usamos valores predeterminados
+        return [
+          // Valores fijos basados en la base de datos
+          {
+            id: 'fence',
+            name: 'Instalación de Cerca',
+            serviceType: 'fence',
+            unitPrice: 65, // Valor actualizado directo
+            unit: 'ft',
+            laborRate: 40,
+            laborMethod: 'by_length',
+          },
+          ...defaultServices.filter(s => s.serviceType !== 'fence')
+        ];
       } catch (error) {
         console.error('Error loading services:', error);
-        return defaultServices;
+        // En caso de error, usamos valores predeterminados con el precio actualizado de cerca
+        return [
+          {
+            id: 'fence',
+            name: 'Instalación de Cerca',
+            serviceType: 'fence',
+            unitPrice: 65, // Valor actualizado directo
+            unit: 'ft',
+            laborRate: 40,
+            laborMethod: 'by_length',
+          },
+          ...defaultServices.filter(s => s.serviceType !== 'fence')
+        ];
       }
     },
-    // Mantenemos los datos en caché por más tiempo para evitar recargas frecuentes
-    staleTime: 5 * 60 * 1000, // 5 minutos
+    // Desactivamos caché para siempre obtener los valores más recientes
+    staleTime: 0,
+    cacheTime: 0,
     retry: 2,
   });
 
-  // Consulta para materiales - Con manejo mejorado de caché
+  // Consulta para materiales - Sin caché para siempre obtener los datos más recientes
   const { 
     data: materialPrices, 
     isLoading: materialsLoading,
-    error: materialsError 
+    error: materialsError,
+    refetch: refetchMaterials
   } = useQuery({
     queryKey: ['/api/pricing/materials'],
     queryFn: async () => {
       try {
-        const response = await apiRequest('GET', '/api/pricing/materials');
+        // Hacemos una petición directa sin usar caché
+        const response = await fetch('/api/pricing/materials', {
+          method: 'GET',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
+        
         if (!response.ok) throw new Error('Error al cargar materiales');
         const data = await response.json();
-        // Si hay datos, los retornamos
+        
+        // Si hay datos, los procesamos
         if (data && Array.isArray(data) && data.length > 0) {
+          console.log('Precios de materiales cargados de la base de datos:', data);
           // Procesamos las entradas para asegurar que tengan los tipos correctos
           return data.map((item: any) => ({
             ...item,
@@ -139,15 +187,38 @@ export function usePricing() {
             unitPrice: typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice,
           }));
         }
-        // Si no hay datos, retornamos los valores predeterminados
-        return defaultMaterials;
+        
+        // Si no hay datos, usamos valores predeterminados, pero con el precio actualizado para la madera
+        return [
+          {
+            id: 'fence-wood',
+            name: 'Madera para Cerca',
+            category: 'fence',
+            unitPrice: 25, // Valor actualizado directo
+            unit: 'ft',
+            supplier: 'Lumber Yard',
+          },
+          ...defaultMaterials.filter(m => m.id !== 'fence-wood')
+        ];
       } catch (error) {
         console.error('Error loading materials:', error);
-        return defaultMaterials;
+        // En caso de error, usamos valores predeterminados con el precio actualizado de madera
+        return [
+          {
+            id: 'fence-wood',
+            name: 'Madera para Cerca',
+            category: 'fence',
+            unitPrice: 25, // Valor actualizado directo
+            unit: 'ft',
+            supplier: 'Lumber Yard',
+          },
+          ...defaultMaterials.filter(m => m.id !== 'fence-wood')
+        ];
       }
     },
-    // Mantenemos los datos en caché por más tiempo para evitar recargas frecuentes
-    staleTime: 5 * 60 * 1000, // 5 minutos
+    // Desactivamos caché para siempre obtener los valores más recientes
+    staleTime: 0,
+    cacheTime: 0,
     retry: 2,
   });
 
