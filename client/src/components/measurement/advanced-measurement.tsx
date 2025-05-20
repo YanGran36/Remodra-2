@@ -578,14 +578,17 @@ export default function AdvancedMeasurement({
       
       if (showCostEstimates && selectedServiceType) {
         // Calculate cost based on service type and measurement
-        const serviceInfo = serviceRates[selectedServiceType];
-        costEstimate = calculateCost(
-          { type: 'line', realLength, unit },
-          selectedServiceType,
-          selectedMaterialType,
-          serviceRates,
-          calculationOptions
-        );
+        // Check if the selectedServiceType exists in serviceRates
+        if (selectedServiceType && typeof serviceRates === 'object' && serviceRates.hasOwnProperty(selectedServiceType)) {
+          const serviceInfo = serviceRates[selectedServiceType as keyof typeof serviceRates];
+          costEstimate = calculateCost(
+            { type: 'line', realLength, unit },
+            selectedServiceType,
+            selectedMaterialType,
+            serviceRates,
+            calculationOptions
+          );
+        }
       }
       
       const newMeasurement: Measurement = {

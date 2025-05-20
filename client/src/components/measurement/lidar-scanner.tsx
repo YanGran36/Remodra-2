@@ -26,8 +26,9 @@ interface ScanResult {
   scanSetting: ScanSettings;
 }
 
-interface LiDARScannerProps {
-  onScanComplete?: (result: ScanResult) => void;
+export interface LiDARScannerProps {
+  onScanComplete?: (results: ScanResult[]) => void;
+  onSaveScan?: (scan: ScanResult) => void;
   width?: number;
   height?: number;
   unit?: string;
@@ -35,6 +36,7 @@ interface LiDARScannerProps {
 
 export default function LiDARScanner({
   onScanComplete,
+  onSaveScan,
   width = 640,
   height = 480,
   unit = "ft"
