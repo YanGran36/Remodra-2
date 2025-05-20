@@ -26,6 +26,7 @@ import {
 import { analyzeProject, generateSharingContent, generateProfessionalJobDescription } from "./ai-service";
 import * as achievementService from "./services/achievement-service";
 import { registerTimeclockRoutes } from "./routes/timeclock-routes";
+import { registerPricingRoutes } from "./routes/pricing";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
