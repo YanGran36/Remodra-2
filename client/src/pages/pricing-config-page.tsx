@@ -195,8 +195,6 @@ const PricingConfigPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   
   // Cargar datos del servidor cuando estén disponibles o cambien
-  // Esta función es CRÍTICA ya que sincroniza los datos de la base de datos 
-  // con los que se muestran en la interfaz
   useEffect(() => {
     // Cuando los datos son cargados de la API, forzamos la actualización de la interfaz
     if (configuredServices) {
@@ -250,24 +248,22 @@ const PricingConfigPage = () => {
     setEditingService(newService);
   };
 
-  // Para guardar cambios en un servicio - Versión ultra simplificada
+  // Para guardar cambios en un servicio
   const handleSaveService = async () => {
     if (!editingService) return;
 
     setIsLoading(true);
     
     try {
-      // Guardamos los cambios en nuestra lista local directamente, sin hacer llamadas a la API
-      // Esto evita los problemas con la API que estamos teniendo
+      // Guardamos el servicio en memoria local inmediatamente para mostrar los cambios al usuario
       const updatedService = {
         ...editingService,
         updatedAt: new Date()
       };
       
-      let updatedServices;
-      
       // Verificar si el servicio ya existe en nuestra lista
       const existingIndex = services.findIndex(s => s.id === editingService.id);
+      let updatedServices;
       
       if (existingIndex >= 0) {
         // Si existe, actualizar en la lista
@@ -281,34 +277,40 @@ const PricingConfigPage = () => {
       // Actualizar la lista local
       setServices(updatedServices);
       
-      // Actualizamos también en la base de datos en segundo plano
-      // Aunque no esperamos la respuesta para actualizar la UI
       // Convertir precios a formato numérico
       const numericUnitPrice = parseFloat(String(editingService.unitPrice));
       const numericLaborRate = parseFloat(String(editingService.laborRate));
       
-      fetch(`/api/pricing/services/${editingService.id}`, {
+      // Intentar guardar en la base de datos
+      const response = await fetch(`/api/pricing/services/${editingService.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...editingService,
           contractorId: 1,
-          serviceType: editingService.id,
-          // Asegurar formato correcto de precios
-          unitPrice: String(numericUnitPrice),
-          laborRate: String(numericLaborRate)
+          serviceType: editingService.serviceType || editingService.id,
+          unitPrice: numericUnitPrice,
+          laborRate: numericLaborRate
         })
-      }).then(() => {
-        // Silenciosamente invalidamos el caché cuando la petición termine
-        queryClient.invalidateQueries({ queryKey: ['/api/pricing/services'] });
-      }).catch(err => {
-        console.warn("Error en segundo plano:", err);
       });
       
-      toast({
-        title: "Servicio guardado",
-        description: "Los precios se han actualizado correctamente"
-      });
+      if (response.ok) {
+        // Invalidar cache
+        queryClient.invalidateQueries({ queryKey: ['/api/pricing/services'] });
+        
+        toast({
+          title: "Servicio guardado",
+          description: "Los precios se han actualizado correctamente"
+        });
+      } else {
+        console.warn("Error al guardar en la base de datos:", await response.text());
+        
+        toast({
+          title: "Advertencia",
+          description: "Se guardó localmente pero hubo un problema al guardar en la base de datos",
+          variant: "destructive"
+        });
+      }
     } catch (error) {
       console.error('Error al guardar servicio:', error);
       toast({
@@ -347,36 +349,46 @@ const PricingConfigPage = () => {
     setIsLoading(true);
     
     try {
-      // Primero intentamos guardar en la base de datos
       // Convertir el precio a un número para asegurar formato correcto
       const numericPrice = parseFloat(String(editingMaterial.unitPrice));
       
       console.log(`Guardando material ${editingMaterial.id} con precio: ${numericPrice}`);
       
-      // Datos para enviar al servidor con los IDs correctos
+      // Simplificar los datos para evitar problemas de tipo
       const materialData = {
-        ...editingMaterial,
-        contractorId: 1,
-        unitPrice: numericPrice, // Enviamos como número
-        // Guarda explícitamente el id como idString y materialId para facilitar búsquedas
-        idString: editingMaterial.id,
-        materialId: editingMaterial.id,
+        name: editingMaterial.name,
+        category: editingMaterial.category || 'fence',
+        unitPrice: numericPrice,
+        unit: editingMaterial.unit || 'ft',
+        supplier: editingMaterial.supplier || '',
         code: editingMaterial.id,
-        category: editingMaterial.category || (editingMaterial.id ? editingMaterial.id.split('_')[0] : 'other')
+        id_string: editingMaterial.id,
+        material_id: editingMaterial.id,
+        status: 'active',
+        description: `${editingMaterial.name} para ${editingMaterial.category}`,
+        contractorId: 1
       };
       
-      // Primero guardamos en la base de datos
+      // Llamada directa a la API
       const response = await fetch(`/api/pricing/materials/${editingMaterial.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(materialData)
       });
       
-      // Actualizar la lista local después de guardar en la base de datos
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error guardando material:", errorText);
+        throw new Error("No se pudo guardar en la base de datos");
+      }
+      
+      const updatedMaterialData = await response.json();
+      console.log("Respuesta del servidor:", updatedMaterialData);
+      
+      // Actualizar la lista local con el material actualizado
       const updatedMaterial = {
         ...editingMaterial,
-        unitPrice: numericPrice, // Asegurarse de que el precio sea un número
-        updatedAt: new Date(),
+        unitPrice: numericPrice
       };
       
       const existingIndex = materials.findIndex(m => m.id === editingMaterial.id);
@@ -394,45 +406,35 @@ const PricingConfigPage = () => {
       // Actualizamos la lista de materiales en la UI
       setMaterials(updatedMaterialsList);
       
-      // Si la respuesta fue exitosa
-      if (response.ok) {
-        console.log("Material guardado exitosamente en la base de datos");
-        
-        // Invalidamos todas las consultas relacionadas con materiales
-        await queryClient.invalidateQueries({ queryKey: ['/api/pricing/materials'] });
-        
-        // Forzar una recarga de datos
-        await queryClient.refetchQueries({ queryKey: ['/api/pricing/materials'] });
-        
-        // También invalidar la caché de cualquier página que use materiales
-        await queryClient.invalidateQueries();
-        
-        // Recargar directamente los datos para actualizar la interfaz
+      // Mensaje de éxito
+      toast({
+        title: "Material guardado",
+        description: "Los precios se han actualizado correctamente"
+      });
+      
+      // Forzar actualización de datos en todas partes
+      queryClient.invalidateQueries();
+      
+      // Recargar directamente los datos más recientes
+      try {
         const freshResponse = await fetch('/api/pricing/materials');
         if (freshResponse.ok) {
           const freshData = await freshResponse.json();
-          console.log("Datos frescos cargados:", freshData);
           
           if (Array.isArray(freshData) && freshData.length > 0) {
-            // Actualizar los materiales con los datos más recientes
-            setMaterials(freshData);
+            const processedMaterials = freshData.map((material: any) => ({
+              ...material,
+              id: material.id_string || material.code || material.material_id,
+              unitPrice: typeof material.unitPrice === 'string' ? 
+                parseFloat(material.unitPrice) : 
+                (typeof material.unit_price === 'string' ? 
+                  parseFloat(material.unit_price) : material.unit_price || 0)
+            }));
+            setMaterials(processedMaterials);
           }
         }
-        
-        // Mostramos mensaje de éxito
-        toast({
-          title: "Material guardado",
-          description: "Los precios se han actualizado correctamente"
-        });
-      } else {
-        // Si hubo un error, lo registramos
-        console.warn("Error al guardar en la base de datos:", await response.text());
-        
-        toast({
-          title: "Error al guardar",
-          description: "Se guardó localmente pero no en la base de datos",
-          variant: "destructive"
-        });
+      } catch (refreshError) {
+        console.warn("Error al recargar datos:", refreshError);
       }
     } catch (error) {
       console.error('Error al guardar material:', error);
@@ -525,9 +527,7 @@ const PricingConfigPage = () => {
               {editingService && (
                 <div className="mt-6 border rounded-lg p-4">
                   <h3 className="text-lg font-medium mb-4">
-                    {services.find(s => s.id === editingService.id) 
-                      ? 'Editar Servicio' 
-                      : 'Añadir Nuevo Servicio'}
+                    {editingService.id.startsWith('service-') ? 'Nuevo Servicio' : 'Editar Servicio'}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div className="space-y-2">
@@ -540,14 +540,25 @@ const PricingConfigPage = () => {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="service-type">Tipo de Servicio</Label>
-                      <Input 
-                        id="service-type"
+                      <Select
                         value={editingService.serviceType}
-                        onChange={(e) => setEditingService({...editingService, serviceType: e.target.value})}
-                      />
+                        onValueChange={(value) => setEditingService({...editingService, serviceType: value})}
+                      >
+                        <SelectTrigger id="service-type">
+                          <SelectValue placeholder="Seleccionar" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="fence">Cercas</SelectItem>
+                          <SelectItem value="roof">Techos</SelectItem>
+                          <SelectItem value="gutters">Canaletas</SelectItem>
+                          <SelectItem value="windows">Ventanas</SelectItem>
+                          <SelectItem value="deck">Deck</SelectItem>
+                          <SelectItem value="otro">Otro</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="unit-price">Precio por Unidad</Label>
+                      <Label htmlFor="unit-price">Precio Base (por unidad)</Label>
                       <Input 
                         id="unit-price"
                         type="number" 
@@ -559,7 +570,19 @@ const PricingConfigPage = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="unit">Unidad</Label>
+                      <Label htmlFor="labor-rate">Mano de Obra (por unidad)</Label>
+                      <Input 
+                        id="labor-rate"
+                        type="number"
+                        value={editingService.laborRate}
+                        onChange={(e) => setEditingService({
+                          ...editingService, 
+                          laborRate: parseFloat(e.target.value) || 0
+                        })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="unit">Unidad de Medida</Label>
                       <Select
                         value={editingService.unit}
                         onValueChange={(value) => setEditingService({...editingService, unit: value})}
@@ -575,19 +598,7 @@ const PricingConfigPage = () => {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="labor-rate">Tarifa de Mano de Obra</Label>
-                      <Input 
-                        id="labor-rate"
-                        type="number" 
-                        value={editingService.laborRate}
-                        onChange={(e) => setEditingService({
-                          ...editingService, 
-                          laborRate: parseFloat(e.target.value) || 0
-                        })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="labor-method">Método de Cálculo</Label>
+                      <Label htmlFor="labor-method">Método de Cálculo de Mano de Obra</Label>
                       <Select
                         value={editingService.laborMethod}
                         onValueChange={(value) => setEditingService({...editingService, laborMethod: value})}
@@ -598,8 +609,8 @@ const PricingConfigPage = () => {
                         <SelectContent>
                           <SelectItem value="by_length">Por Longitud</SelectItem>
                           <SelectItem value="by_area">Por Área</SelectItem>
+                          <SelectItem value="fixed">Monto Fijo</SelectItem>
                           <SelectItem value="hourly">Por Hora</SelectItem>
-                          <SelectItem value="fixed">Fijo</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -608,6 +619,7 @@ const PricingConfigPage = () => {
                     <Button 
                       variant="outline" 
                       onClick={() => setEditingService(null)}
+                      disabled={isLoading}
                     >
                       Cancelar
                     </Button>
@@ -615,10 +627,12 @@ const PricingConfigPage = () => {
                       onClick={handleSaveService}
                       disabled={isLoading}
                     >
-                      {isLoading ? "Guardando..." : (
-                        <span className="flex items-center">
-                          <SaveIcon className="h-4 w-4 mr-1" /> Guardar
-                        </span>
+                      {isLoading ? (
+                        <span>Guardando...</span>
+                      ) : (
+                        <>
+                          <SaveIcon className="mr-2 h-4 w-4" /> Guardar
+                        </>
                       )}
                     </Button>
                   </div>
@@ -634,7 +648,7 @@ const PricingConfigPage = () => {
               <div>
                 <CardTitle>Precios de Materiales</CardTitle>
                 <CardDescription>
-                  Configura los precios de los materiales para todos los proyectos
+                  Configura los precios para todos los materiales que utilizas
                 </CardDescription>
               </div>
               <Button onClick={handleAddMaterial}>
@@ -657,8 +671,8 @@ const PricingConfigPage = () => {
                     <TableRow key={material.id}>
                       <TableCell className="font-medium">{material.name}</TableCell>
                       <TableCell>{material.category}</TableCell>
-                      <TableCell>${material.unitPrice.toFixed(2)} / {material.unit}</TableCell>
-                      <TableCell>{material.supplier || 'N/A'}</TableCell>
+                      <TableCell>${(typeof material.unitPrice === 'number' ? material.unitPrice.toFixed(2) : parseFloat(String(material.unitPrice)).toFixed(2))} / {material.unit}</TableCell>
+                      <TableCell>{material.supplier}</TableCell>
                       <TableCell className="text-right">
                         <Button 
                           variant="ghost" 
@@ -672,13 +686,11 @@ const PricingConfigPage = () => {
                   ))}
                 </TableBody>
               </Table>
-              
+
               {editingMaterial && (
                 <div className="mt-6 border rounded-lg p-4">
                   <h3 className="text-lg font-medium mb-4">
-                    {materials.find(m => m.id === editingMaterial.id) 
-                      ? 'Editar Material' 
-                      : 'Añadir Nuevo Material'}
+                    {editingMaterial.id.startsWith('material-') ? 'Nuevo Material' : 'Editar Material'}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div className="space-y-2">
@@ -751,6 +763,7 @@ const PricingConfigPage = () => {
                     <Button 
                       variant="outline" 
                       onClick={() => setEditingMaterial(null)}
+                      disabled={isLoading}
                     >
                       Cancelar
                     </Button>
@@ -758,10 +771,12 @@ const PricingConfigPage = () => {
                       onClick={handleSaveMaterial}
                       disabled={isLoading}
                     >
-                      {isLoading ? "Guardando..." : (
-                        <span className="flex items-center">
-                          <SaveIcon className="h-4 w-4 mr-1" /> Guardar
-                        </span>
+                      {isLoading ? (
+                        <span>Guardando...</span>
+                      ) : (
+                        <>
+                          <SaveIcon className="mr-2 h-4 w-4" /> Guardar
+                        </>
                       )}
                     </Button>
                   </div>
