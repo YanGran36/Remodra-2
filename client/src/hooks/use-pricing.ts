@@ -154,7 +154,18 @@ export function usePricing() {
   // Funciones de utilidad para obtener precios por tipo o categoria
   const getServicePrice = (serviceType: string): ServicePrice | undefined => {
     if (!servicePrices) return defaultServices.find(s => s.serviceType === serviceType);
-    return servicePrices.find((service: ServicePrice) => service.serviceType === serviceType);
+    
+    // Buscar primero por tipo de servicio (más confiable)
+    const serviceByType = servicePrices.find((service: ServicePrice) => 
+      service.serviceType === serviceType
+    );
+    
+    if (serviceByType) return serviceByType;
+    
+    // Si no encuentra por tipo, intentar por ID (como fallback)
+    return servicePrices.find((service: ServicePrice) => 
+      String(service.id) === serviceType
+    );
   };
 
   const getMaterialPrice = (category: string, materialId?: string): MaterialPrice | undefined => {
@@ -165,16 +176,42 @@ export function usePricing() {
       return defaultMaterials.find(m => m.category === category);
     }
     
+    // Si hay un ID específico, buscar primero por él
     if (materialId) {
-      return materialPrices.find((material: MaterialPrice) => material.id === materialId);
+      // Buscar por ID exacto o por nombre que contenga el ID
+      const exactMatch = materialPrices.find((material: MaterialPrice) => 
+        String(material.id) === materialId
+      );
+      
+      if (exactMatch) return exactMatch;
+      
+      // Buscar por nombre que contenga el ID
+      const nameMatch = materialPrices.find((material: MaterialPrice) => 
+        material.name.toLowerCase().includes(materialId.toLowerCase()) && 
+        material.category === category
+      );
+      
+      if (nameMatch) return nameMatch;
     }
     
-    return materialPrices.find((material: MaterialPrice) => material.category === category);
+    // Buscar el primer material de la categoría correcta
+    return materialPrices.find((material: MaterialPrice) => 
+      material.category === category
+    );
   };
 
   const getMaterialsByCategory = (category: string): MaterialPrice[] => {
     if (!materialPrices) return defaultMaterials.filter(m => m.category === category);
-    return materialPrices.filter((material: MaterialPrice) => material.category === category);
+    
+    // Asegurarse de que devolvemos al menos un material por categoría
+    const materialsInCategory = materialPrices.filter((material: MaterialPrice) => 
+      material.category === category
+    );
+    
+    // Si no hay materiales para esta categoría, usar los predeterminados
+    return materialsInCategory.length > 0 
+      ? materialsInCategory 
+      : defaultMaterials.filter(m => m.category === category);
   };
 
   return {
