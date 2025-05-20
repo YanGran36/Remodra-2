@@ -1401,6 +1401,10 @@ const recalculateTotal = (items: SelectedItem[]) => {
                           .filter(m => (m.type === 'line' || m.type === 'perimeter') && m.realLength)
                           .reduce((sum, m) => sum + (m.realLength || 0), 0);
                           
+                        const totalArea = newMeasurements
+                          .filter(m => m.type === 'area' && m.realArea)
+                          .reduce((sum, m) => sum + (m.realArea || 0), 0);
+                          
                         console.log(`Measurements updated - Total Area: ${totalArea} sqft, Total Length: ${totalLength} ft`);
                         
                         // Calcular estimación de costos total

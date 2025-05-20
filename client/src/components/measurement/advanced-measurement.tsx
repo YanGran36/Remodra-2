@@ -414,7 +414,8 @@ export default function AdvancedMeasurement({
         ctx.fillText(totalLabel, canvasWidth - 20, canvasHeight - 25);
         
         // Log measurement for debugging and to help with calculation
-        console.log("Measurements updated - Total Area: 0 sqft, Total Length: " + scaledTotalDistance + " ft");
+        const totalArea = 0; // No estamos calculando área en este caso
+        console.log(`Measurements updated - Total Area: ${totalArea} sqft, Total Length: ${scaledTotalDistance} ft`);
         
         // Solo mostramos la longitud total, sin costos para evitar confusiones
         ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
