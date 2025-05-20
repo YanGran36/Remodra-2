@@ -107,8 +107,12 @@ export function registerPricingRoutes(app: Express) {
       const [service] = await db
         .select()
         .from(servicePricing)
-        .where(eq(servicePricing.id, parseInt(id)))
-        .where(eq(servicePricing.contractorId, req.user.id));
+        .where(
+          and(
+            eq(servicePricing.id, parseInt(id)),
+            eq(servicePricing.contractorId, req.user.id)
+          )
+        );
       
       if (!service) {
         return res.status(404).json({ message: 'Servicio no encontrado' });
