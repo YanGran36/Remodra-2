@@ -340,20 +340,45 @@ const PricingConfigPage = () => {
     setEditingMaterial(newMaterial);
   };
 
-  // Para guardar cambios en un material - Versión ultra simplificada 
+  // Para guardar cambios en un material
   const handleSaveMaterial = async () => {
     if (!editingMaterial) return;
 
     setIsLoading(true);
     
     try {
-      // Guardamos el material en memoria local inmediatamente para mostrar los cambios al usuario
+      // Primero intentamos guardar en la base de datos
+      // Convertir el precio a un número para asegurar formato correcto
+      const numericPrice = parseFloat(String(editingMaterial.unitPrice));
+      
+      console.log(`Guardando material ${editingMaterial.id} con precio: ${numericPrice}`);
+      
+      // Datos para enviar al servidor con los IDs correctos
+      const materialData = {
+        ...editingMaterial,
+        contractorId: 1,
+        unitPrice: numericPrice, // Enviamos como número
+        // Guarda explícitamente el id como idString y materialId para facilitar búsquedas
+        idString: editingMaterial.id,
+        materialId: editingMaterial.id,
+        code: editingMaterial.id,
+        category: editingMaterial.category || (editingMaterial.id ? editingMaterial.id.split('_')[0] : 'other')
+      };
+      
+      // Primero guardamos en la base de datos
+      const response = await fetch(`/api/pricing/materials/${editingMaterial.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(materialData)
+      });
+      
+      // Actualizar la lista local después de guardar en la base de datos
       const updatedMaterial = {
         ...editingMaterial,
+        unitPrice: numericPrice, // Asegurarse de que el precio sea un número
         updatedAt: new Date(),
       };
       
-      // Actualizar la lista local
       const existingIndex = materials.findIndex(m => m.id === editingMaterial.id);
       let updatedMaterialsList;
       
@@ -369,39 +394,45 @@ const PricingConfigPage = () => {
       // Actualizamos la lista de materiales en la UI
       setMaterials(updatedMaterialsList);
       
-      // Mostramos mensaje de éxito
-      toast({
-        title: "Material guardado",
-        description: "Los precios se han actualizado correctamente en la aplicación"
-      });
-      
-      // También intentamos guardar en la base de datos
-      // Convertir el precio a un número y luego a string para asegurar formato correcto
-      const numericPrice = parseFloat(String(editingMaterial.unitPrice));
-      
-      const response = await fetch(`/api/pricing/materials/${editingMaterial.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...editingMaterial,
-          contractorId: 1,
-          unitPrice: String(numericPrice), // Aseguramos que el precio sea string
-          // Guarda explícitamente el id como idString y materialId para facilitar búsquedas
-          idString: editingMaterial.id,
-          materialId: editingMaterial.id,
-          code: editingMaterial.id,
-          category: editingMaterial.category || (editingMaterial.id ? editingMaterial.id.split('_')[0] : 'other')
-        })
-      });
-      
       // Si la respuesta fue exitosa
       if (response.ok) {
         console.log("Material guardado exitosamente en la base de datos");
-        // Actualizamos la caché
-        queryClient.invalidateQueries({ queryKey: ['/api/pricing/materials'] });
+        
+        // Invalidamos todas las consultas relacionadas con materiales
+        await queryClient.invalidateQueries({ queryKey: ['/api/pricing/materials'] });
+        
+        // Forzar una recarga de datos
+        await queryClient.refetchQueries({ queryKey: ['/api/pricing/materials'] });
+        
+        // También invalidar la caché de cualquier página que use materiales
+        await queryClient.invalidateQueries();
+        
+        // Recargar directamente los datos para actualizar la interfaz
+        const freshResponse = await fetch('/api/pricing/materials');
+        if (freshResponse.ok) {
+          const freshData = await freshResponse.json();
+          console.log("Datos frescos cargados:", freshData);
+          
+          if (Array.isArray(freshData) && freshData.length > 0) {
+            // Actualizar los materiales con los datos más recientes
+            setMaterials(freshData);
+          }
+        }
+        
+        // Mostramos mensaje de éxito
+        toast({
+          title: "Material guardado",
+          description: "Los precios se han actualizado correctamente"
+        });
       } else {
-        // Si hubo un error, lo registramos pero no afectamos la UI
+        // Si hubo un error, lo registramos
         console.warn("Error al guardar en la base de datos:", await response.text());
+        
+        toast({
+          title: "Error al guardar",
+          description: "Se guardó localmente pero no en la base de datos",
+          variant: "destructive"
+        });
       }
     } catch (error) {
       console.error('Error al guardar material:', error);
