@@ -146,7 +146,7 @@ const PricingConfigPage = () => {
     setEditingService(newService);
   };
 
-  // Para guardar cambios en un servicio
+  // Para guardar cambios en un servicio - Versión simplificada
   const handleSaveService = async () => {
     if (!editingService) return;
 
@@ -155,43 +155,33 @@ const PricingConfigPage = () => {
     try {
       let savedService;
       
-      // Verificar si es una actualización o creación
-      const existingService = services.find(s => s.id === editingService.id);
+      // Simplificamos la lógica - siempre usamos PUT que puede crear o actualizar
+      const response = await fetch(`/api/pricing/services/${editingService.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...editingService,
+          contractorId: 1, // Aseguramos que tenga un contractorId válido
+          serviceType: editingService.id, // El ID del servicio es su tipo
+        })
+      });
       
-      if (existingService && !existingService.id.startsWith('service-')) {
-        // Actualizar servicio existente
-        const response = await apiRequest(
-          'PUT', 
-          `/api/pricing/services/${existingService.id}`, 
-          editingService
-        );
-        
-        if (!response.ok) {
-          throw new Error('Error al actualizar el servicio');
-        }
-        
-        savedService = await response.json();
-      } else {
-        // Crear nuevo servicio
-        const response = await apiRequest(
-          'POST', 
-          '/api/pricing/services', 
-          {
-            ...editingService,
-            // Eliminar el id temporal para que el servidor genere uno nuevo
-            id: editingService.id.startsWith('service-') ? undefined : editingService.id
-          }
-        );
-        
-        if (!response.ok) {
-          throw new Error('Error al crear el servicio');
-        }
-        
-        savedService = await response.json();
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Detalles del error:", errorData);
+        throw new Error(`Error al guardar: ${errorData.error || 'Error desconocido'}`);
       }
       
-      // Actualizar la lista local
-      if (existingService) {
+      savedService = await response.json();
+      console.log("Servicio guardado exitosamente:", savedService);
+      
+      // Verificar si el servicio ya existe en nuestra lista
+      const serviceExists = services.some(s => s.id === editingService.id);
+      
+      // Actualizar la lista local simplemente
+      if (serviceExists) {
         const updatedServices = services.map(service => 
           service.id === editingService.id ? savedService : service
         );

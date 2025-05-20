@@ -197,7 +197,12 @@ export function registerPricingRoutes(app: Express) {
       }
     } catch (error) {
       console.error('Error al actualizar servicio:', error);
-      res.status(500).json({ message: 'Error al actualizar servicio' });
+      // Mostrar más detalles del error para depuración
+      res.status(500).json({ 
+        message: 'Error al actualizar servicio',
+        error: error.message || 'Error desconocido',
+        details: JSON.stringify(error)
+      });
     }
   });
 
