@@ -293,6 +293,7 @@ export default function AdvancedMeasurement({
       ctx.lineTo(mousePosition.x, mousePosition.y);
       ctx.strokeStyle = "#FF5722";
       ctx.setLineDash([5, 5]);
+      ctx.lineWidth = 2.5;
       ctx.stroke();
       ctx.setLineDash([]);
       
@@ -300,12 +301,58 @@ export default function AdvancedMeasurement({
       const midX = (lastPoint.x + mousePosition.x) / 2;
       const midY = (lastPoint.y + mousePosition.y) / 2;
       
-      // Draw the distance text
-      ctx.font = "12px Arial";
-      ctx.fillStyle = "#FF5722";
-      ctx.fillRect(midX - 2, midY - 10, 65, 16);
+      // Draw the distance text with improved visibility
+      ctx.font = "bold 14px Arial";
+      // Create a background for better readability
+      const textToDraw = `${formatNumber(scaledDist)} ${unit}`;
+      const textMetrics = ctx.measureText(textToDraw);
+      const textWidth = textMetrics.width;
+      
+      ctx.fillStyle = "rgba(255, 87, 34, 0.9)"; // More opaque background
+      ctx.fillRect(midX - textWidth/2 - 6, midY - 12, textWidth + 12, 24);
       ctx.fillStyle = "white";
-      ctx.fillText(`${formatNumber(scaledDist)} ${unit}`, midX, midY);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(textToDraw, midX, midY);
+      
+      // Calculate and display total length if we have more than one point
+      if (tempPoints.length > 1) {
+        let totalDistance = 0;
+        
+        // Add up all distances between consecutive points
+        for (let i = 1; i < tempPoints.length; i++) {
+          totalDistance += distance(tempPoints[i-1], tempPoints[i]);
+        }
+        
+        // Add current segment being drawn
+        totalDistance += dist;
+        const scaledTotalDistance = totalDistance / scale;
+        
+        // Draw total at a fixed position in the bottom right
+        const totalLabel = `Total: ${formatNumber(scaledTotalDistance)} ${unit}`;
+        ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+        ctx.fillRect(canvasWidth - 160, canvasHeight - 40, 150, 30);
+        ctx.fillStyle = "#ffffff";
+        ctx.textAlign = "right";
+        ctx.font = "bold 14px Arial";
+        ctx.fillText(totalLabel, canvasWidth - 20, canvasHeight - 25);
+        
+        // Log measurement for debugging and to help with calculation
+        console.log("Measurements updated - Total Area: 0 sqft, Total Length: " + scaledTotalDistance + " ft");
+        
+        // Estimate cost if applicable
+        if (showCostEstimates && selectedServiceType === 'fence') {
+          const estimatedCost = scaledTotalDistance * 35; // Simple cost estimation
+          console.log("Total cost estimate: $" + estimatedCost.toFixed(2));
+          
+          // Display cost estimate
+          const costLabel = `Est. Cost: $${estimatedCost.toFixed(2)}`;
+          ctx.fillStyle = "rgba(0, 100, 0, 0.7)";
+          ctx.fillRect(canvasWidth - 160, canvasHeight - 80, 150, 30);
+          ctx.fillStyle = "#ffffff";
+          ctx.fillText(costLabel, canvasWidth - 20, canvasHeight - 65);
+        }
+      }
     }
   };
   
