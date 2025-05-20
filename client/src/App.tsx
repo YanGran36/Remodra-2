@@ -35,7 +35,7 @@ import EstimateSimpleTest from "@/pages/estimate-simple-test";
 import MaterialsPage from "@/pages/materials-page";
 import AIAssistantPage from "@/pages/ai-assistant-page";
 import SettingsPage from "@/pages/settings-page";
-import PriceConfigurationsPage from "@/pages/price-configurations-page";
+// PriceConfigurationsPage eliminado (ya no es necesario)
 import PricingConfigPage from "@/pages/pricing-config-page";
 import PublicEstimateView from "@/pages/public-estimate-view";
 import PublicInvoiceView from "@/pages/public-invoice-view";
@@ -74,7 +74,13 @@ function Router() {
       <ProtectedRoute path="/materials" component={MaterialsPage} />
       <ProtectedRoute path="/timeclock" component={TimeclockPage} />
       <ProtectedRoute path="/ai-assistant" component={AIAssistantPage} />
-      <ProtectedRoute path="/price-configurations" component={PriceConfigurationsPage} />
+      <Route path="/price-configurations">
+        {/* Redirigir a la nueva ruta de pricing */}
+        {() => {
+          window.location.href = "/pricing";
+          return null;
+        }}
+      </Route>
       <ProtectedRoute path="/pricing" component={PricingConfigPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <ProtectedRoute path="/tools-dashboard" component={ToolsDashboard} />
