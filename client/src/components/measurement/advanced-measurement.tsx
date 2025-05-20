@@ -192,65 +192,140 @@ export default function AdvancedMeasurement({
     drawRealTimeDistances(ctx);
   };
   
-  // Draw a simple house outline to help with visualization when no background image is available
+  // Draw a top-down house view to help with visualization
   const drawSimpleHouseOutline = (ctx: CanvasRenderingContext2D) => {
     const centerX = canvasWidth / 2;
     const centerY = canvasHeight / 2;
-    const houseWidth = canvasWidth * 0.5;
-    const houseHeight = canvasHeight * 0.4;
+    const houseWidth = canvasWidth * 0.3; // Smaller house for better perspective
+    const houseHeight = canvasHeight * 0.25;
     
-    // Draw house body (rectangle)
+    // Fill for the property/yard area
+    ctx.fillStyle = "rgba(220, 240, 220, 0.3)"; // Light green for yard
+    ctx.fillRect(
+      centerX - canvasWidth * 0.4,
+      centerY - canvasHeight * 0.35,
+      canvasWidth * 0.8,
+      canvasHeight * 0.7
+    );
+    
+    // Border for property area (dashed)
+    ctx.beginPath();
+    ctx.rect(
+      centerX - canvasWidth * 0.4,
+      centerY - canvasHeight * 0.35,
+      canvasWidth * 0.8,
+      canvasHeight * 0.7
+    );
+    ctx.setLineDash([8, 4]);
+    ctx.strokeStyle = "#888888";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // Draw house body (rectangle) - top-down view
     ctx.beginPath();
     ctx.rect(
       centerX - houseWidth / 2,
-      centerY - houseHeight / 2 + 30,
+      centerY - houseHeight / 2,
       houseWidth,
       houseHeight
     );
-    ctx.strokeStyle = "#aaaaaa";
+    ctx.fillStyle = "#f5f5f5";
+    ctx.fill();
+    ctx.strokeStyle = "#666666";
     ctx.lineWidth = 2;
     ctx.stroke();
     
-    // Draw roof (triangle)
+    // Draw interior lines (rooms)
+    // Vertical division
     ctx.beginPath();
-    ctx.moveTo(centerX - houseWidth / 2, centerY - houseHeight / 2 + 30);
-    ctx.lineTo(centerX, centerY - houseHeight / 2 - 40);
-    ctx.lineTo(centerX + houseWidth / 2, centerY - houseHeight / 2 + 30);
-    ctx.closePath();
+    ctx.moveTo(centerX, centerY - houseHeight / 2);
+    ctx.lineTo(centerX, centerY + houseHeight / 2);
     ctx.strokeStyle = "#aaaaaa";
+    ctx.lineWidth = 1;
     ctx.stroke();
     
-    // Draw door
+    // Horizontal division
     ctx.beginPath();
-    ctx.rect(
-      centerX - 20,
-      centerY + houseHeight / 2 - 40,
-      40,
-      70
-    );
-    ctx.strokeStyle = "#aaaaaa";
+    ctx.moveTo(centerX - houseWidth / 2, centerY);
+    ctx.lineTo(centerX + houseWidth / 2, centerY);
     ctx.stroke();
     
-    // Draw window
+    // Front door (bottom side of house)
     ctx.beginPath();
-    ctx.rect(
-      centerX - houseWidth / 2 + 40,
-      centerY - 20,
-      50,
-      40
-    );
-    ctx.strokeStyle = "#aaaaaa";
+    const doorWidth = 20;
+    ctx.moveTo(centerX - doorWidth/2, centerY + houseHeight/2);
+    ctx.lineTo(centerX + doorWidth/2, centerY + houseHeight/2);
+    ctx.strokeStyle = "#333333";
+    ctx.lineWidth = 3;
     ctx.stroke();
     
-    // Add label
+    // Back door (top of house)
+    ctx.beginPath();
+    ctx.moveTo(centerX - doorWidth/4, centerY - houseHeight/2);
+    ctx.lineTo(centerX + doorWidth/4, centerY - houseHeight/2);
+    ctx.stroke();
+    
+    // Gate symbol (at bottom of property)
+    ctx.beginPath();
+    const gateWidth = 30;
+    const gateY = centerY + canvasHeight * 0.3;
+    ctx.moveTo(centerX - gateWidth/2, gateY);
+    ctx.lineTo(centerX + gateWidth/2, gateY);
+    ctx.strokeStyle = "#996633";
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    
+    // Gate posts
+    ctx.beginPath();
+    ctx.arc(centerX - gateWidth/2, gateY, 4, 0, Math.PI * 2);
+    ctx.arc(centerX + gateWidth/2, gateY, 4, 0, Math.PI * 2);
+    ctx.fillStyle = "#996633";
+    ctx.fill();
+    
+    // Add labels
     ctx.font = "14px Arial";
     ctx.fillStyle = "#666666";
     ctx.textAlign = "center";
-    ctx.fillText("House", centerX, centerY + houseHeight / 2 + 30);
+    ctx.fillText("House", centerX, centerY);
+    ctx.font = "12px Arial";
+    ctx.fillText("Gate", centerX, gateY + 15);
+    ctx.fillText("Property Line", centerX, centerY - canvasHeight * 0.37);
     
-    // Add a scale indicator at the bottom
+    // Add compass direction
+    ctx.font = "bold 12px Arial";
+    const compassX = centerX + canvasWidth * 0.35;
+    const compassY = centerY - canvasHeight * 0.3;
+    // North
+    ctx.fillText("N", compassX, compassY - 15);
+    ctx.beginPath();
+    ctx.moveTo(compassX, compassY);
+    ctx.lineTo(compassX, compassY - 10);
+    ctx.stroke();
+    // South
+    ctx.fillText("S", compassX, compassY + 25);
+    ctx.beginPath();
+    ctx.moveTo(compassX, compassY);
+    ctx.lineTo(compassX, compassY + 10);
+    ctx.stroke();
+    // East
+    ctx.fillText("E", compassX + 15, compassY + 5);
+    ctx.beginPath();
+    ctx.moveTo(compassX, compassY);
+    ctx.lineTo(compassX + 10, compassY);
+    ctx.stroke();
+    // West
+    ctx.fillText("W", compassX - 15, compassY + 5);
+    ctx.beginPath();
+    ctx.moveTo(compassX, compassY);
+    ctx.lineTo(compassX - 10, compassY);
+    ctx.stroke();
+    
+    // Add a scale indicator at the bottom - with ability to adjust scale
     const scaleLineLength = 100;
-    const scaleText = `${Math.round(scaleLineLength / scale)} ${unit}`;
+    // Adjust the scale text to use a smaller measurement for better precision
+    const adjustedScale = scale * 0.5; // Make scale more precise (zoomed in effect)
+    const scaleText = `${Math.round(scaleLineLength / adjustedScale)} ${unit}`;
     
     ctx.beginPath();
     ctx.moveTo(centerX - scaleLineLength / 2, canvasHeight - 40);
@@ -272,6 +347,7 @@ export default function AdvancedMeasurement({
     ctx.fillStyle = "#000000";
     ctx.textAlign = "center";
     ctx.fillText(scaleText, centerX, canvasHeight - 20);
+    ctx.fillText("(Escala ajustable con la rueda del ratón)", centerX, canvasHeight - 5);
   };
   
   // Function to draw real-time distances during measurement
@@ -500,6 +576,41 @@ export default function AdvancedMeasurement({
         title: "Measurement complete",
         description: "Double-click finalized the measurement.",
       });
+    }
+  };
+  
+  // Handler para el zoom con la rueda del mouse
+  const handleWheelZoom = (e: React.WheelEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    
+    // Determinar dirección del zoom (positivo = zoom out, negativo = zoom in)
+    const direction = e.deltaY > 0 ? 1 : -1;
+    
+    // Factor de ajuste para el zoom
+    const zoomFactor = 0.15;
+    
+    // Calcular la nueva escala
+    let newScale = scale;
+    if (direction > 0) {
+      // Zoom out - aumenta la escala (menos preciso)
+      newScale = scale * (1 + zoomFactor);
+    } else {
+      // Zoom in - disminuye la escala (más preciso)
+      newScale = scale * (1 - zoomFactor);
+    }
+    
+    // Establecer límites para evitar escalas extremas
+    newScale = Math.max(0.5, Math.min(30, newScale));
+    
+    // Actualizar la escala
+    setScale(newScale);
+    
+    // Actualizar el canvas con la nueva escala
+    if (canvasRef.current) {
+      const ctx = canvasRef.current.getContext('2d');
+      if (ctx) {
+        drawCanvas(ctx);
+      }
     }
   };
   
@@ -1093,6 +1204,7 @@ export default function AdvancedMeasurement({
                 onClick={handleCanvasClick}
                 onMouseMove={handleMouseMove}
                 onDoubleClick={handleDoubleClick}
+                onWheel={handleWheelZoom}
                 className="border border-gray-300 bg-white"
               />
               
