@@ -1343,10 +1343,59 @@ const recalculateTotal = (items: SelectedItem[]) => {
                       onMeasurementsChange={(newMeasurements) => {
                         setMeasurements(newMeasurements);
                         
-                        // Calcular el costo basado en las mediciones para incluir en el estimado
-                        const totalArea = newMeasurements
-                          .filter(m => m.type === 'area' && m.realArea)
-                          .reduce((sum, m) => sum + (m.realArea || 0), 0);
+                        // Procesar mediciones para agregarlas automáticamente al estimado
+                        if (newMeasurements.length > 0 && selectedServiceTypes.length > 0) {
+                          const serviceType = selectedServiceTypes[0];
+                          
+                          // Eliminar ítems de medición anteriores
+                          const baseItems = selectedItems.filter(item => 
+                            !item.id.toString().includes('measurement'));
+                          
+                          // Crear nuevos ítems basados en las mediciones
+                          const measurementItems: SelectedItem[] = [];
+                          
+                          // Procesar mediciones según tipo de servicio
+                          newMeasurements.forEach((measurement, idx) => {
+                            if (serviceType === 'fence' && measurement.type === 'line' && measurement.realLength) {
+                              // Para cercas - medición lineal
+                              const length = Math.ceil(measurement.realLength);
+                              measurementItems.push({
+                                id: `measurement-${idx}`,
+                                service: serviceType,
+                                name: 'Instalación de Cerca',
+                                description: `Cerca completa - ${length} pies lineales`,
+                                quantity: length,
+                                unit: 'ft',
+                                unitPrice: 57, // Precio por unidad que incluye material y mano de obra
+                                total: length * 57,
+                                type: 'material'
+                              });
+                            }
+                            else if ((serviceType === 'roof' || serviceType === 'roofing') && 
+                                    measurement.type === 'area' && measurement.realArea) {
+                              // Para techos - medición de área
+                              const area = Math.ceil(measurement.realArea);
+                              measurementItems.push({
+                                id: `measurement-${idx}`,
+                                service: serviceType,
+                                name: 'Instalación de Techo',
+                                description: `Techo completo - ${area} pies cuadrados`,
+                                quantity: area,
+                                unit: 'sqft',
+                                unitPrice: 8.7,
+                                total: area * 8.7,
+                                type: 'material'
+                              });
+                            }
+                          });
+                          
+                          // Actualizar ítems y recalcular total
+                          if (measurementItems.length > 0) {
+                            const updatedItems = [...baseItems, ...measurementItems];
+                            setSelectedItems(updatedItems);
+                            recalculateTotal(updatedItems);
+                          }
+                        }
                         
                         const totalLength = newMeasurements
                           .filter(m => (m.type === 'line' || m.type === 'perimeter') && m.realLength)
