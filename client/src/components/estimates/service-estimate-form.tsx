@@ -54,8 +54,13 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   MATERIALS_BY_SERVICE, 
   OPTIONS_BY_SERVICE, 
-  SERVICE_TYPES 
+  SERVICE_TYPES,
+  getMaterialWithConfiguredPrice,
+  getServiceBasePrice
 } from "@/lib/service-options";
+
+// Importar nuestro hook de precios centralizado
+import { usePricing } from '@/hooks/use-pricing';
 
 interface SelectedItem {
   id: string;

@@ -1,0 +1,161 @@
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+
+// Interfaces para los datos de precios
+export interface ServicePrice {
+  id: string;
+  name: string;
+  serviceType: string;
+  unitPrice: number;
+  unit: string;
+  laborRate: number;
+  laborMethod: string;
+}
+
+export interface MaterialPrice {
+  id: string;
+  name: string;
+  category: string;
+  unitPrice: number;
+  unit: string;
+  supplier: string;
+}
+
+// Datos predefinidos (fallback)
+const defaultServices: ServicePrice[] = [
+  {
+    id: 'fence',
+    name: 'Instalación de Cerca',
+    serviceType: 'fence',
+    unitPrice: 57,
+    unit: 'ft',
+    laborRate: 35,
+    laborMethod: 'by_length',
+  },
+  {
+    id: 'roof',
+    name: 'Instalación de Techo',
+    serviceType: 'roof',
+    unitPrice: 8.7,
+    unit: 'sqft',
+    laborRate: 3.5,
+    laborMethod: 'by_area',
+  },
+  {
+    id: 'gutters',
+    name: 'Instalación de Canaletas',
+    serviceType: 'gutters',
+    unitPrice: 12,
+    unit: 'ft',
+    laborRate: 7,
+    laborMethod: 'by_length',
+  }
+];
+
+const defaultMaterials: MaterialPrice[] = [
+  {
+    id: 'fence-wood',
+    name: 'Madera para Cerca',
+    category: 'fence',
+    unitPrice: 22,
+    unit: 'ft',
+    supplier: 'Lumber Yard',
+  },
+  {
+    id: 'fence-metal',
+    name: 'Postes Metálicos',
+    category: 'fence',
+    unitPrice: 35,
+    unit: 'unit',
+    supplier: 'Metal Supply Co.',
+  },
+  {
+    id: 'roofing-shingles',
+    name: 'Tejas Asfálticas',
+    category: 'roof',
+    unitPrice: 5.2,
+    unit: 'sqft',
+    supplier: 'Roofing Supply',
+  }
+];
+
+/**
+ * Hook personalizado para obtener y utilizar los precios centralizados
+ */
+export function usePricing() {
+  // Consulta para servicios
+  const { 
+    data: servicePrices, 
+    isLoading: servicesLoading,
+    error: servicesError
+  } = useQuery({
+    queryKey: ['/api/pricing/services'],
+    queryFn: async () => {
+      try {
+        const response = await apiRequest('GET', '/api/pricing/services');
+        if (!response.ok) throw new Error('Error al cargar servicios');
+        return await response.json();
+      } catch (error) {
+        console.error('Error loading services:', error);
+        return defaultServices;
+      }
+    }
+  });
+
+  // Consulta para materiales
+  const { 
+    data: materialPrices, 
+    isLoading: materialsLoading,
+    error: materialsError 
+  } = useQuery({
+    queryKey: ['/api/pricing/materials'],
+    queryFn: async () => {
+      try {
+        const response = await apiRequest('GET', '/api/pricing/materials');
+        if (!response.ok) throw new Error('Error al cargar materiales');
+        return await response.json();
+      } catch (error) {
+        console.error('Error loading materials:', error);
+        return defaultMaterials;
+      }
+    }
+  });
+
+  // Funciones de utilidad para obtener precios por tipo o categoria
+  const getServicePrice = (serviceType: string): ServicePrice | undefined => {
+    if (!servicePrices) return defaultServices.find(s => s.serviceType === serviceType);
+    return servicePrices.find((service: ServicePrice) => service.serviceType === serviceType);
+  };
+
+  const getMaterialPrice = (category: string, materialId?: string): MaterialPrice | undefined => {
+    if (!materialPrices) {
+      if (materialId) {
+        return defaultMaterials.find(m => m.id === materialId);
+      }
+      return defaultMaterials.find(m => m.category === category);
+    }
+    
+    if (materialId) {
+      return materialPrices.find((material: MaterialPrice) => material.id === materialId);
+    }
+    
+    return materialPrices.find((material: MaterialPrice) => material.category === category);
+  };
+
+  const getMaterialsByCategory = (category: string): MaterialPrice[] => {
+    if (!materialPrices) return defaultMaterials.filter(m => m.category === category);
+    return materialPrices.filter((material: MaterialPrice) => material.category === category);
+  };
+
+  return {
+    services: servicePrices || defaultServices,
+    materials: materialPrices || defaultMaterials,
+    isLoading: servicesLoading || materialsLoading,
+    hasError: !!servicesError || !!materialsError,
+    // Funciones de utilidad
+    getServicePrice,
+    getMaterialPrice,
+    getMaterialsByCategory
+  };
+}

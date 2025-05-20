@@ -205,11 +205,11 @@ const PricingConfigPage = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" asChild>
-            <Link href="/dashboard">
+          <Link href="/dashboard">
+            <Button variant="outline">
               <Home className="mr-2 h-4 w-4" /> Dashboard
-            </Link>
-          </Button>
+            </Button>
+          </Link>
         </div>
       </div>
 

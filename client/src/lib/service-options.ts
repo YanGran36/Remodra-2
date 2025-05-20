@@ -1,3 +1,6 @@
+// Importamos los tipos primero
+import { ServicePrice, MaterialPrice } from '@/hooks/use-pricing';
+
 // Define available service types
 export const SERVICE_TYPES = [
   { value: "roof", label: "Roof", icon: "roof" },
@@ -174,9 +177,35 @@ export function getServiceLabel(serviceType: string): string {
   return service ? service.label : serviceType;
 }
 
+// Versión original para compatibilidad
 export function getMaterial(serviceType: string, materialId: string) {
   const materials = MATERIALS_BY_SERVICE[serviceType as keyof typeof MATERIALS_BY_SERVICE] || [];
   return materials.find(m => m.id === materialId);
+}
+
+// Versión avanzada que utiliza los precios configurados
+export function getMaterialWithConfiguredPrice(
+  serviceType: string, 
+  materialId: string, 
+  configuredMaterials: MaterialPrice[]
+) {
+  // Primero buscamos en los materiales configurados
+  const configuredMaterial = configuredMaterials.find(m => 
+    m.id === materialId || (m.category === serviceType && m.id.includes(materialId))
+  );
+  
+  // Si encontramos un precio configurado, lo usamos
+  if (configuredMaterial) {
+    return {
+      id: configuredMaterial.id,
+      name: configuredMaterial.name,
+      unit: configuredMaterial.unit,
+      unitPrice: configuredMaterial.unitPrice
+    };
+  }
+  
+  // Si no, usamos el predeterminado
+  return getMaterial(serviceType, materialId);
 }
 
 export function getOption(serviceType: string, optionId: string) {
@@ -186,6 +215,39 @@ export function getOption(serviceType: string, optionId: string) {
 
 export function getServiceInfo(serviceType: string) {
   return SERVICE_INFO[serviceType as keyof typeof SERVICE_INFO];
+}
+
+// Función para obtener el precio base de un servicio usando los precios configurados
+export function getServiceBasePrice(
+  serviceType: string, 
+  configuredServices: ServicePrice[]
+) {
+  // Buscamos en los servicios configurados
+  const configuredService = configuredServices.find(s => 
+    s.serviceType === serviceType
+  );
+  
+  // Si encontramos un precio configurado, lo usamos
+  if (configuredService) {
+    return {
+      unitPrice: configuredService.unitPrice,
+      unit: configuredService.unit,
+      laborRate: configuredService.laborRate,
+      laborMethod: configuredService.laborMethod
+    };
+  }
+  
+  // Valores predeterminados por tipo de servicio si no hay configuración
+  const defaultPrices: Record<string, any> = {
+    roof: { unitPrice: 8.7, unit: 'sqft', laborRate: 3.5, laborMethod: 'by_area' },
+    fence: { unitPrice: 28, unit: 'ft', laborRate: 14, laborMethod: 'by_length' },
+    deck: { unitPrice: 35, unit: 'sqft', laborRate: 15, laborMethod: 'by_area' },
+    gutters: { unitPrice: 12, unit: 'ft', laborRate: 7, laborMethod: 'by_length' },
+    windows: { unitPrice: 45, unit: 'unit', laborRate: 85, laborMethod: 'fixed' },
+    siding: { unitPrice: 8, unit: 'sqft', laborRate: 4, laborMethod: 'by_area' },
+  };
+  
+  return defaultPrices[serviceType] || { unitPrice: 10, unit: 'ft', laborRate: 5, laborMethod: 'by_length' };
 }
 
 // Funciones de cálculo básicas para cotizaciones
