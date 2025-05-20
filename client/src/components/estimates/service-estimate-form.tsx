@@ -122,7 +122,7 @@ export default function ServiceEstimateForm({
   // Combinar los materiales predeterminados con los precios configurados
   const materials = defaultMaterials.map(material => {
     // Buscar si existe un precio configurado para este material
-    const configuredMaterial = configuredMaterials.find(m => 
+    const configuredMaterial = configuredMaterials.find((m: {id: string, category: string, name: string}) => 
       m.id === material.id || (m.category === serviceType && m.name.includes(material.name))
     );
     
@@ -254,6 +254,31 @@ export default function ServiceEstimateForm({
   const removeCustomItem = (id: string) => {
     setCustomItems(prev => prev.filter(item => item.id !== id));
   };
+  
+  // Inicializar tarifa de mano de obra desde la configuración central de precios
+  useEffect(() => {
+    // Buscar en los servicios configurados primero
+    const configuredService = services.find((s: {serviceType: string, laborRate?: number}) => 
+      s.serviceType === serviceType
+    );
+    
+    if (configuredService && configuredService.laborRate) {
+      setLaborRate(configuredService.laborRate);
+      return;
+    }
+    
+    // Valores por defecto por tipo de servicio si no hay configuración
+    const defaultRates: Record<string, number> = {
+      roof: 65,
+      siding: 55,
+      deck: 60,
+      fence: 50,
+      windows: 70,
+      gutters: 45
+    };
+    
+    setLaborRate(defaultRates[serviceType] || 60);
+  }, [serviceType, services]);
   
   // Calcular totales
   useEffect(() => {
