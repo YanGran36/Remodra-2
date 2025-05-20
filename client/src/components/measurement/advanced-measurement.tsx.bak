@@ -402,9 +402,9 @@ export default function AdvancedMeasurement({
         ctx.lineTo(tempPoints[i].x, tempPoints[i].y);
       }
       
-      // Si hay una posición temporal del cursor, dibujar línea al cursor
-      if (isDrawing && tempCursorPos && activeTool === 'line') {
-        ctx.lineTo(tempCursorPos.x, tempCursorPos.y);
+      // Si hay una medición temporal activa (cursor moviéndose), dibujar línea al cursor
+      if (isDrawing && tempMeasurement && activeTool === 'line') {
+        ctx.lineTo(tempMeasurement.x, tempMeasurement.y);
       }
       // Si estamos dibujando un área o perímetro, mostrar línea hasta el primer punto para cerrar
       else if ((activeTool === 'area' || activeTool === 'perimeter') && tempPoints.length > 2) {
@@ -422,19 +422,15 @@ export default function AdvancedMeasurement({
     });
     
     // Mostrar distancia en tiempo real mientras se mueve el cursor (solo para líneas)
-    if (isDrawing && tempCursorPos && activeTool === 'line' && tempPoints.length >= 1) {
+    if (isDrawing && tempMeasurement && activeTool === 'line' && tempPoints.length >= 1) {
       const lastPoint = tempPoints[tempPoints.length - 1];
-      const midX = (lastPoint.x + tempCursorPos.x) / 2;
-      const midY = (lastPoint.y + tempCursorPos.y) / 2;
-      
-      // Calcular distancia real en tiempo real
-      const pixelDist = distance(lastPoint, tempCursorPos);
-      const realDist = pixelDist / scale;
+      const midX = (lastPoint.x + tempMeasurement.x) / 2;
+      const midY = (lastPoint.y + tempMeasurement.y) / 2;
       
       drawLabel(
         ctx, 
         [midX, midY], 
-        `${formatNumber(realDist)} ${unit}`, 
+        `${formatNumber(tempMeasurement.distance)} ${unit}`, 
         "#FF5722"
       );
     }
