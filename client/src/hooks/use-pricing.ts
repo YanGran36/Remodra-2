@@ -139,29 +139,106 @@ export function usePricing() {
     queryFn: async () => {
       // Valores reseteados a cero para que el usuario pueda editarlos
       return [
+        // Materiales para cercas (fence) - Con los mismos IDs que se usan en los estimados
         {
-          id: 'fence-wood',
-          name: 'Madera para Cerca',
+          id: 'wood_fence',
+          name: 'Wood Fence',
           category: 'fence',
-          unitPrice: 0, // Precio reseteado a cero
-          unit: 'ft',
+          unitPrice: 0,
+          unit: 'ln.ft',
           supplier: 'Lumber Yard',
         },
         {
-          id: 'fence-metal',
-          name: 'Postes Metálicos',
+          id: 'vinyl_fence',
+          name: 'Vinyl Fence',
           category: 'fence',
-          unitPrice: 0, // Precio reseteado a cero
-          unit: 'unit',
+          unitPrice: 0,
+          unit: 'ln.ft',
+          supplier: 'Modern Materials',
+        },
+        {
+          id: 'chain_link',
+          name: 'Chain Link Fence',
+          category: 'fence',
+          unitPrice: 0,
+          unit: 'ln.ft',
           supplier: 'Metal Supply Co.',
         },
         {
-          id: 'roofing-shingles',
-          name: 'Tejas Asfálticas',
+          id: 'aluminum_fence',
+          name: 'Aluminum Fence',
+          category: 'fence',
+          unitPrice: 0,
+          unit: 'ln.ft',
+          supplier: 'Metal Supply Co.',
+        },
+        {
+          id: 'fence_gate',
+          name: 'Fence Gate',
+          category: 'fence',
+          unitPrice: 0,
+          unit: 'unit',
+          supplier: 'Hardware Supply',
+        },
+        {
+          id: 'post_caps',
+          name: 'Post Caps',
+          category: 'fence',
+          unitPrice: 0,
+          unit: 'unit',
+          supplier: 'Hardware Supply',
+        },
+        
+        // Materiales para techos (roof)
+        {
+          id: 'asphalt_shingles',
+          name: 'Asphalt Shingles',
           category: 'roof',
-          unitPrice: 0, // Precio reseteado a cero
-          unit: 'sqft',
+          unitPrice: 0,
+          unit: 'sq.ft',
           supplier: 'Roofing Supply',
+        },
+        {
+          id: 'metal_roofing',
+          name: 'Metal Roofing',
+          category: 'roof',
+          unitPrice: 0,
+          unit: 'sq.ft',
+          supplier: 'Metal Supply Co.',
+        },
+        {
+          id: 'tile_roofing',
+          name: 'Tile Roofing',
+          category: 'roof',
+          unitPrice: 0,
+          unit: 'sq.ft',
+          supplier: 'Premium Materials',
+        },
+        
+        // Materiales para canaletas (gutters)
+        {
+          id: 'aluminum_gutters',
+          name: 'Aluminum Gutters',
+          category: 'gutters',
+          unitPrice: 0,
+          unit: 'ln.ft',
+          supplier: 'Gutter Supply',
+        },
+        {
+          id: 'vinyl_gutters',
+          name: 'Vinyl Gutters',
+          category: 'gutters',
+          unitPrice: 0,
+          unit: 'ln.ft',
+          supplier: 'Modern Materials',
+        },
+        {
+          id: 'downspouts',
+          name: 'Downspouts',
+          category: 'gutters',
+          unitPrice: 0,
+          unit: 'unit',
+          supplier: 'Gutter Supply',
         }
       ];
     },
