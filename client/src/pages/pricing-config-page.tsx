@@ -188,12 +188,8 @@ const PricingConfigPage = () => {
   } = usePricing();
   
   // Inicializamos con los datos predeterminados o configurados, lo que sea más apropiado
-  const [services, setServices] = useState<Service[]>(
-    configuredServices && configuredServices.length > 0 ? configuredServices : defaultServices
-  );
-  const [materials, setMaterials] = useState<Material[]>(
-    configuredMaterials && configuredMaterials.length > 0 ? configuredMaterials : defaultMaterials
-  );
+  const [services, setServices] = useState<Service[]>(defaultServices);
+  const [materials, setMaterials] = useState<Material[]>(defaultMaterials);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -203,25 +199,35 @@ const PricingConfigPage = () => {
   // con los que se muestran en la interfaz
   useEffect(() => {
     // Cuando los datos son cargados de la API, forzamos la actualización de la interfaz
-    if (configuredServices && configuredServices.length > 0) {
-      console.log('Actualizando precios de servicios desde la base de datos:', configuredServices);
-      // Aseguramos que los precios se muestren correctamente convirtiéndolos a número
-      const processedServices = configuredServices.map(service => ({
-        ...service,
-        unitPrice: typeof service.unitPrice === 'string' ? parseFloat(service.unitPrice) : service.unitPrice,
-        laborRate: typeof service.laborRate === 'string' ? parseFloat(service.laborRate) : service.laborRate
-      }));
-      setServices(processedServices);
+    if (configuredServices) {
+      // Asegurarnos de que configuredServices sea un array
+      const servicesArray = Array.isArray(configuredServices) ? configuredServices : [];
+      
+      if (servicesArray.length > 0) {
+        console.log('Actualizando precios de servicios desde la base de datos:', servicesArray);
+        // Aseguramos que los precios se muestren correctamente convirtiéndolos a número
+        const processedServices = servicesArray.map((service: any) => ({
+          ...service,
+          unitPrice: typeof service.unitPrice === 'string' ? parseFloat(service.unitPrice) : service.unitPrice,
+          laborRate: typeof service.laborRate === 'string' ? parseFloat(service.laborRate) : service.laborRate
+        }));
+        setServices(processedServices);
+      }
     }
     
-    if (configuredMaterials && configuredMaterials.length > 0) {
-      console.log('Actualizando precios de materiales desde la base de datos:', configuredMaterials);
-      // Aseguramos que los precios se muestren correctamente convirtiéndolos a número
-      const processedMaterials = configuredMaterials.map(material => ({
-        ...material,
-        unitPrice: typeof material.unitPrice === 'string' ? parseFloat(material.unitPrice) : material.unitPrice
-      }));
-      setMaterials(processedMaterials);
+    if (configuredMaterials) {
+      // Asegurarnos de que configuredMaterials sea un array
+      const materialsArray = Array.isArray(configuredMaterials) ? configuredMaterials : [];
+      
+      if (materialsArray.length > 0) {
+        console.log('Actualizando precios de materiales desde la base de datos:', materialsArray);
+        // Aseguramos que los precios se muestren correctamente convirtiéndolos a número
+        const processedMaterials = materialsArray.map((material: any) => ({
+          ...material,
+          unitPrice: typeof material.unitPrice === 'string' ? parseFloat(material.unitPrice) : material.unitPrice
+        }));
+        setMaterials(processedMaterials);
+      }
     }
   }, [configuredServices, configuredMaterials]);
 
@@ -277,6 +283,10 @@ const PricingConfigPage = () => {
       
       // Actualizamos también en la base de datos en segundo plano
       // Aunque no esperamos la respuesta para actualizar la UI
+      // Convertir precios a formato numérico
+      const numericUnitPrice = parseFloat(String(editingService.unitPrice));
+      const numericLaborRate = parseFloat(String(editingService.laborRate));
+      
       fetch(`/api/pricing/services/${editingService.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -284,6 +294,9 @@ const PricingConfigPage = () => {
           ...editingService,
           contractorId: 1,
           serviceType: editingService.id,
+          // Asegurar formato correcto de precios
+          unitPrice: String(numericUnitPrice),
+          laborRate: String(numericLaborRate)
         })
       }).then(() => {
         // Silenciosamente invalidamos el caché cuando la petición termine
@@ -363,14 +376,21 @@ const PricingConfigPage = () => {
       });
       
       // También intentamos guardar en la base de datos
+      // Convertir el precio a un número y luego a string para asegurar formato correcto
+      const numericPrice = parseFloat(String(editingMaterial.unitPrice));
+      
       const response = await fetch(`/api/pricing/materials/${editingMaterial.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...editingMaterial,
           contractorId: 1,
-          unitPrice: String(editingMaterial.unitPrice), // Aseguramos que el precio sea string
-          category: editingMaterial.category || (editingMaterial.id ? editingMaterial.id.split('-')[0] : 'other')
+          unitPrice: String(numericPrice), // Aseguramos que el precio sea string
+          // Guarda explícitamente el id como idString y materialId para facilitar búsquedas
+          idString: editingMaterial.id,
+          materialId: editingMaterial.id,
+          code: editingMaterial.id,
+          category: editingMaterial.category || (editingMaterial.id ? editingMaterial.id.split('_')[0] : 'other')
         })
       });
       

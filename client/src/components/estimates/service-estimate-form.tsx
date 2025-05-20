@@ -121,17 +121,35 @@ export default function ServiceEstimateForm({
   
   // Combinar los materiales predeterminados con los precios configurados
   const materials = defaultMaterials.map(material => {
-    // Buscar si existe un precio configurado para este material
-    const configuredMaterial = configuredMaterials.find((m: {id: string, category: string, name: string}) => 
-      m.id === material.id || (m.category === serviceType && m.name.includes(material.name))
+    // Asegurarse de que configuredMaterials sea un array
+    const materialsArray = Array.isArray(configuredMaterials) ? configuredMaterials : [];
+    
+    // Buscar exactamente por ID primero
+    let configuredMaterial = materialsArray.find((m: any) => 
+      m.id === material.id
     );
+    
+    // Si no lo encontramos por ID exacto, intentar buscar por nombre y categoría
+    if (!configuredMaterial) {
+      configuredMaterial = materialsArray.find((m: any) => 
+        m.category === serviceType && 
+        m.name && 
+        m.name.includes(material.name)
+      );
+    }
+    
+    console.log(`Material encontrado para ${material.id}:`, configuredMaterial);
     
     // Si existe, actualizar el precio
     if (configuredMaterial) {
+      const numericPrice = typeof configuredMaterial.unitPrice === 'string' 
+        ? parseFloat(configuredMaterial.unitPrice) 
+        : configuredMaterial.unitPrice;
+      
       return {
         ...material,
-        unitPrice: configuredMaterial.unitPrice,
-        unit: configuredMaterial.unit
+        unitPrice: numericPrice || 0,
+        unit: configuredMaterial.unit || material.unit
       };
     }
     
