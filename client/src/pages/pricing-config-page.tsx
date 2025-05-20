@@ -41,33 +41,33 @@ interface Material {
   supplier: string;
 }
 
-// Datos predefinidos
+// Datos predefinidos con precios en cero
 const defaultServices: Service[] = [
   {
     id: 'fence',
     name: 'Instalación de Cerca',
     serviceType: 'fence',
-    unitPrice: 57,
+    unitPrice: 0,
     unit: 'ft',
-    laborRate: 35,
+    laborRate: 0,
     laborMethod: 'by_length',
   },
   {
     id: 'roof',
     name: 'Instalación de Techo',
     serviceType: 'roof',
-    unitPrice: 8.7,
+    unitPrice: 0,
     unit: 'sqft',
-    laborRate: 3.5,
+    laborRate: 0,
     laborMethod: 'by_area',
   },
   {
     id: 'gutters',
     name: 'Instalación de Canaletas',
     serviceType: 'gutters',
-    unitPrice: 12,
+    unitPrice: 0,
     unit: 'ft',
-    laborRate: 7,
+    laborRate: 0,
     laborMethod: 'by_length',
   }
 ];
@@ -77,7 +77,7 @@ const defaultMaterials: Material[] = [
     id: 'fence-wood',
     name: 'Madera para Cerca',
     category: 'fence',
-    unitPrice: 22,
+    unitPrice: 0,
     unit: 'ft',
     supplier: 'Lumber Yard',
   },
@@ -85,7 +85,7 @@ const defaultMaterials: Material[] = [
     id: 'fence-metal',
     name: 'Postes Metálicos',
     category: 'fence',
-    unitPrice: 35,
+    unitPrice: 0,
     unit: 'unit',
     supplier: 'Metal Supply Co.',
   },
@@ -93,7 +93,7 @@ const defaultMaterials: Material[] = [
     id: 'roofing-shingles',
     name: 'Tejas Asfálticas',
     category: 'roof',
-    unitPrice: 5.2,
+    unitPrice: 0,
     unit: 'sqft',
     supplier: 'Roofing Supply',
   }
