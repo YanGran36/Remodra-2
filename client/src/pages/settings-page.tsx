@@ -659,7 +659,7 @@ export default function SettingsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="mb-4">
-                    <Button variant="outline" onClick={() => window.location.href = '/pricing-config'}>
+                    <Button variant="outline" onClick={() => window.location.href = '/pricing-config-page'}>
                       <DollarSign className="h-4 w-4 mr-2" />
                       Go to Pricing Configuration Page
                     </Button>

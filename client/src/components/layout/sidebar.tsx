@@ -91,7 +91,7 @@ export default function Sidebar() {
             <Drill className="mr-3 h-5 w-5" />
             <span>Materials</span>
           </Link>
-          <Link href="/pricing-config" className={getLinkClass("/pricing-config")}>
+          <Link href="/pricing-config-page" className={getLinkClass("/pricing-config-page")}>
             <BanknoteIcon className="mr-3 h-5 w-5" />
             <span>Pricing Configuration</span>
           </Link>
