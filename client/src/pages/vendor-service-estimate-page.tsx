@@ -1211,21 +1211,51 @@ const recalculateTotal = (items: SelectedItem[]) => {
                 </CardFooter>
               </Card>
               
-              {/* Digital Measurement Dialog */}
+              {/* Advanced Digital Measurement Dialog */}
               <Dialog open={isDigitalMeasurementOpen} onOpenChange={setIsDigitalMeasurementOpen}>
-                <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
+                <DialogContent className="max-w-5xl h-[90vh] flex flex-col overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>Digital Measurement Tool</DialogTitle>
+                    <DialogTitle>Advanced Measurement Tool</DialogTitle>
                     <DialogDescription>
-                      Draw to calculate areas, lengths, and distances
+                      Take precise measurements to calculate accurate costs for your estimate
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="flex-1 overflow-hidden border rounded-md">
-                    <DigitalMeasurement 
-                      onSaveMeasurement={(measurement) => {
-                        setMeasurements(prev => [...prev, measurement]);
+                  <div className="flex-1 overflow-hidden">
+                    <AdvancedMeasurement 
+                      unit="ft"
+                      canvasWidth={850}
+                      canvasHeight={600}
+                      showCostEstimates={true}
+                      initialMeasurements={measurements}
+                      onMeasurementsChange={(newMeasurements) => {
+                        setMeasurements(newMeasurements);
+                        
+                        // Calcular el costo basado en las mediciones para incluir en el estimado
+                        const totalArea = newMeasurements
+                          .filter(m => m.type === 'area' && m.realArea)
+                          .reduce((sum, m) => sum + (m.realArea || 0), 0);
+                        
+                        const totalLength = newMeasurements
+                          .filter(m => (m.type === 'line' || m.type === 'perimeter') && m.realLength)
+                          .reduce((sum, m) => sum + (m.realLength || 0), 0);
+                          
+                        console.log(`Measurements updated - Total Area: ${totalArea} sqft, Total Length: ${totalLength} ft`);
+                        
+                        // Calcular estimación de costos total
+                        const totalCost = newMeasurements.reduce((sum, m) => sum + (m.costEstimate || 0), 0);
+                        if (totalCost > 0) {
+                          console.log(`Total cost estimate: $${totalCost.toFixed(2)}`);
+                        }
                       }} 
                     />
+                  </div>
+                  <div className="flex justify-between mt-4">
+                    <p className="text-sm text-muted-foreground">
+                      Pro Tip: Select a service type and material quality to get accurate cost estimates
+                    </p>
+                    <Button onClick={() => setIsDigitalMeasurementOpen(false)}>
+                      Done
+                    </Button>
                   </div>
                 </DialogContent>
               </Dialog>
