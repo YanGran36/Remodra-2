@@ -149,29 +149,52 @@ export function registerPricingRoutes(app: Express) {
     try {
       const { id } = req.params;
       
-      // Verificar que el servicio pertenece al contratista
+      // Buscar el servicio por serviceType en lugar de ID numérico
       const [existingService] = await db
         .select()
         .from(servicePricing)
-        .where(eq(servicePricing.id, parseInt(id)))
-        .where(eq(servicePricing.contractorId, req.user.id));
-      
-      if (!existingService) {
-        return res.status(404).json({ message: 'Servicio no encontrado' });
-      }
+        .where(
+          and(
+            eq(servicePricing.serviceType, id),
+            eq(servicePricing.contractorId, req.user.id)
+          )
+        );
       
       const updateData = { 
         ...req.body,
+        contractorId: req.user.id,
+        serviceType: id,
         updatedAt: new Date()
       };
       
-      const [updatedService] = await db
-        .update(servicePricing)
-        .set(updateData)
-        .where(eq(servicePricing.id, parseInt(id)))
-        .returning();
-      
-      res.json(updatedService);
+      if (existingService) {
+        // Si existe, actualizar
+        const [updatedService] = await db
+          .update(servicePricing)
+          .set(updateData)
+          .where(
+            and(
+              eq(servicePricing.serviceType, id),
+              eq(servicePricing.contractorId, req.user.id)
+            )
+          )
+          .returning();
+        
+        res.json(updatedService);
+      } else {
+        // Si no existe, crear uno nuevo
+        const newData = {
+          ...updateData,
+          createdAt: new Date()
+        };
+        
+        const [newService] = await db
+          .insert(servicePricing)
+          .values(newData)
+          .returning();
+        
+        res.status(201).json(newService);
+      }
     } catch (error) {
       console.error('Error al actualizar servicio:', error);
       res.status(500).json({ message: 'Error al actualizar servicio' });
@@ -318,29 +341,50 @@ export function registerPricingRoutes(app: Express) {
     try {
       const { id } = req.params;
       
-      // Verificar que el material pertenece al contratista
-      const [existingMaterial] = await db
+      // Buscar el material por su ID de cadena (ej: fence-wood)
+      const materials = await db
         .select()
         .from(materialPricing)
-        .where(eq(materialPricing.id, parseInt(id)))
         .where(eq(materialPricing.contractorId, req.user.id));
       
-      if (!existingMaterial) {
-        return res.status(404).json({ message: 'Material no encontrado' });
-      }
+      // Buscar un material existente que tenga este ID como valor de 'code' o 'name'
+      const existingMaterial = materials.find(m => 
+        (m.id && m.id.toString() === id) || 
+        (m.code === id) || 
+        (m.category === req.body.category && m.name && m.name.toLowerCase().includes(id.toLowerCase()))
+      );
       
       const updateData = { 
         ...req.body,
+        contractorId: req.user.id,
+        category: req.body.category || id.split('-')[0], // Extraer categoría del ID si no está definida
         updatedAt: new Date()
       };
       
-      const [updatedMaterial] = await db
-        .update(materialPricing)
-        .set(updateData)
-        .where(eq(materialPricing.id, parseInt(id)))
-        .returning();
-      
-      res.json(updatedMaterial);
+      if (existingMaterial) {
+        // Si existe, actualizar
+        const [updatedMaterial] = await db
+          .update(materialPricing)
+          .set(updateData)
+          .where(eq(materialPricing.id, existingMaterial.id))
+          .returning();
+        
+        res.json(updatedMaterial);
+      } else {
+        // Si no existe, crear uno nuevo
+        const newData = {
+          ...updateData,
+          code: id, // Guardar el ID original como código
+          createdAt: new Date()
+        };
+        
+        const [newMaterial] = await db
+          .insert(materialPricing)
+          .values(newData)
+          .returning();
+        
+        res.status(201).json(newMaterial);
+      }
     } catch (error) {
       console.error('Error al actualizar material:', error);
       res.status(500).json({ message: 'Error al actualizar material' });
