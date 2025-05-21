@@ -47,29 +47,36 @@ const PricingConfigPage = () => {
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Convertimos los servicios obtenidos de la API al formato que necesitamos en esta página
-  const services: Service[] = Array.isArray(configuredServices)
-    ? configuredServices.map((service: any) => ({
+  // Utilizamos estados locales para manejar la UI
+  const [services, setServices] = useState<Service[]>([]);
+  const [materials, setMaterials] = useState<Material[]>([]);
+
+  // Actualizamos los estados cuando los datos de la API cambian
+  useEffect(() => {
+    if (Array.isArray(configuredServices)) {
+      const mappedServices = configuredServices.map((service: any) => ({
         id: service.id || service.serviceType,
         name: service.name,
         serviceType: service.serviceType,
         unit: service.unit || 'ft',
         laborRate: typeof service.laborRate === 'string' ? parseFloat(service.laborRate) : service.laborRate || 0,
         laborMethod: service.laborCalculationMethod || service.laborMethod || 'by_length'
-      }))
-    : [];
-
-  // Convertimos los materiales obtenidos de la API al formato que necesitamos
-  const materials: Material[] = Array.isArray(configuredMaterials)
-    ? configuredMaterials.map((material: any) => ({
+      }));
+      setServices(mappedServices);
+    }
+    
+    if (Array.isArray(configuredMaterials)) {
+      const mappedMaterials = configuredMaterials.map((material: any) => ({
         id: material.id || material.material_id || material.code,
         name: material.name,
         category: material.category,
         unitPrice: typeof material.unitPrice === 'string' ? parseFloat(material.unitPrice) : material.unitPrice || 0,
         unit: material.unit || 'ft',
         supplier: material.supplier || 'No especificado'
-      }))
-    : [];
+      }));
+      setMaterials(mappedMaterials);
+    }
+  }, [configuredServices, configuredMaterials]);
   
   // Registramos datos recibidos para depuración - solo una vez
   useEffect(() => {
