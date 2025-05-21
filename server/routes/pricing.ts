@@ -145,17 +145,6 @@ export function registerPricingRoutes(app: Express) {
       const { id } = req.params;
       console.log(`Updating service with ID: ${id}`, req.body);
       
-      // Look for the service by serviceType
-      const [existingService] = await db
-        .select()
-        .from(servicePricing)
-        .where(
-          and(
-            eq(servicePricing.serviceType, id),
-            eq(servicePricing.contractorId, req.user.id)
-          )
-        );
-      
       // Convert laborRate to number with better error handling
       let laborRateValue = 0;
       if (req.body.laborRate !== undefined) {
@@ -166,10 +155,29 @@ export function registerPricingRoutes(app: Express) {
         }
       }
       
+      // Si estamos editando un servicio y cambiando su serviceType
+      const isEditing = req.body.originalServiceType && req.body.originalServiceType !== req.body.serviceType;
+      const searchId = isEditing ? req.body.originalServiceType : id;
+      
+      console.log("Searching for service with ID:", searchId);
+      
+      // Buscar el servicio por el ID original
+      const [existingService] = await db
+        .select()
+        .from(servicePricing)
+        .where(
+          and(
+            eq(servicePricing.serviceType, searchId),
+            eq(servicePricing.contractorId, req.user.id)
+          )
+        );
+      
+      console.log("Existing service found:", existingService ? "Yes" : "No");
+      
       // Prepare data with safety defaults
       const serviceData = { 
         name: req.body.name || 'New Service',
-        serviceType: id,
+        serviceType: req.body.serviceType || id, // Usar el nuevo serviceType si está siendo editado
         unit: req.body.unit || 'ft',
         laborRate: laborRateValue,
         laborCalculationMethod: req.body.laborMethod || 'by_length',
@@ -183,13 +191,15 @@ export function registerPricingRoutes(app: Express) {
       
       if (existingService) {
         // Update existing service
-        console.log("Updating existing service with ID:", id);
+        console.log("Updating existing service with ID:", searchId);
+        
+        // Si estamos editando un servicio existente
         [result] = await db
           .update(servicePricing)
           .set(serviceData)
           .where(
             and(
-              eq(servicePricing.serviceType, id),
+              eq(servicePricing.serviceType, searchId),
               eq(servicePricing.contractorId, req.user.id)
             )
           )
@@ -200,12 +210,23 @@ export function registerPricingRoutes(app: Express) {
         // Create new service
         console.log("Creating new service");
         try {
+          // Asegúrate de que todos los valores estén en el formato correcto
+          const insertData = {
+            name: serviceData.name,
+            serviceType: serviceData.serviceType,
+            unit: serviceData.unit,
+            laborRate: String(serviceData.laborRate),
+            laborCalculationMethod: serviceData.laborCalculationMethod,
+            contractorId: serviceData.contractorId,
+            createdAt: new Date(),
+            updatedAt: serviceData.updatedAt
+          };
+          
+          console.log("Inserting new service with data:", insertData);
+          
           [result] = await db
             .insert(servicePricing)
-            .values({
-              ...serviceData,
-              createdAt: new Date()
-            })
+            .values(insertData)
             .returning();
           
           console.log("New service created successfully:", result);
@@ -218,14 +239,28 @@ export function registerPricingRoutes(app: Express) {
         }
       }
       
+      // Guardar en la DB y luego hacer SELECT para verificar
+      await new Promise(r => setTimeout(r, 100));
+      const [checkResult] = await db
+        .select()
+        .from(servicePricing)
+        .where(
+          and(
+            eq(servicePricing.serviceType, serviceData.serviceType),
+            eq(servicePricing.contractorId, req.user.id)
+          )
+        );
+      
+      console.log("Verification query result:", checkResult);
+      
       // Format response to match frontend expectations
       const formattedService = {
-        id: result.serviceType,
-        name: result.name,
-        serviceType: result.serviceType,
-        unit: result.unit,
-        laborRate: Number(result.laborRate),
-        laborMethod: result.laborCalculationMethod
+        id: serviceData.serviceType,
+        name: serviceData.name,
+        serviceType: serviceData.serviceType,
+        unit: serviceData.unit,
+        laborRate: Number(serviceData.laborRate),
+        laborMethod: serviceData.laborCalculationMethod
       };
       
       console.log("Returning formatted service:", formattedService);

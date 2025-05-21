@@ -104,7 +104,13 @@ const PricingConfigPage = () => {
 
   // Para editar un servicio
   const handleEditService = (service: Service) => {
-    setEditingService({...service});
+    // Crear una copia del servicio y agregar el serviceType original
+    const serviceToEdit = {
+      ...service
+    };
+    // Almacenar el serviceType original como una propiedad normal
+    (serviceToEdit as any).originalServiceType = service.serviceType;
+    setEditingService(serviceToEdit);
   };
 
   // Add a new service
@@ -140,17 +146,21 @@ const PricingConfigPage = () => {
         laborRate: numericLaborRate,
         unit: editingService.unit || 'ft',
         laborMethod: editingService.laborMethod || 'by_length',
-        contractorId: 1
+        contractorId: 1,
+        // Incluir el ID original para poder encontrar el servicio si se está cambiando el serviceType
+        originalServiceType: editingService.originalServiceType || editingService.serviceType || editingService.id
       };
       
       console.log("Saving service:", serviceData);
       
       // Intento directo: guardar servicio y usar los datos que enviamos
-      await fetch(`/api/pricing/services/${serviceData.serviceType}`, {
+      const response = await fetch(`/api/pricing/services/${serviceData.originalServiceType}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(serviceData)
       });
+      
+      console.log("Server response status:", response.status);
       
       // Usamos directamente los datos que enviamos sin depender de la respuesta
       const updatedService = {

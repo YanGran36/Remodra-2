@@ -253,6 +253,11 @@ export const servicePricing = pgTable("service_pricing", {
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
 
+export const servicePricingSchema = createSelectSchema(servicePricing);
+export type ServicePricing = z.infer<typeof servicePricingSchema>;
+export const servicePricingInsertSchema = createInsertSchema(servicePricing);
+export type ServicePricingInsert = z.infer<typeof servicePricingInsertSchema>;
+
 // NUEVO: Materiales con precios estandarizados por contratista
 export const materialPricing = pgTable("material_pricing", {
   id: serial("id").primaryKey(),
