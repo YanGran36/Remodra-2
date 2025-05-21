@@ -21,12 +21,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { usePricing } from "@/hooks/use-pricing";
 
-// Types defined to avoid typing errors
+// Types defined to match our simplified database structure
 interface Service {
   id: string;
   name: string;
   serviceType: string;
-  unitPrice: number;
   unit: string;
   laborRate: number;
   laborMethod: string;
@@ -41,33 +40,30 @@ interface Material {
   supplier: string;
 }
 
-// Default data with zero prices
+// Default data with preset labor rates
 const defaultServices: Service[] = [
   {
     id: 'fence',
     name: 'Fence Installation',
     serviceType: 'fence',
-    unitPrice: 0,
     unit: 'ft',
-    laborRate: 0,
+    laborRate: 40,
     laborMethod: 'by_length',
   },
   {
     id: 'roof',
     name: 'Roof Installation',
     serviceType: 'roof',
-    unitPrice: 0,
     unit: 'sqft',
-    laborRate: 0,
+    laborRate: 3.5,
     laborMethod: 'by_area',
   },
   {
     id: 'gutters',
     name: 'Gutter Installation',
     serviceType: 'gutters',
-    unitPrice: 0,
     unit: 'ft',
-    laborRate: 0,
+    laborRate: 7,
     laborMethod: 'by_length',
   }
 ];
@@ -202,12 +198,15 @@ const PricingConfigPage = () => {
       const servicesArray = Array.isArray(configuredServices) ? configuredServices : [];
       
       if (servicesArray.length > 0) {
-        console.log('Actualizando precios de servicios desde la base de datos:', servicesArray);
-        // Aseguramos que los precios se muestren correctamente convirtiéndolos a número
+        console.log('Updating service prices from database:', servicesArray);
+        // Make sure prices are displayed correctly by converting them to numbers
         const processedServices = servicesArray.map((service: any) => ({
-          ...service,
-          unitPrice: typeof service.unitPrice === 'string' ? parseFloat(service.unitPrice) : service.unitPrice,
-          laborRate: typeof service.laborRate === 'string' ? parseFloat(service.laborRate) : service.laborRate
+          id: service.id,
+          name: service.name,
+          serviceType: service.serviceType,
+          unit: service.unit,
+          laborRate: typeof service.laborRate === 'string' ? parseFloat(service.laborRate) : service.laborRate,
+          laborMethod: service.laborMethod
         }));
         setServices(processedServices);
       }
@@ -234,13 +233,12 @@ const PricingConfigPage = () => {
     setEditingService({...service});
   };
 
-  // Para añadir un nuevo servicio
+  // Add a new service
   const handleAddService = () => {
     const newService: Service = {
       id: `service-${Date.now()}`,
-      name: 'Nuevo Servicio',
-      serviceType: 'otro',
-      unitPrice: 0,
+      name: 'New Service',
+      serviceType: 'other',
       unit: 'ft',
       laborRate: 0,
       laborMethod: 'by_length',
