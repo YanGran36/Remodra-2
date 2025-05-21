@@ -24,16 +24,46 @@ export function registerDirectServiceRoutes(app: Express) {
       
       console.log(`Processing service: ID=${id}, Type=${serviceType}, Rate=${numericLaborRate}`);
       
-      // Buscar si ya existe
-      const [existingService] = await db
-        .select()
-        .from(servicePricing)
-        .where(
-          and(
-            eq(servicePricing.serviceType, serviceType),
-            eq(servicePricing.contractorId, req.user.id)
-          )
-        );
+      // Buscar si ya existe por originalServiceType (para ediciones) o por serviceType (para nuevos)
+      const originalServiceType = req.body.originalServiceType || serviceType;
+      
+      console.log(`Searching for existing service with originalType=${originalServiceType} or serviceType=${serviceType}`);
+      
+      // Primero intentamos buscar por originalServiceType (para servicios editados)
+      let existingService = null;
+      
+      if (originalServiceType) {
+        [existingService] = await db
+          .select()
+          .from(servicePricing)
+          .where(
+            and(
+              eq(servicePricing.serviceType, originalServiceType),
+              eq(servicePricing.contractorId, req.user.id)
+            )
+          );
+        
+        if (existingService) {
+          console.log(`Found existing service by originalServiceType: ${existingService.id}`);
+        }
+      }
+      
+      // Si no encontramos, buscamos por serviceType (para nuevos)
+      if (!existingService) {
+        [existingService] = await db
+          .select()
+          .from(servicePricing)
+          .where(
+            and(
+              eq(servicePricing.serviceType, serviceType),
+              eq(servicePricing.contractorId, req.user.id)
+            )
+          );
+        
+        if (existingService) {
+          console.log(`Found existing service by serviceType: ${existingService.id}`);
+        }
+      }
       
       let result;
       
@@ -82,6 +112,51 @@ export function registerDirectServiceRoutes(app: Express) {
       console.error('Error processing service:', error);
       res.status(500).json({ 
         message: 'Error processing service', 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      });
+    }
+  });
+  
+  // Endpoint para eliminar un servicio
+  app.delete('/api/pricing/direct-service/:serviceType', isAuthenticated, async (req: any, res) => {
+    try {
+      const { serviceType } = req.params;
+      
+      console.log(`Deleting service with type: ${serviceType}`);
+      
+      // Verificar que el servicio existe
+      const [existingService] = await db
+        .select()
+        .from(servicePricing)
+        .where(
+          and(
+            eq(servicePricing.serviceType, serviceType),
+            eq(servicePricing.contractorId, req.user.id)
+          )
+        );
+      
+      if (!existingService) {
+        console.log(`Service not found: ${serviceType}`);
+        return res.status(404).json({ message: 'Service not found' });
+      }
+      
+      // Eliminar el servicio
+      const result = await db
+        .delete(servicePricing)
+        .where(
+          and(
+            eq(servicePricing.serviceType, serviceType),
+            eq(servicePricing.contractorId, req.user.id)
+          )
+        );
+      
+      console.log(`Service deleted: ${serviceType}`);
+      
+      res.status(200).json({ message: 'Service deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting service:', error);
+      res.status(500).json({ 
+        message: 'Error deleting service', 
         error: error instanceof Error ? error.message : 'Unknown error' 
       });
     }

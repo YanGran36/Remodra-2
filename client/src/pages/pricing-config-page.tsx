@@ -217,8 +217,8 @@ const PricingConfigPage = () => {
     setIsLoading(true);
     
     try {
-      // Delete from database
-      const response = await fetch(`/api/pricing/services/${serviceId}`, {
+      // Delete from database usando la nueva API directa para servicios
+      const response = await fetch(`/api/pricing/direct-service/${serviceId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' }
       });
