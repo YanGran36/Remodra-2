@@ -153,8 +153,8 @@ const PricingConfigPage = () => {
       
       console.log("Saving service:", serviceData);
       
-      // Intento directo: guardar servicio y usar los datos que enviamos
-      const response = await fetch(`/api/pricing/services/${serviceData.originalServiceType}`, {
+      // Usar la nueva API directa para servicios
+      const response = await fetch(`/api/pricing/direct-service`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(serviceData)

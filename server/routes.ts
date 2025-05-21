@@ -27,10 +27,14 @@ import { analyzeProject, generateSharingContent, generateProfessionalJobDescript
 import * as achievementService from "./services/achievement-service";
 import { registerTimeclockRoutes } from "./routes/timeclock-routes";
 import { registerPricingRoutes } from "./routes/pricing";
+import { registerDirectServiceRoutes } from "./routes/direct-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
   setupAuth(app);
+  
+  // Registrar las rutas directas para servicios
+  registerDirectServiceRoutes(app);
   
   // Language update route
   app.post("/api/protected/language", async (req, res) => {
