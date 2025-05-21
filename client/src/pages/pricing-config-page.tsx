@@ -21,7 +21,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { usePricing } from "@/hooks/use-pricing";
 
-// Tipos definidos para evitar errores de tipado
+// Types defined to avoid typing errors
 interface Service {
   id: string;
   name: string;
@@ -41,11 +41,11 @@ interface Material {
   supplier: string;
 }
 
-// Datos predefinidos con precios en cero
+// Default data with zero prices
 const defaultServices: Service[] = [
   {
     id: 'fence',
-    name: 'Instalación de Cerca',
+    name: 'Fence Installation',
     serviceType: 'fence',
     unitPrice: 0,
     unit: 'ft',
@@ -54,7 +54,7 @@ const defaultServices: Service[] = [
   },
   {
     id: 'roof',
-    name: 'Instalación de Techo',
+    name: 'Roof Installation',
     serviceType: 'roof',
     unitPrice: 0,
     unit: 'sqft',
@@ -63,7 +63,7 @@ const defaultServices: Service[] = [
   },
   {
     id: 'gutters',
-    name: 'Instalación de Canaletas',
+    name: 'Gutter Installation',
     serviceType: 'gutters',
     unitPrice: 0,
     unit: 'ft',
@@ -73,7 +73,7 @@ const defaultServices: Service[] = [
 ];
 
 const defaultMaterials: Material[] = [
-  // Materiales para cercas (fence)
+  // Materials for fences
   {
     id: 'wood_fence',
     name: 'Wood Fence',
@@ -123,7 +123,7 @@ const defaultMaterials: Material[] = [
     supplier: 'Hardware Supply',
   },
   
-  // Materiales para techos (roof)
+  // Materials for roofing
   {
     id: 'asphalt_shingles',
     name: 'Asphalt Shingles',
@@ -149,7 +149,7 @@ const defaultMaterials: Material[] = [
     supplier: 'Premium Materials',
   },
   
-  // Materiales para canaletas (gutters)
+  // Materials for gutters
   {
     id: 'aluminum_gutters',
     name: 'Aluminum Gutters',
@@ -248,78 +248,77 @@ const PricingConfigPage = () => {
     setEditingService(newService);
   };
 
-  // Para guardar cambios en un servicio
+  // Save service changes
   const handleSaveService = async () => {
     if (!editingService) return;
 
     setIsLoading(true);
     
     try {
-      // Guardamos el servicio en memoria local inmediatamente para mostrar los cambios al usuario
-      const updatedService = {
-        ...editingService,
-        updatedAt: new Date()
+      // Convert prices to numerical format
+      const numericLaborRate = parseFloat(String(editingService.laborRate));
+      
+      // Prepare data with only the necessary fields
+      const serviceData = {
+        id: editingService.id,
+        name: editingService.name,
+        serviceType: editingService.serviceType || editingService.id,
+        laborRate: numericLaborRate,
+        unit: editingService.unit || 'ft',
+        laborMethod: editingService.laborMethod || 'by_length',
+        contractorId: 1
       };
       
-      // Verificar si el servicio ya existe en nuestra lista
+      // Save to database
+      const response = await fetch(`/api/pricing/services/${editingService.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(serviceData)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error saving service:", errorText);
+        throw new Error("Could not save to database");
+      }
+      
+      // Update local list
+      const updatedService = {
+        ...editingService,
+        laborRate: numericLaborRate
+      };
+      
       const existingIndex = services.findIndex(s => s.id === editingService.id);
       let updatedServices;
       
       if (existingIndex >= 0) {
-        // Si existe, actualizar en la lista
         updatedServices = [...services];
         updatedServices[existingIndex] = updatedService;
       } else {
-        // Si no existe, añadir a la lista
         updatedServices = [...services, updatedService];
       }
       
-      // Actualizar la lista local
       setServices(updatedServices);
       
-      // Convertir precios a formato numérico
-      const numericUnitPrice = parseFloat(String(editingService.unitPrice));
-      const numericLaborRate = parseFloat(String(editingService.laborRate));
+      // Invalidate cache to refresh data
+      await queryClient.invalidateQueries({ queryKey: ['/api/pricing/services'] });
       
-      // Intentar guardar en la base de datos
-      const response = await fetch(`/api/pricing/services/${editingService.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...editingService,
-          contractorId: 1,
-          serviceType: editingService.serviceType || editingService.id,
-          unitPrice: numericUnitPrice,
-          laborRate: numericLaborRate
-        })
+      // Success message
+      toast({
+        title: "Service saved",
+        description: "Labor rates have been updated successfully"
       });
       
-      if (response.ok) {
-        // Invalidar cache
-        queryClient.invalidateQueries({ queryKey: ['/api/pricing/services'] });
-        
-        toast({
-          title: "Servicio guardado",
-          description: "Los precios se han actualizado correctamente"
-        });
-      } else {
-        console.warn("Error al guardar en la base de datos:", await response.text());
-        
-        toast({
-          title: "Advertencia",
-          description: "Se guardó localmente pero hubo un problema al guardar en la base de datos",
-          variant: "destructive"
-        });
-      }
+      // Close form
+      setEditingService(null);
     } catch (error) {
-      console.error('Error al guardar servicio:', error);
+      console.error('Error saving service:', error);
       toast({
-        title: "Error al guardar",
-        description: "No se pudieron guardar los cambios. Intente nuevamente.",
+        title: "Error saving",
+        description: "Changes could not be saved. Please try again.",
         variant: "destructive"
       });
     } finally {
-      setEditingService(null);
       setIsLoading(false);
     }
   };
@@ -452,16 +451,16 @@ const PricingConfigPage = () => {
   return (
     <div className="container py-8">
       <Helmet>
-        <title>Configuración de Precios | ContractorHub</title>
-        <meta name="description" content="Configuración centralizada de precios" />
+        <title>Price Configuration | ContractorHub</title>
+        <meta name="description" content="Centralized price management" />
       </Helmet>
 
-      {/* Barra de navegación superior */}
+      {/* Top navigation bar */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b pb-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Configuración de Precios</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Price Configuration</h1>
           <p className="text-muted-foreground">
-            Administra los precios de servicios y materiales para toda tu empresa
+            Manage service and material prices for your entire business
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -475,32 +474,31 @@ const PricingConfigPage = () => {
 
       <Tabs defaultValue="services" className="space-y-6">
         <TabsList>
-          <TabsTrigger value="services">Servicios</TabsTrigger>
-          <TabsTrigger value="materials">Materiales</TabsTrigger>
+          <TabsTrigger value="services">Services</TabsTrigger>
+          <TabsTrigger value="materials">Materials</TabsTrigger>
         </TabsList>
 
         <TabsContent value="services">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>Precios de Servicios</CardTitle>
+                <CardTitle>Service Labor Rates</CardTitle>
                 <CardDescription>
-                  Configura las tarifas base para todos tus servicios
+                  Configure labor rates for all your services
                 </CardDescription>
               </div>
               <Button onClick={handleAddService}>
-                <PlusIcon className="mr-2 h-4 w-4" /> Añadir Servicio
+                <PlusIcon className="mr-2 h-4 w-4" /> Add Service
               </Button>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Servicio</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Precio por Unidad</TableHead>
-                    <TableHead>Tarifa de Mano de Obra</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
+                    <TableHead>Service</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Labor Rate</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -508,7 +506,6 @@ const PricingConfigPage = () => {
                     <TableRow key={service.id}>
                       <TableCell className="font-medium">{service.name}</TableCell>
                       <TableCell>{service.serviceType}</TableCell>
-                      <TableCell>${service.unitPrice.toFixed(2)} / {service.unit}</TableCell>
                       <TableCell>${service.laborRate.toFixed(2)} / {service.unit}</TableCell>
                       <TableCell className="text-right">
                         <Button 
@@ -527,11 +524,11 @@ const PricingConfigPage = () => {
               {editingService && (
                 <div className="mt-6 border rounded-lg p-4">
                   <h3 className="text-lg font-medium mb-4">
-                    {editingService.id.startsWith('service-') ? 'Nuevo Servicio' : 'Editar Servicio'}
+                    {editingService.id.startsWith('service-') ? 'New Service' : 'Edit Service'}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div className="space-y-2">
-                      <Label htmlFor="service-name">Nombre del Servicio</Label>
+                      <Label htmlFor="service-name">Service Name</Label>
                       <Input 
                         id="service-name"
                         value={editingService.name}
@@ -539,38 +536,26 @@ const PricingConfigPage = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="service-type">Tipo de Servicio</Label>
+                      <Label htmlFor="service-type">Service Type</Label>
                       <Select
                         value={editingService.serviceType}
                         onValueChange={(value) => setEditingService({...editingService, serviceType: value})}
                       >
                         <SelectTrigger id="service-type">
-                          <SelectValue placeholder="Seleccionar" />
+                          <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="fence">Cercas</SelectItem>
-                          <SelectItem value="roof">Techos</SelectItem>
-                          <SelectItem value="gutters">Canaletas</SelectItem>
-                          <SelectItem value="windows">Ventanas</SelectItem>
+                          <SelectItem value="fence">Fence</SelectItem>
+                          <SelectItem value="roof">Roof</SelectItem>
+                          <SelectItem value="gutters">Gutters</SelectItem>
+                          <SelectItem value="windows">Windows</SelectItem>
                           <SelectItem value="deck">Deck</SelectItem>
-                          <SelectItem value="otro">Otro</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="unit-price">Precio Base (por unidad)</Label>
-                      <Input 
-                        id="unit-price"
-                        type="number" 
-                        value={editingService.unitPrice}
-                        onChange={(e) => setEditingService({
-                          ...editingService, 
-                          unitPrice: parseFloat(e.target.value) || 0
-                        })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="labor-rate">Mano de Obra (por unidad)</Label>
+                      <Label htmlFor="labor-rate">Labor Rate (per unit)</Label>
                       <Input 
                         id="labor-rate"
                         type="number"
@@ -582,35 +567,35 @@ const PricingConfigPage = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="unit">Unidad de Medida</Label>
+                      <Label htmlFor="unit">Unit of Measure</Label>
                       <Select
                         value={editingService.unit}
                         onValueChange={(value) => setEditingService({...editingService, unit: value})}
                       >
                         <SelectTrigger id="unit">
-                          <SelectValue placeholder="Seleccionar" />
+                          <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="ft">Pie Lineal (ft)</SelectItem>
-                          <SelectItem value="sqft">Pie Cuadrado (sqft)</SelectItem>
-                          <SelectItem value="unit">Unidad</SelectItem>
+                          <SelectItem value="ft">Linear Foot (ft)</SelectItem>
+                          <SelectItem value="sqft">Square Foot (sqft)</SelectItem>
+                          <SelectItem value="unit">Unit</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="labor-method">Método de Cálculo de Mano de Obra</Label>
+                      <Label htmlFor="labor-method">Labor Calculation Method</Label>
                       <Select
                         value={editingService.laborMethod}
                         onValueChange={(value) => setEditingService({...editingService, laborMethod: value})}
                       >
                         <SelectTrigger id="labor-method">
-                          <SelectValue placeholder="Seleccionar" />
+                          <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="by_length">Por Longitud</SelectItem>
-                          <SelectItem value="by_area">Por Área</SelectItem>
-                          <SelectItem value="fixed">Monto Fijo</SelectItem>
-                          <SelectItem value="hourly">Por Hora</SelectItem>
+                          <SelectItem value="by_length">By Length</SelectItem>
+                          <SelectItem value="by_area">By Area</SelectItem>
+                          <SelectItem value="fixed">Fixed Amount</SelectItem>
+                          <SelectItem value="hourly">Hourly</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -621,17 +606,17 @@ const PricingConfigPage = () => {
                       onClick={() => setEditingService(null)}
                       disabled={isLoading}
                     >
-                      Cancelar
+                      Cancel
                     </Button>
                     <Button 
                       onClick={handleSaveService}
                       disabled={isLoading}
                     >
                       {isLoading ? (
-                        <span>Guardando...</span>
+                        <span>Saving...</span>
                       ) : (
                         <>
-                          <SaveIcon className="mr-2 h-4 w-4" /> Guardar
+                          <SaveIcon className="mr-2 h-4 w-4" /> Save
                         </>
                       )}
                     </Button>
