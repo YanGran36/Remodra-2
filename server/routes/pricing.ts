@@ -211,12 +211,13 @@ export function registerPricingRoutes(app: Express) {
         console.log("Creating new service with data:", JSON.stringify(serviceData));
         try {
           // Convertir el objeto de datos al formato correcto para la inserción
+          // Aseguramos la correspondencia de nombres entre frontend y backend
           const insertData = {
             name: serviceData.name,
             serviceType: serviceData.serviceType,
             unit: serviceData.unit,
-            laborRate: typeof serviceData.laborRate === 'number' ? String(serviceData.laborRate) : '0',
-            laborCalculationMethod: serviceData.laborCalculationMethod,
+            laborRate: serviceData.laborRate,
+            laborCalculationMethod: serviceData.laborMethod || serviceData.laborCalculationMethod, // Permitir ambos nombres
             contractorId: serviceData.contractorId,
             createdAt: new Date(),
             updatedAt: serviceData.updatedAt
