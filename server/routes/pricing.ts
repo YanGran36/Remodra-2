@@ -20,7 +20,7 @@ export function registerPricingRoutes(app: Express) {
   // SERVICIOS
   // =========
 
-  // Obtener todos los servicios con precios del contratista
+  // Get all services with pricing for the contractor
   app.get('/api/pricing/services', verifyContractorOwnership, async (req: any, res) => {
     try {
       const services = await db
@@ -28,74 +28,69 @@ export function registerPricingRoutes(app: Express) {
         .from(servicePricing)
         .where(eq(servicePricing.contractorId, req.user.id));
       
-      // Si no hay servicios configurados, devolver datos predeterminados
-      if (services.length === 0) {
-        // Datos iniciales para servicios comunes
+      // Format the response to match what the frontend expects
+      const formattedServices = services.map(service => ({
+        id: service.serviceType,
+        name: service.name,
+        serviceType: service.serviceType,
+        unit: service.unit,
+        laborRate: service.laborRate,
+        laborMethod: service.laborCalculationMethod
+      }));
+      
+      // If no services configured, return default data that matches our schema
+      if (formattedServices.length === 0) {
+        // Default services with English names
         const defaultServices = [
           {
             id: 'fence',
-            name: 'Instalación de Cerca',
+            name: 'Fence Installation',
             serviceType: 'fence',
-            description: 'Instalación de cercas residenciales',
-            unitPrice: 57,
             unit: 'ft',
-            laborRate: 35,
-            laborCalculationMethod: 'by_length',
-            status: 'active'
+            laborRate: 40,
+            laborMethod: 'by_length',
           },
           {
             id: 'roof',
-            name: 'Instalación de Techo',
+            name: 'Roof Installation',
             serviceType: 'roof',
-            description: 'Instalación de techos residenciales',
-            unitPrice: 8.7,
             unit: 'sqft',
             laborRate: 3.5,
-            laborCalculationMethod: 'by_area',
-            status: 'active'
+            laborMethod: 'by_area',
           },
           {
             id: 'gutters',
-            name: 'Instalación de Canaletas',
+            name: 'Gutter Installation',
             serviceType: 'gutters',
-            description: 'Instalación de canaletas',
-            unitPrice: 12,
             unit: 'ft',
             laborRate: 7,
-            laborCalculationMethod: 'by_length',
-            status: 'active'
+            laborMethod: 'by_length',
           },
           {
             id: 'windows',
-            name: 'Instalación de Ventanas',
+            name: 'Window Installation',
             serviceType: 'windows',
-            description: 'Instalación de ventanas',
-            unitPrice: 45,
             unit: 'unit',
-            laborRate: 85,
-            laborCalculationMethod: 'fixed',
-            status: 'active'
+            laborRate: 75,
+            laborMethod: 'fixed',
           },
           {
             id: 'deck',
-            name: 'Instalación de Deck',
+            name: 'Deck Construction',
             serviceType: 'deck',
-            description: 'Instalación de cubiertas exteriores',
-            unitPrice: 35,
             unit: 'sqft',
-            laborRate: 15,
-            laborCalculationMethod: 'by_area',
-            status: 'active'
+            laborRate: 12,
+            laborMethod: 'by_area',
           }
         ];
         
         return res.json(defaultServices);
       }
       
-      res.json(services);
+      res.json(formattedServices);
     } catch (error) {
-      console.error('Error al obtener servicios:', error);
-      res.status(500).json({ message: 'Error al obtener servicios' });
+      console.error('Error getting services:', error);
+      res.status(500).json({ message: 'Error getting services' });
     }
   });
 
@@ -144,12 +139,13 @@ export function registerPricingRoutes(app: Express) {
     }
   });
 
-  // Actualizar un servicio existente
+  // Update an existing service
   app.put('/api/pricing/services/:id', verifyContractorOwnership, async (req: any, res) => {
     try {
       const { id } = req.params;
+      console.log(`Updating service with ID: ${id}`, req.body);
       
-      // Buscar el servicio por serviceType en lugar de ID numérico
+      // Look for the service by serviceType
       const [existingService] = await db
         .select()
         .from(servicePricing)
@@ -160,15 +156,21 @@ export function registerPricingRoutes(app: Express) {
           )
         );
       
+      // Prepare update data with simplified schema
       const updateData = { 
-        ...req.body,
-        contractorId: req.user.id,
+        name: req.body.name,
         serviceType: id,
+        unit: req.body.unit,
+        laborRate: parseFloat(req.body.laborRate || 0),
+        laborCalculationMethod: req.body.laborMethod || 'by_length',
+        contractorId: req.user.id,
         updatedAt: new Date()
       };
       
+      console.log("Update data prepared:", updateData);
+      
       if (existingService) {
-        // Si existe, actualizar
+        // If service exists, update it
         const [updatedService] = await db
           .update(servicePricing)
           .set(updateData)
@@ -180,9 +182,20 @@ export function registerPricingRoutes(app: Express) {
           )
           .returning();
         
-        res.json(updatedService);
+        // Format response to match what frontend expects
+        const formattedService = {
+          id: updatedService.serviceType,
+          name: updatedService.name,
+          serviceType: updatedService.serviceType,
+          unit: updatedService.unit,
+          laborRate: updatedService.laborRate,
+          laborMethod: updatedService.laborCalculationMethod
+        };
+        
+        console.log("Service updated successfully:", formattedService);
+        res.json(formattedService);
       } else {
-        // Si no existe, crear uno nuevo
+        // If service doesn't exist, create a new one
         const newData = {
           ...updateData,
           createdAt: new Date()
@@ -193,43 +206,59 @@ export function registerPricingRoutes(app: Express) {
           .values(newData)
           .returning();
         
-        res.status(201).json(newService);
+        // Format response to match what frontend expects
+        const formattedService = {
+          id: newService.serviceType,
+          name: newService.name,
+          serviceType: newService.serviceType,
+          unit: newService.unit,
+          laborRate: newService.laborRate,
+          laborMethod: newService.laborCalculationMethod
+        };
+        
+        console.log("New service created:", formattedService);
+        res.status(201).json(formattedService);
       }
     } catch (error) {
-      console.error('Error al actualizar servicio:', error);
-      // Mostrar más detalles del error para depuración
+      console.error('Error updating service:', error);
       res.status(500).json({ 
-        message: 'Error al actualizar servicio',
-        error: error.message || 'Error desconocido',
-        details: JSON.stringify(error)
+        message: 'Error updating service',
+        error: error.message || 'Unknown error'
       });
     }
   });
 
-  // Eliminar un servicio
+  // Delete a service
   app.delete('/api/pricing/services/:id', verifyContractorOwnership, async (req: any, res) => {
     try {
       const { id } = req.params;
+      console.log(`Deleting service with ID/serviceType: ${id}`);
       
-      // Verificar que el servicio pertenece al contratista
+      // Verify the service belongs to the contractor (using serviceType instead of numeric id)
       const [existingService] = await db
         .select()
         .from(servicePricing)
-        .where(eq(servicePricing.id, parseInt(id)))
-        .where(eq(servicePricing.contractorId, req.user.id));
+        .where(
+          and(
+            eq(servicePricing.serviceType, id),
+            eq(servicePricing.contractorId, req.user.id)
+          )
+        );
       
       if (!existingService) {
-        return res.status(404).json({ message: 'Servicio no encontrado' });
+        return res.status(404).json({ message: 'Service not found' });
       }
       
+      // Delete using the service's primary key id from the database
       await db
         .delete(servicePricing)
-        .where(eq(servicePricing.id, parseInt(id)));
+        .where(eq(servicePricing.id, existingService.id));
       
+      console.log(`Service ${id} deleted successfully`);
       res.status(204).send();
     } catch (error) {
-      console.error('Error al eliminar servicio:', error);
-      res.status(500).json({ message: 'Error al eliminar servicio' });
+      console.error('Error deleting service:', error);
+      res.status(500).json({ message: 'Error deleting service' });
     }
   });
 

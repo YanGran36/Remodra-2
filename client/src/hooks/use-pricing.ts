@@ -2,12 +2,11 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 
-// Interfaces para los datos de precios
+// Interfaces for pricing data
 export interface ServicePrice {
   id: string;
   name: string;
   serviceType: string;
-  unitPrice: number;
   unit: string;
   laborRate: number;
   laborMethod: string;
@@ -22,31 +21,28 @@ export interface MaterialPrice {
   supplier: string;
 }
 
-// Datos predefinidos (fallback)
+// Default fallback data
 const defaultServices: ServicePrice[] = [
   {
     id: 'fence',
-    name: 'Instalación de Cerca',
+    name: 'Fence Installation',
     serviceType: 'fence',
-    unitPrice: 57,
     unit: 'ft',
-    laborRate: 35,
+    laborRate: 40,
     laborMethod: 'by_length',
   },
   {
     id: 'roof',
-    name: 'Instalación de Techo',
+    name: 'Roof Installation',
     serviceType: 'roof',
-    unitPrice: 8.7,
     unit: 'sqft',
     laborRate: 3.5,
     laborMethod: 'by_area',
   },
   {
     id: 'gutters',
-    name: 'Instalación de Canaletas',
+    name: 'Gutter Installation',
     serviceType: 'gutters',
-    unitPrice: 12,
     unit: 'ft',
     laborRate: 7,
     laborMethod: 'by_length',
