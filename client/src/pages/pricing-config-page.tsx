@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, PencilIcon, SaveIcon, PlusIcon, Home } from "lucide-react";
+import { ArrowLeft, PencilIcon, SaveIcon, PlusIcon, Home, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -320,6 +320,54 @@ const PricingConfigPage = () => {
       setIsLoading(false);
     }
   };
+  
+  // Delete a service
+  const handleDeleteService = async (serviceId: string) => {
+    if (!confirm("Are you sure you want to delete this service?")) return;
+    
+    setIsLoading(true);
+    
+    try {
+      // Delete from database
+      const response = await fetch(`/api/pricing/services/${serviceId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error deleting service:", errorText);
+        throw new Error("Could not delete from database");
+      }
+      
+      // Update local list
+      const updatedServices = services.filter(s => s.id !== serviceId);
+      setServices(updatedServices);
+      
+      // Invalidate cache to refresh data
+      await queryClient.invalidateQueries({ queryKey: ['/api/pricing/services'] });
+      
+      // Success message
+      toast({
+        title: "Service deleted",
+        description: "The service has been removed successfully"
+      });
+      
+      // If we're editing this service, close the form
+      if (editingService?.id === serviceId) {
+        setEditingService(null);
+      }
+    } catch (error) {
+      console.error('Error deleting service:', error);
+      toast({
+        title: "Error deleting",
+        description: "Service could not be deleted. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Para editar un material
   const handleEditMaterial = (material: Material) => {
@@ -506,13 +554,23 @@ const PricingConfigPage = () => {
                       <TableCell>{service.serviceType}</TableCell>
                       <TableCell>${service.laborRate.toFixed(2)} / {service.unit}</TableCell>
                       <TableCell className="text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => handleEditService(service)}
-                        >
-                          <PencilIcon className="h-4 w-4" />
-                        </Button>
+                        <div className="flex justify-end gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => handleEditService(service)}
+                          >
+                            <PencilIcon className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleDeleteService(service.id)}
+                            className="text-red-600 hover:text-red-800 hover:bg-red-100"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
