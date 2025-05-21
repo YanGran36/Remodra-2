@@ -489,22 +489,13 @@ const PricingConfigPage = () => {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="service-type">Service Type</Label>
-                      <Select
+                      <Input 
+                        id="service-type"
                         value={editingService.serviceType}
-                        onValueChange={(value) => setEditingService({...editingService, serviceType: value})}
-                      >
-                        <SelectTrigger id="service-type">
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="fence">Fence</SelectItem>
-                          <SelectItem value="roof">Roof</SelectItem>
-                          <SelectItem value="gutters">Gutters</SelectItem>
-                          <SelectItem value="windows">Windows</SelectItem>
-                          <SelectItem value="deck">Deck</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        onChange={(e) => setEditingService({...editingService, serviceType: e.target.value})}
+                        disabled={!editingService.id.startsWith('service-')} // Solo permitir editar el tipo en servicios nuevos
+                        placeholder="Enter a unique service type identifier"
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="labor-rate">Labor Rate (per unit)</Label>
