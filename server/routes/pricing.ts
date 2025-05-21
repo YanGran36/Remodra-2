@@ -161,7 +161,7 @@ export function registerPricingRoutes(app: Express) {
         name: req.body.name,
         serviceType: id,
         unit: req.body.unit,
-        laborRate: parseFloat(req.body.laborRate || 0),
+        laborRate: typeof req.body.laborRate === 'string' ? parseFloat(req.body.laborRate) : (req.body.laborRate || 0),
         laborCalculationMethod: req.body.laborMethod || 'by_length',
         contractorId: req.user.id,
         updatedAt: new Date()
@@ -196,10 +196,19 @@ export function registerPricingRoutes(app: Express) {
         res.json(formattedService);
       } else {
         // If service doesn't exist, create a new one
+        // Ensure all data is properly formatted for creation
         const newData = {
-          ...updateData,
+          name: updateData.name,
+          serviceType: updateData.serviceType,
+          unit: updateData.unit,
+          laborRate: typeof updateData.laborRate === 'string' ? parseFloat(updateData.laborRate) : updateData.laborRate,
+          laborCalculationMethod: updateData.laborCalculationMethod,
+          contractorId: updateData.contractorId,
+          updatedAt: updateData.updatedAt,
           createdAt: new Date()
         };
+        
+        console.log("Creating new service with data:", newData);
         
         const [newService] = await db
           .insert(servicePricing)
