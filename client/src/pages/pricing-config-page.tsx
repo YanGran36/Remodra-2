@@ -19,32 +19,17 @@ import { ArrowLeft, PencilIcon, SaveIcon, PlusIcon, Home, Trash2 } from "lucide-
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { usePricing } from "@/hooks/use-pricing";
+import { usePricing, type ServicePrice, type MaterialPrice } from "@/hooks/use-pricing";
 
-// Types defined to match our simplified database structure
-interface Service {
-  id: string;
-  name: string;
-  serviceType: string;
-  unit: string;
-  laborRate: number;
-  laborMethod: string;
+// Extendemos la interfaz ServicePrice para añadir campos adicionales que necesitamos en la UI
+interface Service extends ServicePrice {
+  originalServiceType?: string; // Para mantener referencia al tipo original durante la edición
 }
 
-interface Material {
-  id: string;
-  name: string;
-  category: string;
-  unitPrice: number;
-  unit: string;
-  supplier: string;
+// Extendemos la interfaz MaterialPrice para añadir campos adicionales que necesitamos
+interface Material extends MaterialPrice {
+  // Campos adicionales si los necesitáramos
 }
-
-// No datos predeterminados - cada contratista añadirá sus propios servicios
-const defaultServices: Service[] = [];
-
-// No datos predeterminados - cada contratista añadirá sus propios materiales
-const defaultMaterials: Material[] = [];
 
 const PricingConfigPage = () => {
   const { toast } = useToast();
@@ -57,52 +42,41 @@ const PricingConfigPage = () => {
     isLoading: isLoadingPrices 
   } = usePricing();
   
-  // Utilizamos los estados para manejar la UI y edición
+  // Estados para edición y carga
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  // Estado local para servicios
-  const [services, setServices] = useState<Service[]>([]);
-  // Estado local para materiales
-  const [materials, setMaterials] = useState<Material[]>([]);
-  
-  // Actualizamos el estado local cuando cambian los datos de la API
-  useEffect(() => {
-    if (Array.isArray(configuredServices)) {
-      const mappedServices = configuredServices.map((service: any) => ({
+
+  // Convertimos los servicios obtenidos de la API al formato que necesitamos en esta página
+  const services: Service[] = Array.isArray(configuredServices)
+    ? configuredServices.map((service: any) => ({
         id: service.id || service.serviceType,
         name: service.name,
         serviceType: service.serviceType,
         unit: service.unit || 'ft',
-        laborRate: typeof service.laborRate === 'string' ? parseFloat(service.laborRate) : service.laborRate,
+        laborRate: typeof service.laborRate === 'string' ? parseFloat(service.laborRate) : service.laborRate || 0,
         laborMethod: service.laborCalculationMethod || service.laborMethod || 'by_length'
-      }));
-      setServices(mappedServices);
-    }
-    
-    if (Array.isArray(configuredMaterials)) {
-      const mappedMaterials = configuredMaterials.map((material: any) => ({
-        id: material.id,
+      }))
+    : [];
+
+  // Convertimos los materiales obtenidos de la API al formato que necesitamos
+  const materials: Material[] = Array.isArray(configuredMaterials)
+    ? configuredMaterials.map((material: any) => ({
+        id: material.id || material.material_id || material.code,
         name: material.name,
         category: material.category,
-        unitPrice: typeof material.unitPrice === 'string' ? parseFloat(material.unitPrice) : material.unitPrice,
-        unit: material.unit,
-        supplier: material.supplier
-      }));
-      setMaterials(mappedMaterials);
-    }
-  }, [configuredServices, configuredMaterials]);
+        unitPrice: typeof material.unitPrice === 'string' ? parseFloat(material.unitPrice) : material.unitPrice || 0,
+        unit: material.unit || 'ft',
+        supplier: material.supplier || 'No especificado'
+      }))
+    : [];
   
-  // Esto será usado para depuración
+  // Registramos datos recibidos para depuración - solo una vez
   useEffect(() => {
     if (configuredServices && Array.isArray(configuredServices) && configuredServices.length > 0) {
-      console.log('Datos de servicios cargados desde la base de datos:', configuredServices);
+      console.log('Datos de servicios cargados:', configuredServices.length, 'servicios');
     }
-    
-    if (configuredMaterials) {
-      console.log('Datos de materiales cargados desde la base de datos:', configuredMaterials);
-    }
-  }, [configuredServices, configuredMaterials]);
+  }, []);
 
   // Para editar un servicio
   const handleEditService = (service: Service) => {
@@ -175,19 +149,11 @@ const PricingConfigPage = () => {
       };
       
       // Update the services array
-      const existingIndex = services.findIndex(s => 
-        s.id === updatedService.id || s.serviceType === updatedService.serviceType
-      );
-      
-      let updatedServices;
-      if (existingIndex >= 0) {
-        updatedServices = [...services];
-        updatedServices[existingIndex] = updatedService;
-      } else {
-        updatedServices = [...services, updatedService];
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error al guardar servicio:", errorText);
+        throw new Error("No se pudo guardar el servicio");
       }
-      
-      setServices(updatedServices);
       
       // Invalidate cache to refresh data
       await queryClient.invalidateQueries({ queryKey: ['/api/pricing/services'] });
