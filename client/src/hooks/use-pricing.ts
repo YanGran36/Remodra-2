@@ -21,100 +21,9 @@ export interface MaterialPrice {
   supplier: string;
 }
 
-// Default fallback data
-const defaultServices: ServicePrice[] = [
-  {
-    id: 'fence',
-    name: 'Fence Installation',
-    serviceType: 'fence',
-    unit: 'ft',
-    laborRate: 40,
-    laborMethod: 'by_length',
-  },
-  {
-    id: 'roof',
-    name: 'Roof Installation',
-    serviceType: 'roof',
-    unit: 'sqft',
-    laborRate: 3.5,
-    laborMethod: 'by_area',
-  },
-  {
-    id: 'gutters',
-    name: 'Gutter Installation',
-    serviceType: 'gutters',
-    unit: 'ft',
-    laborRate: 7,
-    laborMethod: 'by_length',
-  }
-];
-
-const defaultMaterials: MaterialPrice[] = [
-  {
-    id: 'wood_fence',
-    name: 'Wood Fence',
-    category: 'fence',
-    unitPrice: 22,
-    unit: 'ln.ft',
-    supplier: 'Lumber Yard',
-  },
-  {
-    id: 'vinyl_fence',
-    name: 'Vinyl Fence',
-    category: 'fence',
-    unitPrice: 35,
-    unit: 'ln.ft',
-    supplier: 'Modern Materials',
-  },
-  {
-    id: 'chain_link',
-    name: 'Chain Link Fence',
-    category: 'fence',
-    unitPrice: 28,
-    unit: 'ln.ft',
-    supplier: 'Metal Supply Co.',
-  },
-  {
-    id: 'aluminum_fence',
-    name: 'Aluminum Fence',
-    category: 'fence',
-    unitPrice: 40,
-    unit: 'ln.ft',
-    supplier: 'Metal Supply Co.',
-  },
-  {
-    id: 'fence_gate',
-    name: 'Fence Gate',
-    category: 'fence',
-    unitPrice: 150,
-    unit: 'unit',
-    supplier: 'Hardware Supply',
-  },
-  {
-    id: 'post_caps',
-    name: 'Post Caps',
-    category: 'fence',
-    unitPrice: 15,
-    unit: 'unit',
-    supplier: 'Hardware Supply',
-  },
-  {
-    id: 'asphalt_shingles',
-    name: 'Asphalt Shingles',
-    category: 'roof',
-    unitPrice: 5.2,
-    unit: 'sq.ft',
-    supplier: 'Roofing Supply',
-  },
-  {
-    id: 'metal_roofing',
-    name: 'Metal Roofing',
-    category: 'roof',
-    unitPrice: 8.5,
-    unit: 'sq.ft',
-    supplier: 'Metal Supply Co.',
-  }
-];
+// No default data - cada contratista configura sus propios servicios y materiales
+const defaultServices: ServicePrice[] = [];
+const defaultMaterials: MaterialPrice[] = [];
 
 /**
  * Hook personalizado para obtener y utilizar los precios centralizados
@@ -145,7 +54,7 @@ export function usePricing() {
   // Funciones de utilidad para obtener precios por tipo o categoria
   const getServicePrice = (serviceType: string): ServicePrice | undefined => {
     // Asegurarse de que servicePrices es un array y no un objeto vacío
-    const services = Array.isArray(servicePrices) ? servicePrices : defaultServices;
+    const services = Array.isArray(servicePrices) ? servicePrices : [];
     
     // Buscar primero por tipo de servicio (más confiable)
     const serviceByType = services.find((service: any) => 
@@ -162,13 +71,10 @@ export function usePricing() {
 
   const getMaterialPrice = (category: string, materialId?: string): MaterialPrice | undefined => {
     // Asegurarse de que materialPrices es un array y no un objeto vacío
-    const materials = Array.isArray(materialPrices) ? materialPrices : defaultMaterials;
+    const materials = Array.isArray(materialPrices) ? materialPrices : [];
     
     // Si hay un ID específico, buscar primero por él
     if (materialId) {
-      console.log("Material configurado encontrado:", materialId, 
-        materials.find((m: any) => String(m.id) === materialId)?.unitPrice);
-      
       // Buscar por ID exacto o por nombre que contenga el ID
       const exactMatch = materials.find((material: any) => 
         String(material.id) === materialId
@@ -193,22 +99,17 @@ export function usePricing() {
 
   const getMaterialsByCategory = (category: string): MaterialPrice[] => {
     // Asegurarse de que materialPrices es un array y no un objeto vacío
-    const materials = Array.isArray(materialPrices) ? materialPrices : defaultMaterials;
+    const materials = Array.isArray(materialPrices) ? materialPrices : [];
     
-    // Asegurarse de que devolvemos al menos un material por categoría
-    const materialsInCategory = materials.filter((material: any) => 
+    // Filtrar materiales por categoría
+    return materials.filter((material: any) => 
       material.category === category
     );
-    
-    // Si no hay materiales para esta categoría, usar los predeterminados
-    return materialsInCategory.length > 0 
-      ? materialsInCategory 
-      : defaultMaterials.filter(m => m.category === category);
   };
 
   return {
-    services: servicePrices || defaultServices,
-    materials: materialPrices || defaultMaterials,
+    services: servicePrices || [],
+    materials: materialPrices || [],
     isLoading: servicesLoading || materialsLoading,
     hasError: !!servicesError || !!materialsError,
     // Funciones de utilidad
