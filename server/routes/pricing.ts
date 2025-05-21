@@ -179,7 +179,7 @@ export function registerPricingRoutes(app: Express) {
         name: req.body.name || 'New Service',
         serviceType: req.body.serviceType || id, // Usar el nuevo serviceType si está siendo editado
         unit: req.body.unit || 'ft',
-        laborRate: laborRateValue,
+        laborRate: String(laborRateValue), // Convertir a string para evitar errores de tipo
         laborCalculationMethod: req.body.laborMethod || 'by_length',
         contractorId: req.user.id,
         updatedAt: new Date()
@@ -208,14 +208,14 @@ export function registerPricingRoutes(app: Express) {
         console.log("Service updated successfully:", result);
       } else {
         // Create new service
-        console.log("Creating new service");
+        console.log("Creating new service with data:", JSON.stringify(serviceData));
         try {
-          // Asegúrate de que todos los valores estén en el formato correcto
+          // Convertir el objeto de datos al formato correcto para la inserción
           const insertData = {
             name: serviceData.name,
             serviceType: serviceData.serviceType,
             unit: serviceData.unit,
-            laborRate: String(serviceData.laborRate),
+            laborRate: typeof serviceData.laborRate === 'number' ? String(serviceData.laborRate) : '0',
             laborCalculationMethod: serviceData.laborCalculationMethod,
             contractorId: serviceData.contractorId,
             createdAt: new Date(),
