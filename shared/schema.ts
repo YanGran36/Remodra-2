@@ -232,27 +232,23 @@ export const propertyMeasurements = pgTable("property_measurements", {
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
 
-// NUEVO: Servicios con precios estandarizados por contratista
+// Service pricing configuration - simplified schema
 export const servicePricing = pgTable("service_pricing", {
   id: serial("id").primaryKey(),
   contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
   
-  // Datos de servicio
+  // Service information
   name: text("name").notNull(),
   serviceType: text("service_type").notNull(), // fence, roof, gutters, windows, etc.
-  description: text("description"),
   
-  // Precios y unidades
-  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
-  unit: text("unit").notNull(), // ft, sqft, unit, etc.
+  // Labor rate configuration
+  laborRate: decimal("labor_rate", { precision: 10, scale: 2 }).notNull(),
   
-  // Configuración de mano de obra
-  laborRate: decimal("labor_rate", { precision: 10, scale: 2 }),
-  laborCalculationMethod: text("labor_calculation_method").default("by_length"), // by_area, by_length, hourly, fixed
+  // Unit of measure
+  unit: text("unit").default("ft").notNull(), // ft, sqft, unit, etc.
+  laborCalculationMethod: text("labor_calculation_method").default("by_length").notNull(), // by_length, by_area, fixed
   
-  // Metadatos
-  status: text("status").default("active").notNull(), // active, inactive
-  isDefault: boolean("is_default").default(false),
+  // Metadata
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
