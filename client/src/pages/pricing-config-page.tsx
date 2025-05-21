@@ -109,10 +109,12 @@ const PricingConfigPage = () => {
 
   // Add a new service
   const handleAddService = () => {
+    const timestamp = Date.now();
+    const serviceId = `service-${timestamp}`;
     const newService: Service = {
-      id: `service-${Date.now()}`,
+      id: serviceId,
       name: 'New Service',
-      serviceType: 'other',
+      serviceType: serviceId, // Use the same ID for serviceType to ensure uniqueness
       unit: 'ft',
       laborRate: 0,
       laborMethod: 'by_length',
@@ -141,8 +143,10 @@ const PricingConfigPage = () => {
         contractorId: 1
       };
       
-      // Save to database
-      const response = await fetch(`/api/pricing/services/${editingService.id}`, {
+      console.log("Saving service:", serviceData);
+      
+      // Save to database - ensure serviceType is used as the ID
+      const response = await fetch(`/api/pricing/services/${serviceData.serviceType}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(serviceData)
@@ -154,13 +158,25 @@ const PricingConfigPage = () => {
         throw new Error("Could not save to database");
       }
       
-      // Update local list
+      // Get the response data
+      const savedService = await response.json();
+      console.log("Service saved successfully:", savedService);
+      
+      // Update local list with the saved service data from the server
       const updatedService = {
-        ...editingService,
-        laborRate: numericLaborRate
+        id: savedService.id || savedService.serviceType,
+        name: savedService.name,
+        serviceType: savedService.serviceType,
+        unit: savedService.unit,
+        laborRate: typeof savedService.laborRate === 'string' ? 
+          parseFloat(savedService.laborRate) : savedService.laborRate,
+        laborMethod: savedService.laborMethod
       };
       
-      const existingIndex = services.findIndex(s => s.id === editingService.id);
+      const existingIndex = services.findIndex(s => 
+        s.id === updatedService.id || s.serviceType === updatedService.serviceType
+      );
+      
       let updatedServices;
       
       if (existingIndex >= 0) {
