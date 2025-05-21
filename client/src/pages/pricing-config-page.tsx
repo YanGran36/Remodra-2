@@ -57,48 +57,50 @@ const PricingConfigPage = () => {
     isLoading: isLoadingPrices 
   } = usePricing();
   
-  // Inicializamos con los datos predeterminados o configurados, lo que sea más apropiado
-  const [services, setServices] = useState<Service[]>(defaultServices);
-  const [materials, setMaterials] = useState<Material[]>(defaultMaterials);
+  // Utilizamos los estados para manejar la UI y edición
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  // Estado local para servicios
+  const [services, setServices] = useState<Service[]>([]);
+  // Estado local para materiales
+  const [materials, setMaterials] = useState<Material[]>([]);
   
-  // Cargar datos del servidor cuando estén disponibles o cambien
+  // Actualizamos el estado local cuando cambian los datos de la API
   useEffect(() => {
-    // Cuando los datos son cargados de la API, forzamos la actualización de la interfaz
-    if (configuredServices) {
-      // Asegurarnos de que configuredServices sea un array
-      const servicesArray = Array.isArray(configuredServices) ? configuredServices : [];
-      
-      if (servicesArray.length > 0) {
-        console.log('Updating service prices from database:', servicesArray);
-        // Make sure prices are displayed correctly by converting them to numbers
-        const processedServices = servicesArray.map((service: any) => ({
-          id: service.id,
-          name: service.name,
-          serviceType: service.serviceType,
-          unit: service.unit,
-          laborRate: typeof service.laborRate === 'string' ? parseFloat(service.laborRate) : service.laborRate,
-          laborMethod: service.laborMethod
-        }));
-        setServices(processedServices);
-      }
+    if (Array.isArray(configuredServices)) {
+      const mappedServices = configuredServices.map((service: any) => ({
+        id: service.id || service.serviceType,
+        name: service.name,
+        serviceType: service.serviceType,
+        unit: service.unit || 'ft',
+        laborRate: typeof service.laborRate === 'string' ? parseFloat(service.laborRate) : service.laborRate,
+        laborMethod: service.laborCalculationMethod || service.laborMethod || 'by_length'
+      }));
+      setServices(mappedServices);
+    }
+    
+    if (Array.isArray(configuredMaterials)) {
+      const mappedMaterials = configuredMaterials.map((material: any) => ({
+        id: material.id,
+        name: material.name,
+        category: material.category,
+        unitPrice: typeof material.unitPrice === 'string' ? parseFloat(material.unitPrice) : material.unitPrice,
+        unit: material.unit,
+        supplier: material.supplier
+      }));
+      setMaterials(mappedMaterials);
+    }
+  }, [configuredServices, configuredMaterials]);
+  
+  // Esto será usado para depuración
+  useEffect(() => {
+    if (configuredServices && Array.isArray(configuredServices) && configuredServices.length > 0) {
+      console.log('Datos de servicios cargados desde la base de datos:', configuredServices);
     }
     
     if (configuredMaterials) {
-      // Asegurarnos de que configuredMaterials sea un array
-      const materialsArray = Array.isArray(configuredMaterials) ? configuredMaterials : [];
-      
-      if (materialsArray.length > 0) {
-        console.log('Actualizando precios de materiales desde la base de datos:', materialsArray);
-        // Aseguramos que los precios se muestren correctamente convirtiéndolos a número
-        const processedMaterials = materialsArray.map((material: any) => ({
-          ...material,
-          unitPrice: typeof material.unitPrice === 'string' ? parseFloat(material.unitPrice) : material.unitPrice
-        }));
-        setMaterials(processedMaterials);
-      }
+      console.log('Datos de materiales cargados desde la base de datos:', configuredMaterials);
     }
   }, [configuredServices, configuredMaterials]);
 
