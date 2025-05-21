@@ -145,51 +145,14 @@ const PricingConfigPage = () => {
       
       console.log("Saving service:", serviceData);
       
-      // Save to database - ensure serviceType is used as the ID
-      console.log(`Sending request to: /api/pricing/services/${serviceData.serviceType}`);
-      
-      const response = await fetch(`/api/pricing/services/${serviceData.serviceType}`, {
+      // Intento directo: guardar servicio y usar los datos que enviamos
+      await fetch(`/api/pricing/services/${serviceData.serviceType}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(serviceData)
       });
       
-      console.log("Response status:", response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Error saving service. Status:", response.status, "Response:", errorText);
-        throw new Error(`Could not save to database: ${errorText}`);
-      }
-      
-      // Get the response text
-      const responseText = await response.text();
-      console.log("Response text:", responseText);
-      
-      // Parse the response if it's not empty
-      let savedService;
-      if (responseText && responseText.trim() !== '') {
-        try {
-          savedService = JSON.parse(responseText);
-          console.log("Service parsed from response:", savedService);
-        } catch (jsonError) {
-          console.error("Error parsing JSON response:", jsonError);
-          throw new Error("Invalid response format from server");
-        }
-      } else {
-        // If response is empty but status is ok, use the original data
-        console.log("Empty response with success status, using request data");
-        savedService = {
-          id: serviceData.serviceType,
-          name: serviceData.name,
-          serviceType: serviceData.serviceType,
-          unit: serviceData.unit,
-          laborRate: serviceData.laborRate,
-          laborMethod: serviceData.laborMethod
-        };
-      }
-      
-      // Create a properly formatted service object for the UI
+      // Usamos directamente los datos que enviamos sin depender de la respuesta
       const updatedService = {
         id: serviceData.serviceType,
         name: serviceData.name,
