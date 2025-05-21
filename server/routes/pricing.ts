@@ -139,7 +139,7 @@ export function registerPricingRoutes(app: Express) {
     }
   });
 
-  // Update an existing service
+  // Update or create a service
   app.put('/api/pricing/services/:id', verifyContractorOwnership, async (req: any, res) => {
     try {
       const { id } = req.params;
@@ -156,24 +156,37 @@ export function registerPricingRoutes(app: Express) {
           )
         );
       
-      // Prepare update data with simplified schema
-      const updateData = { 
-        name: req.body.name,
+      // Convert laborRate to number with better error handling
+      let laborRateValue = 0;
+      if (req.body.laborRate !== undefined) {
+        if (typeof req.body.laborRate === 'string') {
+          laborRateValue = parseFloat(req.body.laborRate) || 0;
+        } else if (typeof req.body.laborRate === 'number') {
+          laborRateValue = req.body.laborRate;
+        }
+      }
+      
+      // Prepare data with safety defaults
+      const serviceData = { 
+        name: req.body.name || 'New Service',
         serviceType: id,
-        unit: req.body.unit,
-        laborRate: typeof req.body.laborRate === 'string' ? parseFloat(req.body.laborRate) : (req.body.laborRate || 0),
+        unit: req.body.unit || 'ft',
+        laborRate: laborRateValue,
         laborCalculationMethod: req.body.laborMethod || 'by_length',
         contractorId: req.user.id,
         updatedAt: new Date()
       };
       
-      console.log("Update data prepared:", updateData);
+      console.log("Service data prepared:", serviceData);
+      
+      let result;
       
       if (existingService) {
-        // If service exists, update it
-        const [updatedService] = await db
+        // Update existing service
+        console.log("Updating existing service with ID:", id);
+        [result] = await db
           .update(servicePricing)
-          .set(updateData)
+          .set(serviceData)
           .where(
             and(
               eq(servicePricing.serviceType, id),
@@ -181,58 +194,47 @@ export function registerPricingRoutes(app: Express) {
             )
           )
           .returning();
-        
-        // Format response to match what frontend expects
-        const formattedService = {
-          id: updatedService.serviceType,
-          name: updatedService.name,
-          serviceType: updatedService.serviceType,
-          unit: updatedService.unit,
-          laborRate: updatedService.laborRate,
-          laborMethod: updatedService.laborCalculationMethod
-        };
-        
-        console.log("Service updated successfully:", formattedService);
-        res.json(formattedService);
+          
+        console.log("Service updated successfully:", result);
       } else {
-        // If service doesn't exist, create a new one
-        // Ensure all data is properly formatted for creation
-        const newData = {
-          name: updateData.name,
-          serviceType: updateData.serviceType,
-          unit: updateData.unit,
-          laborRate: typeof updateData.laborRate === 'string' ? parseFloat(updateData.laborRate) : updateData.laborRate,
-          laborCalculationMethod: updateData.laborCalculationMethod,
-          contractorId: updateData.contractorId,
-          updatedAt: updateData.updatedAt,
-          createdAt: new Date()
-        };
-        
-        console.log("Creating new service with data:", newData);
-        
-        const [newService] = await db
-          .insert(servicePricing)
-          .values(newData)
-          .returning();
-        
-        // Format response to match what frontend expects
-        const formattedService = {
-          id: newService.serviceType,
-          name: newService.name,
-          serviceType: newService.serviceType,
-          unit: newService.unit,
-          laborRate: newService.laborRate,
-          laborMethod: newService.laborCalculationMethod
-        };
-        
-        console.log("New service created:", formattedService);
-        res.status(201).json(formattedService);
+        // Create new service
+        console.log("Creating new service");
+        try {
+          [result] = await db
+            .insert(servicePricing)
+            .values({
+              ...serviceData,
+              createdAt: new Date()
+            })
+            .returning();
+          
+          console.log("New service created successfully:", result);
+        } catch (insertError) {
+          console.error("Error creating new service:", insertError);
+          return res.status(500).json({ 
+            message: 'Error creating service', 
+            error: insertError instanceof Error ? insertError.message : 'Unknown error' 
+          });
+        }
       }
+      
+      // Format response to match frontend expectations
+      const formattedService = {
+        id: result.serviceType,
+        name: result.name,
+        serviceType: result.serviceType,
+        unit: result.unit,
+        laborRate: Number(result.laborRate),
+        laborMethod: result.laborCalculationMethod
+      };
+      
+      console.log("Returning formatted service:", formattedService);
+      res.status(existingService ? 200 : 201).json(formattedService);
     } catch (error) {
-      console.error('Error updating service:', error);
+      console.error('Error with service operation:', error);
       res.status(500).json({ 
-        message: 'Error updating service',
-        error: error.message || 'Unknown error'
+        message: 'Error processing service',
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   });
