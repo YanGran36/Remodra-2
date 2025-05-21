@@ -174,16 +174,25 @@ export function registerPricingRoutes(app: Express) {
       
       console.log("Existing service found:", existingService ? "Yes" : "No");
       
-      // Prepare data with safety defaults
+      // Prepare data with safety defaults, asegurando concordancia con los campos de la tabla
       const serviceData = { 
         name: req.body.name || 'New Service',
         serviceType: req.body.serviceType || id, // Usar el nuevo serviceType si está siendo editado
         unit: req.body.unit || 'ft',
-        laborRate: String(laborRateValue), // Convertir a string para evitar errores de tipo
+        laborRate: laborRateValue, // Ya es string desde la conversión previa
+        // Usamos laborMethod del frontend y lo asignamos al campo laborCalculationMethod
         laborCalculationMethod: req.body.laborMethod || 'by_length',
         contractorId: req.user.id,
         updatedAt: new Date()
       };
+      
+      console.log("Raw ServiceData:", JSON.stringify(serviceData));
+      
+      // Verificar que los tipos de datos correspondan con la tabla
+      // La tabla espera que laborRate sea numeric/decimal
+      if (typeof serviceData.laborRate === 'string') {
+        serviceData.laborRate = parseFloat(serviceData.laborRate) || 0;
+      }
       
       console.log("Service data prepared:", serviceData);
       
@@ -210,14 +219,13 @@ export function registerPricingRoutes(app: Express) {
         // Create new service
         console.log("Creating new service with data:", JSON.stringify(serviceData));
         try {
-          // Convertir el objeto de datos al formato correcto para la inserción
-          // Aseguramos la correspondencia de nombres entre frontend y backend
+          // Creamos un objeto que respete exactamente los campos de la tabla
           const insertData = {
             name: serviceData.name,
             serviceType: serviceData.serviceType,
             unit: serviceData.unit,
             laborRate: serviceData.laborRate,
-            laborCalculationMethod: serviceData.laborMethod || serviceData.laborCalculationMethod, // Permitir ambos nombres
+            laborCalculationMethod: serviceData.laborCalculationMethod,
             contractorId: serviceData.contractorId,
             createdAt: new Date(),
             updatedAt: serviceData.updatedAt
