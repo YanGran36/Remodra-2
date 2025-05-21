@@ -258,13 +258,20 @@ export function registerPricingRoutes(app: Express) {
         return res.status(404).json({ message: 'Service not found' });
       }
       
-      // Delete using the service's primary key id from the database
-      await db
-        .delete(servicePricing)
-        .where(eq(servicePricing.id, existingService.id));
+      console.log(`Found service to delete:`, existingService);
       
-      console.log(`Service ${id} deleted successfully`);
-      res.status(204).send();
+      // Delete using the service's primary key id from the database
+      const result = await db
+        .delete(servicePricing)
+        .where(
+          and(
+            eq(servicePricing.serviceType, id),
+            eq(servicePricing.contractorId, req.user.id)
+          )
+        );
+      
+      console.log(`Service ${id} deleted successfully with result:`, result);
+      res.status(200).json({ message: 'Service deleted successfully' });
     } catch (error) {
       console.error('Error deleting service:', error);
       res.status(500).json({ message: 'Error deleting service' });
