@@ -162,7 +162,7 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
       ctx.lineWidth = 3;
       ctx.stroke();
 
-      // Draw distance labels with better positioning and visibility
+      // Draw distance labels with cleaner, more precise positioning
       for (let i = 0; i < points.length - 1; i++) {
         const p1 = points[i];
         const p2 = points[i + 1];
@@ -172,48 +172,33 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
         const pixelDistance = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
         const realDistance = scale > 0 ? (pixelDistance / scale).toFixed(1) : pixelDistance.toFixed(0);
         
-        // Calculate angle for text rotation
-        const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-        
-        // Draw label background with better positioning
-        const labelText = `${realDistance} ${measurement.unit}`;
-        ctx.font = 'bold 12px Arial';
-        ctx.textAlign = 'center';
-        const textWidth = ctx.measureText(labelText).width;
-        
-        // Position label slightly offset from line center
-        const offsetDistance = 15;
-        const perpAngle = angle + Math.PI / 2;
-        const labelX = midX + Math.cos(perpAngle) * offsetDistance;
-        const labelY = midY + Math.sin(perpAngle) * offsetDistance;
-        
-        // Draw label background
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-        ctx.fillRect(labelX - textWidth/2 - 3, labelY - 8, textWidth + 6, 16);
-        
-        // Draw label text
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText(labelText, labelX, labelY + 3);
-        
-        // Draw dimension line extensions
-        const extensionLength = 10;
-        const extensionOffset = 5;
-        
-        // Extension lines at both ends
-        ctx.strokeStyle = isActive ? '#1d4ed8' : '#059669';
-        ctx.lineWidth = 1;
-        
-        // Start extension
-        ctx.beginPath();
-        ctx.moveTo(p1.x + Math.cos(perpAngle) * extensionOffset, p1.y + Math.sin(perpAngle) * extensionOffset);
-        ctx.lineTo(p1.x + Math.cos(perpAngle) * (extensionOffset + extensionLength), p1.y + Math.sin(perpAngle) * (extensionOffset + extensionLength));
-        ctx.stroke();
-        
-        // End extension
-        ctx.beginPath();
-        ctx.moveTo(p2.x + Math.cos(perpAngle) * extensionOffset, p2.y + Math.sin(perpAngle) * extensionOffset);
-        ctx.lineTo(p2.x + Math.cos(perpAngle) * (extensionOffset + extensionLength), p2.y + Math.sin(perpAngle) * (extensionOffset + extensionLength));
-        ctx.stroke();
+        // Only show distance if line is long enough to be meaningful
+        if (pixelDistance > 20) {
+          const labelText = `${realDistance} ${measurement.unit}`;
+          ctx.font = '11px Arial';
+          ctx.textAlign = 'center';
+          const textWidth = ctx.measureText(labelText).width;
+          
+          // Position label closer to the line, with subtle offset
+          const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+          const perpAngle = angle + Math.PI / 2;
+          const offsetDistance = 8; // Reduced offset
+          const labelX = midX + Math.cos(perpAngle) * offsetDistance;
+          const labelY = midY + Math.sin(perpAngle) * offsetDistance;
+          
+          // Subtle label background
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+          ctx.fillRect(labelX - textWidth/2 - 2, labelY - 6, textWidth + 4, 12);
+          
+          // Border for better visibility
+          ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+          ctx.lineWidth = 0.5;
+          ctx.strokeRect(labelX - textWidth/2 - 2, labelY - 6, textWidth + 4, 12);
+          
+          // Label text
+          ctx.fillStyle = '#374151';
+          ctx.fillText(labelText, labelX, labelY + 2);
+        }
       }
     }
 
@@ -248,23 +233,29 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Point number with compact design
-      ctx.font = 'bold 10px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      
-      // Small background for number (closer to point)
-      const numberX = point.x + 8;
-      const numberY = point.y - 8;
-      
-      ctx.beginPath();
-      ctx.arc(numberX, numberY, 7, 0, 2 * Math.PI);
-      ctx.fillStyle = isActive ? '#1d4ed8' : '#059669';
-      ctx.fill();
-      
-      // Number text
-      ctx.fillStyle = 'white';
-      ctx.fillText((index + 1).toString(), numberX, numberY);
+      // Smaller, less intrusive point numbers
+      if (points.length > 2) { // Only show numbers for complex shapes
+        ctx.font = '9px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        const numberX = point.x + 8;
+        const numberY = point.y - 8;
+        
+        // Subtle number background
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.beginPath();
+        ctx.arc(numberX, numberY, 6, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        ctx.strokeStyle = isActive ? '#1d4ed8' : '#059669';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        
+        // Number text
+        ctx.fillStyle = isActive ? '#1d4ed8' : '#059669';
+        ctx.fillText((index + 1).toString(), numberX, numberY);
+      }
     });
   };
 
@@ -686,108 +677,130 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
       </Card>
 
       {/* Shape Library */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Square className="h-5 w-5" />
-            Shape Library
+      <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-slate-800">
+            <div className="p-1 bg-blue-100 rounded-md">
+              <Square className="h-4 w-4 text-blue-600" />
+            </div>
+            Smart Templates
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Shape Selection */}
-          <div>
-            <Label className="text-sm font-medium">Select Shape:</Label>
-            <div className="grid grid-cols-2 gap-2 mt-2">
-              <Button
-                variant={selectedShape === "freeform" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedShape("freeform")}
-                className="h-12 flex flex-col items-center gap-1"
-              >
-                <PaintBucket className="h-4 w-4" />
-                <span className="text-xs">Freeform</span>
-              </Button>
-              <Button
-                variant={selectedShape === "rectangle" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedShape("rectangle")}
-                className="h-12 flex flex-col items-center gap-1"
-              >
-                <Square className="h-4 w-4" />
-                <span className="text-xs">Rectangle</span>
-              </Button>
-              <Button
-                variant={selectedShape === "fence" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedShape("fence")}
-                className="h-12 flex flex-col items-center gap-1"
-              >
-                <Minus className="h-4 w-4" />
-                <span className="text-xs">Fence Line</span>
-              </Button>
-              <Button
-                variant={selectedShape === "L-shape" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedShape("L-shape")}
-                className="h-12 flex flex-col items-center gap-1"
-              >
-                <CornerDownRight className="h-4 w-4" />
-                <span className="text-xs">L-Shape</span>
-              </Button>
+        <CardContent className="space-y-3">
+          {/* Shape Selection with better layout */}
+          <div className="grid grid-cols-4 gap-2">
+            <div
+              className={`p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                selectedShape === "freeform" 
+                  ? "border-blue-500 bg-blue-50 shadow-sm" 
+                  : "border-slate-200 bg-white hover:border-slate-300"
+              }`}
+              onClick={() => setSelectedShape("freeform")}
+            >
+              <div className="flex flex-col items-center gap-1">
+                <PaintBucket className={`h-5 w-5 ${selectedShape === "freeform" ? "text-blue-600" : "text-slate-500"}`} />
+                <span className="text-xs font-medium text-slate-700">Custom</span>
+              </div>
+            </div>
+            
+            <div
+              className={`p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                selectedShape === "rectangle" 
+                  ? "border-green-500 bg-green-50 shadow-sm" 
+                  : "border-slate-200 bg-white hover:border-slate-300"
+              }`}
+              onClick={() => setSelectedShape("rectangle")}
+            >
+              <div className="flex flex-col items-center gap-1">
+                <Square className={`h-5 w-5 ${selectedShape === "rectangle" ? "text-green-600" : "text-slate-500"}`} />
+                <span className="text-xs font-medium text-slate-700">Rectangle</span>
+              </div>
+            </div>
+            
+            <div
+              className={`p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                selectedShape === "fence" 
+                  ? "border-orange-500 bg-orange-50 shadow-sm" 
+                  : "border-slate-200 bg-white hover:border-slate-300"
+              }`}
+              onClick={() => setSelectedShape("fence")}
+            >
+              <div className="flex flex-col items-center gap-1">
+                <Minus className={`h-5 w-5 ${selectedShape === "fence" ? "text-orange-600" : "text-slate-500"}`} />
+                <span className="text-xs font-medium text-slate-700">Fence</span>
+              </div>
+            </div>
+            
+            <div
+              className={`p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                selectedShape === "L-shape" 
+                  ? "border-purple-500 bg-purple-50 shadow-sm" 
+                  : "border-slate-200 bg-white hover:border-slate-300"
+              }`}
+              onClick={() => setSelectedShape("L-shape")}
+            >
+              <div className="flex flex-col items-center gap-1">
+                <CornerDownRight className={`h-5 w-5 ${selectedShape === "L-shape" ? "text-purple-600" : "text-slate-500"}`} />
+                <span className="text-xs font-medium text-slate-700">L-Shape</span>
+              </div>
             </div>
           </div>
 
-          {/* Fence-specific tools */}
+          {/* Quick Templates */}
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => createQuickRectangle()}
+              className="flex-1 h-9 text-xs bg-white hover:bg-slate-50"
+            >
+              📐 Quick Rectangle
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => createQuickPerimeter()}
+              className="flex-1 h-9 text-xs bg-white hover:bg-slate-50"
+            >
+              🏠 Property Outline
+            </Button>
+          </div>
+
+          {/* Fence Gates Section */}
           {(selectedShape === "fence" || serviceUnit === 'ft') && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <p className="text-blue-800 font-medium mb-2">🚪 Fence Gates</p>
-              <p className="text-blue-600 text-xs mb-3">
-                Click on fence lines to add gates. Gates will be marked and measured separately.
+            <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center">
+                  <span className="text-orange-600 text-sm">🚪</span>
+                </div>
+                <p className="text-orange-800 font-medium text-sm">Gate Markers</p>
+              </div>
+              <p className="text-orange-700 text-xs mb-3">
+                Click on fence lines to mark gate locations
               </p>
               
               {gates.length > 0 && (
-                <div className="space-y-1">
-                  <p className="text-blue-700 text-xs font-medium">Added Gates:</p>
-                  {gates.map((gate, index) => (
-                    <div key={gate.id} className="flex items-center justify-between text-xs">
-                      <span>Gate {index + 1}: {gate.width.toFixed(1)} ft</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setGates(gates.filter(g => g.id !== gate.id))}
-                        className="h-4 w-4 p-0 text-red-500"
-                      >
-                        ×
-                      </Button>
-                    </div>
-                  ))}
+                <div className="space-y-2">
+                  <div className="text-orange-700 text-xs font-medium">Gates Added:</div>
+                  <div className="max-h-20 overflow-y-auto space-y-1">
+                    {gates.map((gate, index) => (
+                      <div key={gate.id} className="flex items-center justify-between bg-white rounded px-2 py-1 text-xs">
+                        <span className="text-slate-700">Gate {index + 1}: {gate.width}ft</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setGates(gates.filter(g => g.id !== gate.id))}
+                          className="h-4 w-4 p-0 text-red-500 hover:text-red-700"
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
           )}
-
-          {/* Quick Measurements */}
-          <div>
-            <Label className="text-sm font-medium">Quick Shapes:</Label>
-            <div className="grid grid-cols-1 gap-1 mt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => createQuickRectangle()}
-                className="text-xs"
-              >
-                📐 Standard Rectangular Area
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => createQuickPerimeter()}
-                className="text-xs"
-              >
-                📏 Property Perimeter
-              </Button>
-            </div>
-          </div>
         </CardContent>
       </Card>
 
