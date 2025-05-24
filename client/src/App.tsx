@@ -63,7 +63,7 @@ function Router() {
       <ProtectedRoute path="/estimates/:id" component={EstimateDetailPage} />
       <ProtectedRoute path="/estimates/:id/print" component={EstimatePrintPage} />
       <ProtectedRoute path="/premium-estimate" component={PremiumEstimatePage} />
-      <ProtectedRoute path="/vendor-estimate-form" component={VendorEstimateSimple} />
+      <ProtectedRoute path="/vendor-estimate-form" component={VendorEstimateFormPageNew} />
       <ProtectedRoute path="/vendor-estimate-form-service" component={VendorServiceEstimatePage} />
       <ProtectedRoute path="/vendor-estimate-form-new" component={VendorEstimateFormPageNew} />
       <ProtectedRoute path="/property-measurements" component={PropertyMeasurementsPage} />
