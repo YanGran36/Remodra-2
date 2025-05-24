@@ -53,10 +53,10 @@ export default function SimplePricingPage() {
       }
 
       if (editingService) {
-        // Update existing service price using the working PATCH pattern
+        // Update existing service price using the new working endpoint
         console.log(`Updating ${editingService.serviceType} price to ${serviceData.laborRate}`);
-        const response = await fetch(`/api/direct/services/${editingService.serviceType}/update`, {
-          method: 'PATCH',
+        const response = await fetch(`/api/direct/services/${editingService.serviceType}/price`, {
+          method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ laborRate: serviceData.laborRate })
         });
