@@ -373,9 +373,26 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
     
-    // Adjust mouse coordinates for zoom level
-    const x = ((e.clientX - rect.left) * scaleX) / zoomLevel;
-    const y = ((e.clientY - rect.top) * scaleY) / zoomLevel;
+    const clientX = (e.clientX - rect.left) * scaleX;
+    const clientY = (e.clientY - rect.top) * scaleY;
+
+    // Handle panning
+    if (isPanning) {
+      const deltaX = clientX - lastPanPoint.x;
+      const deltaY = clientY - lastPanPoint.y;
+      
+      setPanOffset(prev => ({
+        x: prev.x + deltaX,
+        y: prev.y + deltaY
+      }));
+      
+      setLastPanPoint({ x: clientX, y: clientY });
+      return;
+    }
+    
+    // Convert to world coordinates (accounting for pan and zoom)
+    const x = (clientX - panOffset.x) / zoomLevel;
+    const y = (clientY - panOffset.y) / zoomLevel;
 
     setMousePos({ x, y });
   };
@@ -398,9 +415,17 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
     
-    // Adjust click coordinates for zoom level
-    const x = ((e.clientX - rect.left) * scaleX) / zoomLevel;
-    const y = ((e.clientY - rect.top) * scaleY) / zoomLevel;
+    const clientX = (e.clientX - rect.left) * scaleX;
+    const clientY = (e.clientY - rect.top) * scaleY;
+    
+    // Convert to world coordinates
+    const x = (clientX - panOffset.x) / zoomLevel;
+    const y = (clientY - panOffset.y) / zoomLevel;
+
+    // If panning mode, don't process measurement clicks
+    if (isPanning) {
+      return;
+    }
 
     // Check for double click
     const currentTime = Date.now();
@@ -563,6 +588,29 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     };
     
     setGates(prev => [...prev, newGate]);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // If zoomed in significantly, enable panning with middle mouse or shift+click
+    if (zoomLevel > 1.5 && (e.button === 1 || e.shiftKey)) {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      
+      const clientX = (e.clientX - rect.left) * scaleX;
+      const clientY = (e.clientY - rect.top) * scaleY;
+      
+      setIsPanning(true);
+      setLastPanPoint({ x: clientX, y: clientY });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsPanning(false);
   };
 
   const deleteMeasurement = (id: string) => {
