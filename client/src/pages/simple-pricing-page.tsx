@@ -58,8 +58,8 @@ export default function SimplePricingPage() {
           ...serviceData,
           originalServiceType: editingService.serviceType
         };
-        console.log('Sending POST update request with data:', updateData);
-        const response = await fetch('/api/debug/update-service', {
+        console.log('Sending update request with data:', updateData);
+        const response = await fetch('/api/update-service-price', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updateData)
