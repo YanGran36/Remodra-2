@@ -12,7 +12,10 @@ import {
   MapPin,
   Home,
   Calculator,
-  Save
+  Save,
+  Camera,
+  Edit,
+  Download
 } from "lucide-react";
 
 interface FencePoint {
@@ -27,6 +30,7 @@ interface Gate {
   width: number;
   id: string;
   type: 'gate' | 'double-gate';
+  rotation: number; // degrees
 }
 
 interface Post {
@@ -78,9 +82,12 @@ export default function FenceMeasurementTool({
   const [gateMode, setGateMode] = useState(false);
   const [selectedGateWidth, setSelectedGateWidth] = useState(4);
   const [selectedGateType, setSelectedGateType] = useState<'gate' | 'double-gate'>('gate');
+  const [selectedGateRotation, setSelectedGateRotation] = useState(0);
   const [gates, setGates] = useState<Gate[]>([]);
   const [mousePos, setMousePos] = useState<{x: number, y: number} | null>(null);
   const [lastClickTime, setLastClickTime] = useState(0);
+  const [editingMeasurement, setEditingMeasurement] = useState<string | null>(null);
+  const [selectedGate, setSelectedGate] = useState<string | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -220,6 +227,12 @@ export default function FenceMeasurementTool({
   };
 
   const drawGate = (ctx: CanvasRenderingContext2D, gate: Gate) => {
+    ctx.save();
+    
+    // Apply rotation around gate center
+    ctx.translate(gate.x, gate.y);
+    ctx.rotate((gate.rotation * Math.PI) / 180);
+    
     // Gate opening
     ctx.strokeStyle = gate.type === 'double-gate' ? "#dc2626" : "#f59e0b";
     ctx.lineWidth = 4;
@@ -227,8 +240,8 @@ export default function FenceMeasurementTool({
     
     const gateWidth = gate.width * scale;
     ctx.beginPath();
-    ctx.moveTo(gate.x - gateWidth/2, gate.y);
-    ctx.lineTo(gate.x + gateWidth/2, gate.y);
+    ctx.moveTo(-gateWidth/2, 0);
+    ctx.lineTo(gateWidth/2, 0);
     ctx.stroke();
     
     ctx.setLineDash([]); // Reset dash
@@ -239,24 +252,35 @@ export default function FenceMeasurementTool({
       ctx.strokeStyle = "#dc2626";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(gate.x - gateWidth/4, gate.y, gateWidth/4, 0, Math.PI);
-      ctx.arc(gate.x + gateWidth/4, gate.y, gateWidth/4, 0, Math.PI);
+      ctx.arc(-gateWidth/4, 0, gateWidth/4, 0, Math.PI);
+      ctx.arc(gateWidth/4, 0, gateWidth/4, 0, Math.PI);
       ctx.stroke();
     } else {
       // Single gate symbol (one arc)
       ctx.strokeStyle = "#f59e0b";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(gate.x - gateWidth/2, gate.y, gateWidth/2, 0, Math.PI);
+      ctx.arc(-gateWidth/2, 0, gateWidth/2, 0, Math.PI);
       ctx.stroke();
     }
     
-    // Gate label
+    // Selection highlight if selected
+    if (selectedGate === gate.id) {
+      ctx.strokeStyle = "#3b82f6";
+      ctx.lineWidth = 3;
+      ctx.setLineDash([5, 5]);
+      ctx.strokeRect(-gateWidth/2 - 5, -10, gateWidth + 10, 20);
+      ctx.setLineDash([]);
+    }
+    
+    ctx.restore();
+    
+    // Gate label (not rotated)
     ctx.fillStyle = gate.type === 'double-gate' ? "#dc2626" : "#f59e0b";
     ctx.font = "12px Arial";
     ctx.textAlign = "center";
     const gateLabel = gate.type === 'double-gate' ? `${gate.width}' Double Gate` : `${gate.width}' Gate`;
-    ctx.fillText(gateLabel, gate.x, gate.y - 15);
+    ctx.fillText(gateLabel, gate.x, gate.y - 20);
   };
 
   const drawTempLine = (ctx: CanvasRenderingContext2D, from: FencePoint, to: {x: number, y: number}) => {
@@ -342,7 +366,8 @@ export default function FenceMeasurementTool({
         y,
         width: selectedGateWidth,
         id: `gate-${Date.now()}`,
-        type: selectedGateType
+        type: selectedGateType,
+        rotation: selectedGateRotation
       };
       setGates(prev => [...prev, newGate]);
       setGateMode(false);
@@ -449,7 +474,59 @@ export default function FenceMeasurementTool({
     setCurrentPoints([]);
     setGates([]);
     setIsDrawing(false);
+    setEditingMeasurement(null);
+    setSelectedGate(null);
     onMeasurementsChange([]);
+  };
+
+  const editMeasurement = (measurementId: string) => {
+    const measurement = measurements.find(m => m.id === measurementId);
+    if (!measurement) return;
+
+    // Convert measurement back to editable points
+    const allPoints: FencePoint[] = [];
+    measurement.sections.forEach(section => {
+      allPoints.push(section.start);
+      if (allPoints.length === 1 || allPoints[allPoints.length - 1].id !== section.end.id) {
+        allPoints.push(section.end);
+      }
+    });
+
+    setCurrentPoints(allPoints);
+    setIsDrawing(true);
+    setEditingMeasurement(measurementId);
+
+    // Remove the measurement from completed list temporarily
+    setMeasurements(prev => prev.filter(m => m.id !== measurementId));
+  };
+
+  const deleteGate = (gateId: string) => {
+    setGates(prev => prev.filter(g => g.id !== gateId));
+    if (selectedGate === gateId) {
+      setSelectedGate(null);
+    }
+  };
+
+  const deleteMeasurement = (measurementId: string) => {
+    setMeasurements(prev => prev.filter(m => m.id !== measurementId));
+    const updatedMeasurements = measurements.filter(m => m.id !== measurementId);
+    onMeasurementsChange(updatedMeasurements);
+  };
+
+  const captureScreenshot = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Create a download link
+    const link = document.createElement('a');
+    link.download = `fence-plan-${Date.now()}.png`;
+    link.href = canvas.toDataURL();
+    link.click();
+  };
+
+  const handleGateClick = (gate: Gate, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedGate(selectedGate === gate.id ? null : gate.id);
   };
 
   return (
@@ -513,24 +590,39 @@ export default function FenceMeasurementTool({
               </div>
             </div>
             <div>
-              <Label className="text-sm">Gate Type</Label>
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => setSelectedGateType('gate')}
-                  variant={selectedGateType === 'gate' ? "default" : "outline"}
-                  size="sm"
-                  className="h-8 text-xs"
-                >
-                  Single
-                </Button>
-                <Button
-                  onClick={() => setSelectedGateType('double-gate')}
-                  variant={selectedGateType === 'double-gate' ? "default" : "outline"}
-                  size="sm"
-                  className="h-8 text-xs"
-                >
-                  Double
-                </Button>
+              <Label className="text-sm">Gate Type & Rotation</Label>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => setSelectedGateType('gate')}
+                    variant={selectedGateType === 'gate' ? "default" : "outline"}
+                    size="sm"
+                    className="h-8 text-xs"
+                  >
+                    Single
+                  </Button>
+                  <Button
+                    onClick={() => setSelectedGateType('double-gate')}
+                    variant={selectedGateType === 'double-gate' ? "default" : "outline"}
+                    size="sm"
+                    className="h-8 text-xs"
+                  >
+                    Double
+                  </Button>
+                </div>
+                <div className="flex gap-1">
+                  {[0, 45, 90, 135, 180, 225, 270, 315].map(angle => (
+                    <Button
+                      key={angle}
+                      onClick={() => setSelectedGateRotation(angle)}
+                      variant={selectedGateRotation === angle ? "default" : "outline"}
+                      size="sm"
+                      className="h-6 px-1 text-xs"
+                    >
+                      {angle}°
+                    </Button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -554,6 +646,11 @@ export default function FenceMeasurementTool({
             <Button onClick={clearAll} variant="outline" size="sm">
               <Trash2 className="h-4 w-4 mr-1" />
               Clear All
+            </Button>
+            
+            <Button onClick={captureScreenshot} variant="outline" size="sm">
+              <Camera className="h-4 w-4 mr-1" />
+              Screenshot
             </Button>
           </div>
 
