@@ -1,0 +1,103 @@
+import { Express } from 'express';
+import { db } from '../../db';
+import { servicePricing } from '@shared/schema';
+import { eq } from 'drizzle-orm';
+
+export function registerDirectServicesRoutes(app: Express) {
+  // Simple endpoint to get services directly from database
+  app.get('/api/direct/services', async (req: any, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+
+      console.log(`[DIRECT] Fetching services for contractor ID: ${req.user.id}`);
+      
+      const services = await db
+        .select({
+          id: servicePricing.id,
+          name: servicePricing.name,
+          serviceType: servicePricing.serviceType,
+          unit: servicePricing.unit,
+          laborRate: servicePricing.laborRate,
+          laborMethod: servicePricing.laborCalculationMethod
+        })
+        .from(servicePricing)
+        .where(eq(servicePricing.contractorId, req.user.id));
+      
+      console.log(`[DIRECT] Found ${services.length} services:`, services);
+      
+      res.json(services);
+    } catch (error) {
+      console.error('[DIRECT] Error fetching services:', error);
+      res.status(500).json({ message: 'Error fetching services' });
+    }
+  });
+
+  // Simple endpoint to create a new service
+  app.post('/api/direct/services', async (req: any, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+
+      console.log(`[DIRECT] Creating service for contractor ${req.user.id}:`, req.body);
+      
+      const serviceData = {
+        name: req.body.name,
+        serviceType: req.body.serviceType,
+        unit: req.body.unit,
+        laborRate: req.body.laborRate.toString(), // Convert to string for database
+        laborCalculationMethod: req.body.laborMethod,
+        contractorId: req.user.id,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      const [newService] = await db
+        .insert(servicePricing)
+        .values(serviceData)
+        .returning();
+      
+      console.log(`[DIRECT] Created service:`, newService);
+      
+      // Return in format expected by frontend
+      const formattedService = {
+        id: newService.id,
+        name: newService.name,
+        serviceType: newService.serviceType,
+        unit: newService.unit,
+        laborRate: parseFloat(newService.laborRate),
+        laborMethod: newService.laborCalculationMethod
+      };
+      
+      res.status(201).json(formattedService);
+    } catch (error) {
+      console.error('[DIRECT] Error creating service:', error);
+      res.status(500).json({ message: 'Error creating service' });
+    }
+  });
+
+  // Simple endpoint to delete a service
+  app.delete('/api/direct/services/:serviceType', async (req: any, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+
+      const { serviceType } = req.params;
+      console.log(`[DIRECT] Deleting service ${serviceType} for contractor ${req.user.id}`);
+      
+      await db
+        .delete(servicePricing)
+        .where(eq(servicePricing.serviceType, serviceType))
+        .where(eq(servicePricing.contractorId, req.user.id));
+      
+      console.log(`[DIRECT] Service ${serviceType} deleted`);
+      res.json({ message: 'Service deleted successfully' });
+    } catch (error) {
+      console.error('[DIRECT] Error deleting service:', error);
+      res.status(500).json({ message: 'Error deleting service' });
+    }
+  });
+}

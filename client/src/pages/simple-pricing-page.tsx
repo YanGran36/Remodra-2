@@ -26,10 +26,13 @@ export default function SimplePricingPage() {
     laborMethod: "by_area"
   });
 
-  // Get services from database
-  const { data: services = [], refetch } = useQuery<Service[]>({
-    queryKey: ['/api/pricing/services'],
+  // Get services from database using direct endpoint
+  const { data: services = [], refetch, isLoading } = useQuery<Service[]>({
+    queryKey: ['/api/direct/services'],
   });
+
+  console.log('Services from DIRECT API:', services);
+  console.log('Services loading:', isLoading);
 
   const handleSaveService = async () => {
     try {
@@ -150,25 +153,33 @@ export default function SimplePricingPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {services.length === 0 ? (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-gray-500">
+                    Loading services...
+                  </TableCell>
+                </TableRow>
+              ) : services.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center text-gray-500">
                     No services configured yet. Add your first service above.
+                    <br />
+                    <small>API Response: {JSON.stringify(services)}</small>
                   </TableCell>
                 </TableRow>
               ) : (
-                services.map((service) => (
-                  <TableRow key={service.id}>
-                    <TableCell className="font-medium">{service.name}</TableCell>
+                services.map((service, index) => (
+                  <TableRow key={service.id || service.serviceType || index}>
+                    <TableCell className="font-medium">{service.name || 'Unknown Service'}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{service.serviceType}</Badge>
+                      <Badge variant="outline">{service.serviceType || service.id}</Badge>
                     </TableCell>
-                    <TableCell>${service.laborRate}/{service.unit}</TableCell>
+                    <TableCell>${service.laborRate || 0}/{service.unit || 'unit'}</TableCell>
                     <TableCell>
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        onClick={() => handleDeleteService(service.serviceType)}
+                        onClick={() => handleDeleteService(service.serviceType || service.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

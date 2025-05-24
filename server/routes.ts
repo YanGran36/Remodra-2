@@ -28,6 +28,7 @@ import * as achievementService from "./services/achievement-service";
 import { registerTimeclockRoutes } from "./routes/timeclock-routes";
 import { registerPricingRoutes } from "./routes/pricing";
 import { registerDirectServiceRoutes } from "./routes/direct-service";
+import { registerDirectServicesRoutes } from "./routes/direct-services";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
@@ -35,6 +36,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Registrar las rutas directas para servicios
   registerDirectServiceRoutes(app);
+  
+  // Register new direct services routes for pricing page
+  registerDirectServicesRoutes(app);
   
   // Language update route
   app.post("/api/protected/language", async (req, res) => {
