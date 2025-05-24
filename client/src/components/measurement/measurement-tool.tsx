@@ -128,24 +128,60 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     }
   }, [measurements, currentPoints, serviceUnit, mousePos, scale]);
 
-  const drawGrid = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
-    ctx.strokeStyle = '#e0e0e0';
+  const drawFiveFootGrid = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
+    // Calculate grid size - each square represents 5 feet
+    const fiveFeetGridSize = scale > 0 ? scale * 5 : 40; // Default 40px if no scale set
+    
+    // Draw minor grid lines (1 foot subdivisions)
+    ctx.strokeStyle = '#f0f0f0';
     ctx.lineWidth = 0.5;
+    const oneFootGridSize = fiveFeetGridSize / 5;
     
-    const gridSize = 20;
-    
-    for (let x = 0; x <= width; x += gridSize) {
+    for (let x = 0; x <= width; x += oneFootGridSize) {
       ctx.beginPath();
       ctx.moveTo(x, 0);
       ctx.lineTo(x, height);
       ctx.stroke();
     }
-    
-    for (let y = 0; y <= height; y += gridSize) {
+    for (let y = 0; y <= height; y += oneFootGridSize) {
       ctx.beginPath();
       ctx.moveTo(0, y);
       ctx.lineTo(width, y);
       ctx.stroke();
+    }
+
+    // Draw major grid lines (5 foot markers)
+    ctx.strokeStyle = '#d0d0d0';
+    ctx.lineWidth = 1;
+    for (let x = 0; x <= width; x += fiveFeetGridSize) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, height);
+      ctx.stroke();
+    }
+    for (let y = 0; y <= height; y += fiveFeetGridSize) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
+    }
+
+    // Add grid labels every 20 feet
+    if (scale > 0 && zoomLevel >= 0.5) {
+      ctx.fillStyle = '#888888';
+      ctx.font = `${Math.max(8, 10 * zoomLevel)}px Arial`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      
+      const labelInterval = fiveFeetGridSize * 4; // Every 20 feet
+      for (let x = labelInterval; x <= width; x += labelInterval) {
+        const feet = Math.round((x / scale));
+        ctx.fillText(`${feet}ft`, x + 2, 2);
+      }
+      for (let y = labelInterval; y <= height; y += labelInterval) {
+        const feet = Math.round((y / scale));
+        ctx.fillText(`${feet}ft`, 2, y + 2);
+      }
     }
   };
 
@@ -297,10 +333,21 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
     
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
+    // Adjust for zoom level
+    const x = ((e.clientX - rect.left) * scaleX) / zoomLevel;
+    const y = ((e.clientY - rect.top) * scaleY) / zoomLevel;
 
     setMousePos({ x, y });
+  };
+
+  const handleZoom = (direction: 'in' | 'out') => {
+    setZoomLevel(prev => {
+      if (direction === 'in') {
+        return Math.min(prev * 1.2, 3); // Max 3x zoom
+      } else {
+        return Math.max(prev / 1.2, 0.3); // Min 0.3x zoom
+      }
+    });
   };
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -621,6 +668,34 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
               onChange={(e) => setNextLabel(e.target.value)}
               className="flex-1"
             />
+          </div>
+
+          {/* Zoom Controls */}
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-3 space-y-2">
+            <Label className="text-sm font-medium text-green-800">Zoom & View</Label>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => handleZoom('out')}
+                variant="outline"
+                size="sm"
+                className="flex-1 bg-white hover:bg-green-50"
+              >
+                <Minus className="h-4 w-4 mr-1" />
+                Zoom Out
+              </Button>
+              <div className="text-sm font-medium text-green-700 min-w-16 text-center">
+                {Math.round(zoomLevel * 100)}%
+              </div>
+              <Button
+                onClick={() => handleZoom('in')}
+                variant="outline"
+                size="sm"
+                className="flex-1 bg-white hover:bg-green-50"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Zoom In
+              </Button>
+            </div>
           </div>
 
           {/* Action Buttons */}
