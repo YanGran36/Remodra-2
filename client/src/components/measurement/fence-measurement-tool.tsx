@@ -88,6 +88,33 @@ export default function FenceMeasurementTool({
   const [lastClickTime, setLastClickTime] = useState(0);
   const [editingMeasurement, setEditingMeasurement] = useState<string | null>(null);
   const [selectedGate, setSelectedGate] = useState<string | null>(null);
+  const [draggingPoint, setDraggingPoint] = useState<string | null>(null);
+  const [draggingGate, setDraggingGate] = useState<string | null>(null);
+  const [lastMousePos, setLastMousePos] = useState<{x: number, y: number} | null>(null);
+
+  // ESC key handler
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isDrawing) {
+          setCurrentPoints([]);
+          setIsDrawing(false);
+        }
+        if (selectedGate) {
+          setSelectedGate(null);
+        }
+        if (draggingPoint) {
+          setDraggingPoint(null);
+        }
+        if (draggingGate) {
+          setDraggingGate(null);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isDrawing, selectedGate, draggingPoint, draggingGate]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -170,10 +197,16 @@ export default function FenceMeasurementTool({
 
     // Draw points and measurements
     points.forEach((point, index) => {
-      // Draw point
-      ctx.fillStyle = isActive ? "#3b82f6" : "#1f2937";
+      // Draw point with drag handle
+      ctx.fillStyle = isActive ? "#dc2626" : "#6b7280";
       ctx.beginPath();
-      ctx.arc(point.x, point.y, 6, 0, 2 * Math.PI);
+      ctx.arc(point.x, point.y, 8, 0, 2 * Math.PI);
+      ctx.fill();
+      
+      // Add white center for better visibility
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, 3, 0, 2 * Math.PI);
       ctx.fill();
 
       // Draw measurement between points
