@@ -54,6 +54,7 @@ export default function SimplePricingPage() {
 
       if (editingService) {
         // Update existing service
+        console.log('Sending PUT request with data:', serviceData);
         const response = await fetch(`/api/direct/services/${editingService.serviceType}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
