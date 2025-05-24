@@ -191,6 +191,47 @@ export function registerDirectServicesRoutes(app: Express) {
     }
   });
 
+  // Simple endpoint to update only the price of a service
+  app.patch('/api/direct/services/:serviceType/price', async (req: any, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+
+      const { serviceType } = req.params;
+      const { laborRate } = req.body;
+      
+      console.log(`[DIRECT-PRICE] Updating ${serviceType} price to ${laborRate} for contractor ${req.user.id}`);
+      
+      const [updatedService] = await db
+        .update(servicePricing)
+        .set({ 
+          laborRate: laborRate.toString(),
+          updatedAt: new Date()
+        })
+        .where(and(
+          eq(servicePricing.serviceType, serviceType),
+          eq(servicePricing.contractorId, req.user.id)
+        ))
+        .returning();
+      
+      if (!updatedService) {
+        return res.status(404).json({ message: 'Service not found' });
+      }
+      
+      console.log(`[DIRECT-PRICE] Price updated successfully`);
+      
+      res.json({
+        id: updatedService.id,
+        serviceType: updatedService.serviceType,
+        laborRate: parseFloat(updatedService.laborRate)
+      });
+    } catch (error) {
+      console.error('[DIRECT-PRICE] Error updating price:', error);
+      res.status(500).json({ message: 'Error updating price' });
+    }
+  });
+
   // Simple endpoint to delete a service
   app.delete('/api/direct/services/:serviceType', async (req: any, res) => {
     try {

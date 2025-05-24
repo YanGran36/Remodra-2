@@ -53,16 +53,12 @@ export default function SimplePricingPage() {
       }
 
       if (editingService) {
-        // Update existing service
-        const updateData = {
-          ...serviceData,
-          originalServiceType: editingService.serviceType
-        };
-        console.log('Sending update request with data:', updateData);
-        const response = await fetch('/api/update-service-price', {
-          method: 'POST',
+        // Update existing service price
+        console.log(`Updating ${editingService.serviceType} price to ${serviceData.laborRate}`);
+        const response = await fetch(`/api/direct/services/${editingService.serviceType}/price`, {
+          method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updateData)
+          body: JSON.stringify({ laborRate: serviceData.laborRate })
         });
 
         if (response.ok) {
