@@ -109,7 +109,7 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
         ctx.lineWidth = 2;
         ctx.beginPath();
         const firstPoint = currentPoints[0];
-        ctx.moveTo(mousePos.x, mousePos.y);
+        ctx.moveTo(mousePos!.x, mousePos!.y);
         ctx.lineTo(firstPoint.x, firstPoint.y);
         ctx.stroke();
         ctx.setLineDash([]);
@@ -117,8 +117,8 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
         // Show "Close Area" text
         ctx.fillStyle = '#22c55e';
         ctx.font = 'bold 12px Arial';
-        const midX = (mousePos.x + firstPoint.x) / 2;
-        const midY = (mousePos.y + firstPoint.y) / 2;
+        const midX = (mousePos!.x + firstPoint.x) / 2;
+        const midY = (mousePos!.y + firstPoint.y) / 2;
         ctx.fillText('Close Area', midX + 5, midY - 10);
       }
     }
@@ -192,35 +192,32 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     
     if (points.length === 0) return;
 
-    // Apply zoom to coordinates
-    const zoomedPoints = points.map(p => ({
-      ...p,
-      x: p.x * zoomLevel,
-      y: p.y * zoomLevel
-    }));
+    // Save context and apply zoom transformation
+    ctx.save();
+    ctx.scale(zoomLevel, zoomLevel);
 
     // Draw lines between points first (behind points)
-    if (zoomedPoints.length > 1) {
+    if (points.length > 1) {
       ctx.beginPath();
-      ctx.moveTo(zoomedPoints[0].x, zoomedPoints[0].y);
+      ctx.moveTo(points[0].x, points[0].y);
       
-      for (let i = 1; i < zoomedPoints.length; i++) {
-        ctx.lineTo(zoomedPoints[i].x, zoomedPoints[i].y);
+      for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
       }
       
       ctx.strokeStyle = isActive ? '#3b82f6' : '#10b981';
-      ctx.lineWidth = 3 * zoomLevel;
+      ctx.lineWidth = 3;
       ctx.stroke();
 
       // Draw distance labels with cleaner, more precise positioning
-      for (let i = 0; i < zoomedPoints.length - 1; i++) {
-        const p1 = zoomedPoints[i];
-        const p2 = zoomedPoints[i + 1];
+      for (let i = 0; i < points.length - 1; i++) {
+        const p1 = points[i];
+        const p2 = points[i + 1];
         const midX = (p1.x + p2.x) / 2;
         const midY = (p1.y + p2.y) / 2;
         
         const pixelDistance = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
-        const realDistance = scale > 0 ? (pixelDistance / (scale * zoomLevel)).toFixed(1) : pixelDistance.toFixed(0);
+        const realDistance = scale > 0 ? (pixelDistance / scale).toFixed(1) : pixelDistance.toFixed(0);
         
         // Only show distance if line is long enough to be meaningful
         if (pixelDistance > 20) {
@@ -307,6 +304,9 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
         ctx.fillText((index + 1).toString(), numberX, numberY);
       }
     });
+
+    // Restore context
+    ctx.restore();
   };
 
   const drawGate = (ctx: CanvasRenderingContext2D, gate: {x: number, y: number, id: string, width: number}) => {
@@ -342,9 +342,9 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
     
-    // Get actual canvas coordinates (no zoom adjustment for mouse position)
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
+    // Adjust mouse coordinates for zoom level
+    const x = ((e.clientX - rect.left) * scaleX) / zoomLevel;
+    const y = ((e.clientY - rect.top) * scaleY) / zoomLevel;
 
     setMousePos({ x, y });
   };
@@ -367,8 +367,9 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
     
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
+    // Adjust click coordinates for zoom level
+    const x = ((e.clientX - rect.left) * scaleX) / zoomLevel;
+    const y = ((e.clientY - rect.top) * scaleY) / zoomLevel;
 
     // Check for double click
     const currentTime = Date.now();
