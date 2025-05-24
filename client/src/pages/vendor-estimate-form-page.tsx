@@ -491,13 +491,21 @@ export default function VendorEstimateFormPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="mb-6">
-                    <div className="text-lg font-semibold mb-4">Multi Services</div>
+                    <h2 className="text-2xl font-bold mb-4 text-center">Multi Services</h2>
                     
-                    {/* Tarjetas hardcodeadas que sabemos que funcionan */}
-                    <div className="bg-blue-50 p-4 border border-blue-200 rounded-lg mb-4">
-                      <div className="text-center text-blue-700 font-medium">
-                        ✅ Found 4 services configured
-                      </div>
+                    {/* Header visible que debería aparecer siempre */}
+                    <div style={{
+                      backgroundColor: '#dbeafe',
+                      padding: '16px',
+                      border: '2px solid #3b82f6',
+                      borderRadius: '8px',
+                      marginBottom: '16px',
+                      textAlign: 'center',
+                      color: '#1e40af',
+                      fontWeight: 'bold',
+                      fontSize: '18px'
+                    }}>
+                      ✅ Found 4 services configured - TESTING VISIBILITY
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
