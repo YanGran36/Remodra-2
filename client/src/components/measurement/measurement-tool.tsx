@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Ruler, RotateCcw, Save, Trash2, Plus } from "lucide-react";
+import { Ruler, RotateCcw, Save, Trash2, Plus, Square, PaintBucket, Minus, CornerDownRight } from "lucide-react";
 
 interface Point {
   x: number;
@@ -36,6 +36,8 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
   const [nextLabel, setNextLabel] = useState("");
   const [mousePos, setMousePos] = useState<{x: number, y: number} | null>(null);
   const [lastClickTime, setLastClickTime] = useState(0);
+  const [selectedShape, setSelectedShape] = useState<string>("freeform");
+  const [gates, setGates] = useState<{x: number, y: number, id: string, width: number}[]>([]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -266,6 +268,31 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     });
   };
 
+  const drawGate = (ctx: CanvasRenderingContext2D, gate: {x: number, y: number, id: string, width: number}) => {
+    // Draw gate symbol - a small rectangle with opening lines
+    ctx.strokeStyle = '#ff6b35'; // Orange for gates
+    ctx.lineWidth = 3;
+    
+    // Gate opening lines
+    const gatePixelWidth = gate.width * scale;
+    ctx.beginPath();
+    ctx.moveTo(gate.x - gatePixelWidth/2, gate.y - 10);
+    ctx.lineTo(gate.x - gatePixelWidth/2, gate.y + 10);
+    ctx.moveTo(gate.x + gatePixelWidth/2, gate.y - 10);
+    ctx.lineTo(gate.x + gatePixelWidth/2, gate.y + 10);
+    ctx.stroke();
+    
+    // Gate icon
+    ctx.fillStyle = '#ff6b35';
+    ctx.fillRect(gate.x - 8, gate.y - 4, 16, 8);
+    
+    // Gate label
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 10px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(`🚪 ${gate.width}ft`, gate.x, gate.y - 15);
+  };
+
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -401,7 +428,57 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
   const clearAll = () => {
     setMeasurements([]);
     setCurrentPoints([]);
+    setGates([]);
+    setNextLabel("");
     onMeasurementsChange([]);
+  };
+
+  const createQuickRectangle = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const width = 100;
+    const height = 80;
+    
+    const rectanglePoints: Point[] = [
+      { x: centerX - width/2, y: centerY - height/2, id: Date.now().toString() + "_1" },
+      { x: centerX + width/2, y: centerY - height/2, id: Date.now().toString() + "_2" },
+      { x: centerX + width/2, y: centerY + height/2, id: Date.now().toString() + "_3" },
+      { x: centerX - width/2, y: centerY + height/2, id: Date.now().toString() + "_4" },
+    ];
+    
+    setCurrentPoints(rectanglePoints);
+    setSelectedShape("rectangle");
+  };
+
+  const createQuickPerimeter = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const margin = 50;
+    const perimeterPoints: Point[] = [
+      { x: margin, y: margin, id: Date.now().toString() + "_1" },
+      { x: canvas.width - margin, y: margin, id: Date.now().toString() + "_2" },
+      { x: canvas.width - margin, y: canvas.height - margin, id: Date.now().toString() + "_3" },
+      { x: margin, y: canvas.height - margin, id: Date.now().toString() + "_4" },
+    ];
+    
+    setCurrentPoints(perimeterPoints);
+    setSelectedShape("freeform");
+  };
+
+  const addGateToFence = (x: number, y: number) => {
+    const gateWidth = 4; // Default 4 feet gate
+    const newGate = {
+      x,
+      y,
+      id: Date.now().toString(),
+      width: gateWidth
+    };
+    
+    setGates(prev => [...prev, newGate]);
   };
 
   const deleteMeasurement = (id: string) => {
@@ -604,6 +681,112 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
               <li><strong>Finish:</strong> Double-click to complete the measurement</li>
               <li><strong>Areas:</strong> For {serviceUnit === 'sqft' ? 'square footage services, create closed shapes (3+ points)' : 'linear services, create lines or paths'}</li>
             </ol>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Shape Library */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Square className="h-5 w-5" />
+            Shape Library
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Shape Selection */}
+          <div>
+            <Label className="text-sm font-medium">Select Shape:</Label>
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <Button
+                variant={selectedShape === "freeform" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedShape("freeform")}
+                className="h-12 flex flex-col items-center gap-1"
+              >
+                <PaintBucket className="h-4 w-4" />
+                <span className="text-xs">Freeform</span>
+              </Button>
+              <Button
+                variant={selectedShape === "rectangle" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedShape("rectangle")}
+                className="h-12 flex flex-col items-center gap-1"
+              >
+                <Square className="h-4 w-4" />
+                <span className="text-xs">Rectangle</span>
+              </Button>
+              <Button
+                variant={selectedShape === "fence" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedShape("fence")}
+                className="h-12 flex flex-col items-center gap-1"
+              >
+                <Minus className="h-4 w-4" />
+                <span className="text-xs">Fence Line</span>
+              </Button>
+              <Button
+                variant={selectedShape === "L-shape" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedShape("L-shape")}
+                className="h-12 flex flex-col items-center gap-1"
+              >
+                <CornerDownRight className="h-4 w-4" />
+                <span className="text-xs">L-Shape</span>
+              </Button>
+            </div>
+          </div>
+
+          {/* Fence-specific tools */}
+          {(selectedShape === "fence" || serviceUnit === 'ft') && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-blue-800 font-medium mb-2">🚪 Fence Gates</p>
+              <p className="text-blue-600 text-xs mb-3">
+                Click on fence lines to add gates. Gates will be marked and measured separately.
+              </p>
+              
+              {gates.length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-blue-700 text-xs font-medium">Added Gates:</p>
+                  {gates.map((gate, index) => (
+                    <div key={gate.id} className="flex items-center justify-between text-xs">
+                      <span>Gate {index + 1}: {gate.width.toFixed(1)} ft</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setGates(gates.filter(g => g.id !== gate.id))}
+                        className="h-4 w-4 p-0 text-red-500"
+                      >
+                        ×
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Quick Measurements */}
+          <div>
+            <Label className="text-sm font-medium">Quick Shapes:</Label>
+            <div className="grid grid-cols-1 gap-1 mt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => createQuickRectangle()}
+                className="text-xs"
+              >
+                📐 Standard Rectangular Area
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => createQuickPerimeter()}
+                className="text-xs"
+              >
+                📏 Property Perimeter
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
