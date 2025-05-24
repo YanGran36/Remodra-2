@@ -19,6 +19,9 @@ export function ServiceItemSelector({ value, onChange }: ServiceItemSelectorProp
 
   console.log("Services in ServiceItemSelector:", services);
   console.log("Services loading:", servicesLoading);
+  console.log("Services error:", servicesError);
+  console.log("Services type:", typeof services);
+  console.log("Services is array:", Array.isArray(services));
 
   if (servicesLoading) {
     return (
