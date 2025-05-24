@@ -232,8 +232,8 @@ export function registerDirectServicesRoutes(app: Express) {
     }
   });
 
-  // Simple endpoint to update a service price (using same pattern as DELETE that works)
-  app.put('/api/direct/services/:serviceType/price', async (req: any, res) => {
+  // Simple endpoint to update a service price (using exact same pattern as working DELETE)
+  app.patch('/api/direct/services/:serviceType/edit', async (req: any, res) => {
     try {
       if (!req.isAuthenticated()) {
         return res.status(401).json({ message: 'Not authenticated' });
@@ -242,23 +242,25 @@ export function registerDirectServicesRoutes(app: Express) {
       const { serviceType } = req.params;
       const { laborRate } = req.body;
       
-      console.log(`[DIRECT-PRICE-UPDATE] Updating ${serviceType} price to ${laborRate} for contractor ${req.user.id}`);
+      console.log(`[DIRECT-EDIT] Updating ${serviceType} price to ${laborRate} for contractor ${req.user.id}`);
       
-      // Use raw SQL like the working endpoints
-      const result = await pool.query(
-        'UPDATE service_pricing SET labor_rate = $1, updated_at = NOW() WHERE service_type = $2 AND contractor_id = $3',
-        [laborRate.toString(), serviceType, req.user.id]
-      );
+      // Use Drizzle ORM exactly like DELETE endpoint
+      const result = await db
+        .update(servicePricing)
+        .set({ 
+          laborRate: laborRate.toString(),
+          updatedAt: new Date()
+        })
+        .where(and(
+          eq(servicePricing.serviceType, serviceType),
+          eq(servicePricing.contractorId, req.user.id)
+        ));
       
-      console.log(`[DIRECT-PRICE-UPDATE] Updated ${result.rowCount} rows for ${serviceType}`);
+      console.log(`[DIRECT-EDIT] Service ${serviceType} updated successfully`);
       
-      if (result.rowCount === 0) {
-        return res.status(404).json({ message: 'Service not found' });
-      }
-      
-      res.json({ message: 'Service price updated successfully' });
+      res.json({ message: 'Service updated successfully' });
     } catch (error) {
-      console.error('[DIRECT-PRICE-UPDATE] Error updating service:', error);
+      console.error('[DIRECT-EDIT] Error updating service:', error);
       res.status(500).json({ message: 'Error updating service' });
     }
   });
