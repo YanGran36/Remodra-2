@@ -935,7 +935,8 @@ export default function FenceMeasurementTool({
           {/* Instructions */}
           <div className="text-xs text-green-700 bg-green-50 p-2 rounded">
             <strong>Instructions:</strong> Click to start drawing fence line. Each click adds a fence section. 
-            <strong>Double-click to finish the fence.</strong> Click on existing gates to select and edit them.
+            <strong>Double-click to finish the fence.</strong> Drag red points to adjust lines. Click gates to select and edit them. 
+            <strong>Press ESC to cancel current action.</strong>
           </div>
         </CardContent>
       </Card>
@@ -950,6 +951,8 @@ export default function FenceMeasurementTool({
             ref={canvasRef}
             onClick={handleCanvasClick}
             onMouseMove={handleCanvasMouseMove}
+            onMouseDown={handleCanvasMouseDown}
+            onMouseUp={handleCanvasMouseUp}
             className="border border-gray-300 cursor-crosshair w-full"
             style={{ maxWidth: "800px", height: "600px" }}
           />
