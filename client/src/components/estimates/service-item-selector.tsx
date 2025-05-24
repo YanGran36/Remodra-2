@@ -41,7 +41,10 @@ export function ServiceItemSelector({ value, onChange }: ServiceItemSelectorProp
     );
   }
 
-  if (!services || services.length === 0) {
+  // Forzar que services sea tratado como array
+  const servicesArray = Array.isArray(services) ? services : [];
+  
+  if (!servicesArray || servicesArray.length === 0) {
     return (
       <div className="mb-6">
         <div className="text-lg font-semibold mb-2">Select Service Type</div>
@@ -57,10 +60,10 @@ export function ServiceItemSelector({ value, onChange }: ServiceItemSelectorProp
       <div className="text-lg font-semibold mb-2">Select Service Type</div>
       <div className="bg-white p-4 border-2 border-blue-500 rounded-lg shadow-lg">
         <div className="text-center mb-4 text-blue-600 font-bold">
-          Found {services.length} services configured
+          Found {servicesArray.length} services configured
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {services.map((service: any) => {
+          {servicesArray.map((service: any) => {
             const isSelected = value === service.serviceType;
             const laborRate = parseFloat(service.laborRate || "0");
             
