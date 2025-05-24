@@ -65,6 +65,11 @@ export default function VendorEstimateFormPage() {
     queryKey: ["/api/direct/services"],
   });
 
+  // Fetch materials
+  const { data: materials, isLoading: materialsLoading } = useQuery({
+    queryKey: ["/api/pricing/materials"],
+  });
+
   // Create estimate mutation
   const createEstimateMutation = useMutation({
     mutationFn: async (data: FormValues) => {
@@ -289,10 +294,66 @@ export default function VendorEstimateFormPage() {
                     Choose materials for your project
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground">Materials selection will be available here</p>
-                  </div>
+                <CardContent className="space-y-6">
+                  {!form.getValues("serviceType") ? (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">Please select a service type first</p>
+                    </div>
+                  ) : materialsLoading ? (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">Loading materials...</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="mb-4">
+                        <h3 className="text-lg font-semibold mb-2">Available Materials</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Select materials and quantities for {services?.find(s => s.serviceType === form.getValues("serviceType"))?.name}
+                        </p>
+                      </div>
+                      
+                      {materials && materials.length > 0 ? (
+                        <div className="grid gap-4">
+                          {materials.map((material: any) => (
+                            <div key={material.id} className="border rounded-lg p-4">
+                              <div className="flex items-center justify-between mb-2">
+                                <div>
+                                  <h4 className="font-medium">{material.name}</h4>
+                                  <p className="text-sm text-muted-foreground">
+                                    ${material.unitPrice}/{material.unit}
+                                  </p>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <Input
+                                    type="number"
+                                    placeholder="Qty"
+                                    className="w-20"
+                                    min="0"
+                                    step="0.1"
+                                  />
+                                  <span className="text-sm text-muted-foreground">{material.unit}</span>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <span className="text-sm font-medium">Subtotal: $0.00</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <p className="text-muted-foreground">No materials found. Add materials in the pricing configuration.</p>
+                        </div>
+                      )}
+                      
+                      <div className="border-t pt-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-lg font-semibold">Materials Total:</span>
+                          <span className="text-lg font-bold">$0.00</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
                 <CardFooter className="flex justify-between">
                   <Button 
@@ -320,10 +381,95 @@ export default function VendorEstimateFormPage() {
                     Configure labor costs for your estimate
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground">Labor calculation will be available here</p>
-                  </div>
+                <CardContent className="space-y-6">
+                  {!form.getValues("serviceType") ? (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">Please select a service type first</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {(() => {
+                        const selectedService = services?.find(s => s.serviceType === form.getValues("serviceType"));
+                        return selectedService ? (
+                          <div className="space-y-4">
+                            <div className="bg-blue-50 p-4 rounded-lg">
+                              <h3 className="text-lg font-semibold mb-2">Service: {selectedService.name}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                Labor Rate: ${selectedService.laborRate}/{selectedService.unit}
+                              </p>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                              <FormField
+                                control={form.control}
+                                name="measurements.area"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>
+                                      {selectedService.unit === 'sqft' ? 'Area (sq ft)' : 
+                                       selectedService.unit === 'ft' ? 'Linear Feet' : 
+                                       selectedService.unit === 'unit' ? 'Number of Units' : 'Quantity'}
+                                    </FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        placeholder={`Enter ${selectedService.unit}`}
+                                        {...field}
+                                        onChange={(e) => {
+                                          field.onChange(e.target.value);
+                                          // Auto-calculate labor cost
+                                          const quantity = parseFloat(e.target.value) || 0;
+                                          const laborRate = parseFloat(selectedService.laborRate) || 0;
+                                          const laborTotal = quantity * laborRate;
+                                          form.setValue("laborCost", laborTotal.toString());
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={form.control}
+                                name="laborCost"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Labor Cost (Calculated)</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        placeholder="$0.00"
+                                        {...field}
+                                        readOnly
+                                        className="bg-gray-50"
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                            
+                            <div className="border-t pt-4">
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <span className="text-sm font-medium">Calculation Details:</span>
+                                  <div className="text-sm text-muted-foreground">
+                                    <div>Quantity: {form.watch("measurements.area") || "0"} {selectedService.unit}</div>
+                                    <div>Rate: ${selectedService.laborRate}/{selectedService.unit}</div>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <span className="text-lg font-semibold">Labor Total: ${form.watch("laborCost") || "0.00"}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ) : null;
+                      })()}
+                    </div>
+                  )}
                 </CardContent>
                 <CardFooter className="flex justify-between">
                   <Button 
@@ -382,7 +528,7 @@ export default function VendorEstimateFormPage() {
                     Review your estimate before creating
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-6">
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -392,9 +538,9 @@ export default function VendorEstimateFormPage() {
                         </p>
                       </div>
                       <div>
-                        <Label className="font-semibold">Service Type:</Label>
-                        <p className="text-sm text-muted-foreground capitalize">
-                          {form.getValues("serviceType")}
+                        <Label className="font-semibold">Service:</Label>
+                        <p className="text-sm text-muted-foreground">
+                          {services?.find(s => s.serviceType === form.getValues("serviceType"))?.name}
                         </p>
                       </div>
                     </div>
@@ -414,6 +560,37 @@ export default function VendorEstimateFormPage() {
                         </p>
                       </div>
                     )}
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Cost Breakdown</h3>
+                    
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Labor ({form.watch("measurements.area") || "0"} {services?.find(s => s.serviceType === form.getValues("serviceType"))?.unit})</span>
+                        <span className="font-medium">${form.watch("laborCost") || "0.00"}</span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Materials</span>
+                        <span className="font-medium">$0.00</span>
+                      </div>
+                      
+                      <Separator />
+                      
+                      <div className="flex justify-between items-center text-lg font-bold">
+                        <span>Total Estimate:</span>
+                        <span>${(parseFloat(form.watch("laborCost") || "0")).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <p className="text-sm text-yellow-800">
+                      <strong>Note:</strong> This estimate is valid for 30 days. Final pricing may vary based on site conditions and material costs.
+                    </p>
                   </div>
                 </CardContent>
                 <CardFooter className="flex justify-between">
