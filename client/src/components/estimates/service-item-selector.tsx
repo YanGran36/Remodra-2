@@ -44,10 +44,19 @@ export function ServiceItemSelector({ value, onChange }: ServiceItemSelectorProp
     );
   }
 
+  // Debug: Ver exactamente qué está llegando
+  console.log("=== ServiceItemSelector DEBUG ===");
+  console.log("services raw:", services);
+  console.log("services type:", typeof services);
+  console.log("services is array:", Array.isArray(services));
+  
   // Forzar que services sea tratado como array
   const servicesArray = Array.isArray(services) ? services : [];
+  console.log("servicesArray:", servicesArray);
+  console.log("servicesArray.length:", servicesArray.length);
   
   if (servicesArray.length === 0) {
+    console.log("Showing NO SERVICES message");
     return (
       <div className="mb-6">
         <div className="text-lg font-semibold mb-2">Multi Services</div>
@@ -57,6 +66,8 @@ export function ServiceItemSelector({ value, onChange }: ServiceItemSelectorProp
       </div>
     );
   }
+  
+  console.log("About to render service cards. Services count:", servicesArray.length);
 
   return (
     <div className="mb-6">
