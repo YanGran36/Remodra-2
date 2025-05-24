@@ -393,6 +393,52 @@ export default function FenceMeasurementTool({
       return;
     }
 
+    // Check if clicking on completed measurement lines to start dragging
+    for (const measurement of measurements) {
+      for (const section of measurement.sections) {
+        const startPoint = section.start;
+        const endPoint = section.end;
+        
+        // Check if clicking on start or end point
+        const startDistance = Math.sqrt(Math.pow(x - startPoint.x, 2) + Math.pow(y - startPoint.y, 2));
+        const endDistance = Math.sqrt(Math.pow(x - endPoint.x, 2) + Math.pow(y - endPoint.y, 2));
+        
+        if (startDistance <= 10) {
+          setDraggingPoint(startPoint.id);
+          setLastMousePos({ x, y });
+          setEditingMeasurement(measurement.id);
+          
+          // Convert measurement back to editable points
+          const allPoints: FencePoint[] = [];
+          measurement.sections.forEach(sec => {
+            if (allPoints.length === 0) {
+              allPoints.push(sec.start);
+            }
+            allPoints.push(sec.end);
+          });
+          setCurrentPoints(allPoints);
+          return;
+        }
+        
+        if (endDistance <= 10) {
+          setDraggingPoint(endPoint.id);
+          setLastMousePos({ x, y });
+          setEditingMeasurement(measurement.id);
+          
+          // Convert measurement back to editable points
+          const allPoints: FencePoint[] = [];
+          measurement.sections.forEach(sec => {
+            if (allPoints.length === 0) {
+              allPoints.push(sec.start);
+            }
+            allPoints.push(sec.end);
+          });
+          setCurrentPoints(allPoints);
+          return;
+        }
+      }
+    }
+
     // Check if clicking on an existing gate to select it
     const clickedGate = gates.find(gate => {
       const gateWidth = gate.width * scale;
@@ -464,6 +510,78 @@ export default function FenceMeasurementTool({
           : point
       ));
       
+      // If editing a completed measurement, also update the measurement
+      if (editingMeasurement) {
+        setMeasurements(prev => prev.map(measurement => {
+          if (measurement.id === editingMeasurement) {
+            // Recalculate measurement with updated points
+            const updatedPoints = currentPoints.map(point => 
+              point.id === draggingPoint 
+                ? { ...point, x: point.x + deltaX, y: point.y + deltaY }
+                : point
+            );
+            
+            const totalLength = updatedPoints.reduce((sum, point, index) => {
+              if (index === 0) return 0;
+              const prevPoint = updatedPoints[index - 1];
+              const distance = Math.sqrt(
+                Math.pow(point.x - prevPoint.x, 2) + Math.pow(point.y - prevPoint.y, 2)
+              ) / scale;
+              return sum + distance;
+            }, 0);
+
+            const posts = calculatePosts(updatedPoints);
+            const sections: FenceSection[] = [];
+
+            for (let i = 0; i < updatedPoints.length - 1; i++) {
+              const sectionLength = Math.sqrt(
+                Math.pow(updatedPoints[i + 1].x - updatedPoints[i].x, 2) + 
+                Math.pow(updatedPoints[i + 1].y - updatedPoints[i].y, 2)
+              ) / scale;
+
+              sections.push({
+                start: updatedPoints[i],
+                end: updatedPoints[i + 1],
+                length: sectionLength,
+                posts: posts.filter(p => 
+                  Math.abs(p.x - updatedPoints[i].x) < 10 || 
+                  Math.abs(p.x - updatedPoints[i + 1].x) < 10
+                ),
+                gates: gates.filter(g => 
+                  g.x >= Math.min(updatedPoints[i].x, updatedPoints[i + 1].x) &&
+                  g.x <= Math.max(updatedPoints[i].x, updatedPoints[i + 1].x)
+                )
+              });
+            }
+
+            const panels = Math.ceil(totalLength / 8);
+            const totalPosts = posts.length;
+            const totalGates = gates.length;
+
+            return {
+              ...measurement,
+              label: `Fence - ${totalLength.toFixed(1)} ft`,
+              sections,
+              totalLength,
+              totalPosts,
+              totalGates,
+              materialsList: {
+                posts: totalPosts,
+                panels,
+                gates: totalGates,
+                hardware: [
+                  `${totalPosts} post anchors`,
+                  `${panels} panel brackets`,
+                  `${totalGates} gate hinges`,
+                  `${totalGates} gate latches`
+                ]
+              }
+            };
+          }
+          return measurement;
+        }));
+      }
+      
       setLastMousePos({ x, y });
       return;
     }
@@ -487,6 +605,11 @@ export default function FenceMeasurementTool({
   };
 
   const handleCanvasMouseUp = () => {
+    // If we were editing a measurement and finished dragging, update the parent
+    if (editingMeasurement && draggingPoint) {
+      onMeasurementsChange(measurements);
+    }
+    
     setDraggingPoint(null);
     setDraggingGate(null);
     setLastMousePos(null);
