@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { usePricing } from '@/hooks/use-pricing';
 
 // Icons for services
 const ServiceIcon = ({ service }: { service: string }) => {
@@ -35,6 +36,9 @@ const formatCurrency = (amount: number): string => {
 };
 
 export function ServiceItemSelector({ value, onChange }: ServiceItemSelectorProps) {
+  // Obtener servicios de la configuración de precios
+  const { services, isLoading } = usePricing();
+  
   // Función para prevenir el envío del formulario al hacer clic en botones
   const preventFormSubmission = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -50,25 +54,58 @@ export function ServiceItemSelector({ value, onChange }: ServiceItemSelectorProp
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="mb-6">
+        <div className="text-lg font-semibold mb-2">Select Service Type</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-4">
+                <div className="h-20 bg-gray-200 rounded"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!services || services.length === 0) {
+    return (
+      <div className="mb-6">
+        <div className="text-lg font-semibold mb-2">Select Service Type</div>
+        <Card className="p-6 text-center">
+          <p className="text-muted-foreground">No services configured. Please add services in your pricing configuration first.</p>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="mb-6">
       <div className="text-lg font-semibold mb-2">Select Service Type</div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {SERVICE_TYPES.map((service) => {
-          const isSelected = value === service.value;
-          const serviceInfo = SERVICE_INFO[service.value as keyof typeof SERVICE_INFO];
-          const materials = MATERIALS_BY_SERVICE[service.value as keyof typeof MATERIALS_BY_SERVICE] || [];
-          const options = OPTIONS_BY_SERVICE[service.value as keyof typeof OPTIONS_BY_SERVICE] || [];
-          const isExpanded = expandedDetails === service.value;
+        {services.map((service) => {
+          const isSelected = value === service.serviceType;
+          const serviceInfo = SERVICE_INFO[service.serviceType as keyof typeof SERVICE_INFO];
+          const materials = MATERIALS_BY_SERVICE[service.serviceType as keyof typeof MATERIALS_BY_SERVICE] || [];
+          const options = OPTIONS_BY_SERVICE[service.serviceType as keyof typeof OPTIONS_BY_SERVICE] || [];
+          const isExpanded = expandedDetails === service.serviceType;
           
-          // Get price range
+          // Get price range from materials
           const materialPrices = materials.map(m => m.unitPrice);
           const minPrice = materialPrices.length ? Math.min(...materialPrices) : 0;
           const maxPrice = materialPrices.length ? Math.max(...materialPrices) : 0;
           
+          // Use service labor rate if no materials
+          const laborRate = parseFloat(service.laborRate);
+          const displayMinPrice = minPrice || laborRate;
+          const displayMaxPrice = maxPrice || laborRate;
+          
           return (
             <Card 
-              key={service.value}
+              key={service.id}
               className={cn(
                 "transition-all relative overflow-hidden border-2",
                 isSelected 
@@ -85,45 +122,41 @@ export function ServiceItemSelector({ value, onChange }: ServiceItemSelectorProp
               <CardContent 
                 className="p-4 cursor-pointer"
                 onClick={(e) => {
-                  // Prevenir cualquier acción del formulario
                   e.preventDefault();
                   e.stopPropagation();
-                  // Solo llamar al onChange si es un click directo (no propagado)
-                  if (e.currentTarget === e.target || e.currentTarget.contains(e.target as Node)) {
-                    onChange(service.value);
-                  }
+                  onChange(service.serviceType);
                 }}
               >
                 <div 
                   className="w-full h-1.5 rounded-full mb-3"
-                  style={{ backgroundColor: serviceInfo?.color || "#888" }}
+                  style={{ backgroundColor: serviceInfo?.color || "#3b82f6" }}
                 ></div>
                 
                 <div className="flex items-center gap-3 mb-2">
-                  <ServiceIcon service={service.value} />
-                  <h3 className="font-semibold text-lg">{service.label}</h3>
+                  <ServiceIcon service={service.serviceType} />
+                  <h3 className="font-semibold text-lg">{service.name}</h3>
                 </div>
                 
                 <p className="text-sm text-muted-foreground mb-3">
-                  {serviceInfo?.description || "Service description"}
+                  {serviceInfo?.description || `Professional ${service.name.toLowerCase()} service`}
                 </p>
                 
                 <div className="flex flex-wrap gap-2 mt-2 mb-3">
                   <Badge variant="outline" className="bg-primary/10">
-                    {serviceInfo?.unitType === 'sq.ft' ? 'Area Based' : 
-                     serviceInfo?.unitType === 'ln.ft' ? 'Length Based' :
-                     serviceInfo?.unitType === 'unit' ? 'Per Unit' : 'Custom'}
+                    {service.unit === 'sqft' ? 'Area Based' : 
+                     service.unit === 'ft' ? 'Length Based' :
+                     service.unit === 'unit' ? 'Per Unit' : 'Custom'}
                   </Badge>
                   
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Badge variant="outline" className="bg-primary/10">
-                          {formatCurrency(minPrice)} - {formatCurrency(maxPrice)}/{serviceInfo?.unitType}
+                          {formatCurrency(laborRate)}/{service.unit} labor
                         </Badge>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Price range per {serviceInfo?.unitType}</p>
+                        <p>Labor rate per {service.unit}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -132,7 +165,7 @@ export function ServiceItemSelector({ value, onChange }: ServiceItemSelectorProp
                 {serviceInfo?.benefits && (
                   <div className="mt-2">
                     <ul className="text-xs space-y-1">
-                      {serviceInfo.benefits.map((benefit, index) => (
+                      {serviceInfo.benefits.map((benefit: string, index: number) => (
                         <li key={index} className="flex items-start">
                           <span className="text-primary mr-1">✓</span>
                           <span>{benefit}</span>
@@ -149,7 +182,11 @@ export function ServiceItemSelector({ value, onChange }: ServiceItemSelectorProp
                 <Button 
                   variant="ghost" 
                   className="w-full p-2 flex items-center justify-center gap-1 rounded-none text-sm text-muted-foreground hover:text-foreground"
-                  onClick={() => toggleDetails(service.value)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleDetails(service.serviceType);
+                  }}
                 >
                   {isExpanded ? (
                     <>
@@ -165,37 +202,57 @@ export function ServiceItemSelector({ value, onChange }: ServiceItemSelectorProp
               
               {isExpanded && (
                 <div className="p-3 bg-muted/30 border-t">
-                  <h4 className="text-sm font-medium mb-2">Available Materials</h4>
-                  <ScrollArea className="h-48 rounded-md border p-2 bg-background">
-                    <div className="space-y-2">
-                      {materials.map((material) => (
-                        <div key={material.id} className="flex justify-between items-center p-2 hover:bg-muted rounded-md">
-                          <span className="text-sm">{material.name}</span>
-                          <div className="flex items-center">
-                            <Badge variant="outline">
-                              {formatCurrency(material.unitPrice)}/{material.unit}
-                            </Badge>
-                          </div>
-                        </div>
-                      ))}
+                  <h4 className="text-sm font-medium mb-2">Service Details</h4>
+                  <div className="space-y-2 mb-4">
+                    <div className="flex justify-between items-center p-2 bg-background rounded-md">
+                      <span className="text-sm font-medium">Labor Rate</span>
+                      <Badge variant="outline">
+                        {formatCurrency(laborRate)}/{service.unit}
+                      </Badge>
                     </div>
-                  </ScrollArea>
+                    <div className="flex justify-between items-center p-2 bg-background rounded-md">
+                      <span className="text-sm">Labor Method</span>
+                      <Badge variant="secondary">
+                        {service.laborMethod === 'by_area' ? 'By Area' : 'Fixed Rate'}
+                      </Badge>
+                    </div>
+                  </div>
                   
-                  <h4 className="text-sm font-medium mt-3 mb-2">Additional Options</h4>
-                  <ScrollArea className="h-48 rounded-md border p-2 bg-background">
-                    <div className="space-y-2">
-                      {options.map((option) => (
-                        <div key={option.id} className="flex justify-between items-center p-2 hover:bg-muted rounded-md">
-                          <span className="text-sm">{option.name}</span>
-                          <div className="flex items-center">
-                            <Badge variant="outline">
-                              {formatCurrency(option.unitPrice)}/{option.unit}
-                            </Badge>
-                          </div>
+                  {materials.length > 0 && (
+                    <>
+                      <h4 className="text-sm font-medium mb-2">Available Materials</h4>
+                      <ScrollArea className="h-32 rounded-md border p-2 bg-background mb-4">
+                        <div className="space-y-2">
+                          {materials.map((material: any) => (
+                            <div key={material.id} className="flex justify-between items-center p-2 hover:bg-muted rounded-md">
+                              <span className="text-sm">{material.name}</span>
+                              <Badge variant="outline">
+                                {formatCurrency(material.unitPrice)}/{material.unit}
+                              </Badge>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
+                      </ScrollArea>
+                    </>
+                  )}
+                  
+                  {options.length > 0 && (
+                    <>
+                      <h4 className="text-sm font-medium mb-2">Additional Options</h4>
+                      <ScrollArea className="h-32 rounded-md border p-2 bg-background">
+                        <div className="space-y-2">
+                          {options.map((option: any) => (
+                            <div key={option.id} className="flex justify-between items-center p-2 hover:bg-muted rounded-md">
+                              <span className="text-sm">{option.name}</span>
+                              <Badge variant="outline">
+                                {formatCurrency(option.unitPrice)}/{option.unit}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </>
+                  )}
                 </div>
               )}
             </Card>
