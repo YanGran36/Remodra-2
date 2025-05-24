@@ -348,6 +348,18 @@ export default function FenceMeasurementTool({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
+    // Check if clicking on an existing gate to select it
+    const clickedGate = gates.find(gate => {
+      const gateWidth = gate.width * scale;
+      const distance = Math.sqrt(Math.pow(x - gate.x, 2) + Math.pow(y - gate.y, 2));
+      return distance <= gateWidth / 2 + 10; // 10px tolerance
+    });
+
+    if (clickedGate) {
+      setSelectedGate(selectedGate === clickedGate.id ? null : clickedGate.id);
+      return;
+    }
+
     // Handle double-click to finish fence
     const currentTime = Date.now();
     const timeDiff = currentTime - lastClickTime;
@@ -439,8 +451,9 @@ export default function FenceMeasurementTool({
     const totalPosts = posts.length;
     const totalGates = gates.length;
 
+    const measurementId = editingMeasurement || `fence-${Date.now()}`;
     const newMeasurement: FenceMeasurement = {
-      id: `fence-${Date.now()}`,
+      id: measurementId,
       label: `Fence - ${totalLength.toFixed(1)} ft`,
       sections,
       totalLength,
@@ -459,14 +472,18 @@ export default function FenceMeasurementTool({
       }
     };
 
-    const updatedMeasurements = [...measurements, newMeasurement];
+    const updatedMeasurements = editingMeasurement 
+      ? measurements.map(m => m.id === editingMeasurement ? newMeasurement : m)
+      : [...measurements, newMeasurement];
+    
     setMeasurements(updatedMeasurements);
     onMeasurementsChange(updatedMeasurements);
 
     // Reset
     setCurrentPoints([]);
     setIsDrawing(false);
-    setGates([]);
+    setEditingMeasurement(null);
+    // Don't clear gates - they should persist
   };
 
   const clearAll = () => {
@@ -524,9 +541,40 @@ export default function FenceMeasurementTool({
     link.click();
   };
 
-  const handleGateClick = (gate: Gate, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setSelectedGate(selectedGate === gate.id ? null : gate.id);
+  const rotateSelectedGate = (direction: 'left' | 'right') => {
+    if (!selectedGate) return;
+    
+    setGates(prev => prev.map(gate => {
+      if (gate.id === selectedGate) {
+        const newRotation = direction === 'right' 
+          ? (gate.rotation + 45) % 360
+          : (gate.rotation - 45 + 360) % 360;
+        return { ...gate, rotation: newRotation };
+      }
+      return gate;
+    }));
+  };
+
+  const updateSelectedGateSize = (newWidth: number) => {
+    if (!selectedGate) return;
+    
+    setGates(prev => prev.map(gate => {
+      if (gate.id === selectedGate) {
+        return { ...gate, width: newWidth };
+      }
+      return gate;
+    }));
+  };
+
+  const updateSelectedGateType = (newType: 'gate' | 'double-gate') => {
+    if (!selectedGate) return;
+    
+    setGates(prev => prev.map(gate => {
+      if (gate.id === selectedGate) {
+        return { ...gate, type: newType };
+      }
+      return gate;
+    }));
   };
 
   return (
@@ -654,10 +702,103 @@ export default function FenceMeasurementTool({
             </Button>
           </div>
 
+          {/* Gate Editor for Selected Gate */}
+          {selectedGate && (
+            <div className="bg-blue-50 border border-blue-200 rounded p-3">
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-sm font-medium text-blue-800">Editing Selected Gate</Label>
+                <Button
+                  onClick={() => setSelectedGate(null)}
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0"
+                >
+                  ×
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <Label className="text-xs">Size</Label>
+                  <div className="flex gap-1 flex-wrap">
+                    {[3, 4, 5, 6, 8, 10, 12].map(width => (
+                      <Button
+                        key={width}
+                        onClick={() => updateSelectedGateSize(width)}
+                        variant={gates.find(g => g.id === selectedGate)?.width === width ? "default" : "outline"}
+                        size="sm"
+                        className="h-6 px-1 text-xs"
+                      >
+                        {width}'
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <Label className="text-xs">Type</Label>
+                  <div className="flex gap-1">
+                    <Button
+                      onClick={() => updateSelectedGateType('gate')}
+                      variant={gates.find(g => g.id === selectedGate)?.type === 'gate' ? "default" : "outline"}
+                      size="sm"
+                      className="h-6 text-xs"
+                    >
+                      Single
+                    </Button>
+                    <Button
+                      onClick={() => updateSelectedGateType('double-gate')}
+                      variant={gates.find(g => g.id === selectedGate)?.type === 'double-gate' ? "default" : "outline"}
+                      size="sm"
+                      className="h-6 text-xs"
+                    >
+                      Double
+                    </Button>
+                  </div>
+                </div>
+                
+                <div>
+                  <Label className="text-xs">Rotation</Label>
+                  <div className="flex gap-1">
+                    <Button
+                      onClick={() => rotateSelectedGate('left')}
+                      variant="outline"
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                    >
+                      ↶ -45°
+                    </Button>
+                    <Button
+                      onClick={() => rotateSelectedGate('right')}
+                      variant="outline"
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                    >
+                      ↷ +45°
+                    </Button>
+                  </div>
+                  <div className="text-xs text-center mt-1">
+                    {gates.find(g => g.id === selectedGate)?.rotation || 0}°
+                  </div>
+                </div>
+              </div>
+              
+              <Button
+                onClick={() => deleteGate(selectedGate)}
+                variant="destructive"
+                size="sm"
+                className="w-full mt-2 h-6 text-xs"
+              >
+                <Trash2 className="h-3 w-3 mr-1" />
+                Delete Gate
+              </Button>
+            </div>
+          )}
+
           {/* Instructions */}
           <div className="text-xs text-green-700 bg-green-50 p-2 rounded">
             <strong>Instructions:</strong> Click to start drawing fence line. Each click adds a fence section. 
-            <strong>Double-click to finish the fence.</strong> Select gate size and type, then click "Add Gate" and click on the plan to place gates.
+            <strong>Double-click to finish the fence.</strong> Click on existing gates to select and edit them.
           </div>
         </CardContent>
       </Card>
