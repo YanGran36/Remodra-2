@@ -537,12 +537,43 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
       ? `Area ${measurements.length + 1}` 
       : `Line ${measurements.length + 1}`;
 
+    // Calculate area and perimeter for professional architectural measurements
+    let area = 0;
+    let perimeter = 0;
+    
+    if (measurementMode === 'area' && currentPoints.length >= 3) {
+      // Calculate polygon area using shoelace formula
+      for (let i = 0; i < currentPoints.length; i++) {
+        const j = (i + 1) % currentPoints.length;
+        area += currentPoints[i].x * currentPoints[j].y;
+        area -= currentPoints[j].x * currentPoints[i].y;
+      }
+      area = Math.abs(area / 2);
+      area = scale > 0 ? area / (scale * scale) : area; // Convert to real units
+    }
+    
+    if (measurementMode === 'perimeter' || measurementMode === 'area') {
+      // Calculate perimeter
+      for (let i = 0; i < currentPoints.length; i++) {
+        const j = (i + 1) % currentPoints.length;
+        const segmentDistance = Math.sqrt(
+          Math.pow(currentPoints[j].x - currentPoints[i].x, 2) + 
+          Math.pow(currentPoints[j].y - currentPoints[i].y, 2)
+        );
+        perimeter += segmentDistance;
+      }
+      perimeter = scale > 0 ? perimeter / scale : perimeter;
+    }
+
     const newMeasurement: Measurement = {
       id: Date.now().toString(),
-      label: nextLabel || defaultLabel,
+      label: nextLabel || `${measurementMode.charAt(0).toUpperCase() + measurementMode.slice(1)} ${measurements.length + 1}`,
       points: [...currentPoints],
       distance: finalValue,
-      unit: serviceUnit
+      area: area > 0 ? area : undefined,
+      perimeter: perimeter > 0 ? perimeter : undefined,
+      unit: measurementMode === 'area' ? 'sqft' : 'ft',
+      type: measurementMode
     };
 
     const updatedMeasurements = [...measurements, newMeasurement];
@@ -577,7 +608,7 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     ];
     
     setCurrentPoints(rectanglePoints);
-    setSelectedShape("rectangle");
+    setMeasurementMode("area");
   };
 
   const createQuickPerimeter = () => {
@@ -593,7 +624,7 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     ];
     
     setCurrentPoints(perimeterPoints);
-    setSelectedShape("freeform");
+    setMeasurementMode("perimeter");
   };
 
   const addGateToFence = (x: number, y: number) => {
@@ -1010,7 +1041,7 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
           </div>
 
           {/* Fence Gates Section */}
-          {(selectedShape === "fence" || serviceUnit === 'ft') && (
+          {(measurementMode === "linear" || serviceUnit === 'ft') && (
             <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center">
