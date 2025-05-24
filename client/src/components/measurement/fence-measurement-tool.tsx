@@ -76,8 +76,11 @@ export default function FenceMeasurementTool({
   const [fenceHeight, setFenceHeight] = useState(6);
   const [postSpacing, setPostSpacing] = useState(8);
   const [gateMode, setGateMode] = useState(false);
+  const [selectedGateWidth, setSelectedGateWidth] = useState(4);
+  const [selectedGateType, setSelectedGateType] = useState<'gate' | 'double-gate'>('gate');
   const [gates, setGates] = useState<Gate[]>([]);
   const [mousePos, setMousePos] = useState<{x: number, y: number} | null>(null);
+  const [lastClickTime, setLastClickTime] = useState(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -140,15 +143,7 @@ export default function FenceMeasurementTool({
       ctx.stroke();
     }
 
-    // Draw property boundary
-    ctx.strokeStyle = "#10b981";
-    ctx.lineWidth = 3;
-    ctx.strokeRect(50, 50, width - 100, height - 100);
-    
-    // Add property labels
-    ctx.fillStyle = "#10b981";
-    ctx.font = "14px Arial";
-    ctx.fillText("Property Line", 60, 40);
+    // Property grid is ready for fence planning
   };
 
   const drawFenceLine = (ctx: CanvasRenderingContext2D, points: FencePoint[], isActive: boolean) => {
@@ -226,7 +221,7 @@ export default function FenceMeasurementTool({
 
   const drawGate = (ctx: CanvasRenderingContext2D, gate: Gate) => {
     // Gate opening
-    ctx.strokeStyle = "#f59e0b";
+    ctx.strokeStyle = gate.type === 'double-gate' ? "#dc2626" : "#f59e0b";
     ctx.lineWidth = 4;
     ctx.setLineDash([10, 5]);
     
@@ -238,11 +233,30 @@ export default function FenceMeasurementTool({
     
     ctx.setLineDash([]); // Reset dash
     
+    // Gate symbol - different for single vs double
+    if (gate.type === 'double-gate') {
+      // Double gate symbol (two arcs)
+      ctx.strokeStyle = "#dc2626";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(gate.x - gateWidth/4, gate.y, gateWidth/4, 0, Math.PI);
+      ctx.arc(gate.x + gateWidth/4, gate.y, gateWidth/4, 0, Math.PI);
+      ctx.stroke();
+    } else {
+      // Single gate symbol (one arc)
+      ctx.strokeStyle = "#f59e0b";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(gate.x - gateWidth/2, gate.y, gateWidth/2, 0, Math.PI);
+      ctx.stroke();
+    }
+    
     // Gate label
-    ctx.fillStyle = "#f59e0b";
+    ctx.fillStyle = gate.type === 'double-gate' ? "#dc2626" : "#f59e0b";
     ctx.font = "12px Arial";
     ctx.textAlign = "center";
-    ctx.fillText(`${gate.width}' Gate`, gate.x, gate.y - 10);
+    const gateLabel = gate.type === 'double-gate' ? `${gate.width}' Double Gate` : `${gate.width}' Gate`;
+    ctx.fillText(gateLabel, gate.x, gate.y - 15);
   };
 
   const drawTempLine = (ctx: CanvasRenderingContext2D, from: FencePoint, to: {x: number, y: number}) => {
@@ -310,14 +324,25 @@ export default function FenceMeasurementTool({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
+    // Handle double-click to finish fence
+    const currentTime = Date.now();
+    const timeDiff = currentTime - lastClickTime;
+    setLastClickTime(currentTime);
+
+    if (timeDiff < 400 && isDrawing && currentPoints.length >= 2) {
+      // Double-click detected - finish fence
+      finishFence();
+      return;
+    }
+
     if (gateMode) {
-      // Add gate
+      // Add gate with selected size and type
       const newGate: Gate = {
         x,
         y,
-        width: 4, // Default 4ft gate
+        width: selectedGateWidth,
         id: `gate-${Date.now()}`,
-        type: 'gate'
+        type: selectedGateType
       };
       setGates(prev => [...prev, newGate]);
       setGateMode(false);
@@ -469,6 +494,47 @@ export default function FenceMeasurementTool({
             </div>
           </div>
 
+          {/* Gate Configuration */}
+          <div className="grid grid-cols-2 gap-4 mb-3">
+            <div>
+              <Label className="text-sm">Gate Width</Label>
+              <div className="flex gap-1">
+                {[3, 4, 5, 6, 8, 10, 12].map(width => (
+                  <Button
+                    key={width}
+                    onClick={() => setSelectedGateWidth(width)}
+                    variant={selectedGateWidth === width ? "default" : "outline"}
+                    size="sm"
+                    className="h-8 px-2 text-xs"
+                  >
+                    {width}'
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Label className="text-sm">Gate Type</Label>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setSelectedGateType('gate')}
+                  variant={selectedGateType === 'gate' ? "default" : "outline"}
+                  size="sm"
+                  className="h-8 text-xs"
+                >
+                  Single
+                </Button>
+                <Button
+                  onClick={() => setSelectedGateType('double-gate')}
+                  variant={selectedGateType === 'double-gate' ? "default" : "outline"}
+                  size="sm"
+                  className="h-8 text-xs"
+                >
+                  Double
+                </Button>
+              </div>
+            </div>
+          </div>
+
           {/* Drawing Controls */}
           <div className="flex gap-2">
             <Button
@@ -477,7 +543,7 @@ export default function FenceMeasurementTool({
               size="sm"
             >
               <MapPin className="h-4 w-4 mr-1" />
-              {gateMode ? "Exit Gate Mode" : "Add Gate"}
+              {gateMode ? `Exit Gate Mode (${selectedGateWidth}' ${selectedGateType === 'double-gate' ? 'Double' : 'Single'})` : "Add Gate"}
             </Button>
             
             <Button onClick={finishFence} variant="outline" size="sm" disabled={currentPoints.length < 2}>
@@ -494,7 +560,7 @@ export default function FenceMeasurementTool({
           {/* Instructions */}
           <div className="text-xs text-green-700 bg-green-50 p-2 rounded">
             <strong>Instructions:</strong> Click to start drawing fence line. Each click adds a fence section. 
-            Click "Add Gate" then click on fence line to place gates. Click "Complete Fence" when done.
+            <strong>Double-click to finish the fence.</strong> Select gate size and type, then click "Add Gate" and click on the plan to place gates.
           </div>
         </CardContent>
       </Card>
