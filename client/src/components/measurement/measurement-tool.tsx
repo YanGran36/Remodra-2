@@ -1005,8 +1005,16 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
             height={600}
             onClick={handleCanvasClick}
             onMouseMove={handleMouseMove}
-            onMouseLeave={() => setMousePos(null)}
-            className="border border-gray-300 cursor-crosshair w-full"
+            onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={() => {
+              setMousePos(null);
+              setIsPanning(false);
+            }}
+            className={`border border-gray-300 w-full ${
+              isPanning ? 'cursor-grabbing' : 
+              zoomLevel > 1.5 ? 'cursor-grab' : 'cursor-crosshair'
+            }`}
             style={{ maxWidth: '100%', height: 'auto' }}
           />
         </CardContent>
