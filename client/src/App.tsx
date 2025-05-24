@@ -23,7 +23,7 @@ import PdfTemplateEditorPage from "@/pages/pdf-template-editor-page";
 import CompanyServicesPage from "@/pages/company-services-page";
 import ToolsDashboard from "@/pages/tools-dashboard";
 import PremiumEstimatePage from "@/pages/premium-estimate-page";
-import VendorEstimateSimple from "@/pages/vendor-estimate-simple";
+import VendorEstimateFormPage from "@/pages/vendor-estimate-form-page";
 import VendorEstimateFormPageNew from "@/pages/vendor-estimate-form-page-new";
 import VendorServiceEstimatePage from "@/pages/vendor-service-estimate-page";
 import PropertyMeasurementsPage from "@/pages/property-measurements-page";
@@ -63,7 +63,7 @@ function Router() {
       <ProtectedRoute path="/estimates/:id" component={EstimateDetailPage} />
       <ProtectedRoute path="/estimates/:id/print" component={EstimatePrintPage} />
       <ProtectedRoute path="/premium-estimate" component={PremiumEstimatePage} />
-      <ProtectedRoute path="/vendor-estimate-form" component={VendorEstimateFormPageNew} />
+      <ProtectedRoute path="/vendor-estimate-form" component={VendorEstimateFormPage} />
       <ProtectedRoute path="/vendor-estimate-form-service" component={VendorServiceEstimatePage} />
       <ProtectedRoute path="/vendor-estimate-form-new" component={VendorEstimateFormPageNew} />
       <ProtectedRoute path="/property-measurements" component={PropertyMeasurementsPage} />
