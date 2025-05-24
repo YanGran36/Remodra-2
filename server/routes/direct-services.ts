@@ -78,6 +78,57 @@ export function registerDirectServicesRoutes(app: Express) {
     }
   });
 
+  // Simple endpoint to update a service
+  app.put('/api/direct/services/:serviceType', async (req: any, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+
+      const { serviceType } = req.params;
+      console.log(`[DIRECT] Updating service ${serviceType} for contractor ${req.user.id}:`, req.body);
+      
+      const updateData = {
+        name: req.body.name || 'Updated Service',
+        serviceType: req.body.serviceType || serviceType,
+        unit: req.body.unit || 'unit',
+        laborRate: (req.body.laborRate || 0).toString(),
+        laborCalculationMethod: req.body.laborMethod || 'by_area',
+        updatedAt: new Date()
+      };
+      
+      const [updatedService] = await db
+        .update(servicePricing)
+        .set(updateData)
+        .where(and(
+          eq(servicePricing.serviceType, serviceType),
+          eq(servicePricing.contractorId, req.user.id)
+        ))
+        .returning();
+      
+      if (!updatedService) {
+        return res.status(404).json({ message: 'Service not found' });
+      }
+      
+      console.log(`[DIRECT] Service updated:`, updatedService);
+      
+      // Return in format expected by frontend
+      const formattedService = {
+        id: updatedService.id,
+        name: updatedService.name,
+        serviceType: updatedService.serviceType,
+        unit: updatedService.unit,
+        laborRate: parseFloat(updatedService.laborRate),
+        laborMethod: updatedService.laborCalculationMethod
+      };
+      
+      res.json(formattedService);
+    } catch (error) {
+      console.error('[DIRECT] Error updating service:', error);
+      res.status(500).json({ message: 'Error updating service' });
+    }
+  });
+
   // Simple endpoint to delete a service
   app.delete('/api/direct/services/:serviceType', async (req: any, res) => {
     try {

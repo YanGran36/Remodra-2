@@ -27,6 +27,8 @@ export default function SimplePricingPage() {
     laborMethod: "by_area"
   });
 
+  const [editingService, setEditingService] = useState<Service | null>(null);
+
   // Get services from database using direct endpoint
   const { data: services = [], refetch, isLoading } = useQuery<Service[]>({
     queryKey: ['/api/direct/services'],
@@ -39,7 +41,9 @@ export default function SimplePricingPage() {
 
   const handleSaveService = async () => {
     try {
-      if (!newService.name || !newService.serviceType) {
+      const serviceData = editingService ? newService : newService;
+      
+      if (!serviceData.name || !serviceData.serviceType) {
         toast({
           title: "Missing Information",
           description: "Please fill in service name and type",
@@ -48,29 +52,43 @@ export default function SimplePricingPage() {
         return;
       }
 
-      const response = await fetch('/api/direct/services', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newService)
-      });
+      if (editingService) {
+        // Update existing service
+        const response = await fetch(`/api/direct/services/${editingService.serviceType}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(serviceData)
+        });
 
-      if (response.ok) {
-        // Reset form
-        setNewService({
-          name: "",
-          serviceType: "",
-          unit: "sqft",
-          laborRate: 0,
-          laborMethod: "by_area"
-        });
-        // Refresh the list
-        refetch();
-        toast({
-          title: "Service Added",
-          description: "New service has been saved successfully",
-        });
+        if (response.ok) {
+          setEditingService(null);
+          resetForm();
+          refetch();
+          toast({
+            title: "Service Updated",
+            description: "Service has been updated successfully",
+          });
+        } else {
+          throw new Error('Failed to update service');
+        }
       } else {
-        throw new Error('Failed to save service');
+        // Create new service
+        const response = await fetch('/api/direct/services', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(serviceData)
+        });
+
+        if (response.ok) {
+          resetForm();
+          refetch();
+          toast({
+            title: "Service Added",
+            description: "New service has been saved successfully",
+          });
+        } else {
+          throw new Error('Failed to save service');
+        }
       }
     } catch (error) {
       console.error('Error saving service:', error);
@@ -80,6 +98,28 @@ export default function SimplePricingPage() {
         variant: "destructive",
       });
     }
+  };
+
+  const resetForm = () => {
+    setNewService({
+      name: "",
+      serviceType: "",
+      unit: "sqft",
+      laborRate: 0,
+      laborMethod: "by_area"
+    });
+    setEditingService(null);
+  };
+
+  const handleEditService = (service: Service) => {
+    setEditingService(service);
+    setNewService({
+      name: service.name,
+      serviceType: service.serviceType,
+      unit: service.unit,
+      laborRate: Number(service.laborRate),
+      laborMethod: service.laborMethod
+    });
   };
 
   const handleDeleteService = async (serviceId: string) => {
@@ -114,7 +154,9 @@ export default function SimplePricingPage() {
       {/* Add New Service Form */}
       <Card>
         <CardHeader>
-          <CardTitle>Add New Service</CardTitle>
+          <CardTitle>
+            {editingService ? 'Edit Service' : 'Add New Service'}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -165,9 +207,16 @@ export default function SimplePricingPage() {
               />
             </div>
           </div>
-          <Button onClick={handleSaveService} className="w-full">
-            Save Service
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={handleSaveService} className="flex-1">
+              {editingService ? 'Update Service' : 'Save Service'}
+            </Button>
+            {editingService && (
+              <Button onClick={resetForm} variant="outline" className="flex-1">
+                Cancel
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -210,13 +259,22 @@ export default function SimplePricingPage() {
                     </TableCell>
                     <TableCell>${service.laborRate || 0}/{service.unit || 'unit'}</TableCell>
                     <TableCell>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleDeleteService(service.serviceType || service.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEditService(service)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleDeleteService(service.serviceType || service.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
