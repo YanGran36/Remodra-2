@@ -29,14 +29,13 @@ const defaultMaterials: MaterialPrice[] = [];
  * Hook personalizado para obtener y utilizar los precios centralizados
  */
 export function usePricing() {
-  // Consulta para servicios - Con carga directa de valores fijos
+  // Consulta para servicios - Usar la API directa que funciona
   const { 
     data: servicePrices, 
     isLoading: servicesLoading,
     error: servicesError
   } = useQuery({
-    queryKey: ['/api/pricing/services'],
-    // Ahora usamos los valores reales de la API en lugar de valores hardcodeados
+    queryKey: ['/api/direct/services'],
     retry: 1,
   });
 
