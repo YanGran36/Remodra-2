@@ -136,6 +136,61 @@ export function registerDirectServicesRoutes(app: Express) {
     }
   });
 
+  // Simple endpoint to update service via POST (avoiding PUT conflicts)
+  app.post('/api/direct/services/update', async (req: any, res) => {
+    console.log('[DIRECT] Update service POST request received');
+    console.log('[DIRECT] Request body:', req.body);
+    
+    try {
+      if (!req.isAuthenticated()) {
+        console.log('[DIRECT] User not authenticated');
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+
+      const { originalServiceType, name, serviceType, unit, laborRate, laborMethod } = req.body;
+      console.log(`[DIRECT] Updating service ${originalServiceType} for contractor ${req.user.id}`);
+      
+      const updateData = {
+        name: name || 'Updated Service',
+        serviceType: serviceType || originalServiceType,
+        unit: unit || 'unit',
+        laborRate: (laborRate || 0).toString(),
+        laborCalculationMethod: laborMethod || 'by_area',
+        updatedAt: new Date()
+      };
+      
+      console.log('[DIRECT] Update data:', updateData);
+      
+      const [updatedService] = await db
+        .update(servicePricing)
+        .set(updateData)
+        .where(and(
+          eq(servicePricing.serviceType, originalServiceType || serviceType),
+          eq(servicePricing.contractorId, req.user.id)
+        ))
+        .returning();
+      
+      if (!updatedService) {
+        console.log('[DIRECT] Service not found');
+        return res.status(404).json({ message: 'Service not found' });
+      }
+      
+      console.log('[DIRECT] Service updated successfully:', updatedService);
+      
+      res.json({
+        id: updatedService.id,
+        name: updatedService.name,
+        serviceType: updatedService.serviceType,
+        unit: updatedService.unit,
+        laborRate: parseFloat(updatedService.laborRate),
+        laborMethod: updatedService.laborCalculationMethod
+      });
+    } catch (error) {
+      console.error('[DIRECT] Error updating service:', error);
+      res.status(500).json({ message: 'Error updating service' });
+    }
+  });
+
   // Simple endpoint to delete a service
   app.delete('/api/direct/services/:serviceType', async (req: any, res) => {
     try {
