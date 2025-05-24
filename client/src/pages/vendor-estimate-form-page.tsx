@@ -108,7 +108,6 @@ import { usePricing } from '@/hooks/use-pricing';
 
 // Importar componentes de formulario especializados
 import ServiceEstimateForm from "@/components/estimates/service-estimate-form";
-import { ServiceItemSelector } from "@/components/estimates/service-item-selector";
 
 // Define el esquema de validación del formulario
 const formSchema = z.object({
@@ -484,7 +483,7 @@ export default function VendorEstimateFormPage() {
             <TabsContent value="services" className="space-y-6 pt-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Services Selection</CardTitle>
+                  <CardTitle>Multi Services</CardTitle>
                   <CardDescription>
                     Select the services you want to include in this estimate
                   </CardDescription>
