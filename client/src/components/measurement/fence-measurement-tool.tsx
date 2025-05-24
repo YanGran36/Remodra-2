@@ -381,6 +381,18 @@ export default function FenceMeasurementTool({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
+    // Check if clicking on an existing fence point to start dragging
+    const clickedPoint = currentPoints.find(point => {
+      const distance = Math.sqrt(Math.pow(x - point.x, 2) + Math.pow(y - point.y, 2));
+      return distance <= 10; // 10px tolerance
+    });
+
+    if (clickedPoint && !isDrawing) {
+      setDraggingPoint(clickedPoint.id);
+      setLastMousePos({ x, y });
+      return;
+    }
+
     // Check if clicking on an existing gate to select it
     const clickedGate = gates.find(gate => {
       const gateWidth = gate.width * scale;
@@ -441,7 +453,64 @@ export default function FenceMeasurementTool({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
+    // Handle point dragging
+    if (draggingPoint && lastMousePos) {
+      const deltaX = x - lastMousePos.x;
+      const deltaY = y - lastMousePos.y;
+      
+      setCurrentPoints(prev => prev.map(point => 
+        point.id === draggingPoint 
+          ? { ...point, x: point.x + deltaX, y: point.y + deltaY }
+          : point
+      ));
+      
+      setLastMousePos({ x, y });
+      return;
+    }
+
+    // Handle gate dragging
+    if (draggingGate && lastMousePos) {
+      const deltaX = x - lastMousePos.x;
+      const deltaY = y - lastMousePos.y;
+      
+      setGates(prev => prev.map(gate => 
+        gate.id === draggingGate 
+          ? { ...gate, x: gate.x + deltaX, y: gate.y + deltaY }
+          : gate
+      ));
+      
+      setLastMousePos({ x, y });
+      return;
+    }
+
     setMousePos({ x, y });
+  };
+
+  const handleCanvasMouseUp = () => {
+    setDraggingPoint(null);
+    setDraggingGate(null);
+    setLastMousePos(null);
+  };
+
+  const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Check if clicking on a gate to start dragging
+    const clickedGate = gates.find(gate => {
+      const distance = Math.sqrt(Math.pow(x - gate.x, 2) + Math.pow(y - gate.y, 2));
+      return distance <= 15; // 15px tolerance for gates
+    });
+
+    if (clickedGate) {
+      setDraggingGate(clickedGate.id);
+      setLastMousePos({ x, y });
+      return;
+    }
   };
 
   const finishFence = () => {
@@ -550,12 +619,7 @@ export default function FenceMeasurementTool({
     setMeasurements(prev => prev.filter(m => m.id !== measurementId));
   };
 
-  const deleteGate = (gateId: string) => {
-    setGates(prev => prev.filter(g => g.id !== gateId));
-    if (selectedGate === gateId) {
-      setSelectedGate(null);
-    }
-  };
+
 
   const deleteMeasurement = (measurementId: string) => {
     setMeasurements(prev => prev.filter(m => m.id !== measurementId));
@@ -608,6 +672,12 @@ export default function FenceMeasurementTool({
       }
       return gate;
     }));
+  };
+
+  const deleteSelectedGate = () => {
+    if (!selectedGate) return;
+    setGates(prev => prev.filter(gate => gate.id !== selectedGate));
+    setSelectedGate(null);
   };
 
   return (
@@ -802,6 +872,40 @@ export default function FenceMeasurementTool({
                       ↶ -45°
                     </Button>
                     <Button
+                      onClick={() => {
+                        if (!selectedGate) return;
+                        const currentGate = gates.find(g => g.id === selectedGate);
+                        if (currentGate) {
+                          const newRotation = (currentGate.rotation - 5 + 360) % 360;
+                          setGates(prev => prev.map(gate => 
+                            gate.id === selectedGate ? { ...gate, rotation: newRotation } : gate
+                          ));
+                        }
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="h-6 px-1 text-xs"
+                    >
+                      ↶ -5°
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        if (!selectedGate) return;
+                        const currentGate = gates.find(g => g.id === selectedGate);
+                        if (currentGate) {
+                          const newRotation = (currentGate.rotation + 5) % 360;
+                          setGates(prev => prev.map(gate => 
+                            gate.id === selectedGate ? { ...gate, rotation: newRotation } : gate
+                          ));
+                        }
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="h-6 px-1 text-xs"
+                    >
+                      ↷ +5°
+                    </Button>
+                    <Button
                       onClick={() => rotateSelectedGate('right')}
                       variant="outline"
                       size="sm"
@@ -817,7 +921,7 @@ export default function FenceMeasurementTool({
               </div>
               
               <Button
-                onClick={() => deleteGate(selectedGate)}
+                onClick={deleteSelectedGate}
                 variant="destructive"
                 size="sm"
                 className="w-full mt-2 h-6 text-xs"
