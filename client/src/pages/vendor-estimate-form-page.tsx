@@ -25,6 +25,7 @@ import {
 // Componentes de Medición Digital
 import DigitalMeasurement from "@/components/measurement/digital-measurement";
 import LiDARScanner from "@/components/measurement/lidar-scanner";
+import { ServiceItemSelector } from "@/components/estimates/service-item-selector";
 
 // UI Components
 import PageHeader from "@/components/ui/page-header";
@@ -493,50 +494,11 @@ export default function VendorEstimateFormPage() {
                     control={form.control}
                     name="serviceType"
                     render={({ field }) => (
-                      <FormItem className="space-y-1">
-                        <FormControl>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div 
-                              className={`p-6 border-2 rounded-lg cursor-pointer transition-all ${field.value === 'deck' ? 'border-blue-500 bg-blue-50 shadow-lg' : 'border-gray-300 hover:border-blue-400 hover:shadow-md'}`}
-                              onClick={() => field.onChange('deck')}
-                            >
-                              <div className="text-3xl mb-3">🪵</div>
-                              <div className="font-bold text-lg">Deck Installation</div>
-                              <div className="text-sm text-gray-600 mt-1">$40.00 per sqft</div>
-                              <div className="text-xs text-gray-500 mt-2">Labor method: by area</div>
-                            </div>
-                            
-                            <div 
-                              className={`p-6 border-2 rounded-lg cursor-pointer transition-all ${field.value === 'fence' ? 'border-blue-500 bg-blue-50 shadow-lg' : 'border-gray-300 hover:border-blue-400 hover:shadow-md'}`}
-                              onClick={() => field.onChange('fence')}
-                            >
-                              <div className="text-3xl mb-3">🔧</div>
-                              <div className="font-bold text-lg">Fence Installation</div>
-                              <div className="text-sm text-gray-600 mt-1">$38.00 per ft</div>
-                              <div className="text-xs text-gray-500 mt-2">Labor method: by area</div>
-                            </div>
-                            
-                            <div 
-                              className={`p-6 border-2 rounded-lg cursor-pointer transition-all ${field.value === 'roof' ? 'border-blue-500 bg-blue-50 shadow-lg' : 'border-gray-300 hover:border-blue-400 hover:shadow-md'}`}
-                              onClick={() => field.onChange('roof')}
-                            >
-                              <div className="text-3xl mb-3">🏠</div>
-                              <div className="font-bold text-lg">Roof Installation</div>
-                              <div className="text-sm text-gray-600 mt-1">$15.00 per sqft</div>
-                              <div className="text-xs text-gray-500 mt-2">Labor method: by area</div>
-                            </div>
-                            
-                            <div 
-                              className={`p-6 border-2 rounded-lg cursor-pointer transition-all ${field.value === 'windows' ? 'border-blue-500 bg-blue-50 shadow-lg' : 'border-gray-300 hover:border-blue-400 hover:shadow-md'}`}
-                              onClick={() => field.onChange('windows')}
-                            >
-                              <div className="text-3xl mb-3">🪟</div>
-                              <div className="font-bold text-lg">Windows Installation</div>
-                              <div className="text-sm text-gray-600 mt-1">$350.00 per unit</div>
-                              <div className="text-xs text-gray-500 mt-2">Labor method: by area</div>
-                            </div>
-                          </div>
-                        </FormControl>
+                      <FormItem>
+                        <ServiceItemSelector 
+                          value={field.value || ""} 
+                          onChange={field.onChange}
+                        />
                         <FormMessage />
                       </FormItem>
                     )}
