@@ -38,13 +38,10 @@ const formatCurrency = (amount: number): string => {
 export function ServiceItemSelector({ value, onChange }: ServiceItemSelectorProps) {
   // Obtener servicios de la configuración de precios
   const { services, isLoading } = usePricing();
-  
-  // Función para prevenir el envío del formulario al hacer clic en botones
-  const preventFormSubmission = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
   const [expandedDetails, setExpandedDetails] = useState<string | null>(null);
+
+  console.log('Services in ServiceItemSelector:', services);
+  console.log('Services loading:', isLoading);
 
   const toggleDetails = (serviceId: string) => {
     if (expandedDetails === serviceId) {
@@ -71,7 +68,7 @@ export function ServiceItemSelector({ value, onChange }: ServiceItemSelectorProp
     );
   }
 
-  if (!services || services.length === 0) {
+  if (!services || !Array.isArray(services) || services.length === 0) {
     return (
       <div className="mb-6">
         <div className="text-lg font-semibold mb-2">Select Service Type</div>
