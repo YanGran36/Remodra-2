@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { usePricing } from "@/hooks/use-pricing";
+import { useQuery } from "@tanstack/react-query";
 
 interface ServiceItemSelectorProps {
   value: string;
@@ -8,7 +8,14 @@ interface ServiceItemSelectorProps {
 }
 
 export function ServiceItemSelector({ value, onChange }: ServiceItemSelectorProps) {
-  const { servicePrices: services, servicesLoading, servicesError } = usePricing();
+  const { 
+    data: services, 
+    isLoading: servicesLoading, 
+    error: servicesError 
+  } = useQuery({
+    queryKey: ['/api/direct/services'],
+    retry: 1,
+  });
 
   console.log("Services in ServiceItemSelector:", services);
   console.log("Services loading:", servicesLoading);
