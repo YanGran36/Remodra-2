@@ -457,10 +457,50 @@ export default function VendorEstimateFormPage() {
                           </div>
                         </div>
                         <FormControl>
-                          <ServiceItemSelector
-                            value={field.value}
-                            onChange={field.onChange}
-                          />
+                          <div className="space-y-4">
+                            <div className="bg-red-100 p-4 border-2 border-red-500 rounded-lg">
+                              <div className="text-center text-red-600 font-bold text-xl mb-4">
+                                🔴 SERVICIOS DIRECTO AQUI 🔴
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div 
+                                  className={`p-4 border-2 rounded-lg cursor-pointer ${field.value === 'deck' ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-blue-400'}`}
+                                  onClick={() => field.onChange('deck')}
+                                >
+                                  <div className="text-2xl mb-2">🪵</div>
+                                  <div className="font-bold">Deck Installation</div>
+                                  <div className="text-sm text-gray-600">$40.00 per sqft</div>
+                                </div>
+                                
+                                <div 
+                                  className={`p-4 border-2 rounded-lg cursor-pointer ${field.value === 'fence' ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-blue-400'}`}
+                                  onClick={() => field.onChange('fence')}
+                                >
+                                  <div className="text-2xl mb-2">🔧</div>
+                                  <div className="font-bold">Fence Installation</div>
+                                  <div className="text-sm text-gray-600">$38.00 per ft</div>
+                                </div>
+                                
+                                <div 
+                                  className={`p-4 border-2 rounded-lg cursor-pointer ${field.value === 'roof' ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-blue-400'}`}
+                                  onClick={() => field.onChange('roof')}
+                                >
+                                  <div className="text-2xl mb-2">🏠</div>
+                                  <div className="font-bold">Roof Installation</div>
+                                  <div className="text-sm text-gray-600">$15.00 per sqft</div>
+                                </div>
+                                
+                                <div 
+                                  className={`p-4 border-2 rounded-lg cursor-pointer ${field.value === 'windows' ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-blue-400'}`}
+                                  onClick={() => field.onChange('windows')}
+                                >
+                                  <div className="text-2xl mb-2">🪟</div>
+                                  <div className="font-bold">Windows Installation</div>
+                                  <div className="text-sm text-gray-600">$350.00 per unit</div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         </FormControl>
                         <FormDescription>
                           The type of service that will be provided
