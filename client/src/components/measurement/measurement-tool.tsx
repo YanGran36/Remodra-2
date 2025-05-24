@@ -138,9 +138,9 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
   }, [measurements, currentPoints, serviceUnit, mousePos, scale, panOffset, zoomLevel]);
 
   const drawFiveFootGrid = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
-    // Calculate grid size - each square represents 5 feet, adjusted for zoom
+    // Calculate grid size - each square represents 5 feet (no zoom multiplication here since we apply zoom via transform)
     const baseFiveFeetGridSize = scale > 0 ? scale * 5 : 40; // Default 40px if no scale set
-    const fiveFeetGridSize = baseFiveFeetGridSize * zoomLevel;
+    const fiveFeetGridSize = baseFiveFeetGridSize;
     
     // Only draw grid if it's not too small or too large
     if (fiveFeetGridSize < 5 || fiveFeetGridSize > 200) return;
@@ -205,11 +205,7 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     
     if (points.length === 0) return;
 
-    // Save context and apply zoom transformation
-    ctx.save();
-    ctx.scale(zoomLevel, zoomLevel);
-
-    // Draw lines between points first (behind points)
+    // Draw lines between points first (behind points) - no additional scaling needed
     if (points.length > 1) {
       ctx.beginPath();
       ctx.moveTo(points[0].x, points[0].y);
@@ -219,7 +215,7 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
       }
       
       ctx.strokeStyle = isActive ? '#3b82f6' : '#10b981';
-      ctx.lineWidth = 3 / zoomLevel; // Scale line width inversely with zoom
+      ctx.lineWidth = 3;
       ctx.stroke();
 
       // Draw distance labels with cleaner, more precise positioning
@@ -236,47 +232,46 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
         if (pixelDistance > 20) {
           const labelText = `${realDistance} ${measurement.unit}`;
           
-          // Scale font size inversely with zoom to maintain visual size
-          const fontSize = Math.max(8, 11 / zoomLevel);
-          ctx.font = `${fontSize}px Arial`;
+          // Use normal font size (no inverse scaling needed with canvas transforms)
+          ctx.font = '11px Arial';
           ctx.textAlign = 'center';
           const textWidth = ctx.measureText(labelText).width;
           
-          // Position label closer to the line, with scaled offset
+          // Position label closer to the line
           const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
           const perpAngle = angle + Math.PI / 2;
-          const offsetDistance = 8 / zoomLevel; // Scale offset
+          const offsetDistance = 8;
           const labelX = midX + Math.cos(perpAngle) * offsetDistance;
           const labelY = midY + Math.sin(perpAngle) * offsetDistance;
           
-          // Scale background dimensions
-          const bgPadding = 2 / zoomLevel;
-          const bgHeight = 12 / zoomLevel;
+          // Normal background dimensions
+          const bgPadding = 2;
+          const bgHeight = 12;
           
           // Subtle label background
           ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
           ctx.fillRect(labelX - textWidth/2 - bgPadding, labelY - bgHeight/2, textWidth + bgPadding*2, bgHeight);
           
-          // Border for better visibility with scaled line width
+          // Border for better visibility
           ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
-          ctx.lineWidth = 0.5 / zoomLevel;
+          ctx.lineWidth = 0.5;
           ctx.strokeRect(labelX - textWidth/2 - bgPadding, labelY - bgHeight/2, textWidth + bgPadding*2, bgHeight);
           
           // Label text
           ctx.fillStyle = '#374151';
-          ctx.fillText(labelText, labelX, labelY + 2/zoomLevel);
+          ctx.fillText(labelText, labelX, labelY + 2);
         }
       }
     }
 
-    // Draw points on top with better precision - scale sizes inversely with zoom
+    // Draw points on top with normal sizes (no inverse scaling)
     points.forEach((point, index) => {
-      // Scale all point elements to maintain visual size
-      const crosshairSize = 8 / zoomLevel;
-      const centerDotRadius = 2 / zoomLevel;
-      const outerRingRadius = 5 / zoomLevel;
-      const lineWidth = 1 / zoomLevel;
-      const boldLineWidth = 2 / zoomLevel;
+      // Use normal sizes since canvas transform handles scaling
+      const crosshairSize = 8;
+      const centerDotRadius = 2;
+      const outerRingRadius = 5;
+      const lineWidth = 1;
+      const boldLineWidth = 2;
       
       // Crosshair for precise positioning
       ctx.strokeStyle = isActive ? '#1d4ed8' : '#059669';
@@ -785,6 +780,29 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
                 Zoom In
               </Button>
             </div>
+            
+            {/* Reset View Button */}
+            <div className="flex justify-center pt-1">
+              <Button
+                onClick={() => {
+                  setZoomLevel(1.0);
+                  setPanOffset({ x: 0, y: 0 });
+                }}
+                variant="outline"
+                size="sm"
+                className="bg-white hover:bg-green-50 border-green-200"
+              >
+                <RotateCcw className="h-4 w-4 mr-1" />
+                Reset View
+              </Button>
+            </div>
+            
+            {/* Navigation Tip */}
+            {zoomLevel > 1.5 && (
+              <div className="text-xs text-green-600 bg-green-50 rounded p-2 border border-green-200">
+                💡 <strong>Tip:</strong> Hold Shift and drag to navigate when zoomed in
+              </div>
+            )}
           </div>
 
           {/* Action Buttons */}
