@@ -61,6 +61,11 @@ export function ServiceItemSelector({ value, onChange }: ServiceItemSelectorProp
   return (
     <div className="mb-6">
       <div className="text-lg font-semibold mb-2">Select Service Type</div>
+      <div className="bg-red-100 p-4 border-2 border-red-500 rounded-lg mb-4">
+        <div className="text-center text-red-600 font-bold text-xl">
+          🔴 AQUI - SERVICIOS AQUI 🔴
+        </div>
+      </div>
       <div className="bg-white p-4 border-2 border-blue-500 rounded-lg shadow-lg">
         <div className="text-center mb-4 text-blue-600 font-bold">
           Found {servicesArray.length} services configured
