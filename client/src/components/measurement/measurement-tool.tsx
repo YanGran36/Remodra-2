@@ -34,6 +34,7 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
   const [isCalibrating, setIsCalibrating] = useState(false);
   const [calibrationDistance, setCalibrationDistance] = useState("");
   const [nextLabel, setNextLabel] = useState("");
+  const [mousePos, setMousePos] = useState<{x: number, y: number} | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -63,8 +64,41 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
         unit: serviceUnit
       };
       drawMeasurement(ctx, tempMeasurement, true);
+
+      // Draw preview line to mouse position
+      if (mousePos && currentPoints.length > 0) {
+        const lastPoint = currentPoints[currentPoints.length - 1];
+        
+        // Preview line
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(lastPoint.x, lastPoint.y);
+        ctx.lineTo(mousePos.x, mousePos.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Show preview distance
+        const pixelDistance = Math.sqrt((mousePos.x - lastPoint.x) ** 2 + (mousePos.y - lastPoint.y) ** 2);
+        const realDistance = scale > 0 ? (pixelDistance / scale).toFixed(1) : pixelDistance.toFixed(0);
+        
+        const midX = (lastPoint.x + mousePos.x) / 2;
+        const midY = (lastPoint.y + mousePos.y) / 2;
+        
+        // Preview label
+        ctx.fillStyle = 'rgba(59, 130, 246, 0.9)';
+        ctx.font = 'bold 12px Arial';
+        const previewText = `${realDistance} ${serviceUnit}`;
+        const textWidth = ctx.measureText(previewText).width;
+        ctx.fillRect(midX - textWidth/2 - 3, midY - 10, textWidth + 6, 20);
+        
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.fillText(previewText, midX, midY + 3);
+      }
     }
-  }, [measurements, currentPoints, serviceUnit]);
+  }, [measurements, currentPoints, serviceUnit, mousePos, scale]);
 
   const drawGrid = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
     ctx.strokeStyle = '#e0e0e0';
@@ -118,90 +152,111 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
         // Calculate angle for text rotation
         const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
         
-        // Draw label background with shadow for better visibility
+        // Draw label background with better positioning
         const labelText = `${realDistance} ${measurement.unit}`;
-        ctx.font = 'bold 14px Arial';
+        ctx.font = 'bold 12px Arial';
         ctx.textAlign = 'center';
         const textWidth = ctx.measureText(labelText).width;
         
-        // Shadow/outline for better visibility
+        // Position label slightly offset from line center
+        const offsetDistance = 15;
+        const perpAngle = angle + Math.PI / 2;
+        const labelX = midX + Math.cos(perpAngle) * offsetDistance;
+        const labelY = midY + Math.sin(perpAngle) * offsetDistance;
+        
+        // Draw label background
         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-        ctx.fillRect(midX - textWidth/2 - 4, midY - 10, textWidth + 8, 20);
+        ctx.fillRect(labelX - textWidth/2 - 3, labelY - 8, textWidth + 6, 16);
         
-        // White text
+        // Draw label text
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(labelText, midX, midY + 4);
+        ctx.fillText(labelText, labelX, labelY + 3);
         
-        // Add small arrow indicators
-        const arrowSize = 8;
-        const arrowOffset = 25;
+        // Draw dimension line extensions
+        const extensionLength = 10;
+        const extensionOffset = 5;
         
-        // Arrow at start point
-        ctx.save();
-        ctx.translate(p1.x, p1.y);
-        ctx.rotate(angle);
+        // Extension lines at both ends
+        ctx.strokeStyle = isActive ? '#1d4ed8' : '#059669';
+        ctx.lineWidth = 1;
+        
+        // Start extension
         ctx.beginPath();
-        ctx.moveTo(-arrowOffset, 0);
-        ctx.lineTo(-arrowOffset + arrowSize, -arrowSize/2);
-        ctx.lineTo(-arrowOffset + arrowSize, arrowSize/2);
-        ctx.closePath();
-        ctx.fillStyle = isActive ? '#1d4ed8' : '#059669';
-        ctx.fill();
-        ctx.restore();
+        ctx.moveTo(p1.x + Math.cos(perpAngle) * extensionOffset, p1.y + Math.sin(perpAngle) * extensionOffset);
+        ctx.lineTo(p1.x + Math.cos(perpAngle) * (extensionOffset + extensionLength), p1.y + Math.sin(perpAngle) * (extensionOffset + extensionLength));
+        ctx.stroke();
         
-        // Arrow at end point
-        ctx.save();
-        ctx.translate(p2.x, p2.y);
-        ctx.rotate(angle + Math.PI);
+        // End extension
         ctx.beginPath();
-        ctx.moveTo(-arrowOffset, 0);
-        ctx.lineTo(-arrowOffset + arrowSize, -arrowSize/2);
-        ctx.lineTo(-arrowOffset + arrowSize, arrowSize/2);
-        ctx.closePath();
-        ctx.fillStyle = isActive ? '#1d4ed8' : '#059669';
-        ctx.fill();
-        ctx.restore();
+        ctx.moveTo(p2.x + Math.cos(perpAngle) * extensionOffset, p2.y + Math.sin(perpAngle) * extensionOffset);
+        ctx.lineTo(p2.x + Math.cos(perpAngle) * (extensionOffset + extensionLength), p2.y + Math.sin(perpAngle) * (extensionOffset + extensionLength));
+        ctx.stroke();
       }
     }
 
-    // Draw points on top
+    // Draw points on top with better precision
     points.forEach((point, index) => {
-      // Outer circle (shadow)
+      // Crosshair for precise positioning
+      ctx.strokeStyle = isActive ? '#1d4ed8' : '#059669';
+      ctx.lineWidth = 1;
+      
+      // Horizontal crosshair line
       ctx.beginPath();
-      ctx.arc(point.x + 1, point.y + 1, 7, 0, 2 * Math.PI);
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.moveTo(point.x - 8, point.y);
+      ctx.lineTo(point.x + 8, point.y);
+      ctx.stroke();
+      
+      // Vertical crosshair line
+      ctx.beginPath();
+      ctx.moveTo(point.x, point.y - 8);
+      ctx.lineTo(point.x, point.y + 8);
+      ctx.stroke();
+      
+      // Center dot
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, 2, 0, 2 * Math.PI);
+      ctx.fillStyle = isActive ? '#1d4ed8' : '#059669';
       ctx.fill();
       
-      // Main point circle
+      // Outer ring
       ctx.beginPath();
-      ctx.arc(point.x, point.y, 6, 0, 2 * Math.PI);
-      ctx.fillStyle = isActive ? '#3b82f6' : '#10b981';
-      ctx.fill();
+      ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
       ctx.strokeStyle = isActive ? '#1d4ed8' : '#059669';
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Inner circle
-      ctx.beginPath();
-      ctx.arc(point.x, point.y, 3, 0, 2 * Math.PI);
-      ctx.fillStyle = 'white';
-      ctx.fill();
-
-      // Point number with better visibility
-      ctx.font = 'bold 11px Arial';
+      // Point number with compact design
+      ctx.font = 'bold 10px Arial';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       
-      // Background circle for number
+      // Small background for number (closer to point)
+      const numberX = point.x + 8;
+      const numberY = point.y - 8;
+      
       ctx.beginPath();
-      ctx.arc(point.x + 12, point.y - 12, 10, 0, 2 * Math.PI);
+      ctx.arc(numberX, numberY, 7, 0, 2 * Math.PI);
       ctx.fillStyle = isActive ? '#1d4ed8' : '#059669';
       ctx.fill();
       
       // Number text
       ctx.fillStyle = 'white';
-      ctx.fillText((index + 1).toString(), point.x + 12, point.y - 12);
+      ctx.fillText((index + 1).toString(), numberX, numberY);
     });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+
+    setMousePos({ x, y });
   };
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -209,8 +264,11 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
 
     const newPoint: Point = {
       x,
@@ -480,6 +538,8 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
             width={800}
             height={600}
             onClick={handleCanvasClick}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={() => setMousePos(null)}
             className="border border-gray-300 cursor-crosshair w-full"
             style={{ maxWidth: '100%', height: 'auto' }}
           />
