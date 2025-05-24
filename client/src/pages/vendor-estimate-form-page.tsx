@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
-import ProfessionalMeasurementTool from "@/components/measurement/professional-measurement-tool";
+import FenceMeasurementTool from "@/components/measurement/fence-measurement-tool";
 
 const formSchema = z.object({
   clientId: z.number().min(1, "Please select a client"),
@@ -538,34 +538,25 @@ export default function VendorEstimateFormPage() {
                           </p>
                         </div>
                         
-                        <ProfessionalMeasurementTool 
+                        <FenceMeasurementTool 
                           onMeasurementsChange={(measurements) => {
-                            // Calculate totals from professional measurements
-                            const totalArea = measurements.reduce((sum, m) => sum + (m.area || 0), 0);
-                            const totalLinear = measurements.reduce((sum, m) => sum + (m.length || m.perimeter || 0), 0);
+                            // Calculate totals from fence measurements
+                            const totalLength = measurements.reduce((sum, m) => sum + m.totalLength, 0);
+                            const totalPosts = measurements.reduce((sum, m) => sum + m.totalPosts, 0);
+                            const totalGates = measurements.reduce((sum, m) => sum + m.totalGates, 0);
                             
-                            // Update form with measurement data based on service type
-                            if (selectedService.unit === 'sqft') {
-                              form.setValue("squareFeet", totalArea);
-                            } else if (selectedService.unit === 'ft') {
-                              form.setValue("linearFeet", totalLinear);
-                            } else if (selectedService.unit === 'unit') {
-                              form.setValue("units", measurements.length); // Count of measurements
-                            }
+                            // Update form with fence measurement data
+                            form.setValue("linearFeet", totalLength);
+                            form.setValue("quantity", totalPosts); // Posts count
                             
-                            // Auto-calculate labor cost
+                            // Auto-calculate labor cost based on linear feet
                             const laborRate = parseFloat(selectedService.laborRate) || 0;
-                            let laborTotal = 0;
-                            
-                            if (selectedService.unit === 'sqft') {
-                              laborTotal = totalArea * laborRate;
-                            } else if (selectedService.unit === 'ft') {
-                              laborTotal = totalLinear * laborRate;
-                            } else {
-                              laborTotal = measurements.length * laborRate;
-                            }
-                            
+                            const laborTotal = totalLength * laborRate;
                             form.setValue("laborCost", laborTotal);
+                            
+                            // Calculate material costs (optional - can be enhanced later)
+                            const estimatedMaterialCost = (totalPosts * 25) + (Math.ceil(totalLength / 8) * 45) + (totalGates * 150);
+                            form.setValue("materialsCost", estimatedMaterialCost);
                           }}
                           serviceUnit={selectedService.unit}
                         />
