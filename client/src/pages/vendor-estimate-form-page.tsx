@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
+import MeasurementTool from "@/components/measurement/measurement-tool";
 
 const formSchema = z.object({
   clientId: z.number().min(1, "Please select a client"),
@@ -495,34 +496,90 @@ export default function VendorEstimateFormPage() {
             </TabsContent>
 
             <TabsContent value="measurements" className="space-y-6 pt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Measurements</CardTitle>
-                  <CardDescription>
-                    Take measurements for your project
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground">Measurement tools will be available here</p>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={() => setActiveTab("labor")}
-                  >
-                    Previous
-                  </Button>
-                  <Button 
-                    type="button" 
-                    onClick={() => setActiveTab("review")}
-                  >
-                    Next: Review
-                  </Button>
-                </CardFooter>
-              </Card>
+              {!form.getValues("serviceType") ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Measurements</CardTitle>
+                    <CardDescription>
+                      Take measurements for your project
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">Please select a service type first</p>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="flex justify-between">
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={() => setActiveTab("labor")}
+                    >
+                      Previous
+                    </Button>
+                    <Button 
+                      type="button" 
+                      onClick={() => setActiveTab("review")}
+                    >
+                      Next: Review
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  {(() => {
+                    const selectedService = services?.find(s => s.serviceType === form.getValues("serviceType"));
+                    return selectedService ? (
+                      <>
+                        <div className="bg-blue-50 p-4 rounded-lg">
+                          <h3 className="text-lg font-semibold mb-2">Service: {selectedService.name}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Unit: {selectedService.unit} | Labor Rate: ${selectedService.laborRate}/{selectedService.unit}
+                          </p>
+                        </div>
+                        
+                        <MeasurementTool 
+                          onMeasurementsChange={(measurements) => {
+                            const totalDistance = measurements.reduce((sum, m) => sum + m.distance, 0);
+                            // Update form with measurement data
+                            if (selectedService.unit === 'sqft') {
+                              form.setValue("squareFeet", totalDistance);
+                            } else if (selectedService.unit === 'ft') {
+                              form.setValue("linearFeet", totalDistance);
+                            } else if (selectedService.unit === 'unit') {
+                              form.setValue("units", totalDistance);
+                            }
+                            
+                            // Auto-calculate labor cost
+                            const laborRate = parseFloat(selectedService.laborRate) || 0;
+                            const laborTotal = totalDistance * laborRate;
+                            form.setValue("laborCost", laborTotal);
+                          }}
+                          serviceUnit={selectedService.unit}
+                        />
+                        
+                        <Card>
+                          <CardFooter className="flex justify-between">
+                            <Button 
+                              type="button" 
+                              variant="outline"
+                              onClick={() => setActiveTab("labor")}
+                            >
+                              Previous
+                            </Button>
+                            <Button 
+                              type="button" 
+                              onClick={() => setActiveTab("review")}
+                            >
+                              Next: Review
+                            </Button>
+                          </CardFooter>
+                        </Card>
+                      </>
+                    ) : null;
+                  })()}
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="review" className="space-y-6 pt-4">
