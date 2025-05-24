@@ -394,8 +394,12 @@ export default function FenceMeasurementTool({
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    let x = e.clientX - rect.left;
+    let y = e.clientY - rect.top;
+
+    // Adjust for zoom and pan
+    x = (x - canvas.width / 2) / zoomLevel + canvas.width / 2 - panOffset.x;
+    y = (y - canvas.height / 2) / zoomLevel + canvas.height / 2 - panOffset.y;
 
     // Check if clicking on an existing fence point to start dragging
     const clickedPoint = currentPoints.find(point => {
@@ -512,8 +516,12 @@ export default function FenceMeasurementTool({
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    let x = e.clientX - rect.left;
+    let y = e.clientY - rect.top;
+
+    // Adjust for zoom and pan
+    x = (x - canvas.width / 2) / zoomLevel + canvas.width / 2 - panOffset.x;
+    y = (y - canvas.height / 2) / zoomLevel + canvas.height / 2 - panOffset.y;
 
     // Handle point dragging
     if (draggingPoint && lastMousePos) {
@@ -636,8 +644,12 @@ export default function FenceMeasurementTool({
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    let x = e.clientX - rect.left;
+    let y = e.clientY - rect.top;
+
+    // Adjust for zoom and pan
+    x = (x - canvas.width / 2) / zoomLevel + canvas.width / 2 - panOffset.x;
+    y = (y - canvas.height / 2) / zoomLevel + canvas.height / 2 - panOffset.y;
 
     // Check if clicking on a gate to start dragging
     const clickedGate = gates.find(gate => {
@@ -690,7 +702,22 @@ export default function FenceMeasurementTool({
 
     const panels = Math.ceil(totalLength / 8); // 8ft panels
     const totalPosts = posts.length;
-    const totalGates = gates.length;
+    const singleGates = gates.filter(g => g.type === 'gate').length;
+    const doubleGates = gates.filter(g => g.type === 'double-gate').length;
+
+    const hardwareList = [
+      `${totalPosts} post anchors`,
+      `${panels} panel brackets`
+    ];
+
+    if (singleGates > 0) {
+      hardwareList.push(`${singleGates} single gate hinges (2 per gate)`);
+      hardwareList.push(`${singleGates} single gate latches`);
+    }
+    if (doubleGates > 0) {
+      hardwareList.push(`${doubleGates * 2} double gate hinges (4 per double gate)`);
+      hardwareList.push(`${doubleGates} double gate latches with drop rod`);
+    }
 
     const measurementId = editingMeasurement || `fence-${Date.now()}`;
     const newMeasurement: FenceMeasurement = {
@@ -699,17 +726,12 @@ export default function FenceMeasurementTool({
       sections,
       totalLength,
       totalPosts,
-      totalGates,
+      totalGates: singleGates + doubleGates,
       materialsList: {
         posts: totalPosts,
         panels,
-        gates: totalGates,
-        hardware: [
-          `${totalPosts} post anchors`,
-          `${panels} panel brackets`,
-          `${totalGates} gate hinges`,
-          `${totalGates} gate latches`
-        ]
+        gates: singleGates + doubleGates,
+        hardware: hardwareList
       }
     };
 
@@ -928,9 +950,15 @@ export default function FenceMeasurementTool({
               {gateMode ? `Exit Gate Mode (${selectedGateWidth}' ${selectedGateType === 'double-gate' ? 'Double' : 'Single'})` : "Add Gate"}
             </Button>
             
-            <Button onClick={finishFence} variant="outline" size="sm" disabled={currentPoints.length < 2}>
+            <Button 
+              onClick={finishFence} 
+              variant={currentPoints.length >= 2 ? "default" : "outline"} 
+              size="sm" 
+              disabled={currentPoints.length < 2}
+              className={currentPoints.length >= 2 ? "bg-green-600 hover:bg-green-700 text-white" : ""}
+            >
               <Save className="h-4 w-4 mr-1" />
-              Complete Fence
+              Complete Fence {currentPoints.length >= 2 ? `(${currentPoints.length} points)` : "(Need 2+ points)"}
             </Button>
             
             <Button onClick={clearAll} variant="outline" size="sm">
