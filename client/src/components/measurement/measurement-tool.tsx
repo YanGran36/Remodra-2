@@ -206,7 +206,7 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
       }
       
       ctx.strokeStyle = isActive ? '#3b82f6' : '#10b981';
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 3 / zoomLevel; // Scale line width inversely with zoom
       ctx.stroke();
 
       // Draw distance labels with cleaner, more precise positioning
@@ -222,81 +222,99 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
         // Only show distance if line is long enough to be meaningful
         if (pixelDistance > 20) {
           const labelText = `${realDistance} ${measurement.unit}`;
-          ctx.font = '11px Arial';
+          
+          // Scale font size inversely with zoom to maintain visual size
+          const fontSize = Math.max(8, 11 / zoomLevel);
+          ctx.font = `${fontSize}px Arial`;
           ctx.textAlign = 'center';
           const textWidth = ctx.measureText(labelText).width;
           
-          // Position label closer to the line, with subtle offset
+          // Position label closer to the line, with scaled offset
           const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
           const perpAngle = angle + Math.PI / 2;
-          const offsetDistance = 8; // Reduced offset
+          const offsetDistance = 8 / zoomLevel; // Scale offset
           const labelX = midX + Math.cos(perpAngle) * offsetDistance;
           const labelY = midY + Math.sin(perpAngle) * offsetDistance;
           
+          // Scale background dimensions
+          const bgPadding = 2 / zoomLevel;
+          const bgHeight = 12 / zoomLevel;
+          
           // Subtle label background
           ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-          ctx.fillRect(labelX - textWidth/2 - 2, labelY - 6, textWidth + 4, 12);
+          ctx.fillRect(labelX - textWidth/2 - bgPadding, labelY - bgHeight/2, textWidth + bgPadding*2, bgHeight);
           
-          // Border for better visibility
+          // Border for better visibility with scaled line width
           ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
-          ctx.lineWidth = 0.5;
-          ctx.strokeRect(labelX - textWidth/2 - 2, labelY - 6, textWidth + 4, 12);
+          ctx.lineWidth = 0.5 / zoomLevel;
+          ctx.strokeRect(labelX - textWidth/2 - bgPadding, labelY - bgHeight/2, textWidth + bgPadding*2, bgHeight);
           
           // Label text
           ctx.fillStyle = '#374151';
-          ctx.fillText(labelText, labelX, labelY + 2);
+          ctx.fillText(labelText, labelX, labelY + 2/zoomLevel);
         }
       }
     }
 
-    // Draw points on top with better precision
+    // Draw points on top with better precision - scale sizes inversely with zoom
     points.forEach((point, index) => {
+      // Scale all point elements to maintain visual size
+      const crosshairSize = 8 / zoomLevel;
+      const centerDotRadius = 2 / zoomLevel;
+      const outerRingRadius = 5 / zoomLevel;
+      const lineWidth = 1 / zoomLevel;
+      const boldLineWidth = 2 / zoomLevel;
+      
       // Crosshair for precise positioning
       ctx.strokeStyle = isActive ? '#1d4ed8' : '#059669';
-      ctx.lineWidth = 1;
+      ctx.lineWidth = lineWidth;
       
       // Horizontal crosshair line
       ctx.beginPath();
-      ctx.moveTo(point.x - 8, point.y);
-      ctx.lineTo(point.x + 8, point.y);
+      ctx.moveTo(point.x - crosshairSize, point.y);
+      ctx.lineTo(point.x + crosshairSize, point.y);
       ctx.stroke();
       
       // Vertical crosshair line
       ctx.beginPath();
-      ctx.moveTo(point.x, point.y - 8);
-      ctx.lineTo(point.x, point.y + 8);
+      ctx.moveTo(point.x, point.y - crosshairSize);
+      ctx.lineTo(point.x, point.y + crosshairSize);
       ctx.stroke();
       
       // Center dot
       ctx.beginPath();
-      ctx.arc(point.x, point.y, 2, 0, 2 * Math.PI);
+      ctx.arc(point.x, point.y, centerDotRadius, 0, 2 * Math.PI);
       ctx.fillStyle = isActive ? '#1d4ed8' : '#059669';
       ctx.fill();
       
       // Outer ring
       ctx.beginPath();
-      ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
+      ctx.arc(point.x, point.y, outerRingRadius, 0, 2 * Math.PI);
       ctx.strokeStyle = isActive ? '#1d4ed8' : '#059669';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = boldLineWidth;
       ctx.stroke();
 
       // Smaller, less intrusive point numbers
       if (points.length > 2) { // Only show numbers for complex shapes
-        ctx.font = '9px Arial';
+        const fontSize = Math.max(6, 9 / zoomLevel);
+        const numberOffset = 8 / zoomLevel;
+        const numberBgRadius = 6 / zoomLevel;
+        
+        ctx.font = `${fontSize}px Arial`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
-        const numberX = point.x + 8;
-        const numberY = point.y - 8;
+        const numberX = point.x + numberOffset;
+        const numberY = point.y - numberOffset;
         
         // Subtle number background
         ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
         ctx.beginPath();
-        ctx.arc(numberX, numberY, 6, 0, 2 * Math.PI);
+        ctx.arc(numberX, numberY, numberBgRadius, 0, 2 * Math.PI);
         ctx.fill();
         
         ctx.strokeStyle = isActive ? '#1d4ed8' : '#059669';
-        ctx.lineWidth = 1;
+        ctx.lineWidth = lineWidth;
         ctx.stroke();
         
         // Number text
