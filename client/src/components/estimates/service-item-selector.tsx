@@ -81,9 +81,6 @@ export function ServiceItemSelector({ value, onChange }: ServiceItemSelectorProp
 
   return (
     <div className="mb-6">
-      <div className="text-4xl font-bold text-red-500 mb-4 text-center border-4 border-red-500 p-4">
-        🔴 AQUI - SERVICIOS AQUI 🔴
-      </div>
       <div className="text-lg font-semibold mb-2">Select Service Type</div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {services.map((service: any) => {
