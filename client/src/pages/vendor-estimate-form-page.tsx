@@ -490,18 +490,9 @@ export default function VendorEstimateFormPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="serviceType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <ServiceItemSelector 
-                          value={field.value || ""} 
-                          onChange={field.onChange}
-                        />
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                  <ServiceItemSelector 
+                    value={form.getValues("serviceType") || ""} 
+                    onChange={(value) => form.setValue("serviceType", value)}
                   />
                 </CardContent>
                 <CardFooter className="flex justify-between">
@@ -526,25 +517,21 @@ export default function VendorEstimateFormPage() {
             <TabsContent value="labor" className="space-y-6 pt-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Service Selection & Labor Configuration</CardTitle>
+                  <CardTitle>Labor Configuration</CardTitle>
                   <CardDescription>
-                    Choose your service and configure labor rates based on your pricing configuration
+                    Configure labor rates and calculations for your selected service
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="serviceType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <ServiceItemSelector 
-                          value={field.value || ""} 
-                          onChange={field.onChange}
-                        />
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {!form.getValues("serviceType") ? (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">Please select a service in the Services tab first</p>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">Labor configuration will be implemented here</p>
+                    </div>
+                  )}
                 </CardContent>
                 <CardFooter className="flex justify-between">
                   <Button 
