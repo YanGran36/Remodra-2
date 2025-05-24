@@ -483,6 +483,12 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     setCurrentPoints([]);
   };
 
+  const quickCalibrate = (distance: number) => {
+    setCalibrationDistance(distance.toString());
+    setIsCalibrating(true);
+    setCurrentPoints([]);
+  };
+
   const getTotalArea = () => {
     return measurements.reduce((total, m) => {
       if (serviceUnit === 'sqft' && m.points.length >= 3) {
@@ -526,61 +532,78 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
               )}
             </div>
             
-            <div className="flex items-center space-x-2">
-              <Input
-                type="number"
-                placeholder="Enter known distance"
-                value={calibrationDistance}
-                onChange={(e) => setCalibrationDistance(e.target.value)}
-                className="w-40"
-                step="0.1"
-              />
-              <span className="text-sm text-muted-foreground">{serviceUnit}</span>
-              <Button 
-                onClick={startCalibration} 
-                variant="outline" 
-                size="sm"
-                disabled={!calibrationDistance || parseFloat(calibrationDistance) <= 0}
-              >
-                {isCalibrating ? "Click 2 points..." : "Calibrate Scale"}
-              </Button>
+            {/* Smart Calibration Presets */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 space-y-3">
+              <Label className="text-sm font-medium text-blue-800">Quick Calibration</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <Button 
+                  onClick={() => quickCalibrate(12)} 
+                  variant="outline" 
+                  size="sm"
+                  className="h-12 flex flex-col items-center gap-1 bg-white hover:bg-blue-50"
+                >
+                  <span className="font-medium text-blue-700">12 {serviceUnit}</span>
+                  <span className="text-xs text-blue-600">Standard Room</span>
+                </Button>
+                <Button 
+                  onClick={() => quickCalibrate(24)} 
+                  variant="outline" 
+                  size="sm"
+                  className="h-12 flex flex-col items-center gap-1 bg-white hover:bg-blue-50"
+                >
+                  <span className="font-medium text-blue-700">24 {serviceUnit}</span>
+                  <span className="text-xs text-blue-600">Large Room</span>
+                </Button>
+                <Button 
+                  onClick={() => quickCalibrate(8)} 
+                  variant="outline" 
+                  size="sm"
+                  className="h-12 flex flex-col items-center gap-1 bg-white hover:bg-blue-50"
+                >
+                  <span className="font-medium text-blue-700">8 {serviceUnit}</span>
+                  <span className="text-xs text-blue-600">Wall Height</span>
+                </Button>
+                <Button 
+                  onClick={() => quickCalibrate(6)} 
+                  variant="outline" 
+                  size="sm"
+                  className="h-12 flex flex-col items-center gap-1 bg-white hover:bg-blue-50"
+                >
+                  <span className="font-medium text-blue-700">6 {serviceUnit}</span>
+                  <span className="text-xs text-blue-600">Door/Window</span>
+                </Button>
+              </div>
             </div>
-            
-            {/* Quick calibration presets */}
-            <div className="flex items-center space-x-2">
-              <Label className="text-sm">Quick presets:</Label>
-              <Button 
-                onClick={() => { setCalibrationDistance("10"); startCalibration(); }} 
-                variant="ghost" 
-                size="sm"
-                className="text-xs"
-              >
-                10 {serviceUnit}
-              </Button>
-              <Button 
-                onClick={() => { setCalibrationDistance("20"); startCalibration(); }} 
-                variant="ghost" 
-                size="sm"
-                className="text-xs"
-              >
-                20 {serviceUnit}
-              </Button>
-              <Button 
-                onClick={() => { setCalibrationDistance("50"); startCalibration(); }} 
-                variant="ghost" 
-                size="sm"
-                className="text-xs"
-              >
-                50 {serviceUnit}
-              </Button>
-              <Button 
-                onClick={() => { setCalibrationDistance("100"); startCalibration(); }} 
-                variant="ghost" 
-                size="sm"
-                className="text-xs"
-              >
-                100 {serviceUnit}
-              </Button>
+
+            {/* Custom Calibration */}
+            <div className="bg-slate-50 rounded-lg p-3 space-y-2">
+              <Label className="text-xs font-medium text-slate-700">Custom Distance</Label>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  placeholder="Enter distance"
+                  value={calibrationDistance}
+                  onChange={(e) => setCalibrationDistance(e.target.value)}
+                  className="text-sm flex-1"
+                  step="0.1"
+                />
+                <span className="text-sm text-muted-foreground self-center px-1">{serviceUnit}</span>
+                <Button 
+                  onClick={isCalibrating ? () => setIsCalibrating(false) : startCalibration} 
+                  variant={isCalibrating ? "destructive" : "default"}
+                  size="sm"
+                  disabled={!calibrationDistance || parseFloat(calibrationDistance) <= 0}
+                  className="px-4"
+                >
+                  {isCalibrating ? "Cancel" : "Set"}
+                </Button>
+              </div>
+              
+              {isCalibrating && (
+                <div className="text-xs text-blue-600 bg-blue-50 rounded p-2 border border-blue-200">
+                  📏 Click two points that are exactly <strong>{calibrationDistance} {serviceUnit}</strong> apart
+                </div>
+              )}
             </div>
           </div>
 
