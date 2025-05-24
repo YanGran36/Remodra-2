@@ -244,7 +244,8 @@ export function registerDirectServicesRoutes(app: Express) {
       
       console.log(`[DIRECT-UPDATE] Updating ${serviceType} price to ${laborRate} for contractor ${req.user.id}`);
       
-      const result = await db
+      // Execute the update query with proper await
+      await db
         .update(servicePricing)
         .set({
           laborRate: laborRate.toString(),
@@ -253,7 +254,8 @@ export function registerDirectServicesRoutes(app: Express) {
         .where(and(
           eq(servicePricing.serviceType, serviceType),
           eq(servicePricing.contractorId, req.user.id)
-        ));
+        ))
+        .execute();
       
       console.log(`[DIRECT-UPDATE] Service ${serviceType} updated successfully`);
       
