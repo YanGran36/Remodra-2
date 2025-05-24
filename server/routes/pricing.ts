@@ -28,9 +28,11 @@ export function registerPricingRoutes(app: Express) {
         .from(servicePricing)
         .where(eq(servicePricing.contractorId, req.user.id));
       
+      console.log(`Found ${services.length} services for contractor ${req.user.id}`);
+      
       // Format the response to match what the frontend expects
       const formattedServices = services.map(service => ({
-        id: service.serviceType,
+        id: service.id,
         name: service.name,
         serviceType: service.serviceType,
         unit: service.unit,
@@ -38,59 +40,13 @@ export function registerPricingRoutes(app: Express) {
         laborMethod: service.laborCalculationMethod
       }));
       
-      // If no services configured, return default data that matches our schema
-      if (formattedServices.length === 0) {
-        // Default services with English names
-        const defaultServices = [
-          {
-            id: 'fence',
-            name: 'Fence Installation',
-            serviceType: 'fence',
-            unit: 'ft',
-            laborRate: 40,
-            laborMethod: 'by_length',
-          },
-          {
-            id: 'roof',
-            name: 'Roof Installation',
-            serviceType: 'roof',
-            unit: 'sqft',
-            laborRate: 3.5,
-            laborMethod: 'by_area',
-          },
-          {
-            id: 'gutters',
-            name: 'Gutter Installation',
-            serviceType: 'gutters',
-            unit: 'ft',
-            laborRate: 7,
-            laborMethod: 'by_length',
-          },
-          {
-            id: 'windows',
-            name: 'Window Installation',
-            serviceType: 'windows',
-            unit: 'unit',
-            laborRate: 75,
-            laborMethod: 'fixed',
-          },
-          {
-            id: 'deck',
-            name: 'Deck Construction',
-            serviceType: 'deck',
-            unit: 'sqft',
-            laborRate: 12,
-            laborMethod: 'by_area',
-          }
-        ];
-        
-        return res.json(defaultServices);
-      }
+      console.log('Formatted services:', formattedServices);
       
+      // Return the actual services from the database
       res.json(formattedServices);
     } catch (error) {
-      console.error('Error getting services:', error);
-      res.status(500).json({ message: 'Error getting services' });
+      console.error('Error fetching services:', error);
+      res.status(500).json({ message: 'Error fetching services' });
     }
   });
 
