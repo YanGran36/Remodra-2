@@ -20,7 +20,8 @@ import {
   propertyMeasurementInsertSchema,
   priceConfigurationInsertSchema,
   contractorCreateSchema,
-  contractorInsertSchema
+  contractorInsertSchema,
+  servicePricing
 } from "@shared/schema";
 
 import { analyzeProject, generateSharingContent, generateProfessionalJobDescription } from "./ai-service";
@@ -39,6 +40,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register new direct services routes for pricing page
   registerDirectServicesRoutes(app);
+
+  // TEMPORARY: Direct update endpoint for debugging
+  app.post('/api/debug/update-service', async (req: any, res) => {
+    console.log('[DEBUG] Update service request received');
+    console.log('[DEBUG] Body:', req.body);
+    
+    if (!req.isAuthenticated()) {
+      console.log('[DEBUG] Not authenticated');
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+
+    try {
+      const { originalServiceType, laborRate } = req.body;
+      console.log(`[DEBUG] Updating ${originalServiceType} with rate ${laborRate} for contractor ${req.user.id}`);
+      
+      // Direct SQL update
+      const result = await db
+        .update(servicePricing)
+        .set({ 
+          laborRate: laborRate.toString(),
+          updatedAt: new Date()
+        })
+        .where(and(
+          eq(servicePricing.serviceType, originalServiceType),
+          eq(servicePricing.contractorId, req.user.id)
+        ))
+        .returning();
+      
+      console.log('[DEBUG] Update result:', result);
+      res.json({ success: true, updated: result });
+    } catch (error) {
+      console.error('[DEBUG] Error:', error);
+      res.status(500).json({ error: 'Update failed' });
+    }
+  });
   
   // Language update route
   app.post("/api/protected/language", async (req, res) => {
