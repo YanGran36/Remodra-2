@@ -4,10 +4,27 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
+import { format } from "date-fns";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { ArrowLeft } from "lucide-react";
+import { 
+  ArrowLeft, 
+  Save, 
+  Plus, 
+  Pencil, 
+  Trash2, 
+  Calculator, 
+  CalendarIcon, 
+  ClipboardCheck,
+  Ruler,
+  Scan,
+  Camera
+} from "lucide-react";
+
+// Componentes de Medición Digital
+import DigitalMeasurement from "@/components/measurement/digital-measurement";
+import LiDARScanner from "@/components/measurement/lidar-scanner";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -17,7 +34,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const formSchema = z.object({
   clientId: z.number().min(1, "Please select a client"),
@@ -25,13 +47,49 @@ const formSchema = z.object({
   description: z.string().optional(),
   serviceType: z.string().min(1, "Please select a service type"),
   laborAmount: z.number().min(0, "Labor amount must be positive").optional(),
+  
+  // Measurement fields
   squareFeet: z.number().min(0).optional(),
   linearFeet: z.number().min(0).optional(),
   units: z.number().min(0).optional(),
+  
+  // Date fields
+  estimateDate: z.date().optional(),
+  expirationDate: z.date().optional(),
+  
+  // Notes
   notes: z.string().optional(),
+  
+  // Selected items arrays
+  selectedMaterials: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    quantity: z.number(),
+    unit: z.string(),
+    unitPrice: z.number(),
+    total: z.number(),
+  })).default([]),
+  
+  selectedServices: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    quantity: z.number(),
+    unit: z.string(),
+    unitPrice: z.number(),
+    total: z.number(),
+  })).default([]),
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+interface SelectedItem {
+  id: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+  total: number;
+}
 
 export default function VendorEstimateFormPage() {
   const [location, setLocation] = useLocation();
@@ -39,6 +97,12 @@ export default function VendorEstimateFormPage() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("client");
+  const [measurementMode, setMeasurementMode] = useState<"digital" | "lidar" | "manual">("manual");
+  const [measurements, setMeasurements] = useState({
+    squareFeet: 0,
+    linearFeet: 0,
+    units: 0
+  });
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -52,6 +116,8 @@ export default function VendorEstimateFormPage() {
       linearFeet: 0,
       units: 0,
       notes: "",
+      selectedMaterials: [],
+      selectedServices: [],
     },
   });
 
@@ -85,6 +151,12 @@ export default function VendorEstimateFormPage() {
   const onSubmit = (values: FormValues) => {
     createEstimateMutation.mutate(values);
   };
+
+  function addDays(date: Date, days: number): Date {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+  }
 
   function generateEstimateNumber(): string {
     const now = new Date();
@@ -209,85 +281,80 @@ export default function VendorEstimateFormPage() {
             </TabsContent>
 
             <TabsContent value="services" className="space-y-6 pt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Multi Services</CardTitle>
-                  <CardDescription>
-                    Select the services you want to include in this estimate
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-2 gap-6">
-                    {/* Deck Installation */}
-                    <div 
-                      className={`p-6 border-2 rounded-lg cursor-pointer transition-all hover:shadow-lg ${
-                        form.getValues("serviceType") === "deck" 
-                          ? "border-blue-500 bg-blue-50" 
-                          : "border-gray-200 hover:border-blue-300"
-                      }`}
-                      onClick={() => form.setValue("serviceType", "deck")}
-                    >
-                      <div className="text-center">
-                        <div className="text-4xl mb-4">🪵</div>
-                        <h3 className="text-xl font-bold mb-2">Deck Installation</h3>
-                        <p className="text-sm text-gray-600 mb-2">$40.00/sqft</p>
-                        <p className="text-xs text-gray-500">Custom deck construction and design</p>
-                      </div>
-                    </div>
-
-                    {/* Fence Installation */}
-                    <div 
-                      className={`p-6 border-2 rounded-lg cursor-pointer transition-all hover:shadow-lg ${
-                        form.getValues("serviceType") === "fence" 
-                          ? "border-blue-500 bg-blue-50" 
-                          : "border-gray-200 hover:border-blue-300"
-                      }`}
-                      onClick={() => form.setValue("serviceType", "fence")}
-                    >
-                      <div className="text-center">
-                        <div className="text-4xl mb-4">🔧</div>
-                        <h3 className="text-xl font-bold mb-2">Fence Installation</h3>
-                        <p className="text-sm text-gray-600 mb-2">$38.00/ft</p>
-                        <p className="text-xs text-gray-500">Custom fence design and installation</p>
-                      </div>
-                    </div>
-
-                    {/* Roof Installation */}
-                    <div 
-                      className={`p-6 border-2 rounded-lg cursor-pointer transition-all hover:shadow-lg ${
-                        form.getValues("serviceType") === "roof" 
-                          ? "border-blue-500 bg-blue-50" 
-                          : "border-gray-200 hover:border-blue-300"
-                      }`}
-                      onClick={() => form.setValue("serviceType", "roof")}
-                    >
-                      <div className="text-center">
-                        <div className="text-4xl mb-4">🏠</div>
-                        <h3 className="text-xl font-bold mb-2">Roof Installation</h3>
-                        <p className="text-sm text-gray-600 mb-2">$15.00/sqft</p>
-                        <p className="text-xs text-gray-500">Complete roof installation and replacement</p>
-                      </div>
-                    </div>
-
-                    {/* Windows Installation */}
-                    <div 
-                      className={`p-6 border-2 rounded-lg cursor-pointer transition-all hover:shadow-lg ${
-                        form.getValues("serviceType") === "windows" 
-                          ? "border-blue-500 bg-blue-50" 
-                          : "border-gray-200 hover:border-blue-300"
-                      }`}
-                      onClick={() => form.setValue("serviceType", "windows")}
-                    >
-                      <div className="text-center">
-                        <div className="text-4xl mb-4">🪟</div>
-                        <h3 className="text-xl font-bold mb-2">Windows Installation</h3>
-                        <p className="text-sm text-gray-600 mb-2">$350.00/unit</p>
-                        <p className="text-xs text-gray-500">Energy-efficient window installation</p>
-                      </div>
+              <div className="p-6 bg-white rounded-lg border">
+                <h1 className="text-3xl font-bold text-center mb-8">Select Your Service</h1>
+                
+                <div className="grid grid-cols-2 gap-6">
+                  {/* Deck Installation */}
+                  <div 
+                    className={`p-6 border-2 rounded-lg cursor-pointer transition-all hover:shadow-lg ${
+                      form.getValues("serviceType") === "deck" 
+                        ? "border-blue-500 bg-blue-50" 
+                        : "border-gray-200 hover:border-blue-300"
+                    }`}
+                    onClick={() => form.setValue("serviceType", "deck")}
+                  >
+                    <div className="text-center">
+                      <div className="text-4xl mb-4">🪵</div>
+                      <h3 className="text-xl font-bold mb-2">Deck Installation</h3>
+                      <p className="text-sm text-gray-600 mb-2">$40.00/sqft</p>
+                      <p className="text-xs text-gray-500">Custom deck construction and design</p>
                     </div>
                   </div>
-                </CardContent>
-                <CardFooter className="flex justify-between">
+
+                  {/* Fence Installation */}
+                  <div 
+                    className={`p-6 border-2 rounded-lg cursor-pointer transition-all hover:shadow-lg ${
+                      form.getValues("serviceType") === "fence" 
+                        ? "border-blue-500 bg-blue-50" 
+                        : "border-gray-200 hover:border-blue-300"
+                    }`}
+                    onClick={() => form.setValue("serviceType", "fence")}
+                  >
+                    <div className="text-center">
+                      <div className="text-4xl mb-4">🔧</div>
+                      <h3 className="text-xl font-bold mb-2">Fence Installation</h3>
+                      <p className="text-sm text-gray-600 mb-2">$38.00/ft</p>
+                      <p className="text-xs text-gray-500">Custom fence design and installation</p>
+                    </div>
+                  </div>
+
+                  {/* Roof Installation */}
+                  <div 
+                    className={`p-6 border-2 rounded-lg cursor-pointer transition-all hover:shadow-lg ${
+                      form.getValues("serviceType") === "roof" 
+                        ? "border-blue-500 bg-blue-50" 
+                        : "border-gray-200 hover:border-blue-300"
+                    }`}
+                    onClick={() => form.setValue("serviceType", "roof")}
+                  >
+                    <div className="text-center">
+                      <div className="text-4xl mb-4">🏠</div>
+                      <h3 className="text-xl font-bold mb-2">Roof Installation</h3>
+                      <p className="text-sm text-gray-600 mb-2">$15.00/sqft</p>
+                      <p className="text-xs text-gray-500">Complete roof installation and replacement</p>
+                    </div>
+                  </div>
+
+                  {/* Windows Installation */}
+                  <div 
+                    className={`p-6 border-2 rounded-lg cursor-pointer transition-all hover:shadow-lg ${
+                      form.getValues("serviceType") === "windows" 
+                        ? "border-blue-500 bg-blue-50" 
+                        : "border-gray-200 hover:border-blue-300"
+                    }`}
+                    onClick={() => form.setValue("serviceType", "windows")}
+                  >
+                    <div className="text-center">
+                      <div className="text-4xl mb-4">🪟</div>
+                      <h3 className="text-xl font-bold mb-2">Windows Installation</h3>
+                      <p className="text-sm text-gray-600 mb-2">$350.00/unit</p>
+                      <p className="text-xs text-gray-500">Energy-efficient window installation</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-8 flex justify-between">
                   <Button 
                     type="button" 
                     variant="outline"
@@ -302,8 +369,8 @@ export default function VendorEstimateFormPage() {
                   >
                     Next: Materials
                   </Button>
-                </CardFooter>
-              </Card>
+                </div>
+              </div>
             </TabsContent>
 
             <TabsContent value="materials" className="space-y-6 pt-4">
