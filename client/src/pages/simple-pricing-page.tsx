@@ -53,18 +53,12 @@ export default function SimplePricingPage() {
       }
 
       if (editingService) {
-        // Update existing service - using the same endpoint that works for delete but with full data
-        console.log(`Updating ${editingService.serviceType} with all data:`, serviceData);
-        const response = await fetch(`/api/direct/services/${editingService.serviceType}`, {
-          method: 'PUT',
+        // Update existing service price using the working PATCH pattern
+        console.log(`Updating ${editingService.serviceType} price to ${serviceData.laborRate}`);
+        const response = await fetch(`/api/direct/services/${editingService.serviceType}/update`, {
+          method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: serviceData.name,
-            serviceType: serviceData.serviceType,
-            unit: serviceData.unit,
-            laborRate: serviceData.laborRate,
-            laborMethod: serviceData.laborMethod
-          })
+          body: JSON.stringify({ laborRate: serviceData.laborRate })
         });
 
         if (response.ok) {

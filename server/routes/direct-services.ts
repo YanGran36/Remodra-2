@@ -232,51 +232,32 @@ export function registerDirectServicesRoutes(app: Express) {
     }
   });
 
-  // Simple endpoint to update a service (same pattern as delete that works)
-  app.put('/api/direct/services/:serviceType', async (req: any, res) => {
+  // Simple endpoint to update a service price - using PATCH like the working price endpoint
+  app.patch('/api/direct/services/:serviceType/update', async (req: any, res) => {
     try {
       if (!req.isAuthenticated()) {
         return res.status(401).json({ message: 'Not authenticated' });
       }
 
       const { serviceType } = req.params;
-      const { name, unit, laborRate, laborMethod } = req.body;
+      const { laborRate } = req.body;
       
-      console.log(`[DIRECT-UPDATE] Updating ${serviceType} for contractor ${req.user.id}`);
-      console.log(`[DIRECT-UPDATE] New data:`, req.body);
+      console.log(`[DIRECT-UPDATE] Updating ${serviceType} price to ${laborRate} for contractor ${req.user.id}`);
       
-      const [updatedService] = await db
+      const result = await db
         .update(servicePricing)
         .set({
-          name: name || 'Updated Service',
-          unit: unit || 'unit',
           laborRate: laborRate.toString(),
-          laborCalculationMethod: laborMethod || 'by_area',
           updatedAt: new Date()
         })
         .where(and(
           eq(servicePricing.serviceType, serviceType),
           eq(servicePricing.contractorId, req.user.id)
-        ))
-        .returning();
+        ));
       
-      if (!updatedService) {
-        return res.status(404).json({ message: 'Service not found' });
-      }
+      console.log(`[DIRECT-UPDATE] Service ${serviceType} updated successfully`);
       
-      console.log(`[DIRECT-UPDATE] Service updated successfully`);
-      
-      res.json({
-        message: 'Service updated successfully',
-        service: {
-          id: updatedService.id,
-          name: updatedService.name,
-          serviceType: updatedService.serviceType,
-          unit: updatedService.unit,
-          laborRate: parseFloat(updatedService.laborRate),
-          laborMethod: updatedService.laborCalculationMethod
-        }
-      });
+      res.json({ message: 'Service updated successfully' });
     } catch (error) {
       console.error('[DIRECT-UPDATE] Error updating service:', error);
       res.status(500).json({ message: 'Error updating service' });
