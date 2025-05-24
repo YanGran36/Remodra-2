@@ -1102,31 +1102,71 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
         </CardContent>
       </Card>
 
-      {/* Measurements Summary */}
+      {/* Professional Measurements Summary */}
       <Card>
         <CardHeader>
-          <CardTitle>Measurements Summary</CardTitle>
+          <CardTitle>Professional Measurements</CardTitle>
           <CardDescription>
-            Total: {getTotalArea().toFixed(2)} {serviceUnit}
+            Architectural measurements by type
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {measurements.map((measurement) => (
-              <div key={measurement.id} className="flex items-center justify-between p-2 border rounded">
-                <div>
-                  <span className="font-medium">{measurement.label}</span>
-                  <span className="text-sm text-muted-foreground ml-2">
-                    {measurement.distance.toFixed(2)} {measurement.unit}
-                  </span>
+              <div key={measurement.id} className="p-3 border rounded-lg bg-gradient-to-r from-slate-50 to-slate-100">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    {measurement.type === 'area' && <Square className="h-4 w-4 text-blue-600" />}
+                    {measurement.type === 'linear' && <Ruler className="h-4 w-4 text-green-600" />}
+                    {measurement.type === 'perimeter' && <CornerDownRight className="h-4 w-4 text-orange-600" />}
+                    <span className="font-medium">{measurement.label}</span>
+                    <Badge variant="outline" className={
+                      measurement.type === 'area' ? 'bg-blue-50 text-blue-700' :
+                      measurement.type === 'linear' ? 'bg-green-50 text-green-700' :
+                      'bg-orange-50 text-orange-700'
+                    }>
+                      {measurement.type}
+                    </Badge>
+                  </div>
+                  <Button
+                    onClick={() => deleteMeasurement(measurement.id)}
+                    variant="ghost"
+                    size="sm"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
-                <Button
-                  onClick={() => deleteMeasurement(measurement.id)}
-                  variant="ghost"
-                  size="sm"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  {measurement.type === 'area' && measurement.area && (
+                    <div>
+                      <span className="text-muted-foreground">Area:</span>
+                      <span className="font-medium ml-1">{measurement.area.toFixed(2)} sqft</span>
+                    </div>
+                  )}
+                  {measurement.type === 'linear' && (
+                    <div>
+                      <span className="text-muted-foreground">Length:</span>
+                      <span className="font-medium ml-1">{measurement.distance.toFixed(2)} ft</span>
+                    </div>
+                  )}
+                  {measurement.type === 'perimeter' && measurement.perimeter && (
+                    <div>
+                      <span className="text-muted-foreground">Perimeter:</span>
+                      <span className="font-medium ml-1">{measurement.perimeter.toFixed(2)} ft</span>
+                    </div>
+                  )}
+                  {measurement.type === 'area' && measurement.perimeter && (
+                    <div>
+                      <span className="text-muted-foreground">Perimeter:</span>
+                      <span className="font-medium ml-1">{measurement.perimeter.toFixed(2)} ft</span>
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-muted-foreground">Points:</span>
+                    <span className="font-medium ml-1">{measurement.points.length}</span>
+                  </div>
+                </div>
               </div>
             ))}
             {measurements.length === 0 && (
