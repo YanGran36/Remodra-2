@@ -39,6 +39,9 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
   const [lastClickTime, setLastClickTime] = useState(0);
   const [selectedShape, setSelectedShape] = useState<string>("freeform");
   const [gates, setGates] = useState<{x: number, y: number, id: string, width: number}[]>([]);
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -50,8 +53,15 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw 5ft grid background (no zoom applied to grid)
-    drawFiveFootGrid(ctx, canvas.width, canvas.height);
+    // Save context for pan and zoom transformations
+    ctx.save();
+    
+    // Apply pan offset and zoom
+    ctx.translate(panOffset.x, panOffset.y);
+    ctx.scale(zoomLevel, zoomLevel);
+
+    // Draw 5ft grid background
+    drawFiveFootGrid(ctx, canvas.width / zoomLevel, canvas.height / zoomLevel);
 
     // Draw completed measurements
     measurements.forEach(measurement => {
@@ -122,7 +132,10 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
         ctx.fillText('Close Area', midX + 5, midY - 10);
       }
     }
-  }, [measurements, currentPoints, serviceUnit, mousePos, scale]);
+    
+    // Restore context after all drawing
+    ctx.restore();
+  }, [measurements, currentPoints, serviceUnit, mousePos, scale, panOffset, zoomLevel]);
 
   const drawFiveFootGrid = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
     // Calculate grid size - each square represents 5 feet, adjusted for zoom
