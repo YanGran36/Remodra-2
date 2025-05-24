@@ -480,9 +480,9 @@ export default function EstimateCreateServicePage() {
             <TabsContent value="service" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Service Selection</CardTitle>
+                  <CardTitle>Multi Services</CardTitle>
                   <CardDescription>
-                    Select the type of service for this estimate
+                    Select the services you want to include in this estimate
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
