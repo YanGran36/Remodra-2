@@ -26,7 +26,7 @@ export function ServiceItemSelector({ value, onChange }: ServiceItemSelectorProp
   if (servicesLoading) {
     return (
       <div className="mb-6">
-        <div className="text-lg font-semibold mb-2">Select Service Type</div>
+        <div className="text-lg font-semibold mb-2">Multi Services</div>
         <div className="flex items-center justify-center p-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           <span className="ml-2">Loading services...</span>
@@ -38,7 +38,7 @@ export function ServiceItemSelector({ value, onChange }: ServiceItemSelectorProp
   if (servicesError) {
     return (
       <div className="mb-6">
-        <div className="text-lg font-semibold mb-2">Select Service Type</div>
+        <div className="text-lg font-semibold mb-2">Multi Services</div>
         <div className="text-red-500">Error loading services: {servicesError.message}</div>
       </div>
     );
@@ -50,7 +50,7 @@ export function ServiceItemSelector({ value, onChange }: ServiceItemSelectorProp
   if (!servicesArray || servicesArray.length === 0) {
     return (
       <div className="mb-6">
-        <div className="text-lg font-semibold mb-2">Select Service Type</div>
+        <div className="text-lg font-semibold mb-2">Multi Services</div>
         <div className="text-gray-500">
           No services configured. Please add services in your pricing configuration first.
         </div>
@@ -60,7 +60,7 @@ export function ServiceItemSelector({ value, onChange }: ServiceItemSelectorProp
 
   return (
     <div className="mb-6">
-      <div className="text-lg font-semibold mb-2">Select Service Type</div>
+      <div className="text-lg font-semibold mb-2">Multi Services</div>
       <div className="bg-red-100 p-4 border-2 border-red-500 rounded-lg mb-4">
         <div className="text-center text-red-600 font-bold text-xl">
           🔴 AQUI - SERVICIOS AQUI 🔴
