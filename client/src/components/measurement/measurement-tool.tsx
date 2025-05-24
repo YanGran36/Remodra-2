@@ -45,6 +45,7 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
+  const [segments, setSegments] = useState<{length: number, angle: number}[]>([]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -959,83 +960,134 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
         </CardContent>
       </Card>
 
-      {/* Professional Measurement Modes */}
+      {/* Professional CAD-Style Measurement */}
       <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-slate-800">
             <div className="p-1 bg-blue-100 rounded-md">
               <Ruler className="h-4 w-4 text-blue-600" />
             </div>
-            Measurement Type
+            Professional Measurement Input
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          {/* Measurement Mode Selection */}
-          <div className="grid grid-cols-3 gap-2">
-            <div
-              className={`p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                measurementMode === "area" 
-                  ? "border-blue-500 bg-blue-50 shadow-sm" 
-                  : "border-slate-200 bg-white hover:border-slate-300"
-              }`}
-              onClick={() => setMeasurementMode("area")}
-            >
-              <div className="flex flex-col items-center gap-1">
-                <Square className={`h-5 w-5 ${measurementMode === "area" ? "text-blue-600" : "text-slate-500"}`} />
-                <span className="text-xs font-medium text-slate-700">Area</span>
-                <span className="text-xs text-slate-500">sqft</span>
+        <CardContent className="space-y-4">
+          {/* Quick Templates for Common Shapes */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Rectangle (Deck/Roof)</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs">Width (ft)</Label>
+                  <Input 
+                    type="number" 
+                    placeholder="20" 
+                    className="h-8 text-sm"
+                    id="rect-width"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Length (ft)</Label>
+                  <Input 
+                    type="number" 
+                    placeholder="30" 
+                    className="h-8 text-sm"
+                    id="rect-length"
+                  />
+                </div>
               </div>
+              <Button 
+                onClick={() => createRectangleFromDimensions()}
+                variant="outline" 
+                size="sm" 
+                className="w-full h-8 text-xs"
+              >
+                <Square className="h-3 w-3 mr-1" />
+                Create Rectangle
+              </Button>
             </div>
-            
-            <div
-              className={`p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                measurementMode === "linear" 
-                  ? "border-green-500 bg-green-50 shadow-sm" 
-                  : "border-slate-200 bg-white hover:border-slate-300"
-              }`}
-              onClick={() => setMeasurementMode("linear")}
-            >
-              <div className="flex flex-col items-center gap-1">
-                <Ruler className={`h-5 w-5 ${measurementMode === "linear" ? "text-green-600" : "text-slate-500"}`} />
-                <span className="text-xs font-medium text-slate-700">Linear</span>
-                <span className="text-xs text-slate-500">ft</span>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Fence/Linear</Label>
+              <div>
+                <Label className="text-xs">Total Length (ft)</Label>
+                <Input 
+                  type="number" 
+                  placeholder="150" 
+                  className="h-8 text-sm"
+                  id="fence-length"
+                />
               </div>
-            </div>
-            
-            <div
-              className={`p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                measurementMode === "perimeter" 
-                  ? "border-orange-500 bg-orange-50 shadow-sm" 
-                  : "border-slate-200 bg-white hover:border-slate-300"
-              }`}
-              onClick={() => setMeasurementMode("perimeter")}
-            >
-              <div className="flex flex-col items-center gap-1">
-                <CornerDownRight className={`h-5 w-5 ${measurementMode === "perimeter" ? "text-orange-600" : "text-slate-500"}`} />
-                <span className="text-xs font-medium text-slate-700">Perimeter</span>
-                <span className="text-xs text-slate-500">ft</span>
-              </div>
+              <Button 
+                onClick={() => createLinearFromDimension()}
+                variant="outline" 
+                size="sm" 
+                className="w-full h-8 text-xs"
+              >
+                <Ruler className="h-3 w-3 mr-1" />
+                Create Linear
+              </Button>
             </div>
           </div>
-          
-          {/* Measurement Mode Instructions */}
-          <div className="bg-slate-50 rounded p-3">
+
+          {/* L-Shape for Complex Areas */}
+          <div className="border rounded p-3 bg-white">
+            <Label className="text-sm font-medium mb-2 block">L-Shape (Complex Areas)</Label>
+            <div className="grid grid-cols-4 gap-2">
+              <div>
+                <Label className="text-xs">Width 1</Label>
+                <Input type="number" placeholder="20" className="h-8 text-sm" id="l-w1" />
+              </div>
+              <div>
+                <Label className="text-xs">Length 1</Label>
+                <Input type="number" placeholder="30" className="h-8 text-sm" id="l-l1" />
+              </div>
+              <div>
+                <Label className="text-xs">Width 2</Label>
+                <Input type="number" placeholder="15" className="h-8 text-sm" id="l-w2" />
+              </div>
+              <div>
+                <Label className="text-xs">Length 2</Label>
+                <Input type="number" placeholder="20" className="h-8 text-sm" id="l-l2" />
+              </div>
+            </div>
+            <Button 
+              onClick={() => createLShapeFromDimensions()}
+              variant="outline" 
+              size="sm" 
+              className="w-full h-8 text-xs mt-2"
+            >
+              <CornerDownRight className="h-3 w-3 mr-1" />
+              Create L-Shape
+            </Button>
+          </div>
+
+          {/* Custom Polygon by Segments */}
+          <div className="border rounded p-3 bg-white">
+            <Label className="text-sm font-medium mb-2 block">Custom Shape by Segments</Label>
+            <div className="flex gap-2 mb-2">
+              <Input 
+                type="number" 
+                placeholder="Length (ft)" 
+                className="h-8 text-sm flex-1"
+                id="segment-length"
+              />
+              <Input 
+                type="number" 
+                placeholder="Angle (°)" 
+                className="h-8 text-sm w-20"
+                id="segment-angle"
+              />
+              <Button 
+                onClick={() => addSegment()}
+                variant="outline" 
+                size="sm" 
+                className="h-8 px-3"
+              >
+                <Plus className="h-3 w-3" />
+              </Button>
+            </div>
             <div className="text-xs text-slate-600">
-              {measurementMode === 'area' && (
-                <div>
-                  <strong>Area Mode:</strong> Click points to create closed polygons. Automatically calculates square footage when shape is complete.
-                </div>
-              )}
-              {measurementMode === 'linear' && (
-                <div>
-                  <strong>Linear Mode:</strong> Click two points to measure straight-line distances. Perfect for walls, fence sections, and linear features.
-                </div>
-              )}
-              {measurementMode === 'perimeter' && (
-                <div>
-                  <strong>Perimeter Mode:</strong> Click points around the boundary of an area to calculate total perimeter length.
-                </div>
-              )}
+              Add segments one by one. 0° = East, 90° = North
             </div>
           </div>
 
