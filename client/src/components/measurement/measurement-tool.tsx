@@ -92,24 +92,7 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     
     if (points.length === 0) return;
 
-    // Draw points
-    points.forEach((point, index) => {
-      ctx.beginPath();
-      ctx.arc(point.x, point.y, 4, 0, 2 * Math.PI);
-      ctx.fillStyle = isActive ? '#3b82f6' : '#10b981';
-      ctx.fill();
-      ctx.strokeStyle = isActive ? '#1d4ed8' : '#059669';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // Draw point number
-      ctx.fillStyle = 'white';
-      ctx.font = '12px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText((index + 1).toString(), point.x, point.y + 4);
-    });
-
-    // Draw lines between points
+    // Draw lines between points first (behind points)
     if (points.length > 1) {
       ctx.beginPath();
       ctx.moveTo(points[0].x, points[0].y);
@@ -119,10 +102,10 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
       }
       
       ctx.strokeStyle = isActive ? '#3b82f6' : '#10b981';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 3;
       ctx.stroke();
 
-      // Draw distance labels
+      // Draw distance labels with better positioning and visibility
       for (let i = 0; i < points.length - 1; i++) {
         const p1 = points[i];
         const p2 = points[i + 1];
@@ -132,14 +115,93 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
         const pixelDistance = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
         const realDistance = scale > 0 ? (pixelDistance / scale).toFixed(1) : pixelDistance.toFixed(0);
         
-        ctx.fillStyle = 'black';
-        ctx.font = '12px Arial';
+        // Calculate angle for text rotation
+        const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+        
+        // Draw label background with shadow for better visibility
+        const labelText = `${realDistance} ${measurement.unit}`;
+        ctx.font = 'bold 14px Arial';
         ctx.textAlign = 'center';
-        ctx.fillRect(midX - 20, midY - 8, 40, 16);
-        ctx.fillStyle = 'white';
-        ctx.fillText(`${realDistance}${measurement.unit}`, midX, midY + 4);
+        const textWidth = ctx.measureText(labelText).width;
+        
+        // Shadow/outline for better visibility
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect(midX - textWidth/2 - 4, midY - 10, textWidth + 8, 20);
+        
+        // White text
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(labelText, midX, midY + 4);
+        
+        // Add small arrow indicators
+        const arrowSize = 8;
+        const arrowOffset = 25;
+        
+        // Arrow at start point
+        ctx.save();
+        ctx.translate(p1.x, p1.y);
+        ctx.rotate(angle);
+        ctx.beginPath();
+        ctx.moveTo(-arrowOffset, 0);
+        ctx.lineTo(-arrowOffset + arrowSize, -arrowSize/2);
+        ctx.lineTo(-arrowOffset + arrowSize, arrowSize/2);
+        ctx.closePath();
+        ctx.fillStyle = isActive ? '#1d4ed8' : '#059669';
+        ctx.fill();
+        ctx.restore();
+        
+        // Arrow at end point
+        ctx.save();
+        ctx.translate(p2.x, p2.y);
+        ctx.rotate(angle + Math.PI);
+        ctx.beginPath();
+        ctx.moveTo(-arrowOffset, 0);
+        ctx.lineTo(-arrowOffset + arrowSize, -arrowSize/2);
+        ctx.lineTo(-arrowOffset + arrowSize, arrowSize/2);
+        ctx.closePath();
+        ctx.fillStyle = isActive ? '#1d4ed8' : '#059669';
+        ctx.fill();
+        ctx.restore();
       }
     }
+
+    // Draw points on top
+    points.forEach((point, index) => {
+      // Outer circle (shadow)
+      ctx.beginPath();
+      ctx.arc(point.x + 1, point.y + 1, 7, 0, 2 * Math.PI);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.fill();
+      
+      // Main point circle
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, 6, 0, 2 * Math.PI);
+      ctx.fillStyle = isActive ? '#3b82f6' : '#10b981';
+      ctx.fill();
+      ctx.strokeStyle = isActive ? '#1d4ed8' : '#059669';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Inner circle
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, 3, 0, 2 * Math.PI);
+      ctx.fillStyle = 'white';
+      ctx.fill();
+
+      // Point number with better visibility
+      ctx.font = 'bold 11px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      
+      // Background circle for number
+      ctx.beginPath();
+      ctx.arc(point.x + 12, point.y - 12, 10, 0, 2 * Math.PI);
+      ctx.fillStyle = isActive ? '#1d4ed8' : '#059669';
+      ctx.fill();
+      
+      // Number text
+      ctx.fillStyle = 'white';
+      ctx.fillText((index + 1).toString(), point.x + 12, point.y - 12);
+    });
   };
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -249,21 +311,80 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Scale Calibration */}
-          <div className="flex items-center space-x-2">
-            <Label>Scale:</Label>
-            <Badge variant={scale > 0 ? "default" : "secondary"}>
-              {scale > 0 ? `1 px = ${(1/scale).toFixed(2)} ${serviceUnit}` : "Not calibrated"}
-            </Badge>
-            <Input
-              type="number"
-              placeholder="Known distance"
-              value={calibrationDistance}
-              onChange={(e) => setCalibrationDistance(e.target.value)}
-              className="w-32"
-            />
-            <Button onClick={startCalibration} variant="outline" size="sm">
-              Calibrate
-            </Button>
+          <div className="space-y-3">
+            <div className="flex items-center space-x-2">
+              <Label>Scale Status:</Label>
+              <Badge variant={scale > 0 ? "default" : "secondary"}>
+                {scale > 0 ? `1 px = ${(1/scale).toFixed(3)} ${serviceUnit}` : "Not calibrated"}
+              </Badge>
+              {scale > 0 && (
+                <Button 
+                  onClick={() => setScale(0)} 
+                  variant="ghost" 
+                  size="sm"
+                  className="text-red-600"
+                >
+                  Reset Scale
+                </Button>
+              )}
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Input
+                type="number"
+                placeholder="Enter known distance"
+                value={calibrationDistance}
+                onChange={(e) => setCalibrationDistance(e.target.value)}
+                className="w-40"
+                step="0.1"
+              />
+              <span className="text-sm text-muted-foreground">{serviceUnit}</span>
+              <Button 
+                onClick={startCalibration} 
+                variant="outline" 
+                size="sm"
+                disabled={!calibrationDistance || parseFloat(calibrationDistance) <= 0}
+              >
+                {isCalibrating ? "Click 2 points..." : "Calibrate Scale"}
+              </Button>
+            </div>
+            
+            {/* Quick calibration presets */}
+            <div className="flex items-center space-x-2">
+              <Label className="text-sm">Quick presets:</Label>
+              <Button 
+                onClick={() => { setCalibrationDistance("10"); startCalibration(); }} 
+                variant="ghost" 
+                size="sm"
+                className="text-xs"
+              >
+                10 {serviceUnit}
+              </Button>
+              <Button 
+                onClick={() => { setCalibrationDistance("20"); startCalibration(); }} 
+                variant="ghost" 
+                size="sm"
+                className="text-xs"
+              >
+                20 {serviceUnit}
+              </Button>
+              <Button 
+                onClick={() => { setCalibrationDistance("50"); startCalibration(); }} 
+                variant="ghost" 
+                size="sm"
+                className="text-xs"
+              >
+                50 {serviceUnit}
+              </Button>
+              <Button 
+                onClick={() => { setCalibrationDistance("100"); startCalibration(); }} 
+                variant="ghost" 
+                size="sm"
+                className="text-xs"
+              >
+                100 {serviceUnit}
+              </Button>
+            </div>
           </div>
 
           {/* Measurement Label */}
@@ -305,14 +426,47 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
             </Button>
           </div>
 
+          {/* Current Status */}
+          {isCalibrating && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-blue-800 font-medium">
+                🎯 Calibration Mode: Click {currentPoints.length === 0 ? "first" : "second"} point
+              </p>
+              <p className="text-blue-600 text-sm">
+                {currentPoints.length === 0 
+                  ? "Click anywhere on the canvas to mark the start of your known distance"
+                  : `Click the end point of your ${calibrationDistance} ${serviceUnit} reference distance`
+                }
+              </p>
+            </div>
+          )}
+          
+          {!isCalibrating && scale === 0 && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+              <p className="text-yellow-800 font-medium">⚠️ Scale not calibrated</p>
+              <p className="text-yellow-600 text-sm">
+                Enter a known distance and click "Calibrate Scale" to start measuring accurately
+              </p>
+            </div>
+          )}
+          
+          {!isCalibrating && scale > 0 && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+              <p className="text-green-800 font-medium">✅ Ready to measure</p>
+              <p className="text-green-600 text-sm">
+                Click points on the canvas to create measurements. Add a label and save when finished.
+              </p>
+            </div>
+          )}
+
           {/* Instructions */}
           <div className="text-sm text-muted-foreground">
-            <p><strong>Instructions:</strong></p>
-            <ol className="list-decimal list-inside space-y-1">
-              <li>First calibrate the scale by clicking two points of known distance</li>
-              <li>Click points to create measurement lines</li>
-              <li>Add a label to describe what you're measuring</li>
-              <li>Click "Save Measurement" to finalize</li>
+            <p><strong>How to use:</strong></p>
+            <ol className="list-decimal list-inside space-y-1 mt-2">
+              <li><strong>Calibrate:</strong> Enter a known distance and click two points to set scale</li>
+              <li><strong>Measure:</strong> Click multiple points to create measurement lines</li>
+              <li><strong>Label:</strong> Add descriptive names like "North Wall" or "Roof Width"</li>
+              <li><strong>Save:</strong> Click "Save Measurement" to finalize and start a new one</li>
             </ol>
           </div>
         </CardContent>
