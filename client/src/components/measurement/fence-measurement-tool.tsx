@@ -91,20 +91,27 @@ export default function FenceMeasurementTool({
   const [draggingPoint, setDraggingPoint] = useState<string | null>(null);
   const [draggingGate, setDraggingGate] = useState<string | null>(null);
   const [lastMousePos, setLastMousePos] = useState<{x: number, y: number} | null>(null);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
 
-  // ESC key handler
+  // ESC key handler - only cancel current action, don't delete completed work
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (isDrawing) {
+          // Only cancel current line being drawn, keep completed measurements
           setCurrentPoints([]);
           setIsDrawing(false);
+        }
+        if (gateMode) {
+          setGateMode(false);
         }
         if (selectedGate) {
           setSelectedGate(null);
         }
         if (draggingPoint) {
           setDraggingPoint(null);
+          setEditingMeasurement(null);
         }
         if (draggingGate) {
           setDraggingGate(null);
@@ -114,7 +121,7 @@ export default function FenceMeasurementTool({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isDrawing, selectedGate, draggingPoint, draggingGate]);
+  }, [isDrawing, gateMode, selectedGate, draggingPoint, draggingGate]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -129,6 +136,12 @@ export default function FenceMeasurementTool({
     // Set canvas size
     canvas.width = 800;
     canvas.height = 600;
+
+    // Apply zoom and pan transformation
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.scale(zoomLevel, zoomLevel);
+    ctx.translate(-canvas.width / 2 + panOffset.x, -canvas.height / 2 + panOffset.y);
 
     // Draw property grid (5ft squares)
     drawPropertyGrid(ctx, canvas.width, canvas.height);
@@ -155,7 +168,10 @@ export default function FenceMeasurementTool({
       const lastPoint = currentPoints[currentPoints.length - 1];
       drawTempLine(ctx, lastPoint, mousePos);
     }
-  }, [currentPoints, measurements, gates, mousePos, isDrawing]);
+
+    // Restore canvas transformation
+    ctx.restore();
+  }, [currentPoints, measurements, gates, mousePos, isDrawing, zoomLevel, panOffset]);
 
   const drawPropertyGrid = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
     ctx.strokeStyle = "#e5e7eb";
@@ -1069,7 +1085,7 @@ export default function FenceMeasurementTool({
         <CardHeader className="pb-3">
           <CardTitle className="text-sm">Property Plan</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative">
           <canvas
             ref={canvasRef}
             onClick={handleCanvasClick}
@@ -1079,6 +1095,44 @@ export default function FenceMeasurementTool({
             className="border border-gray-300 cursor-crosshair w-full"
             style={{ maxWidth: "800px", height: "600px" }}
           />
+          
+          {/* Zoom Control */}
+          <div className="absolute top-4 right-4 bg-white rounded-lg shadow-md p-3 border">
+            <div className="flex flex-col items-center gap-2">
+              <Label className="text-xs font-medium text-gray-700">Zoom</Label>
+              <div className="flex flex-col items-center gap-1">
+                <Button
+                  onClick={() => setZoomLevel(prev => Math.min(prev + 0.25, 3))}
+                  variant="outline"
+                  size="sm"
+                  className="h-6 w-6 p-0 text-xs"
+                  disabled={zoomLevel >= 3}
+                >
+                  +
+                </Button>
+                <div className="text-xs text-center min-w-12 py-1">
+                  {Math.round(zoomLevel * 100)}%
+                </div>
+                <Button
+                  onClick={() => setZoomLevel(prev => Math.max(prev - 0.25, 0.5))}
+                  variant="outline"
+                  size="sm"
+                  className="h-6 w-6 p-0 text-xs"
+                  disabled={zoomLevel <= 0.5}
+                >
+                  -
+                </Button>
+              </div>
+              <Button
+                onClick={() => setZoomLevel(1)}
+                variant="outline"
+                size="sm"
+                className="h-5 px-2 text-xs"
+              >
+                Reset
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
