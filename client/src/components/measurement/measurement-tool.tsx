@@ -53,19 +53,29 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Save context for pan and zoom transformations
+    // Save context for transformations
     ctx.save();
     
-    // Apply pan offset and zoom
-    ctx.translate(panOffset.x, panOffset.y);
+    // Apply zoom from center point with pan offset
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    
+    // Translate to center, apply zoom, then translate back with pan offset
+    ctx.translate(centerX, centerY);
     ctx.scale(zoomLevel, zoomLevel);
+    ctx.translate(-centerX + panOffset.x / zoomLevel, -centerY + panOffset.y / zoomLevel);
 
     // Draw 5ft grid background
-    drawFiveFootGrid(ctx, canvas.width / zoomLevel, canvas.height / zoomLevel);
+    drawFiveFootGrid(ctx, canvas.width, canvas.height);
 
     // Draw completed measurements
     measurements.forEach(measurement => {
       drawMeasurement(ctx, measurement, false);
+    });
+
+    // Draw gates
+    gates.forEach(gate => {
+      drawGate(ctx, gate);
     });
 
     // Draw current measurement being created
@@ -83,10 +93,10 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
       if (mousePos && currentPoints.length > 0) {
         const lastPoint = currentPoints[currentPoints.length - 1];
         
-        // Preview line
+        // Preview line with fixed visual size
         ctx.strokeStyle = '#3b82f6';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([5, 5]);
+        ctx.lineWidth = 2 / zoomLevel; // Keep line width consistent
+        ctx.setLineDash([5 / zoomLevel, 5 / zoomLevel]); // Keep dash consistent
         ctx.beginPath();
         ctx.moveTo(lastPoint.x, lastPoint.y);
         ctx.lineTo(mousePos.x, mousePos.y);
@@ -100,42 +110,44 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
         const midX = (lastPoint.x + mousePos.x) / 2;
         const midY = (lastPoint.y + mousePos.y) / 2;
         
-        // Preview label
+        // Preview label with fixed visual size
         ctx.fillStyle = 'rgba(59, 130, 246, 0.9)';
-        ctx.font = 'bold 12px Arial';
+        ctx.font = `bold ${12 / zoomLevel}px Arial`; // Keep font size consistent
         const previewText = `${realDistance} ${serviceUnit}`;
         const textWidth = ctx.measureText(previewText).width;
-        ctx.fillRect(midX - textWidth/2 - 3, midY - 10, textWidth + 6, 20);
+        const padding = 3 / zoomLevel;
+        const height = 20 / zoomLevel;
+        ctx.fillRect(midX - textWidth/2 - padding, midY - height/2, textWidth + padding*2, height);
         
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
-        ctx.fillText(previewText, midX, midY + 3);
+        ctx.fillText(previewText, midX, midY + 3 / zoomLevel);
       }
 
       // Draw closing line preview for area services when we have 3+ points
-      if (serviceUnit === 'sqft' && currentPoints.length >= 3) {
-        ctx.setLineDash([3, 3]);
+      if (serviceUnit === 'sqft' && currentPoints.length >= 3 && mousePos) {
+        ctx.setLineDash([3 / zoomLevel, 3 / zoomLevel]);
         ctx.strokeStyle = '#22c55e'; // Green for area closing
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2 / zoomLevel;
         ctx.beginPath();
         const firstPoint = currentPoints[0];
-        ctx.moveTo(mousePos!.x, mousePos!.y);
+        ctx.moveTo(mousePos.x, mousePos.y);
         ctx.lineTo(firstPoint.x, firstPoint.y);
         ctx.stroke();
         ctx.setLineDash([]);
         
-        // Show "Close Area" text
+        // Show "Close Area" text with fixed visual size
         ctx.fillStyle = '#22c55e';
-        ctx.font = 'bold 12px Arial';
-        const midX = (mousePos!.x + firstPoint.x) / 2;
-        const midY = (mousePos!.y + firstPoint.y) / 2;
-        ctx.fillText('Close Area', midX + 5, midY - 10);
+        ctx.font = `bold ${12 / zoomLevel}px Arial`;
+        const midX = (mousePos.x + firstPoint.x) / 2;
+        const midY = (mousePos.y + firstPoint.y) / 2;
+        ctx.fillText('Close Area', midX + 5 / zoomLevel, midY - 10 / zoomLevel);
       }
     }
     
     // Restore context after all drawing
     ctx.restore();
-  }, [measurements, currentPoints, serviceUnit, mousePos, scale, panOffset, zoomLevel]);
+  }, [measurements, currentPoints, serviceUnit, mousePos, scale, panOffset, zoomLevel, gates]);
 
   const drawFiveFootGrid = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
     // Calculate grid size - each square represents 5 feet (no zoom multiplication here since we apply zoom via transform)
@@ -264,14 +276,14 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
       }
     }
 
-    // Draw points on top with normal sizes (no inverse scaling)
+    // Draw points on top with smaller, more precise sizes
     points.forEach((point, index) => {
-      // Use normal sizes since canvas transform handles scaling
-      const crosshairSize = 8;
-      const centerDotRadius = 2;
-      const outerRingRadius = 5;
-      const lineWidth = 1;
-      const boldLineWidth = 2;
+      // Smaller sizes for better precision - scale inversely to maintain visual size
+      const crosshairSize = 6 / zoomLevel;
+      const centerDotRadius = 1.5 / zoomLevel;
+      const outerRingRadius = 3 / zoomLevel;
+      const lineWidth = 0.8 / zoomLevel;
+      const boldLineWidth = 1.5 / zoomLevel;
       
       // Crosshair for precise positioning
       ctx.strokeStyle = isActive ? '#1d4ed8' : '#059669';
@@ -385,11 +397,15 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
       return;
     }
     
-    // Convert to world coordinates (accounting for pan and zoom)
-    const x = (clientX - panOffset.x) / zoomLevel;
-    const y = (clientY - panOffset.y) / zoomLevel;
+    // Convert screen coordinates to world coordinates
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    
+    // Apply inverse transformation
+    const worldX = (clientX - centerX) / zoomLevel + centerX - panOffset.x / zoomLevel;
+    const worldY = (clientY - centerY) / zoomLevel + centerY - panOffset.y / zoomLevel;
 
-    setMousePos({ x, y });
+    setMousePos({ x: worldX, y: worldY });
   };
 
   const handleZoom = (direction: 'in' | 'out') => {
@@ -413,9 +429,12 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     const clientX = (e.clientX - rect.left) * scaleX;
     const clientY = (e.clientY - rect.top) * scaleY;
     
-    // Convert to world coordinates
-    const x = (clientX - panOffset.x) / zoomLevel;
-    const y = (clientY - panOffset.y) / zoomLevel;
+    // Convert screen coordinates to world coordinates (same as mouse move)
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    
+    const x = (clientX - centerX) / zoomLevel + centerX - panOffset.x / zoomLevel;
+    const y = (clientY - centerY) / zoomLevel + centerY - panOffset.y / zoomLevel;
 
     // If panning mode, don't process measurement clicks
     if (isPanning) {
