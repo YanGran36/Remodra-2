@@ -232,7 +232,7 @@ export function registerDirectServicesRoutes(app: Express) {
     }
   });
 
-  // Simple endpoint to update a service price (using exact same pattern as working DELETE)
+  // Update service price using the same database query pattern that works for CREATE
   app.patch('/api/direct/services/:serviceType/edit', async (req: any, res) => {
     try {
       if (!req.isAuthenticated()) {
@@ -244,8 +244,20 @@ export function registerDirectServicesRoutes(app: Express) {
       
       console.log(`[DIRECT-EDIT] Updating ${serviceType} price to ${laborRate} for contractor ${req.user.id}`);
       
-      // Use Drizzle ORM exactly like DELETE endpoint
-      const result = await db
+      // First check if the service exists
+      const existingService = await db.query.servicePricing.findFirst({
+        where: and(
+          eq(servicePricing.serviceType, serviceType),
+          eq(servicePricing.contractorId, req.user.id)
+        )
+      });
+      
+      if (!existingService) {
+        return res.status(404).json({ message: 'Service not found' });
+      }
+      
+      // Update using the same pattern as successful operations
+      const [updatedService] = await db
         .update(servicePricing)
         .set({ 
           laborRate: laborRate.toString(),
@@ -254,14 +266,18 @@ export function registerDirectServicesRoutes(app: Express) {
         .where(and(
           eq(servicePricing.serviceType, serviceType),
           eq(servicePricing.contractorId, req.user.id)
-        ));
+        ))
+        .returning();
       
-      console.log(`[DIRECT-EDIT] Service ${serviceType} updated successfully`);
+      console.log(`[DIRECT-EDIT] Service ${serviceType} updated to ${laborRate} successfully`);
       
-      res.json({ message: 'Service updated successfully' });
+      res.json({ 
+        message: 'Service updated successfully',
+        service: updatedService
+      });
     } catch (error) {
       console.error('[DIRECT-EDIT] Error updating service:', error);
-      res.status(500).json({ message: 'Error updating service' });
+      res.status(500).json({ message: 'Error updating service', error: error.message });
     }
   });
 
