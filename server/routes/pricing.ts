@@ -20,30 +20,26 @@ export function registerPricingRoutes(app: Express) {
   // SERVICIOS
   // =========
 
-  // Get all services with pricing for the contractor
+  // Get all services with pricing for the contractor - redirect to direct services API
   app.get('/api/pricing/services', verifyContractorOwnership, async (req: any, res) => {
     try {
-      const services = await db
-        .select()
-        .from(directServices)
-        .where(eq(directServices.contractorId, req.user.id));
+      // Use the direct services API that's already working
+      const response = await fetch(`http://localhost:5000/api/direct/services`, {
+        headers: {
+          'Cookie': req.headers.cookie || ''
+        }
+      });
       
-      console.log(`Found ${services.length} services for contractor ${req.user.id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch from direct services API');
+      }
       
-      // Format the response to match what the frontend expects
-      const formattedServices = services.map(service => ({
-        id: service.id,
-        name: service.name,
-        serviceType: service.serviceType,
-        unit: service.unit,
-        laborRate: service.laborRate,
-        laborMethod: service.laborMethod
-      }));
+      const services = await response.json();
       
-      console.log('Formatted services:', formattedServices);
+      console.log(`[PRICING-SERVICES] Found ${services.length} services for contractor ${req.user.id}`);
+      console.log('[PRICING-SERVICES] Services from direct API:', services);
       
-      // Return the actual services from the database
-      res.json(formattedServices);
+      res.json(services);
     } catch (error) {
       console.error('Error fetching services:', error);
       res.status(500).json({ message: 'Error fetching services' });
