@@ -37,6 +37,7 @@ import AIAssistantPage from "@/pages/ai-assistant-page";
 import SettingsPage from "@/pages/settings-page";
 // PriceConfigurationsPage eliminado (ya no es necesario)
 import PricingConfigPage from "@/pages/pricing-config-page";
+import SimplePricingPage from "@/pages/simple-pricing-page";
 import PublicEstimateView from "@/pages/public-estimate-view";
 import PublicInvoiceView from "@/pages/public-invoice-view";
 import ClientPortal from "@/pages/client-portal";
@@ -81,7 +82,8 @@ function Router() {
           return null;
         }}
       </Route>
-      <ProtectedRoute path="/pricing" component={PricingConfigPage} />
+      <ProtectedRoute path="/pricing" component={SimplePricingPage} />
+      <ProtectedRoute path="/pricing-old" component={PricingConfigPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <ProtectedRoute path="/tools-dashboard" component={ToolsDashboard} />
       <ProtectedRoute path="/admin-dashboard" component={AdminDashboard} />

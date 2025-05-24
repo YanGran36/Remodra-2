@@ -196,9 +196,11 @@ const PricingConfigPage = () => {
         throw new Error("Could not delete from database");
       }
       
-      // Update local list
-      const updatedServices = services.filter(s => s.id !== serviceId);
-      setServices(updatedServices);
+      // Update local list - fix the undefined setServices error
+      if (typeof setServices === 'function') {
+        const updatedServices = services.filter(s => s.id !== serviceId);
+        setServices(updatedServices);
+      }
       
       // Invalidate cache to refresh data
       await queryClient.invalidateQueries({ queryKey: ['/api/pricing/services'] });
