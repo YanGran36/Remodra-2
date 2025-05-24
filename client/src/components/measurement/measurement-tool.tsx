@@ -63,10 +63,10 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
     
-    // Translate to center, apply zoom, then translate back with pan offset
-    ctx.translate(centerX, centerY);
+    // Apply zoom and pan transformation from center point
+    ctx.translate(centerX + panOffset.x, centerY + panOffset.y);
     ctx.scale(zoomLevel, zoomLevel);
-    ctx.translate(-centerX + panOffset.x / zoomLevel, -centerY + panOffset.y / zoomLevel);
+    ctx.translate(-centerX, -centerY);
 
     // Draw 5ft grid background
     drawFiveFootGrid(ctx, canvas.width, canvas.height);
@@ -401,24 +401,43 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
       return;
     }
     
-    // Convert screen coordinates to world coordinates
+    // Convert screen coordinates to world coordinates with improved accuracy
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
     
-    // Apply inverse transformation
-    const worldX = (clientX - centerX) / zoomLevel + centerX - panOffset.x / zoomLevel;
-    const worldY = (clientY - centerY) / zoomLevel + centerY - panOffset.y / zoomLevel;
+    // Apply proper inverse transformation accounting for zoom center
+    const worldX = (clientX - centerX - panOffset.x) / zoomLevel + centerX;
+    const worldY = (clientY - centerY - panOffset.y) / zoomLevel + centerY;
 
     setMousePos({ x: worldX, y: worldY });
   };
 
   const handleZoom = (direction: 'in' | 'out') => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Get current mouse position if available, otherwise use center
+    const zoomCenter = mousePos || { 
+      x: canvas.width / 2, 
+      y: canvas.height / 2 
+    };
+
     setZoomLevel(prev => {
-      if (direction === 'in') {
-        return Math.min(prev * 1.2, 3); // Max 3x zoom
-      } else {
-        return Math.max(prev / 1.2, 0.3); // Min 0.3x zoom
-      }
+      const newZoom = direction === 'in' 
+        ? Math.min(prev * 1.2, 3) // Max 3x zoom
+        : Math.max(prev / 1.2, 0.3); // Min 0.3x zoom
+
+      // Adjust pan offset to keep zoom centered on cursor/center point
+      const zoomRatio = newZoom / prev;
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      
+      setPanOffset(prevPan => ({
+        x: prevPan.x + (zoomCenter.x - centerX) * (1 - zoomRatio),
+        y: prevPan.y + (zoomCenter.y - centerY) * (1 - zoomRatio)
+      }));
+
+      return newZoom;
     });
   };
 
@@ -433,12 +452,12 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     const clientX = (e.clientX - rect.left) * scaleX;
     const clientY = (e.clientY - rect.top) * scaleY;
     
-    // Convert screen coordinates to world coordinates (same as mouse move)
+    // Convert screen coordinates to world coordinates (consistent with mouse move)
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
     
-    const x = (clientX - centerX) / zoomLevel + centerX - panOffset.x / zoomLevel;
-    const y = (clientY - centerY) / zoomLevel + centerY - panOffset.y / zoomLevel;
+    const x = (clientX - centerX - panOffset.x) / zoomLevel + centerX;
+    const y = (clientY - centerY - panOffset.y) / zoomLevel + centerY;
 
     // If panning mode, don't process measurement clicks
     if (isPanning) {
