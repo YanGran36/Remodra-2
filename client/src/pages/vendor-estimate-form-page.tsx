@@ -523,49 +523,10 @@ export default function VendorEstimateFormPage() {
                         onClearForm={handleClearSpecializedForm}
                       />
                       
-                      {/* Herramientas de medición */}
-                      <div className="flex justify-center mt-6 space-x-4">
-                        <Dialog open={isDigitalMeasurementOpen} onOpenChange={setIsDigitalMeasurementOpen}>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" type="button">
-                              <Ruler className="h-4 w-4 mr-2" />
-                              Medición Digital
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-4xl">
-                            <DialogHeader>
-                              <DialogTitle>Herramienta de Medición Digital</DialogTitle>
-                              <DialogDescription>
-                                Dibuje líneas sobre la imagen para medir distancias con precisión
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="min-h-[500px]">
-                              <DigitalMeasurement 
-                                onMeasurementsChange={handleMeasurementsChange} 
-                              />
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                        
-                        <Dialog open={isLidarScannerOpen} onOpenChange={setIsLidarScannerOpen}>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" type="button">
-                              <Scan className="h-4 w-4 mr-2" />
-                              Escaneo LiDAR
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-4xl">
-                            <DialogHeader>
-                              <DialogTitle>Escaneo LiDAR</DialogTitle>
-                              <DialogDescription>
-                                Use la cámara para escanear el área y obtener medidas precisas
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="min-h-[500px]">
-                              <LiDARScanner onScanComplete={handleScanComplete} />
-                            </div>
-                          </DialogContent>
-                        </Dialog>
+                      {/* Nueva sección simple */}
+                      <div className="text-center py-8">
+                        <h3 className="text-lg font-medium mb-4">Services Configuration Complete</h3>
+                        <p className="text-muted-foreground">Ready to proceed to summary</p>
                       </div>
                     </>
                   )}
@@ -576,14 +537,14 @@ export default function VendorEstimateFormPage() {
                     type="button" 
                     onClick={() => setActiveTab("information")}
                   >
-                    Atrás
+                    Previous
                   </Button>
                   <Button 
                     type="button" 
                     onClick={() => setActiveTab("summary")}
                     disabled={estimateItems.length === 0}
                   >
-                    Siguiente
+                    Next: Measurements
                   </Button>
                 </CardFooter>
               </Card>
