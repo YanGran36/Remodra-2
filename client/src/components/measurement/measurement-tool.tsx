@@ -31,6 +31,7 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [currentPoints, setCurrentPoints] = useState<Point[]>([]);
   const [scale, setScale] = useState(1); // pixels per foot
+  const [zoomLevel, setZoomLevel] = useState(1); // zoom multiplier
   const [isCalibrating, setIsCalibrating] = useState(false);
   const [calibrationDistance, setCalibrationDistance] = useState("");
   const [nextLabel, setNextLabel] = useState("");
@@ -49,8 +50,12 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw grid
-    drawGrid(ctx, canvas.width, canvas.height);
+    // Save context for zoom transformations
+    ctx.save();
+    ctx.scale(zoomLevel, zoomLevel);
+
+    // Draw 5ft grid background
+    drawFiveFootGrid(ctx, canvas.width / zoomLevel, canvas.height / zoomLevel);
 
     // Draw completed measurements
     measurements.forEach(measurement => {
