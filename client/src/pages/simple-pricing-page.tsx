@@ -53,12 +53,29 @@ export default function SimplePricingPage() {
       }
 
       if (editingService) {
-        // Update existing service price using the working edit endpoint
+        // Update existing service using a completely different approach
         console.log(`Updating ${editingService.serviceType} price to ${serviceData.laborRate}`);
-        const response = await fetch(`/api/direct/services/${editingService.serviceType}/edit`, {
-          method: 'PATCH',
+        
+        // First delete the old service
+        const deleteResponse = await fetch(`/api/direct/services/${editingService.serviceType}`, {
+          method: 'DELETE'
+        });
+        
+        if (!deleteResponse.ok) {
+          throw new Error('Failed to delete old service');
+        }
+        
+        // Then create a new one with updated price
+        const response = await fetch('/api/direct/services', {
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ laborRate: serviceData.laborRate })
+          body: JSON.stringify({
+            name: serviceData.name,
+            serviceType: serviceData.serviceType,
+            unit: serviceData.unit,
+            laborRate: serviceData.laborRate,
+            laborMethod: serviceData.laborMethod
+          })
         });
 
         if (response.ok) {
