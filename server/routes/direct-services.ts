@@ -4,6 +4,7 @@ import { servicePricing } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 
 export function registerDirectServicesRoutes(app: Express) {
+  console.log('[DIRECT-SERVICES] Registering direct services routes...');
   // Simple endpoint to get services directly from database
   app.get('/api/direct/services', async (req: any, res) => {
     try {
@@ -78,8 +79,9 @@ export function registerDirectServicesRoutes(app: Express) {
     }
   });
 
-  // Simple endpoint to update a service
-  app.put('/api/direct/services/:serviceType', async (req: any, res) => {
+  // Simple endpoint to update a service (using unique path to avoid conflicts)
+  console.log('[DIRECT-SERVICES] Registering PUT /api/services/update/:serviceType');
+  app.put('/api/services/update/:serviceType', async (req: any, res) => {
     console.log(`[DIRECT] PUT request received for serviceType: ${req.params.serviceType}`);
     console.log(`[DIRECT] Request body received:`, req.body);
     
