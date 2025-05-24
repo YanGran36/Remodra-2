@@ -1,7 +1,7 @@
 import { Express } from 'express';
 import { db } from '../../db';
 import { servicePricing } from '@shared/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 export function registerDirectServicesRoutes(app: Express) {
   // Simple endpoint to get services directly from database
@@ -90,8 +90,10 @@ export function registerDirectServicesRoutes(app: Express) {
       
       await db
         .delete(servicePricing)
-        .where(eq(servicePricing.serviceType, serviceType))
-        .where(eq(servicePricing.contractorId, req.user.id));
+        .where(and(
+          eq(servicePricing.serviceType, serviceType),
+          eq(servicePricing.contractorId, req.user.id)
+        ));
       
       console.log(`[DIRECT] Service ${serviceType} deleted`);
       res.json({ message: 'Service deleted successfully' });
