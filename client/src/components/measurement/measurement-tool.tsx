@@ -17,7 +17,10 @@ interface Measurement {
   label: string;
   points: Point[];
   distance: number;
+  area?: number;
+  perimeter?: number;
   unit: string;
+  type: 'area' | 'linear' | 'perimeter';
 }
 
 interface MeasurementToolProps {
@@ -37,7 +40,7 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
   const [nextLabel, setNextLabel] = useState("");
   const [mousePos, setMousePos] = useState<{x: number, y: number} | null>(null);
   const [lastClickTime, setLastClickTime] = useState(0);
-  const [selectedShape, setSelectedShape] = useState<string>("freeform");
+  const [measurementMode, setMeasurementMode] = useState<'area' | 'linear' | 'perimeter'>('area');
   const [gates, setGates] = useState<{x: number, y: number, id: string, width: number}[]>([]);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
@@ -85,7 +88,8 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
         label: 'Current',
         points: currentPoints,
         distance: 0,
-        unit: serviceUnit
+        unit: serviceUnit,
+        type: measurementMode
       };
       drawMeasurement(ctx, tempMeasurement, true);
 
@@ -905,73 +909,83 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
         </CardContent>
       </Card>
 
-      {/* Shape Library */}
+      {/* Professional Measurement Modes */}
       <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-slate-800">
             <div className="p-1 bg-blue-100 rounded-md">
-              <Square className="h-4 w-4 text-blue-600" />
+              <Ruler className="h-4 w-4 text-blue-600" />
             </div>
-            Smart Templates
+            Measurement Type
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {/* Shape Selection with better layout */}
-          <div className="grid grid-cols-4 gap-2">
+          {/* Measurement Mode Selection */}
+          <div className="grid grid-cols-3 gap-2">
             <div
               className={`p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                selectedShape === "freeform" 
+                measurementMode === "area" 
                   ? "border-blue-500 bg-blue-50 shadow-sm" 
                   : "border-slate-200 bg-white hover:border-slate-300"
               }`}
-              onClick={() => setSelectedShape("freeform")}
+              onClick={() => setMeasurementMode("area")}
             >
               <div className="flex flex-col items-center gap-1">
-                <PaintBucket className={`h-5 w-5 ${selectedShape === "freeform" ? "text-blue-600" : "text-slate-500"}`} />
-                <span className="text-xs font-medium text-slate-700">Custom</span>
+                <Square className={`h-5 w-5 ${measurementMode === "area" ? "text-blue-600" : "text-slate-500"}`} />
+                <span className="text-xs font-medium text-slate-700">Area</span>
+                <span className="text-xs text-slate-500">sqft</span>
               </div>
             </div>
             
             <div
               className={`p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                selectedShape === "rectangle" 
+                measurementMode === "linear" 
                   ? "border-green-500 bg-green-50 shadow-sm" 
                   : "border-slate-200 bg-white hover:border-slate-300"
               }`}
-              onClick={() => setSelectedShape("rectangle")}
+              onClick={() => setMeasurementMode("linear")}
             >
               <div className="flex flex-col items-center gap-1">
-                <Square className={`h-5 w-5 ${selectedShape === "rectangle" ? "text-green-600" : "text-slate-500"}`} />
-                <span className="text-xs font-medium text-slate-700">Rectangle</span>
+                <Ruler className={`h-5 w-5 ${measurementMode === "linear" ? "text-green-600" : "text-slate-500"}`} />
+                <span className="text-xs font-medium text-slate-700">Linear</span>
+                <span className="text-xs text-slate-500">ft</span>
               </div>
             </div>
             
             <div
               className={`p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                selectedShape === "fence" 
+                measurementMode === "perimeter" 
                   ? "border-orange-500 bg-orange-50 shadow-sm" 
                   : "border-slate-200 bg-white hover:border-slate-300"
               }`}
-              onClick={() => setSelectedShape("fence")}
+              onClick={() => setMeasurementMode("perimeter")}
             >
               <div className="flex flex-col items-center gap-1">
-                <Minus className={`h-5 w-5 ${selectedShape === "fence" ? "text-orange-600" : "text-slate-500"}`} />
-                <span className="text-xs font-medium text-slate-700">Fence</span>
+                <CornerDownRight className={`h-5 w-5 ${measurementMode === "perimeter" ? "text-orange-600" : "text-slate-500"}`} />
+                <span className="text-xs font-medium text-slate-700">Perimeter</span>
+                <span className="text-xs text-slate-500">ft</span>
               </div>
             </div>
-            
-            <div
-              className={`p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                selectedShape === "L-shape" 
-                  ? "border-purple-500 bg-purple-50 shadow-sm" 
-                  : "border-slate-200 bg-white hover:border-slate-300"
-              }`}
-              onClick={() => setSelectedShape("L-shape")}
-            >
-              <div className="flex flex-col items-center gap-1">
-                <CornerDownRight className={`h-5 w-5 ${selectedShape === "L-shape" ? "text-purple-600" : "text-slate-500"}`} />
-                <span className="text-xs font-medium text-slate-700">L-Shape</span>
-              </div>
+          </div>
+          
+          {/* Measurement Mode Instructions */}
+          <div className="bg-slate-50 rounded p-3">
+            <div className="text-xs text-slate-600">
+              {measurementMode === 'area' && (
+                <div>
+                  <strong>Area Mode:</strong> Click points to create closed polygons. Automatically calculates square footage when shape is complete.
+                </div>
+              )}
+              {measurementMode === 'linear' && (
+                <div>
+                  <strong>Linear Mode:</strong> Click two points to measure straight-line distances. Perfect for walls, fence sections, and linear features.
+                </div>
+              )}
+              {measurementMode === 'perimeter' && (
+                <div>
+                  <strong>Perimeter Mode:</strong> Click points around the boundary of an area to calculate total perimeter length.
+                </div>
+              )}
             </div>
           </div>
 
