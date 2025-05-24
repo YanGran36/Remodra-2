@@ -44,11 +44,11 @@ export function registerDirectServicesRoutes(app: Express) {
       console.log(`[DIRECT] Creating service for contractor ${req.user.id}:`, req.body);
       
       const serviceData = {
-        name: req.body.name,
-        serviceType: req.body.serviceType,
-        unit: req.body.unit,
-        laborRate: req.body.laborRate.toString(), // Convert to string for database
-        laborCalculationMethod: req.body.laborMethod,
+        name: req.body.name || 'New Service',
+        serviceType: req.body.serviceType || 'general',
+        unit: req.body.unit || 'unit',
+        laborRate: (req.body.laborRate || 0).toString(), // Convert to string for database
+        laborCalculationMethod: req.body.laborMethod || 'by_area',
         contractorId: req.user.id,
         createdAt: new Date(),
         updatedAt: new Date()

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Edit } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Service {
   id: string;
@@ -34,9 +35,20 @@ export default function SimplePricingPage() {
   console.log('Services from DIRECT API:', services);
   console.log('Services loading:', isLoading);
 
+  const { toast } = useToast();
+
   const handleSaveService = async () => {
     try {
-      const response = await fetch('/api/pricing/services', {
+      if (!newService.name || !newService.serviceType) {
+        toast({
+          title: "Missing Information",
+          description: "Please fill in service name and type",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const response = await fetch('/api/direct/services', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newService)
@@ -53,23 +65,45 @@ export default function SimplePricingPage() {
         });
         // Refresh the list
         refetch();
+        toast({
+          title: "Service Added",
+          description: "New service has been saved successfully",
+        });
+      } else {
+        throw new Error('Failed to save service');
       }
     } catch (error) {
       console.error('Error saving service:', error);
+      toast({
+        title: "Error",
+        description: "Could not save service. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
   const handleDeleteService = async (serviceId: string) => {
     try {
-      const response = await fetch(`/api/pricing/services/${serviceId}`, {
+      const response = await fetch(`/api/direct/services/${serviceId}`, {
         method: 'DELETE'
       });
 
       if (response.ok) {
         refetch();
+        toast({
+          title: "Service Deleted",
+          description: "Service has been removed successfully",
+        });
+      } else {
+        throw new Error('Failed to delete service');
       }
     } catch (error) {
       console.error('Error deleting service:', error);
+      toast({
+        title: "Error",
+        description: "Could not delete service. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
