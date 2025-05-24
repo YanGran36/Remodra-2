@@ -166,3 +166,5 @@ export function ServiceItemSelector({ value, onChange }: ServiceItemSelectorProp
     </div>
   );
 }
+
+export default ServiceItemSelector;
