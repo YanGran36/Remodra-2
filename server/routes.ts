@@ -34,8 +34,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
   setupAuth(app);
   
-  // Registrar las rutas directas para servicios
-  registerDirectServiceRoutes(app);
+  // Registrar las rutas directas para servicios (COMENTADO - conflicto con nuevo endpoint)
+  // registerDirectServiceRoutes(app);
   
   // Register new direct services routes for pricing page
   registerDirectServicesRoutes(app);
