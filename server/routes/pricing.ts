@@ -25,8 +25,8 @@ export function registerPricingRoutes(app: Express) {
     try {
       const services = await db
         .select()
-        .from(servicePricing)
-        .where(eq(servicePricing.contractorId, req.user.id));
+        .from(directServices)
+        .where(eq(directServices.contractorId, req.user.id));
       
       console.log(`Found ${services.length} services for contractor ${req.user.id}`);
       
@@ -37,7 +37,7 @@ export function registerPricingRoutes(app: Express) {
         serviceType: service.serviceType,
         unit: service.unit,
         laborRate: service.laborRate,
-        laborMethod: service.laborCalculationMethod
+        laborMethod: service.laborMethod
       }));
       
       console.log('Formatted services:', formattedServices);
