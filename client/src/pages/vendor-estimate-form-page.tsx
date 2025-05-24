@@ -25,7 +25,7 @@ import {
 // Componentes de Medición Digital
 import DigitalMeasurement from "@/components/measurement/digital-measurement";
 import LiDARScanner from "@/components/measurement/lidar-scanner";
-import { ServiceItemSelector } from "@/components/estimates/service-item-selector";
+import ServiceItemSelector from "@/components/estimates/service-item-selector";
 
 // UI Components
 import PageHeader from "@/components/ui/page-header";
