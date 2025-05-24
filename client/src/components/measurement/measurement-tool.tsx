@@ -50,12 +50,8 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Save context for zoom transformations
-    ctx.save();
-    ctx.scale(zoomLevel, zoomLevel);
-
-    // Draw 5ft grid background
-    drawFiveFootGrid(ctx, canvas.width / zoomLevel, canvas.height / zoomLevel);
+    // Draw 5ft grid background (no zoom applied to grid)
+    drawFiveFootGrid(ctx, canvas.width, canvas.height);
 
     // Draw completed measurements
     measurements.forEach(measurement => {
@@ -129,25 +125,31 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
   }, [measurements, currentPoints, serviceUnit, mousePos, scale]);
 
   const drawFiveFootGrid = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
-    // Calculate grid size - each square represents 5 feet
-    const fiveFeetGridSize = scale > 0 ? scale * 5 : 40; // Default 40px if no scale set
+    // Calculate grid size - each square represents 5 feet, adjusted for zoom
+    const baseFiveFeetGridSize = scale > 0 ? scale * 5 : 40; // Default 40px if no scale set
+    const fiveFeetGridSize = baseFiveFeetGridSize * zoomLevel;
+    
+    // Only draw grid if it's not too small or too large
+    if (fiveFeetGridSize < 5 || fiveFeetGridSize > 200) return;
     
     // Draw minor grid lines (1 foot subdivisions)
     ctx.strokeStyle = '#f0f0f0';
     ctx.lineWidth = 0.5;
     const oneFootGridSize = fiveFeetGridSize / 5;
     
-    for (let x = 0; x <= width; x += oneFootGridSize) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, height);
-      ctx.stroke();
-    }
-    for (let y = 0; y <= height; y += oneFootGridSize) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(width, y);
-      ctx.stroke();
+    if (oneFootGridSize > 2) { // Only draw if visible
+      for (let x = 0; x <= width; x += oneFootGridSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+      for (let y = 0; y <= height; y += oneFootGridSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
     }
 
     // Draw major grid lines (5 foot markers)
@@ -167,19 +169,19 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     }
 
     // Add grid labels every 20 feet
-    if (scale > 0 && zoomLevel >= 0.5) {
+    if (scale > 0 && fiveFeetGridSize > 15) {
       ctx.fillStyle = '#888888';
-      ctx.font = `${Math.max(8, 10 * zoomLevel)}px Arial`;
+      ctx.font = `${Math.max(8, 10)}px Arial`;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
       
       const labelInterval = fiveFeetGridSize * 4; // Every 20 feet
       for (let x = labelInterval; x <= width; x += labelInterval) {
-        const feet = Math.round((x / scale));
+        const feet = Math.round((x / (scale * zoomLevel)));
         ctx.fillText(`${feet}ft`, x + 2, 2);
       }
       for (let y = labelInterval; y <= height; y += labelInterval) {
-        const feet = Math.round((y / scale));
+        const feet = Math.round((y / (scale * zoomLevel)));
         ctx.fillText(`${feet}ft`, 2, y + 2);
       }
     }
@@ -190,28 +192,35 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     
     if (points.length === 0) return;
 
+    // Apply zoom to coordinates
+    const zoomedPoints = points.map(p => ({
+      ...p,
+      x: p.x * zoomLevel,
+      y: p.y * zoomLevel
+    }));
+
     // Draw lines between points first (behind points)
-    if (points.length > 1) {
+    if (zoomedPoints.length > 1) {
       ctx.beginPath();
-      ctx.moveTo(points[0].x, points[0].y);
+      ctx.moveTo(zoomedPoints[0].x, zoomedPoints[0].y);
       
-      for (let i = 1; i < points.length; i++) {
-        ctx.lineTo(points[i].x, points[i].y);
+      for (let i = 1; i < zoomedPoints.length; i++) {
+        ctx.lineTo(zoomedPoints[i].x, zoomedPoints[i].y);
       }
       
       ctx.strokeStyle = isActive ? '#3b82f6' : '#10b981';
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 3 * zoomLevel;
       ctx.stroke();
 
       // Draw distance labels with cleaner, more precise positioning
-      for (let i = 0; i < points.length - 1; i++) {
-        const p1 = points[i];
-        const p2 = points[i + 1];
+      for (let i = 0; i < zoomedPoints.length - 1; i++) {
+        const p1 = zoomedPoints[i];
+        const p2 = zoomedPoints[i + 1];
         const midX = (p1.x + p2.x) / 2;
         const midY = (p1.y + p2.y) / 2;
         
         const pixelDistance = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
-        const realDistance = scale > 0 ? (pixelDistance / scale).toFixed(1) : pixelDistance.toFixed(0);
+        const realDistance = scale > 0 ? (pixelDistance / (scale * zoomLevel)).toFixed(1) : pixelDistance.toFixed(0);
         
         // Only show distance if line is long enough to be meaningful
         if (pixelDistance > 20) {
@@ -333,9 +342,9 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
     
-    // Adjust for zoom level
-    const x = ((e.clientX - rect.left) * scaleX) / zoomLevel;
-    const y = ((e.clientY - rect.top) * scaleY) / zoomLevel;
+    // Get actual canvas coordinates (no zoom adjustment for mouse position)
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
 
     setMousePos({ x, y });
   };
