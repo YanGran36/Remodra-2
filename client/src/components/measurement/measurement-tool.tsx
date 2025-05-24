@@ -35,6 +35,7 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
   const [calibrationDistance, setCalibrationDistance] = useState("");
   const [nextLabel, setNextLabel] = useState("");
   const [mousePos, setMousePos] = useState<{x: number, y: number} | null>(null);
+  const [lastClickTime, setLastClickTime] = useState(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -96,6 +97,26 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
         ctx.fillText(previewText, midX, midY + 3);
+      }
+
+      // Draw closing line preview for area services when we have 3+ points
+      if (serviceUnit === 'sqft' && currentPoints.length >= 3) {
+        ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = '#22c55e'; // Green for area closing
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const firstPoint = currentPoints[0];
+        ctx.moveTo(mousePos.x, mousePos.y);
+        ctx.lineTo(firstPoint.x, firstPoint.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        // Show "Close Area" text
+        ctx.fillStyle = '#22c55e';
+        ctx.font = 'bold 12px Arial';
+        const midX = (mousePos.x + firstPoint.x) / 2;
+        const midY = (mousePos.y + firstPoint.y) / 2;
+        ctx.fillText('Close Area', midX + 5, midY - 10);
       }
     }
   }, [measurements, currentPoints, serviceUnit, mousePos, scale]);
@@ -270,6 +291,17 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     const x = (e.clientX - rect.left) * scaleX;
     const y = (e.clientY - rect.top) * scaleY;
 
+    // Check for double click
+    const currentTime = Date.now();
+    const isDoubleClick = currentTime - lastClickTime < 300; // 300ms for double click
+    setLastClickTime(currentTime);
+
+    if (isDoubleClick && !isCalibrating && currentPoints.length >= 2) {
+      // Double click finishes the measurement
+      finishMeasurement();
+      return;
+    }
+
     const newPoint: Point = {
       x,
       y,
@@ -301,22 +333,61 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
     }
   };
 
-  const finishMeasurement = () => {
-    if (currentPoints.length < 2) return;
+  const calculatePolygonArea = (points: Point[]): number => {
+    if (points.length < 3) return 0;
+    
+    let area = 0;
+    for (let i = 0; i < points.length; i++) {
+      const j = (i + 1) % points.length;
+      area += points[i].x * points[j].y;
+      area -= points[j].x * points[i].y;
+    }
+    area = Math.abs(area) / 2;
+    
+    // Convert from pixels to real units
+    return scale > 0 ? area / (scale * scale) : area;
+  };
 
+  const calculatePerimeter = (points: Point[]): number => {
     let totalDistance = 0;
-    for (let i = 0; i < currentPoints.length - 1; i++) {
-      const p1 = currentPoints[i];
-      const p2 = currentPoints[i + 1];
+    for (let i = 0; i < points.length - 1; i++) {
+      const p1 = points[i];
+      const p2 = points[i + 1];
       const pixelDistance = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
       totalDistance += scale > 0 ? pixelDistance / scale : pixelDistance;
     }
+    return totalDistance;
+  };
+
+  const finishMeasurement = () => {
+    if (currentPoints.length < 2) return;
+
+    let finalValue = 0;
+    let measurementType = "linear";
+
+    // Determine if this should be area or linear measurement based on service unit
+    const isAreaService = serviceUnit === 'sqft';
+    const isLinearService = serviceUnit === 'ft';
+    
+    if (isAreaService && currentPoints.length >= 3) {
+      // For area services (roof, deck, etc.), calculate area if it's a closed polygon
+      finalValue = calculatePolygonArea(currentPoints);
+      measurementType = "area";
+    } else {
+      // For linear services (fence, gutters) or lines, calculate perimeter/length
+      finalValue = calculatePerimeter(currentPoints);
+      measurementType = "linear";
+    }
+
+    const defaultLabel = measurementType === "area" 
+      ? `Area ${measurements.length + 1}` 
+      : `Line ${measurements.length + 1}`;
 
     const newMeasurement: Measurement = {
       id: Date.now().toString(),
-      label: nextLabel || `Measurement ${measurements.length + 1}`,
+      label: nextLabel || defaultLabel,
       points: [...currentPoints],
-      distance: totalDistance,
+      distance: finalValue,
       unit: serviceUnit
     };
 
@@ -512,8 +583,15 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
             <div className="bg-green-50 border border-green-200 rounded-lg p-3">
               <p className="text-green-800 font-medium">✅ Ready to measure</p>
               <p className="text-green-600 text-sm">
-                Click points on the canvas to create measurements. Add a label and save when finished.
+                Click points to create measurements. {serviceUnit === 'sqft' ? 'Create a closed area (3+ points) for square footage.' : 'Create lines for linear measurements.'} Double-click to finish.
               </p>
+              {currentPoints.length > 0 && (
+                <p className="text-blue-600 text-xs mt-1">
+                  Current points: {currentPoints.length} | 
+                  {serviceUnit === 'sqft' && currentPoints.length >= 3 ? ' Ready for area calculation' : ' Building measurement'} | 
+                  Double-click to finish
+                </p>
+              )}
             </div>
           )}
 
@@ -522,9 +600,9 @@ export default function MeasurementTool({ onMeasurementsChange, serviceUnit }: M
             <p><strong>How to use:</strong></p>
             <ol className="list-decimal list-inside space-y-1 mt-2">
               <li><strong>Calibrate:</strong> Enter a known distance and click two points to set scale</li>
-              <li><strong>Measure:</strong> Click multiple points to create measurement lines</li>
-              <li><strong>Label:</strong> Add descriptive names like "North Wall" or "Roof Width"</li>
-              <li><strong>Save:</strong> Click "Save Measurement" to finalize and start a new one</li>
+              <li><strong>Measure:</strong> Click multiple points to create measurements</li>
+              <li><strong>Finish:</strong> Double-click to complete the measurement</li>
+              <li><strong>Areas:</strong> For {serviceUnit === 'sqft' ? 'square footage services, create closed shapes (3+ points)' : 'linear services, create lines or paths'}</li>
             </ol>
           </div>
         </CardContent>
