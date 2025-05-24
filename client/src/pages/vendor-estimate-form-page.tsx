@@ -451,6 +451,11 @@ export default function VendorEstimateFormPage() {
                     render={({ field }) => (
                       <FormItem className="space-y-1">
                         <FormLabel>Service Type*</FormLabel>
+                        <div className="bg-yellow-100 border-2 border-yellow-500 p-4 mb-4 rounded">
+                          <div className="text-yellow-800 font-bold text-center">
+                            ⚠️ AQUÍ DEBE APARECER SERVICES SELECTION ⚠️
+                          </div>
+                        </div>
                         <FormControl>
                           <ServiceItemSelector
                             value={field.value}
