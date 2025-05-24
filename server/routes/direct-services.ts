@@ -86,7 +86,8 @@ export function registerDirectServicesRoutes(app: Express) {
       }
 
       const { serviceType } = req.params;
-      console.log(`[DIRECT] Updating service ${serviceType} for contractor ${req.user.id}:`, req.body);
+      console.log(`[DIRECT] Updating service ${serviceType} for contractor ${req.user.id}`);
+      console.log(`[DIRECT] Request body:`, req.body);
       
       const updateData = {
         name: req.body.name || 'Updated Service',
