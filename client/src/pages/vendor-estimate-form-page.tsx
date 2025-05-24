@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
-import MeasurementTool from "@/components/measurement/measurement-tool";
+import ProfessionalMeasurementTool from "@/components/measurement/professional-measurement-tool";
 
 const formSchema = z.object({
   clientId: z.number().min(1, "Please select a client"),
@@ -538,21 +538,33 @@ export default function VendorEstimateFormPage() {
                           </p>
                         </div>
                         
-                        <MeasurementTool 
+                        <ProfessionalMeasurementTool 
                           onMeasurementsChange={(measurements) => {
-                            const totalDistance = measurements.reduce((sum, m) => sum + m.distance, 0);
-                            // Update form with measurement data
+                            // Calculate totals from professional measurements
+                            const totalArea = measurements.reduce((sum, m) => sum + (m.area || 0), 0);
+                            const totalLinear = measurements.reduce((sum, m) => sum + (m.length || m.perimeter || 0), 0);
+                            
+                            // Update form with measurement data based on service type
                             if (selectedService.unit === 'sqft') {
-                              form.setValue("squareFeet", totalDistance);
+                              form.setValue("squareFeet", totalArea);
                             } else if (selectedService.unit === 'ft') {
-                              form.setValue("linearFeet", totalDistance);
+                              form.setValue("linearFeet", totalLinear);
                             } else if (selectedService.unit === 'unit') {
-                              form.setValue("units", totalDistance);
+                              form.setValue("units", measurements.length); // Count of measurements
                             }
                             
                             // Auto-calculate labor cost
                             const laborRate = parseFloat(selectedService.laborRate) || 0;
-                            const laborTotal = totalDistance * laborRate;
+                            let laborTotal = 0;
+                            
+                            if (selectedService.unit === 'sqft') {
+                              laborTotal = totalArea * laborRate;
+                            } else if (selectedService.unit === 'ft') {
+                              laborTotal = totalLinear * laborRate;
+                            } else {
+                              laborTotal = measurements.length * laborRate;
+                            }
+                            
                             form.setValue("laborCost", laborTotal);
                           }}
                           serviceUnit={selectedService.unit}
