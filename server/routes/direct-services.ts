@@ -80,8 +80,12 @@ export function registerDirectServicesRoutes(app: Express) {
 
   // Simple endpoint to update a service
   app.put('/api/direct/services/:serviceType', async (req: any, res) => {
+    console.log(`[DIRECT] PUT request received for serviceType: ${req.params.serviceType}`);
+    console.log(`[DIRECT] Request body received:`, req.body);
+    
     try {
       if (!req.isAuthenticated()) {
+        console.log(`[DIRECT] User not authenticated`);
         return res.status(401).json({ message: 'Not authenticated' });
       }
 
