@@ -523,6 +523,48 @@ export default function VendorEstimateFormPage() {
               </Card>
             </TabsContent>
             
+            <TabsContent value="labor" className="space-y-6 pt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Service Selection & Labor Configuration</CardTitle>
+                  <CardDescription>
+                    Choose your service and configure labor rates based on your pricing configuration
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="serviceType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <ServiceItemSelector 
+                          value={field.value || ""} 
+                          onChange={field.onChange}
+                        />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+                <CardFooter className="flex justify-between">
+                  <Button 
+                    variant="outline" 
+                    type="button" 
+                    onClick={() => setActiveTab("services")}
+                  >
+                    Previous
+                  </Button>
+                  <Button 
+                    type="button" 
+                    onClick={() => setActiveTab("measurements")}
+                    disabled={!form.getValues("serviceType")}
+                  >
+                    Next: Measurements
+                  </Button>
+                </CardFooter>
+              </Card>
+            </TabsContent>
+            
             <TabsContent value="materials" className="space-y-6 pt-4">
               <Card>
                 <CardHeader>

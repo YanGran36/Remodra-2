@@ -47,15 +47,7 @@ export function ServiceItemSelector({ value, onChange }: ServiceItemSelectorProp
   // Forzar que services sea tratado como array
   const servicesArray = Array.isArray(services) ? services : [];
   
-  // Debug logs temporales
-  console.log("ServiceItemSelector - services raw:", services);
-  console.log("ServiceItemSelector - servicesArray:", servicesArray);
-  console.log("ServiceItemSelector - servicesArray.length:", servicesArray.length);
-  console.log("ServiceItemSelector - isLoading:", isLoading);
-  console.log("ServiceItemSelector - servicesError:", servicesError);
-  
   if (servicesArray.length === 0) {
-    console.log("ServiceItemSelector - Showing no services message");
     return (
       <div className="mb-6">
         <div className="text-lg font-semibold mb-2">Multi Services</div>
