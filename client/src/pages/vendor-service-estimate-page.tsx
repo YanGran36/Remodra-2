@@ -993,7 +993,7 @@ const recalculateTotal = (items: SelectedItem[]) => {
             <TabsContent value="services" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Services Selection</CardTitle>
+                  <CardTitle>Multi Services</CardTitle>
                   <CardDescription>
                     Select the services you want to include in this estimate
                   </CardDescription>
