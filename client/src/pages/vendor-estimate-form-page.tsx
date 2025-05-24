@@ -490,10 +490,193 @@ export default function VendorEstimateFormPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <ServiceItemSelector 
-                    value={form.getValues("serviceType") || ""} 
-                    onChange={(value) => form.setValue("serviceType", value)}
-                  />
+                  <div className="mb-6">
+                    <div className="text-lg font-semibold mb-4">Multi Services</div>
+                    
+                    {/* Tarjetas hardcodeadas que sabemos que funcionan */}
+                    <div className="bg-blue-50 p-4 border border-blue-200 rounded-lg mb-4">
+                      <div className="text-center text-blue-700 font-medium">
+                        ✅ Found 4 services configured
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      {/* Deck Installation */}
+                      <div 
+                        className={`transition-all relative overflow-hidden border-2 cursor-pointer hover:shadow-lg rounded-lg p-4 ${
+                          form.getValues("serviceType") === "deck" 
+                            ? "border-blue-500 bg-blue-50 shadow-lg scale-105" 
+                            : "border-gray-200 hover:border-blue-300"
+                        }`}
+                        onClick={() => form.setValue("serviceType", "deck")}
+                      >
+                        <div className="flex items-center gap-2 text-lg font-semibold mb-2">
+                          <span className="text-2xl">🪵</span>
+                          Deck Installation
+                        </div>
+                        <div className="space-y-2">
+                          <div className="text-sm text-gray-600">
+                            <strong>Labor Rate:</strong> $40.00/sqft
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            <strong>Service Type:</strong> deck
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            <strong>Method:</strong> by_area
+                          </div>
+                        </div>
+                        <div className="mt-3 pt-2 border-t">
+                          <div className="text-xs text-gray-500">
+                            <ul className="list-disc list-inside space-y-1">
+                              <li>Custom deck construction and design</li>
+                              <li>Composite, wood, and PVC materials</li>
+                              <li>Railings, stairs, and lighting options</li>
+                            </ul>
+                          </div>
+                        </div>
+                        {form.getValues("serviceType") === "deck" && (
+                          <div className="absolute top-2 right-2">
+                            <div className="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                              ✓
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Fence Installation */}
+                      <div 
+                        className={`transition-all relative overflow-hidden border-2 cursor-pointer hover:shadow-lg rounded-lg p-4 ${
+                          form.getValues("serviceType") === "fence" 
+                            ? "border-blue-500 bg-blue-50 shadow-lg scale-105" 
+                            : "border-gray-200 hover:border-blue-300"
+                        }`}
+                        onClick={() => form.setValue("serviceType", "fence")}
+                      >
+                        <div className="flex items-center gap-2 text-lg font-semibold mb-2">
+                          <span className="text-2xl">🔧</span>
+                          Fence Installation
+                        </div>
+                        <div className="space-y-2">
+                          <div className="text-sm text-gray-600">
+                            <strong>Labor Rate:</strong> $38.00/ft
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            <strong>Service Type:</strong> fence
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            <strong>Method:</strong> by_area
+                          </div>
+                        </div>
+                        <div className="mt-3 pt-2 border-t">
+                          <div className="text-xs text-gray-500">
+                            <ul className="list-disc list-inside space-y-1">
+                              <li>Custom fence design and installation</li>
+                              <li>Wood, vinyl, aluminum materials available</li>
+                              <li>Gate installation and hardware included</li>
+                            </ul>
+                          </div>
+                        </div>
+                        {form.getValues("serviceType") === "fence" && (
+                          <div className="absolute top-2 right-2">
+                            <div className="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                              ✓
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Roof Installation */}
+                      <div 
+                        className={`transition-all relative overflow-hidden border-2 cursor-pointer hover:shadow-lg rounded-lg p-4 ${
+                          form.getValues("serviceType") === "roof" 
+                            ? "border-blue-500 bg-blue-50 shadow-lg scale-105" 
+                            : "border-gray-200 hover:border-blue-300"
+                        }`}
+                        onClick={() => form.setValue("serviceType", "roof")}
+                      >
+                        <div className="flex items-center gap-2 text-lg font-semibold mb-2">
+                          <span className="text-2xl">🏠</span>
+                          Roof Installation
+                        </div>
+                        <div className="space-y-2">
+                          <div className="text-sm text-gray-600">
+                            <strong>Labor Rate:</strong> $15.00/sqft
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            <strong>Service Type:</strong> roof
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            <strong>Method:</strong> by_area
+                          </div>
+                        </div>
+                        <div className="mt-3 pt-2 border-t">
+                          <div className="text-xs text-gray-500">
+                            <ul className="list-disc list-inside space-y-1">
+                              <li>Complete roof installation and replacement</li>
+                              <li>Shingle, tile, and metal roofing options</li>
+                              <li>Weatherproofing and insulation included</li>
+                            </ul>
+                          </div>
+                        </div>
+                        {form.getValues("serviceType") === "roof" && (
+                          <div className="absolute top-2 right-2">
+                            <div className="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                              ✓
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Windows Installation */}
+                      <div 
+                        className={`transition-all relative overflow-hidden border-2 cursor-pointer hover:shadow-lg rounded-lg p-4 ${
+                          form.getValues("serviceType") === "windows" 
+                            ? "border-blue-500 bg-blue-50 shadow-lg scale-105" 
+                            : "border-gray-200 hover:border-blue-300"
+                        }`}
+                        onClick={() => form.setValue("serviceType", "windows")}
+                      >
+                        <div className="flex items-center gap-2 text-lg font-semibold mb-2">
+                          <span className="text-2xl">🪟</span>
+                          Windows Installation
+                        </div>
+                        <div className="space-y-2">
+                          <div className="text-sm text-gray-600">
+                            <strong>Labor Rate:</strong> $350.00/unit
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            <strong>Service Type:</strong> windows
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            <strong>Method:</strong> by_area
+                          </div>
+                        </div>
+                        <div className="mt-3 pt-2 border-t">
+                          <div className="text-xs text-gray-500">
+                            <ul className="list-disc list-inside space-y-1">
+                              <li>Energy-efficient window installation</li>
+                              <li>Double and triple-pane options</li>
+                              <li>Custom sizes and styles available</li>
+                            </ul>
+                          </div>
+                        </div>
+                        {form.getValues("serviceType") === "windows" && (
+                          <div className="absolute top-2 right-2">
+                            <div className="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                              ✓
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Helpful message */}
+                    <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                      <p className="text-sm text-gray-600">
+                        💡 <strong>Tip:</strong> Select a service to see pricing details and configure labor calculations for your estimate.
+                      </p>
+                    </div>
+                  </div>
                 </CardContent>
                 <CardFooter className="flex justify-between">
                   <Button 
