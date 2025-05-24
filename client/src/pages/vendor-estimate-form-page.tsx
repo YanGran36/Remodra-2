@@ -60,6 +60,11 @@ export default function VendorEstimateFormPage() {
     queryKey: ["/api/protected/clients"],
   });
 
+  // Fetch services
+  const { data: services, isLoading: servicesLoading } = useQuery({
+    queryKey: ["/api/direct/services"],
+  });
+
   // Create estimate mutation
   const createEstimateMutation = useMutation({
     mutationFn: async (data: FormValues) => {
@@ -217,75 +222,45 @@ export default function VendorEstimateFormPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="grid grid-cols-2 gap-6">
-                    {/* Deck Installation */}
-                    <div 
-                      className={`p-6 border-2 rounded-lg cursor-pointer transition-all hover:shadow-lg ${
-                        form.getValues("serviceType") === "deck" 
-                          ? "border-blue-500 bg-blue-50" 
-                          : "border-gray-200 hover:border-blue-300"
-                      }`}
-                      onClick={() => form.setValue("serviceType", "deck")}
-                    >
-                      <div className="text-center">
-                        <div className="text-4xl mb-4">🪵</div>
-                        <h3 className="text-xl font-bold mb-2">Deck Installation</h3>
-                        <p className="text-sm text-gray-600 mb-2">$40.00/sqft</p>
-                        <p className="text-xs text-gray-500">Custom deck construction and design</p>
-                      </div>
+                  {servicesLoading ? (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">Loading services...</p>
                     </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-6">
+                      {services?.map((service: any) => {
+                        const getServiceIcon = (serviceType: string) => {
+                          switch(serviceType) {
+                            case 'deck': return '🪵';
+                            case 'fence': return '🔧';
+                            case 'roof': return '🏠';
+                            case 'windows': return '🪟';
+                            case 'gutters': return '🏘️';
+                            default: return '🔨';
+                          }
+                        };
 
-                    {/* Fence Installation */}
-                    <div 
-                      className={`p-6 border-2 rounded-lg cursor-pointer transition-all hover:shadow-lg ${
-                        form.getValues("serviceType") === "fence" 
-                          ? "border-blue-500 bg-blue-50" 
-                          : "border-gray-200 hover:border-blue-300"
-                      }`}
-                      onClick={() => form.setValue("serviceType", "fence")}
-                    >
-                      <div className="text-center">
-                        <div className="text-4xl mb-4">🔧</div>
-                        <h3 className="text-xl font-bold mb-2">Fence Installation</h3>
-                        <p className="text-sm text-gray-600 mb-2">$38.00/ft</p>
-                        <p className="text-xs text-gray-500">Custom fence design and installation</p>
-                      </div>
+                        return (
+                          <div 
+                            key={service.id}
+                            className={`p-6 border-2 rounded-lg cursor-pointer transition-all hover:shadow-lg ${
+                              form.getValues("serviceType") === service.serviceType 
+                                ? "border-blue-500 bg-blue-50" 
+                                : "border-gray-200 hover:border-blue-300"
+                            }`}
+                            onClick={() => form.setValue("serviceType", service.serviceType)}
+                          >
+                            <div className="text-center">
+                              <div className="text-4xl mb-4">{getServiceIcon(service.serviceType)}</div>
+                              <h3 className="text-xl font-bold mb-2">{service.name}</h3>
+                              <p className="text-sm text-gray-600 mb-2">${service.laborRate}/{service.unit}</p>
+                              <p className="text-xs text-gray-500">Professional {service.serviceType} service</p>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-
-                    {/* Roof Installation */}
-                    <div 
-                      className={`p-6 border-2 rounded-lg cursor-pointer transition-all hover:shadow-lg ${
-                        form.getValues("serviceType") === "roof" 
-                          ? "border-blue-500 bg-blue-50" 
-                          : "border-gray-200 hover:border-blue-300"
-                      }`}
-                      onClick={() => form.setValue("serviceType", "roof")}
-                    >
-                      <div className="text-center">
-                        <div className="text-4xl mb-4">🏠</div>
-                        <h3 className="text-xl font-bold mb-2">Roof Installation</h3>
-                        <p className="text-sm text-gray-600 mb-2">$15.00/sqft</p>
-                        <p className="text-xs text-gray-500">Complete roof installation and replacement</p>
-                      </div>
-                    </div>
-
-                    {/* Windows Installation */}
-                    <div 
-                      className={`p-6 border-2 rounded-lg cursor-pointer transition-all hover:shadow-lg ${
-                        form.getValues("serviceType") === "windows" 
-                          ? "border-blue-500 bg-blue-50" 
-                          : "border-gray-200 hover:border-blue-300"
-                      }`}
-                      onClick={() => form.setValue("serviceType", "windows")}
-                    >
-                      <div className="text-center">
-                        <div className="text-4xl mb-4">🪟</div>
-                        <h3 className="text-xl font-bold mb-2">Windows Installation</h3>
-                        <p className="text-sm text-gray-600 mb-2">$350.00/unit</p>
-                        <p className="text-xs text-gray-500">Energy-efficient window installation</p>
-                      </div>
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
                 <CardFooter className="flex justify-between">
                   <Button 
