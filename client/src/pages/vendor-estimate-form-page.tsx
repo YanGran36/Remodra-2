@@ -800,15 +800,69 @@ export default function VendorEstimateFormPage() {
                         <p className="text-sm text-muted-foreground">Total Estimate</p>
                         <p className="text-2xl font-bold text-blue-600">
                           ${form.watch("selectedServices")?.reduce((total: number, service: any) => {
-                            const servicePrice = parseFloat(service.laborRate || 0);
-                            const quantity = service.measurements?.quantity || 1;
-                            return total + (servicePrice * quantity);
+                            const laborRate = parseFloat(service.laborRate || 0);
+                            let quantity = 1;
+                            
+                            // Calculate quantity based on service type and measurements
+                            if (service.measurements) {
+                              if (service.serviceType === "fence" || service.serviceType === "gutters") {
+                                // Linear feet services
+                                quantity = service.measurements.linearFeet || 1;
+                              } else if (service.serviceType === "deck" || service.serviceType === "roof" || service.serviceType === "siding") {
+                                // Square feet services
+                                quantity = service.measurements.squareFeet || 1;
+                              } else if (service.serviceType === "windows") {
+                                // Unit-based services
+                                quantity = service.measurements.units || 1;
+                              }
+                            }
+                            
+                            return total + (laborRate * quantity);
                           }, 0).toFixed(2) || "0.00"}
                         </p>
                       </div>
                       <div className="text-right">
                         <p className="text-sm text-muted-foreground">Services Count</p>
                         <p className="text-lg font-semibold">{form.watch("selectedServices")?.length || 0} services</p>
+                      </div>
+                    </div>
+                    
+                    {/* Price Breakdown */}
+                    <div className="mt-4 pt-4 border-t">
+                      <h4 className="font-medium mb-2">Price Breakdown</h4>
+                      <div className="space-y-2 text-sm">
+                        {form.watch("selectedServices")?.map((service: any, index: number) => {
+                          const laborRate = parseFloat(service.laborRate || 0);
+                          let quantity = 1;
+                          let unitLabel = "unit";
+                          
+                          if (service.measurements) {
+                            if (service.serviceType === "fence" || service.serviceType === "gutters") {
+                              quantity = service.measurements.linearFeet || 1;
+                              unitLabel = "linear ft";
+                            } else if (service.serviceType === "deck" || service.serviceType === "roof" || service.serviceType === "siding") {
+                              quantity = service.measurements.squareFeet || 1;
+                              unitLabel = "sq ft";
+                            } else if (service.serviceType === "windows") {
+                              quantity = service.measurements.units || 1;
+                              unitLabel = "unit";
+                            }
+                          }
+                          
+                          const serviceTotal = laborRate * quantity;
+                          
+                          return (
+                            <div key={index} className="flex justify-between items-center">
+                              <div>
+                                <span className="font-medium">{service.name}</span>
+                                <span className="text-muted-foreground ml-2">
+                                  ({quantity} {unitLabel} × ${laborRate})
+                                </span>
+                              </div>
+                              <span className="font-medium">${serviceTotal.toFixed(2)}</span>
+                            </div>
+                          );
+                        }) || []}
                       </div>
                     </div>
                   </div>
