@@ -307,13 +307,16 @@ export default function VendorEstimateFormPage() {
                                 const totalLength = measurements.reduce((sum: number, m: any) => sum + (m.totalLength || 0), 0);
                                 const totalGates = measurements.reduce((sum: number, m: any) => sum + (m.totalGates || 0), 0);
                                 
+                                // Round to nearest whole number for professional display
+                                const roundedLength = Math.round(totalLength);
+                                
                                 currentServices[index] = {
                                   ...currentServices[index],
                                   measurements: {
-                                    linearFeet: totalLength,
+                                    linearFeet: roundedLength,
                                     squareFeet: 0,
                                     units: totalGates,
-                                    quantity: totalLength,
+                                    quantity: roundedLength,
                                   }
                                 };
                                 form.setValue("selectedServices", currentServices);
@@ -331,9 +334,9 @@ export default function VendorEstimateFormPage() {
                                     type="number" 
                                     placeholder="Enter width"
                                     onChange={(e) => {
-                                      const width = parseFloat(e.target.value) || 0;
+                                      const width = Math.round(parseFloat(e.target.value) || 0);
                                       const length = service.measurements?.length || 0;
-                                      const squareFeet = width * length;
+                                      const squareFeet = Math.round(width * length);
                                       
                                       const currentServices = form.getValues("selectedServices");
                                       currentServices[index] = {
@@ -424,7 +427,7 @@ export default function VendorEstimateFormPage() {
                                 type="number" 
                                 placeholder="Enter linear feet"
                                 onChange={(e) => {
-                                  const linearFeet = parseFloat(e.target.value) || 0;
+                                  const linearFeet = Math.round(parseFloat(e.target.value) || 0);
                                   
                                   const currentServices = form.getValues("selectedServices");
                                   currentServices[index] = {
