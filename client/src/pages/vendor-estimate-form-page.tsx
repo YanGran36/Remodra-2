@@ -7,7 +7,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -282,62 +282,59 @@ export default function VendorEstimateFormPage() {
                             }
                           };
 
-                          const isSelected = form.getValues("selectedServices")?.some(s => s.serviceType === service.serviceType);
 
-                          const toggleService = () => {
+
+                          const addService = () => {
                             const currentServices = form.getValues("selectedServices") || [];
                             
-                            if (isSelected) {
-                              // Remove service
-                              const filtered = currentServices.filter(s => s.serviceType !== service.serviceType);
-                              form.setValue("selectedServices", filtered);
-                            } else {
-                              // Add service
-                              const newService = {
-                                serviceType: service.serviceType,
-                                name: service.name,
-                                laborRate: service.laborRate,
-                                unit: service.unit,
-                                measurements: {
-                                  quantity: 0,
-                                  squareFeet: 0,
-                                  linearFeet: 0,
-                                  units: 0,
-                                },
-                                laborCost: 0,
-                                materialsCost: 0,
-                                notes: "",
-                              };
-                              form.setValue("selectedServices", [...currentServices, newService]);
+                            // Check if already added
+                            const isAlreadyAdded = currentServices.some(s => s.serviceType === service.serviceType);
+                            if (isAlreadyAdded) {
+                              return;
                             }
+
+                            // Add service
+                            const newService = {
+                              serviceType: service.serviceType,
+                              name: service.name,
+                              laborRate: service.laborRate,
+                              unit: service.unit,
+                              measurements: {
+                                quantity: 0,
+                                squareFeet: 0,
+                                linearFeet: 0,
+                                units: 0,
+                              },
+                              laborCost: 0,
+                              materialsCost: 0,
+                              notes: "",
+                            };
+                            form.setValue("selectedServices", [...currentServices, newService]);
                           };
 
                           return (
                             <div 
                               key={service.id}
-                              className={`p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-lg ${
-                                isSelected 
-                                  ? "border-blue-500 bg-blue-50" 
-                                  : "border-gray-200 hover:border-blue-300"
-                              }`}
-                              onClick={toggleService}
+                              className="p-4 border rounded-lg hover:border-blue-300 transition-all"
                             >
-                              <div className="flex items-center space-x-4">
-                                <div className="flex-shrink-0">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-4">
                                   <div className="text-3xl">{getServiceIcon(service.serviceType)}</div>
-                                </div>
-                                <div className="flex-grow">
-                                  <h3 className="text-lg font-bold">{service.name}</h3>
-                                  <p className="text-sm text-gray-600">${service.laborRate}/{service.unit}</p>
-                                  <p className="text-xs text-gray-500">Professional {service.serviceType} service</p>
-                                </div>
-                                <div className="flex-shrink-0">
-                                  <div className={`w-6 h-6 rounded border-2 flex items-center justify-center ${
-                                    isSelected ? "bg-blue-500 border-blue-500" : "border-gray-300"
-                                  }`}>
-                                    {isSelected && <span className="text-white text-sm">✓</span>}
+                                  <div>
+                                    <h3 className="text-lg font-bold">{service.name}</h3>
+                                    <p className="text-sm text-gray-600">${service.laborRate}/{service.unit}</p>
+                                    <p className="text-xs text-gray-500">Professional {service.serviceType} service</p>
                                   </div>
                                 </div>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  onClick={addService}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                                >
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  Add
+                                </Button>
                               </div>
                             </div>
                           );
