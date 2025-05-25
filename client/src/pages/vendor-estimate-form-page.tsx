@@ -7,7 +7,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, Trash } from "lucide-react";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -317,16 +317,10 @@ export default function VendorEstimateFormPage() {
 
 
 
-                          const addService = () => {
-                            const currentServices = form.getValues("selectedServices") || [];
-                            
-                            // Check if already added
-                            const isAlreadyAdded = currentServices.some(s => s.serviceType === service.serviceType);
-                            if (isAlreadyAdded) {
-                              return;
-                            }
+                          const currentServices = form.getValues("selectedServices") || [];
+                          const isAdded = currentServices.some(s => s.serviceType === service.serviceType);
 
-                            // Add service
+                          const addService = () => {
                             const newService = {
                               serviceType: service.serviceType,
                               name: service.name,
@@ -345,6 +339,11 @@ export default function VendorEstimateFormPage() {
                             form.setValue("selectedServices", [...currentServices, newService]);
                           };
 
+                          const removeService = () => {
+                            const updatedServices = currentServices.filter(s => s.serviceType !== service.serviceType);
+                            form.setValue("selectedServices", updatedServices);
+                          };
+
                           return (
                             <div 
                               key={service.id}
@@ -359,15 +358,27 @@ export default function VendorEstimateFormPage() {
                                     <p className="text-xs text-gray-500">Professional {service.serviceType} service</p>
                                   </div>
                                 </div>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  onClick={addService}
-                                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                                >
-                                  <Plus className="h-4 w-4 mr-2" />
-                                  Add
-                                </Button>
+                                {isAdded ? (
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={removeService}
+                                    className="bg-red-600 hover:bg-red-700 text-white"
+                                  >
+                                    <Trash className="h-4 w-4" />
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    onClick={addService}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                                  >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Add
+                                  </Button>
+                                )}
                               </div>
                             </div>
                           );
