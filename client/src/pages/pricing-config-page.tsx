@@ -460,14 +460,14 @@ const PricingConfigPage = () => {
                       <Select 
                         value={editingService.serviceType}
                         onValueChange={(value) => setEditingService({...editingService, serviceType: value})}
-                        disabled={!editingService.id.startsWith('service-')} // Solo permitir editar el tipo en servicios nuevos
+                        disabled={!editingService.id.startsWith('service-')}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Choose your service type" />
                         </SelectTrigger>
                         <SelectContent>
                           {/* Exterior Services */}
-                          <SelectItem value="fence">Fence Installation</SelectItem>
+                          <SelectItem value="fence">🏗️ Fence Installation</SelectItem>
                           <SelectItem value="deck">Deck Construction</SelectItem>
                           <SelectItem value="roof">Roofing</SelectItem>
                           <SelectItem value="windows">Windows Installation</SelectItem>
