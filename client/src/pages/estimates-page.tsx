@@ -18,6 +18,7 @@ import {
   BanknoteIcon,
   Calendar, 
   CheckCircle,
+  Calculator,
   XCircle,
   Clock
 } from "lucide-react";
