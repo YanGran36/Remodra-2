@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Plus } from "lucide-react";
-import FenceMeasurementTool from "@/components/measurement/fence-measurement-tool";
+import { FenceMeasurementTool } from "@/components/measurement/fence-measurement-tool";
 
 const formSchema = z.object({
   clientId: z.number(),
