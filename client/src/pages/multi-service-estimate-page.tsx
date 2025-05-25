@@ -132,6 +132,17 @@ export default function MultiServiceEstimatePage() {
   }, [form]);
 
   const addService = (service: any) => {
+    // Check if service is already added
+    const isAlreadyAdded = selectedServices.some(s => s.serviceType === service.serviceType);
+    if (isAlreadyAdded) {
+      toast({
+        title: "Service already added",
+        description: `${service.name} is already in your estimate`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     const newService: SelectedService = {
       serviceType: service.serviceType,
       serviceName: service.name,
@@ -148,6 +159,11 @@ export default function MultiServiceEstimatePage() {
       notes: "",
     };
     setSelectedServices([...selectedServices, newService]);
+    
+    toast({
+      title: "Service added",
+      description: `${service.name} has been added to your estimate`,
+    });
   };
 
   const removeService = (index: number) => {
