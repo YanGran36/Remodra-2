@@ -25,15 +25,24 @@ const formSchema = z.object({
   clientId: z.number().min(1, "Please select a client"),
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
-  serviceType: z.string().min(1, "Please select a service type"),
-  laborAmount: z.number().min(0, "Labor amount must be positive").optional(),
-  laborCost: z.number().optional(),
-  materialsCost: z.number().optional(),
+  selectedServices: z.array(z.object({
+    serviceType: z.string(),
+    name: z.string(),
+    laborRate: z.string(),
+    unit: z.string(),
+    measurements: z.object({
+      quantity: z.number().optional(),
+      squareFeet: z.number().optional(),
+      linearFeet: z.number().optional(),
+      units: z.number().optional(),
+    }).optional(),
+    laborCost: z.number().optional(),
+    materialsCost: z.number().optional(),
+    notes: z.string().optional(),
+  })).min(1, "Please select at least one service"),
+  totalLaborCost: z.number().optional(),
+  totalMaterialsCost: z.number().optional(),
   totalAmount: z.number().optional(),
-  quantity: z.number().min(0).optional(),
-  squareFeet: z.number().min(0).optional(),
-  linearFeet: z.number().min(0).optional(),
-  units: z.number().min(0).optional(),
   notes: z.string().optional(),
 });
 
@@ -52,11 +61,10 @@ export default function VendorEstimateFormPage() {
       clientId: 0,
       title: "",
       description: "",
-      serviceType: "",
-      laborAmount: 0,
-      squareFeet: 0,
-      linearFeet: 0,
-      units: 0,
+      selectedServices: [],
+      totalLaborCost: 0,
+      totalMaterialsCost: 0,
+      totalAmount: 0,
       notes: "",
     },
   });
@@ -99,15 +107,21 @@ export default function VendorEstimateFormPage() {
   });
 
   const onSubmit = (values: FormValues) => {
-    // Calculate totals and add required fields
-    const subtotal = (parseFloat(values.laborCost?.toString() || "0") + parseFloat(values.materialsCost?.toString() || "0"));
+    // Calculate totals from all selected services
+    const totalLaborCost = values.selectedServices?.reduce((sum, service) => sum + (service.laborCost || 0), 0) || 0;
+    const totalMaterialsCost = values.selectedServices?.reduce((sum, service) => sum + (service.materialsCost || 0), 0) || 0;
+    const subtotal = totalLaborCost + totalMaterialsCost;
     const total = subtotal; // For now, no tax or discount
     
     const estimateData = {
       ...values,
       estimateNumber: values.title || generateEstimateNumber(),
       subtotal: subtotal.toString(),
-      total: total.toString()
+      total: total.toString(),
+      // Convert back to old format for API compatibility
+      serviceType: values.selectedServices?.[0]?.serviceType || "",
+      laborCost: totalLaborCost,
+      materialsCost: totalMaterialsCost,
     };
     
     createEstimateMutation.mutate(estimateData);
@@ -250,38 +264,98 @@ export default function VendorEstimateFormPage() {
                       <p className="text-muted-foreground">Loading services...</p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 gap-6">
-                      {services?.map((service: any) => {
-                        const getServiceIcon = (serviceType: string) => {
-                          switch(serviceType) {
-                            case 'deck': return '🪵';
-                            case 'fence': return '🔧';
-                            case 'roof': return '🏠';
-                            case 'windows': return '🪟';
-                            case 'gutters': return '🏘️';
-                            default: return '🔨';
-                          }
-                        };
+                    <div className="space-y-4">
+                      <div className="text-sm text-muted-foreground mb-4">
+                        Select multiple services to include in this estimate. You can add measurements and materials for each service separately.
+                      </div>
+                      
+                      <div className="grid gap-4">
+                        {services?.map((service: any) => {
+                          const getServiceIcon = (serviceType: string) => {
+                            switch(serviceType) {
+                              case 'deck': return '🪵';
+                              case 'fence': return '🔧';
+                              case 'roof': return '🏠';
+                              case 'windows': return '🪟';
+                              case 'gutters': return '🏘️';
+                              default: return '🔨';
+                            }
+                          };
 
-                        return (
-                          <div 
-                            key={service.id}
-                            className={`p-6 border-2 rounded-lg cursor-pointer transition-all hover:shadow-lg ${
-                              form.getValues("serviceType") === service.serviceType 
-                                ? "border-blue-500 bg-blue-50" 
-                                : "border-gray-200 hover:border-blue-300"
-                            }`}
-                            onClick={() => form.setValue("serviceType", service.serviceType)}
-                          >
-                            <div className="text-center">
-                              <div className="text-4xl mb-4">{getServiceIcon(service.serviceType)}</div>
-                              <h3 className="text-xl font-bold mb-2">{service.name}</h3>
-                              <p className="text-sm text-gray-600 mb-2">${service.laborRate}/{service.unit}</p>
-                              <p className="text-xs text-gray-500">Professional {service.serviceType} service</p>
+                          const isSelected = form.getValues("selectedServices")?.some(s => s.serviceType === service.serviceType);
+
+                          const toggleService = () => {
+                            const currentServices = form.getValues("selectedServices") || [];
+                            
+                            if (isSelected) {
+                              // Remove service
+                              const filtered = currentServices.filter(s => s.serviceType !== service.serviceType);
+                              form.setValue("selectedServices", filtered);
+                            } else {
+                              // Add service
+                              const newService = {
+                                serviceType: service.serviceType,
+                                name: service.name,
+                                laborRate: service.laborRate,
+                                unit: service.unit,
+                                measurements: {
+                                  quantity: 0,
+                                  squareFeet: 0,
+                                  linearFeet: 0,
+                                  units: 0,
+                                },
+                                laborCost: 0,
+                                materialsCost: 0,
+                                notes: "",
+                              };
+                              form.setValue("selectedServices", [...currentServices, newService]);
+                            }
+                          };
+
+                          return (
+                            <div 
+                              key={service.id}
+                              className={`p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-lg ${
+                                isSelected 
+                                  ? "border-blue-500 bg-blue-50" 
+                                  : "border-gray-200 hover:border-blue-300"
+                              }`}
+                              onClick={toggleService}
+                            >
+                              <div className="flex items-center space-x-4">
+                                <div className="flex-shrink-0">
+                                  <div className="text-3xl">{getServiceIcon(service.serviceType)}</div>
+                                </div>
+                                <div className="flex-grow">
+                                  <h3 className="text-lg font-bold">{service.name}</h3>
+                                  <p className="text-sm text-gray-600">${service.laborRate}/{service.unit}</p>
+                                  <p className="text-xs text-gray-500">Professional {service.serviceType} service</p>
+                                </div>
+                                <div className="flex-shrink-0">
+                                  <div className={`w-6 h-6 rounded border-2 flex items-center justify-center ${
+                                    isSelected ? "bg-blue-500 border-blue-500" : "border-gray-300"
+                                  }`}>
+                                    {isSelected && <span className="text-white text-sm">✓</span>}
+                                  </div>
+                                </div>
+                              </div>
                             </div>
+                          );
+                        })}
+                      </div>
+                      
+                      {form.getValues("selectedServices")?.length > 0 && (
+                        <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                          <h4 className="font-medium text-green-800 mb-2">Selected Services:</h4>
+                          <div className="space-y-1">
+                            {form.getValues("selectedServices")?.map((service, index) => (
+                              <div key={index} className="text-sm text-green-700">
+                                • {service.name} (${service.laborRate}/{service.unit})
+                              </div>
+                            ))}
                           </div>
-                        );
-                      })}
+                        </div>
+                      )}
                     </div>
                   )}
                 </CardContent>
