@@ -184,10 +184,20 @@ export default function EstimatesPage() {
             title="Estimates" 
             description="Create and manage customer estimates"
             actions={
-              <Button className="flex items-center" onClick={createNewEstimate}>
-                <Plus className="h-4 w-4 mr-2" />
-                New Estimate
-              </Button>
+              <div className="flex space-x-3">
+                <Button 
+                  variant="outline" 
+                  className="flex items-center" 
+                  onClick={() => setLocation("/multi-service-estimate")}
+                >
+                  <Calculator className="h-4 w-4 mr-2" />
+                  Multi-Service Estimate
+                </Button>
+                <Button className="flex items-center" onClick={createNewEstimate}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Estimate
+                </Button>
+              </div>
             }
           />
           

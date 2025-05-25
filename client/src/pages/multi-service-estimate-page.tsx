@@ -17,6 +17,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Building2, Calculator, FileText, User, ArrowLeft, Plus, Trash2 } from "lucide-react";
+import FenceMeasurementTool from "@/components/measurement/fence-measurement-tool";
 
 interface SelectedService {
   serviceType: string;
@@ -441,12 +442,97 @@ export default function MultiServiceEstimatePage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {selectedServices.map((service, index) => (
-                    <div key={index} className="p-4 border rounded-lg space-y-4">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-2xl">{getServiceIcon(service.serviceType)}</span>
-                        <h3 className="text-lg font-semibold">{service.serviceName}</h3>
-                        <Badge variant="outline">${service.laborRate}/{service.unit}</Badge>
+                    <div key={index} className="p-6 border rounded-lg space-y-6 bg-gradient-to-r from-slate-50 to-blue-50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <span className="text-3xl">{getServiceIcon(service.serviceType)}</span>
+                          <div>
+                            <h3 className="text-xl font-bold text-gray-900">{service.serviceName}</h3>
+                            <p className="text-sm text-gray-600">Rate: ${service.laborRate}/{service.unit}</p>
+                          </div>
+                        </div>
+                        <Badge variant="secondary" className="text-lg px-3 py-1">
+                          Service #{index + 1}
+                        </Badge>
                       </div>
+
+                      {/* Visual Measurement Tool for Each Service */}
+                      <div className="space-y-4">
+                        <h4 className="text-lg font-semibold text-gray-800 border-b pb-2">
+                          📐 Visual Measurements & Drawings
+                        </h4>
+                        <div className="bg-white rounded-lg border border-gray-200 p-4">
+                          <FenceMeasurementTool
+                            serviceType={service.serviceType}
+                            onMeasurementsChange={(measurements) => {
+                              const updatedServices = [...selectedServices];
+                              updatedServices[index] = {
+                                ...updatedServices[index],
+                                measurements: {
+                                  quantity: measurements.quantity || 0,
+                                  squareFeet: measurements.squareFeet || 0,
+                                  linearFeet: measurements.linearFeet || 0,
+                                  units: measurements.units || 0,
+                                }
+                              };
+                              setSelectedServices(updatedServices);
+                              
+                              // Calculate labor cost based on measurements and labor rate
+                              const laborRate = parseFloat(service.laborRate);
+                              let laborCost = 0;
+                              
+                              if (service.unit === "sqft" && measurements.squareFeet) {
+                                laborCost = measurements.squareFeet * laborRate;
+                              } else if (service.unit === "ft" && measurements.linearFeet) {
+                                laborCost = measurements.linearFeet * laborRate;
+                              } else if (service.unit === "unit" && measurements.units) {
+                                laborCost = measurements.units * laborRate;
+                              }
+                              
+                              updatedServices[index].laborCost = laborCost;
+                              setSelectedServices(updatedServices);
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Display Current Measurements */}
+                      {service.measurements && (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          {service.measurements.squareFeet > 0 && (
+                            <div className="text-center p-3 bg-blue-50 rounded-lg border">
+                              <div className="text-2xl font-bold text-blue-600">
+                                {service.measurements.squareFeet.toFixed(1)}
+                              </div>
+                              <div className="text-sm text-blue-700">Square Feet</div>
+                            </div>
+                          )}
+                          {service.measurements.linearFeet > 0 && (
+                            <div className="text-center p-3 bg-green-50 rounded-lg border">
+                              <div className="text-2xl font-bold text-green-600">
+                                {service.measurements.linearFeet.toFixed(1)}
+                              </div>
+                              <div className="text-sm text-green-700">Linear Feet</div>
+                            </div>
+                          )}
+                          {service.measurements.units > 0 && (
+                            <div className="text-center p-3 bg-purple-50 rounded-lg border">
+                              <div className="text-2xl font-bold text-purple-600">
+                                {service.measurements.units}
+                              </div>
+                              <div className="text-sm text-purple-700">Units</div>
+                            </div>
+                          )}
+                          {service.laborCost > 0 && (
+                            <div className="text-center p-3 bg-orange-50 rounded-lg border">
+                              <div className="text-2xl font-bold text-orange-600">
+                                ${service.laborCost.toFixed(2)}
+                              </div>
+                              <div className="text-sm text-orange-700">Labor Cost</div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                       
                       <div className="grid grid-cols-2 gap-4">
                         <div>
