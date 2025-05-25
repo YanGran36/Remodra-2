@@ -474,7 +474,7 @@ const PricingConfigPage = () => {
                           <SelectItem value="windows">Windows Installation</SelectItem>
                           <SelectItem value="gutters">Gutters & Downspouts</SelectItem>
                           <SelectItem value="siding">Siding Installation</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
+                          <SelectItem value="other">Other Services</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
