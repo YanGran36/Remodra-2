@@ -377,8 +377,10 @@ export default function VendorEstimateFormPage() {
                                 </div>
                               </div>
                               {service.measurements?.squareFeet > 0 && (
-                                <div className="p-3 bg-blue-50 rounded">
-                                  <p className="text-sm font-medium">Total Area: {service.measurements.squareFeet} sq ft</p>
+                                <div className="p-3 bg-blue-50 rounded border-l-4 border-blue-400">
+                                  <p className="text-sm font-medium text-blue-800">
+                                    📐 Total Area: <span className="font-bold">{service.measurements.squareFeet.toLocaleString()} sq ft</span>
+                                  </p>
                                 </div>
                               )}
                             </div>
@@ -406,8 +408,10 @@ export default function VendorEstimateFormPage() {
                                 }}
                               />
                               {service.measurements?.units > 0 && (
-                                <div className="p-3 bg-blue-50 rounded">
-                                  <p className="text-sm font-medium">Total Windows: {service.measurements.units} units</p>
+                                <div className="p-3 bg-green-50 rounded border-l-4 border-green-400">
+                                  <p className="text-sm font-medium text-green-800">
+                                    🪟 Total Windows: <span className="font-bold">{service.measurements.units.toLocaleString()} units</span>
+                                  </p>
                                 </div>
                               )}
                             </div>
@@ -435,8 +439,10 @@ export default function VendorEstimateFormPage() {
                                 }}
                               />
                               {service.measurements?.linearFeet > 0 && (
-                                <div className="p-3 bg-blue-50 rounded">
-                                  <p className="text-sm font-medium">Total Length: {service.measurements.linearFeet} linear ft</p>
+                                <div className="p-3 bg-orange-50 rounded border-l-4 border-orange-400">
+                                  <p className="text-sm font-medium text-orange-800">
+                                    📏 Total Length: <span className="font-bold">{service.measurements.linearFeet.toLocaleString()} linear ft</span>
+                                  </p>
                                 </div>
                               )}
                             </div>
@@ -977,7 +983,7 @@ export default function VendorEstimateFormPage() {
                             }
                             
                             return total + (laborRate * quantity);
-                          }, 0).toFixed(2) || "0.00"}
+                          }, 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || "0.00"}
                         </p>
                       </div>
                       <div className="text-right">
@@ -1015,10 +1021,10 @@ export default function VendorEstimateFormPage() {
                               <div>
                                 <span className="font-medium">{service.name}</span>
                                 <span className="text-muted-foreground ml-2">
-                                  ({quantity} {unitLabel} × ${laborRate})
+                                  ({quantity.toLocaleString()} {unitLabel} × ${laborRate.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                                 </span>
                               </div>
-                              <span className="font-medium">${serviceTotal.toFixed(2)}</span>
+                              <span className="font-medium">${serviceTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                           );
                         }) || []}
