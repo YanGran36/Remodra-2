@@ -304,16 +304,15 @@ export default function VendorEstimateFormPage() {
                               onMeasurementsChange={(measurements) => {
                                 const currentServices = form.getValues("selectedServices");
                                 // Calculate totals from measurements array
-                                const totalLength = measurements.reduce((sum, m) => sum + (m.length || 0), 0);
-                                const totalArea = measurements.reduce((sum, m) => sum + (m.area || 0), 0);
-                                const gateCount = measurements.filter(m => m.isGate).length;
+                                const totalLength = measurements.reduce((sum: number, m: any) => sum + (m.totalLength || 0), 0);
+                                const totalGates = measurements.reduce((sum: number, m: any) => sum + (m.totalGates || 0), 0);
                                 
                                 currentServices[index] = {
                                   ...currentServices[index],
                                   measurements: {
                                     linearFeet: totalLength,
-                                    squareFeet: totalArea,
-                                    units: gateCount,
+                                    squareFeet: 0,
+                                    units: totalGates,
                                     quantity: totalLength,
                                   }
                                 };
@@ -328,34 +327,147 @@ export default function VendorEstimateFormPage() {
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
                                   <label className="text-sm font-medium">Width (ft)</label>
-                                  <Input type="number" placeholder="Enter width" />
+                                  <Input 
+                                    type="number" 
+                                    placeholder="Enter width"
+                                    onChange={(e) => {
+                                      const width = parseFloat(e.target.value) || 0;
+                                      const length = service.measurements?.length || 0;
+                                      const squareFeet = width * length;
+                                      
+                                      const currentServices = form.getValues("selectedServices");
+                                      currentServices[index] = {
+                                        ...currentServices[index],
+                                        measurements: {
+                                          ...currentServices[index].measurements,
+                                          width,
+                                          length,
+                                          squareFeet,
+                                          quantity: squareFeet,
+                                        }
+                                      };
+                                      form.setValue("selectedServices", currentServices);
+                                    }}
+                                  />
                                 </div>
                                 <div>
                                   <label className="text-sm font-medium">Length (ft)</label>
-                                  <Input type="number" placeholder="Enter length" />
+                                  <Input 
+                                    type="number" 
+                                    placeholder="Enter length"
+                                    onChange={(e) => {
+                                      const length = parseFloat(e.target.value) || 0;
+                                      const width = service.measurements?.width || 0;
+                                      const squareFeet = width * length;
+                                      
+                                      const currentServices = form.getValues("selectedServices");
+                                      currentServices[index] = {
+                                        ...currentServices[index],
+                                        measurements: {
+                                          ...currentServices[index].measurements,
+                                          width,
+                                          length,
+                                          squareFeet,
+                                          quantity: squareFeet,
+                                        }
+                                      };
+                                      form.setValue("selectedServices", currentServices);
+                                    }}
+                                  />
                                 </div>
                               </div>
+                              {service.measurements?.squareFeet > 0 && (
+                                <div className="p-3 bg-blue-50 rounded">
+                                  <p className="text-sm font-medium">Total Area: {service.measurements.squareFeet} sq ft</p>
+                                </div>
+                              )}
                             </div>
                           )}
 
                           {service.serviceType === "windows" && (
                             <div className="space-y-4">
                               <p className="text-sm text-muted-foreground">Number of Windows</p>
-                              <Input type="number" placeholder="Enter number of windows" />
+                              <Input 
+                                type="number" 
+                                placeholder="Enter number of windows"
+                                onChange={(e) => {
+                                  const units = parseInt(e.target.value) || 0;
+                                  
+                                  const currentServices = form.getValues("selectedServices");
+                                  currentServices[index] = {
+                                    ...currentServices[index],
+                                    measurements: {
+                                      ...currentServices[index].measurements,
+                                      units,
+                                      quantity: units,
+                                    }
+                                  };
+                                  form.setValue("selectedServices", currentServices);
+                                }}
+                              />
+                              {service.measurements?.units > 0 && (
+                                <div className="p-3 bg-blue-50 rounded">
+                                  <p className="text-sm font-medium">Total Windows: {service.measurements.units} units</p>
+                                </div>
+                              )}
                             </div>
                           )}
 
                           {service.serviceType === "gutters" && (
                             <div className="space-y-4">
                               <p className="text-sm text-muted-foreground">Linear Feet of Gutters</p>
-                              <Input type="number" placeholder="Enter linear feet" />
+                              <Input 
+                                type="number" 
+                                placeholder="Enter linear feet"
+                                onChange={(e) => {
+                                  const linearFeet = parseFloat(e.target.value) || 0;
+                                  
+                                  const currentServices = form.getValues("selectedServices");
+                                  currentServices[index] = {
+                                    ...currentServices[index],
+                                    measurements: {
+                                      ...currentServices[index].measurements,
+                                      linearFeet,
+                                      quantity: linearFeet,
+                                    }
+                                  };
+                                  form.setValue("selectedServices", currentServices);
+                                }}
+                              />
+                              {service.measurements?.linearFeet > 0 && (
+                                <div className="p-3 bg-blue-50 rounded">
+                                  <p className="text-sm font-medium">Total Length: {service.measurements.linearFeet} linear ft</p>
+                                </div>
+                              )}
                             </div>
                           )}
 
                           {service.serviceType === "roof" && (
                             <div className="space-y-4">
                               <p className="text-sm text-muted-foreground">Roof Area (sq ft)</p>
-                              <Input type="number" placeholder="Enter roof area" />
+                              <Input 
+                                type="number" 
+                                placeholder="Enter roof area"
+                                onChange={(e) => {
+                                  const squareFeet = parseFloat(e.target.value) || 0;
+                                  
+                                  const currentServices = form.getValues("selectedServices");
+                                  currentServices[index] = {
+                                    ...currentServices[index],
+                                    measurements: {
+                                      ...currentServices[index].measurements,
+                                      squareFeet,
+                                      quantity: squareFeet,
+                                    }
+                                  };
+                                  form.setValue("selectedServices", currentServices);
+                                }}
+                              />
+                              {service.measurements?.squareFeet > 0 && (
+                                <div className="p-3 bg-blue-50 rounded">
+                                  <p className="text-sm font-medium">Total Area: {service.measurements.squareFeet} sq ft</p>
+                                </div>
+                              )}
                             </div>
                           )}
 
@@ -365,13 +477,60 @@ export default function VendorEstimateFormPage() {
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
                                   <label className="text-sm font-medium">Height (ft)</label>
-                                  <Input type="number" placeholder="Enter height" />
+                                  <Input 
+                                    type="number" 
+                                    placeholder="Enter height"
+                                    onChange={(e) => {
+                                      const height = parseFloat(e.target.value) || 0;
+                                      const perimeter = service.measurements?.perimeter || 0;
+                                      const squareFeet = height * perimeter;
+                                      
+                                      const currentServices = form.getValues("selectedServices");
+                                      currentServices[index] = {
+                                        ...currentServices[index],
+                                        measurements: {
+                                          ...currentServices[index].measurements,
+                                          height,
+                                          perimeter,
+                                          squareFeet,
+                                          quantity: squareFeet,
+                                        }
+                                      };
+                                      form.setValue("selectedServices", currentServices);
+                                    }}
+                                  />
                                 </div>
                                 <div>
                                   <label className="text-sm font-medium">Perimeter (ft)</label>
-                                  <Input type="number" placeholder="Enter perimeter" />
+                                  <Input 
+                                    type="number" 
+                                    placeholder="Enter perimeter"
+                                    onChange={(e) => {
+                                      const perimeter = parseFloat(e.target.value) || 0;
+                                      const height = service.measurements?.height || 0;
+                                      const squareFeet = height * perimeter;
+                                      
+                                      const currentServices = form.getValues("selectedServices");
+                                      currentServices[index] = {
+                                        ...currentServices[index],
+                                        measurements: {
+                                          ...currentServices[index].measurements,
+                                          height,
+                                          perimeter,
+                                          squareFeet,
+                                          quantity: squareFeet,
+                                        }
+                                      };
+                                      form.setValue("selectedServices", currentServices);
+                                    }}
+                                  />
                                 </div>
                               </div>
+                              {service.measurements?.squareFeet > 0 && (
+                                <div className="p-3 bg-blue-50 rounded">
+                                  <p className="text-sm font-medium">Total Area: {service.measurements.squareFeet} sq ft</p>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
