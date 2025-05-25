@@ -139,9 +139,9 @@ export default function VendorEstimateFormPage() {
             <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="client">Client</TabsTrigger>
               <TabsTrigger value="services">Services</TabsTrigger>
-              <TabsTrigger value="materials">Materials</TabsTrigger>
-              <TabsTrigger value="labor">Labor</TabsTrigger>
               <TabsTrigger value="measurements">Measurements</TabsTrigger>
+              <TabsTrigger value="materials">Materials & Labor</TabsTrigger>
+              <TabsTrigger value="labor" className="hidden">Labor</TabsTrigger>
               <TabsTrigger value="review">Review</TabsTrigger>
             </TabsList>
 
@@ -305,59 +305,221 @@ export default function VendorEstimateFormPage() {
                     <div className="text-center py-8">
                       <p className="text-muted-foreground">Please select a service type first</p>
                     </div>
-                  ) : materialsLoading ? (
-                    <div className="text-center py-8">
-                      <p className="text-muted-foreground">Loading materials...</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="mb-4">
-                        <h3 className="text-lg font-semibold mb-2">Available Materials</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Select materials and quantities for {services?.find(s => s.serviceType === form.getValues("serviceType"))?.name}
-                        </p>
-                      </div>
-                      
-                      {materials && materials.length > 0 ? (
-                        <div className="grid gap-4">
-                          {materials.map((material: any) => (
-                            <div key={material.id} className="border rounded-lg p-4">
-                              <div className="flex items-center justify-between mb-2">
-                                <div>
-                                  <h4 className="font-medium">{material.name}</h4>
-                                  <p className="text-sm text-muted-foreground">
-                                    ${material.unitPrice}/{material.unit}
-                                  </p>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <Input
-                                    type="number"
-                                    placeholder="Qty"
-                                    className="w-20"
-                                    min="0"
-                                    step="0.1"
-                                  />
-                                  <span className="text-sm text-muted-foreground">{material.unit}</span>
-                                </div>
+                  ) : form.getValues("serviceType") === "fence" ? (
+                    <div className="space-y-6">
+                      {/* Fence Materials Section */}
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold">Fence Materials</h3>
+                        
+                        {/* Posts Section */}
+                        <div className="border rounded-lg p-4">
+                          <h4 className="font-medium mb-3">Posts & Foundations</h4>
+                          <div className="grid gap-3">
+                            <div className="flex items-center justify-between p-3 border rounded">
+                              <div>
+                                <p className="font-medium">Pressure Treated 4x4x8 Posts</p>
+                                <p className="text-sm text-muted-foreground">$28.50 each</p>
                               </div>
-                              <div className="text-right">
-                                <span className="text-sm font-medium">Subtotal: $0.00</span>
+                              <div className="flex items-center gap-2">
+                                <Input type="number" className="w-20" placeholder="0" min="0" />
+                                <span className="text-xs">posts</span>
                               </div>
                             </div>
-                          ))}
+                            <div className="flex items-center justify-between p-3 border rounded">
+                              <div>
+                                <p className="font-medium">Concrete Mix (60lb bags)</p>
+                                <p className="text-sm text-muted-foreground">$4.25 per bag</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Input type="number" className="w-20" placeholder="0" min="0" />
+                                <span className="text-xs">bags</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between p-3 border rounded">
+                              <div>
+                                <p className="font-medium">Post Anchors/Brackets</p>
+                                <p className="text-sm text-muted-foreground">$12.80 each</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Input type="number" className="w-20" placeholder="0" min="0" />
+                                <span className="text-xs">brackets</span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      ) : (
-                        <div className="text-center py-8">
-                          <p className="text-muted-foreground">No materials found. Add materials in the pricing configuration.</p>
+
+                        {/* Panels Section */}
+                        <div className="border rounded-lg p-4">
+                          <h4 className="font-medium mb-3">Fence Panels & Rails</h4>
+                          <div className="grid gap-3">
+                            <div className="flex items-center justify-between p-3 border rounded">
+                              <div>
+                                <p className="font-medium">6ft Privacy Fence Panels</p>
+                                <p className="text-sm text-muted-foreground">$45.90 per 8ft panel</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Input type="number" className="w-20" placeholder="0" min="0" />
+                                <span className="text-xs">panels</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between p-3 border rounded">
+                              <div>
+                                <p className="font-medium">2x4x8 Pressure Treated Rails</p>
+                                <p className="text-sm text-muted-foreground">$8.75 each</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Input type="number" className="w-20" placeholder="0" min="0" />
+                                <span className="text-xs">rails</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between p-3 border rounded">
+                              <div>
+                                <p className="font-medium">Panel Brackets</p>
+                                <p className="text-sm text-muted-foreground">$3.25 each</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Input type="number" className="w-20" placeholder="0" min="0" />
+                                <span className="text-xs">brackets</span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      )}
-                      
-                      <div className="border-t pt-4">
-                        <div className="flex justify-between items-center">
-                          <span className="text-lg font-semibold">Materials Total:</span>
-                          <span className="text-lg font-bold">$0.00</span>
+
+                        {/* Gates Section */}
+                        <div className="border rounded-lg p-4">
+                          <h4 className="font-medium mb-3">Gates & Hardware</h4>
+                          <div className="grid gap-3">
+                            <div className="flex items-center justify-between p-3 border rounded">
+                              <div>
+                                <p className="font-medium">Single Gate (3-6ft wide)</p>
+                                <p className="text-sm text-muted-foreground">$125.00 - $180.00 each</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Input type="number" className="w-20" placeholder="0" min="0" />
+                                <span className="text-xs">gates</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between p-3 border rounded">
+                              <div>
+                                <p className="font-medium">Double Gate (8-12ft wide)</p>
+                                <p className="text-sm text-muted-foreground">$295.00 - $425.00 each</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Input type="number" className="w-20" placeholder="0" min="0" />
+                                <span className="text-xs">gates</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between p-3 border rounded">
+                              <div>
+                                <p className="font-medium">Heavy Duty Gate Hinges</p>
+                                <p className="text-sm text-muted-foreground">$18.50 per pair</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Input type="number" className="w-20" placeholder="0" min="0" />
+                                <span className="text-xs">pairs</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between p-3 border rounded">
+                              <div>
+                                <p className="font-medium">Gate Latches & Locks</p>
+                                <p className="text-sm text-muted-foreground">$32.75 each</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Input type="number" className="w-20" placeholder="0" min="0" />
+                                <span className="text-xs">latches</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between p-3 border rounded">
+                              <div>
+                                <p className="font-medium">Drop Rod for Double Gates</p>
+                                <p className="text-sm text-muted-foreground">$24.90 each</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Input type="number" className="w-20" placeholder="0" min="0" />
+                                <span className="text-xs">rods</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Fasteners & Hardware */}
+                        <div className="border rounded-lg p-4">
+                          <h4 className="font-medium mb-3">Fasteners & Hardware</h4>
+                          <div className="grid gap-3">
+                            <div className="flex items-center justify-between p-3 border rounded">
+                              <div>
+                                <p className="font-medium">Galvanized Carriage Bolts (1/2" x 6")</p>
+                                <p className="text-sm text-muted-foreground">$2.85 each</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Input type="number" className="w-20" placeholder="0" min="0" />
+                                <span className="text-xs">bolts</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between p-3 border rounded">
+                              <div>
+                                <p className="font-medium">Galvanized Screws (2.5" deck screws)</p>
+                                <p className="text-sm text-muted-foreground">$45.00 per 5lb box</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Input type="number" className="w-20" placeholder="0" min="0" />
+                                <span className="text-xs">boxes</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between p-3 border rounded">
+                              <div>
+                                <p className="font-medium">Washers & Nuts</p>
+                                <p className="text-sm text-muted-foreground">$12.50 per pack</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Input type="number" className="w-20" placeholder="0" min="0" />
+                                <span className="text-xs">packs</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Labor Section */}
+                        <div className="border rounded-lg p-4 bg-blue-50">
+                          <h4 className="font-medium mb-3">Labor & Installation</h4>
+                          <div className="grid gap-3">
+                            <div className="flex items-center justify-between p-3 border rounded bg-white">
+                              <div>
+                                <p className="font-medium">Fence Installation Labor</p>
+                                <p className="text-sm text-muted-foreground">$38.00 per linear foot</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Input type="number" className="w-20" placeholder="0" min="0" step="0.1" />
+                                <span className="text-xs">linear ft</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between p-3 border rounded bg-white">
+                              <div>
+                                <p className="font-medium">Gate Installation</p>
+                                <p className="text-sm text-muted-foreground">$125.00 per gate</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Input type="number" className="w-20" placeholder="0" min="0" />
+                                <span className="text-xs">gates</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between p-3 border rounded bg-white">
+                              <div>
+                                <p className="font-medium">Site Preparation & Cleanup</p>
+                                <p className="text-sm text-muted-foreground">$250.00 flat rate</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Input type="number" className="w-20" placeholder="1" min="0" />
+                                <span className="text-xs">job</span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">Select a service type to see available materials</p>
                     </div>
                   )}
                 </CardContent>
