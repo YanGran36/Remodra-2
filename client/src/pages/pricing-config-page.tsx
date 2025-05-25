@@ -230,12 +230,13 @@ const PricingConfigPage = () => {
     const newService: Service = {
       id: serviceId,
       name: 'New Service',
-      serviceType: serviceId, // Use the same ID for serviceType to ensure uniqueness
+      serviceType: '', // Empty so the modal will show
       unit: 'ft',
       laborRate: 0,
       laborMethod: 'by_length',
     };
     setEditingService(newService);
+    setShowServiceCategories(true); // Auto-open the modal for new services
   };
 
   // Save service changes
