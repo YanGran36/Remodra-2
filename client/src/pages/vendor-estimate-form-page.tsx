@@ -272,7 +272,7 @@ export default function VendorEstimateFormPage() {
                   <Button 
                     type="button" 
                     onClick={() => setActiveTab("measurements")}
-                    disabled={form.getValues("selectedServices").length === 0}
+                    disabled={!form.watch("selectedServices") || form.watch("selectedServices").length === 0}
                   >
                     Continue to Measurements
                   </Button>
@@ -288,13 +288,13 @@ export default function VendorEstimateFormPage() {
                   <CardDescription>Measure each selected service</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {form.getValues("selectedServices").length === 0 ? (
+                  {form.watch("selectedServices")?.length === 0 || !form.watch("selectedServices") ? (
                     <div className="text-center py-8">
                       <p className="text-muted-foreground">Please select services first</p>
                     </div>
                   ) : (
                     <div className="space-y-6">
-                      {form.getValues("selectedServices").map((service: any, index: number) => (
+                      {form.watch("selectedServices").map((service: any, index: number) => (
                         <div key={`${service.serviceType}-${index}`} className="border rounded-lg p-4">
                           <h3 className="text-lg font-semibold mb-4">{service.name} Measurements</h3>
                           
@@ -398,13 +398,13 @@ export default function VendorEstimateFormPage() {
                   <CardDescription>Basic materials needed for selected services</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {!form.getValues("selectedServices") || form.getValues("selectedServices").length === 0 ? (
+                  {!form.watch("selectedServices") || form.watch("selectedServices").length === 0 ? (
                     <div className="text-center py-8">
                       <p className="text-muted-foreground">Please select services first</p>
                     </div>
                   ) : (
                     <div className="space-y-6">
-                      {form.getValues("selectedServices").map((service: any, index: number) => (
+                      {form.watch("selectedServices").map((service: any, index: number) => (
                         <div key={`materials-${service.serviceType}-${index}`} className="border rounded-lg p-4">
                           <h3 className="text-lg font-semibold mb-4">{service.name} - Materials Needed</h3>
                           
@@ -592,16 +592,16 @@ export default function VendorEstimateFormPage() {
                       <div>
                         <p className="text-sm text-muted-foreground">Client</p>
                         <p className="font-medium">
-                          {clients?.find(c => c.id === form.getValues("clientId"))?.firstName} {clients?.find(c => c.id === form.getValues("clientId"))?.lastName}
+                          {clients?.find(c => c.id === form.watch("clientId"))?.firstName} {clients?.find(c => c.id === form.watch("clientId"))?.lastName}
                         </p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Project Title</p>
-                        <p className="font-medium">{form.getValues("title") || "Untitled Project"}</p>
+                        <p className="font-medium">{form.watch("title") || "Untitled Project"}</p>
                       </div>
                       <div className="md:col-span-2">
                         <p className="text-sm text-muted-foreground">Description</p>
-                        <p className="font-medium">{form.getValues("description") || "No description provided"}</p>
+                        <p className="font-medium">{form.watch("description") || "No description provided"}</p>
                       </div>
                     </div>
                   </div>
