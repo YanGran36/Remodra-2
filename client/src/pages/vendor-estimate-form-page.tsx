@@ -99,7 +99,18 @@ export default function VendorEstimateFormPage() {
   });
 
   const onSubmit = (values: FormValues) => {
-    createEstimateMutation.mutate(values);
+    // Calculate totals and add required fields
+    const subtotal = (parseFloat(values.laborCost?.toString() || "0") + parseFloat(values.materialsCost?.toString() || "0"));
+    const total = subtotal; // For now, no tax or discount
+    
+    const estimateData = {
+      ...values,
+      estimateNumber: values.title || generateEstimateNumber(),
+      subtotal: subtotal.toString(),
+      total: total.toString()
+    };
+    
+    createEstimateMutation.mutate(estimateData);
   };
 
   function generateEstimateNumber(): string {
