@@ -596,8 +596,8 @@ export default function VendorEstimateFormPage() {
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Project Title</p>
-                        <p className="font-medium">{form.watch("title") || "Untitled Project"}</p>
+                        <p className="text-sm text-muted-foreground">Estimate Number</p>
+                        <p className="font-medium">{form.watch("title") || "EST-" + Date.now().toString().slice(-6)}</p>
                       </div>
                       <div className="md:col-span-2">
                         <p className="text-sm text-muted-foreground">Description</p>
@@ -638,22 +638,76 @@ export default function VendorEstimateFormPage() {
                             <h4 className="font-medium mb-2">{service.name}</h4>
                             <div className="text-sm text-muted-foreground">
                               {service.serviceType === "fence" && (
-                                <p>• Professional on-site measurement and layout planning</p>
+                                <div>
+                                  <p>• Professional fence layout with precise measurements</p>
+                                  {service.measurements && (
+                                    <>
+                                      <p>• Total linear footage: {service.measurements.linearFeet || 0} ft</p>
+                                      <p>• Gate installations: {service.measurements.units || 0} units</p>
+                                      <p>• Post requirements calculated based on spacing</p>
+                                    </>
+                                  )}
+                                </div>
                               )}
                               {service.serviceType === "deck" && (
-                                <p>• Area measurement and structural assessment</p>
+                                <div>
+                                  <p>• Deck area measurement and structural planning</p>
+                                  {service.measurements && (
+                                    <>
+                                      <p>• Total deck area: {service.measurements.squareFeet || 0} sq ft</p>
+                                      <p>• Structural support and joist layout included</p>
+                                      <p>• Railing perimeter measured and planned</p>
+                                    </>
+                                  )}
+                                </div>
                               )}
                               {service.serviceType === "windows" && (
-                                <p>• Window count and sizing verification</p>
+                                <div>
+                                  <p>• Window measurement and installation planning</p>
+                                  {service.measurements && (
+                                    <>
+                                      <p>• Number of windows: {service.measurements.units || 0} units</p>
+                                      <p>• Opening size verification and trim calculation</p>
+                                      <p>• Installation sequence planned</p>
+                                    </>
+                                  )}
+                                </div>
                               )}
                               {service.serviceType === "gutters" && (
-                                <p>• Linear footage measurement and slope calculation</p>
+                                <div>
+                                  <p>• Gutter system measurement and slope planning</p>
+                                  {service.measurements && (
+                                    <>
+                                      <p>• Total gutter length: {service.measurements.linearFeet || 0} ft</p>
+                                      <p>• Downspout placement optimized for drainage</p>
+                                      <p>• Proper slope calculated for water flow</p>
+                                    </>
+                                  )}
+                                </div>
                               )}
                               {service.serviceType === "roof" && (
-                                <p>• Square footage measurement and pitch assessment</p>
+                                <div>
+                                  <p>• Roof measurement and material calculation</p>
+                                  {service.measurements && (
+                                    <>
+                                      <p>• Total roof area: {service.measurements.squareFeet || 0} sq ft</p>
+                                      <p>• Pitch and slope assessment completed</p>
+                                      <p>• Material waste factor included in calculations</p>
+                                    </>
+                                  )}
+                                </div>
                               )}
                               {service.serviceType === "siding" && (
-                                <p>• Coverage area measurement and material calculation</p>
+                                <div>
+                                  <p>• Siding coverage measurement and planning</p>
+                                  {service.measurements && (
+                                    <>
+                                      <p>• Coverage area: {service.measurements.squareFeet || 0} sq ft</p>
+                                      <p>• Window and door cutouts accounted for</p>
+                                      <p>• Corner and trim measurements included</p>
+                                    </>
+                                  )}
+                                </div>
                               )}
                             </div>
                           </div>
@@ -735,6 +789,27 @@ export default function VendorEstimateFormPage() {
                       <p>✓ Professional installation and workmanship</p>
                       <p>✓ Site cleanup and debris removal</p>
                       <p>✓ Quality guarantee on all work performed</p>
+                    </div>
+                  </div>
+
+                  {/* Final Price */}
+                  <div className="border rounded-lg p-4 bg-blue-50">
+                    <h3 className="text-lg font-semibold mb-3">Project Total</h3>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Total Estimate</p>
+                        <p className="text-2xl font-bold text-blue-600">
+                          ${form.watch("selectedServices")?.reduce((total: number, service: any) => {
+                            const servicePrice = parseFloat(service.laborRate || 0);
+                            const quantity = service.measurements?.quantity || 1;
+                            return total + (servicePrice * quantity);
+                          }, 0).toFixed(2) || "0.00"}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-muted-foreground">Services Count</p>
+                        <p className="text-lg font-semibold">{form.watch("selectedServices")?.length || 0} services</p>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
