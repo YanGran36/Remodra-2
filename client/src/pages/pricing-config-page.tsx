@@ -466,6 +466,7 @@ const PricingConfigPage = () => {
                           <SelectValue placeholder="Select service type" />
                         </SelectTrigger>
                         <SelectContent>
+                          {/* Service type options */}
                           <SelectItem value="fence">Fence</SelectItem>
                           <SelectItem value="deck">Deck</SelectItem>
                           <SelectItem value="roof">Roof</SelectItem>
