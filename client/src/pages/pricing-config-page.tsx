@@ -463,7 +463,7 @@ const PricingConfigPage = () => {
                         disabled={!editingService.id.startsWith('service-')} // Solo permitir editar el tipo en servicios nuevos
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select service type" />
+                          <SelectValue placeholder="Choose your service type" />
                         </SelectTrigger>
                         <SelectContent>
                           {/* Exterior Services */}
