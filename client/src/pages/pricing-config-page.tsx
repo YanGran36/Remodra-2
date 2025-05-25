@@ -466,14 +466,71 @@ const PricingConfigPage = () => {
                           <SelectValue placeholder="Select service type" />
                         </SelectTrigger>
                         <SelectContent>
-                          {/* Service type options */}
-                          <SelectItem value="fence">Fence</SelectItem>
-                          <SelectItem value="deck">Deck</SelectItem>
-                          <SelectItem value="roof">Roof</SelectItem>
-                          <SelectItem value="windows">Windows</SelectItem>
-                          <SelectItem value="gutters">Gutters</SelectItem>
-                          <SelectItem value="siding">Siding</SelectItem>
-                          <SelectItem value="others">Others</SelectItem>
+                          {/* Exterior Services */}
+                          <SelectItem value="fence">Fence Installation</SelectItem>
+                          <SelectItem value="deck">Deck Construction</SelectItem>
+                          <SelectItem value="roof">Roofing</SelectItem>
+                          <SelectItem value="windows">Windows Installation</SelectItem>
+                          <SelectItem value="gutters">Gutters & Downspouts</SelectItem>
+                          <SelectItem value="siding">Siding Installation</SelectItem>
+                          <SelectItem value="patio">Patio Construction</SelectItem>
+                          <SelectItem value="driveway">Driveway Installation</SelectItem>
+                          <SelectItem value="landscaping">Landscaping</SelectItem>
+                          <SelectItem value="concrete">Concrete Work</SelectItem>
+                          <SelectItem value="masonry">Masonry & Stonework</SelectItem>
+                          <SelectItem value="painting_exterior">Exterior Painting</SelectItem>
+                          <SelectItem value="pool">Pool Installation</SelectItem>
+                          <SelectItem value="shed">Shed Construction</SelectItem>
+                          <SelectItem value="gazebo">Gazebo/Pergola</SelectItem>
+                          
+                          {/* Interior Services */}
+                          <SelectItem value="flooring">Flooring Installation</SelectItem>
+                          <SelectItem value="kitchen_remodel">Kitchen Remodeling</SelectItem>
+                          <SelectItem value="bathroom_remodel">Bathroom Remodeling</SelectItem>
+                          <SelectItem value="basement_finish">Basement Finishing</SelectItem>
+                          <SelectItem value="painting_interior">Interior Painting</SelectItem>
+                          <SelectItem value="drywall">Drywall Installation</SelectItem>
+                          <SelectItem value="insulation">Insulation</SelectItem>
+                          <SelectItem value="crown_molding">Crown Molding</SelectItem>
+                          <SelectItem value="doors">Door Installation</SelectItem>
+                          <SelectItem value="trim_work">Trim & Millwork</SelectItem>
+                          <SelectItem value="stairs">Stair Construction</SelectItem>
+                          <SelectItem value="ceiling">Ceiling Work</SelectItem>
+                          
+                          {/* Electrical & Plumbing */}
+                          <SelectItem value="electrical">Electrical Work</SelectItem>
+                          <SelectItem value="plumbing">Plumbing</SelectItem>
+                          <SelectItem value="hvac">HVAC Installation</SelectItem>
+                          <SelectItem value="lighting">Lighting Installation</SelectItem>
+                          
+                          {/* Specialty Services */}
+                          <SelectItem value="solar">Solar Panel Installation</SelectItem>
+                          <SelectItem value="home_addition">Home Addition</SelectItem>
+                          <SelectItem value="garage">Garage Construction</SelectItem>
+                          <SelectItem value="basement_waterproofing">Basement Waterproofing</SelectItem>
+                          <SelectItem value="foundation">Foundation Work</SelectItem>
+                          <SelectItem value="structural">Structural Repairs</SelectItem>
+                          <SelectItem value="demolition">Demolition</SelectItem>
+                          <SelectItem value="general_repair">General Repairs</SelectItem>
+                          <SelectItem value="handyman">Handyman Services</SelectItem>
+                          <SelectItem value="carpentry">Custom Carpentry</SelectItem>
+                          <SelectItem value="cabinetry">Cabinetry Installation</SelectItem>
+                          <SelectItem value="countertops">Countertop Installation</SelectItem>
+                          <SelectItem value="tile_work">Tile Work</SelectItem>
+                          <SelectItem value="pressure_washing">Pressure Washing</SelectItem>
+                          <SelectItem value="tree_service">Tree Services</SelectItem>
+                          <SelectItem value="snow_removal">Snow Removal</SelectItem>
+                          <SelectItem value="home_security">Home Security Systems</SelectItem>
+                          <SelectItem value="smart_home">Smart Home Installation</SelectItem>
+                          
+                          {/* Commercial Services */}
+                          <SelectItem value="commercial_roofing">Commercial Roofing</SelectItem>
+                          <SelectItem value="commercial_flooring">Commercial Flooring</SelectItem>
+                          <SelectItem value="office_renovation">Office Renovation</SelectItem>
+                          <SelectItem value="retail_buildout">Retail Buildout</SelectItem>
+                          
+                          {/* Catch-all */}
+                          <SelectItem value="others">Other Services</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
