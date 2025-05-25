@@ -315,7 +315,7 @@ export default function MultiServiceEstimatePage() {
                   <Button 
                     type="button" 
                     onClick={() => setActiveTab("services")}
-                    disabled={!form.getValues("clientId")}
+                    disabled={form.getValues("clientId") === 0 || !form.getValues("clientId")}
                   >
                     Next: Select Services →
                   </Button>
