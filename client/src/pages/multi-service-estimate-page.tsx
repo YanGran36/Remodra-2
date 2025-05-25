@@ -356,36 +356,32 @@ export default function MultiServiceEstimatePage() {
                   ) : (
                     <div className="space-y-4">
                       <div className="grid gap-4">
-                        {services?.map((service: any) => {
-                          const isSelected = selectedServices.some(s => s.serviceType === service.serviceType);
-                          
-                          return (
-                            <div 
-                              key={service.id}
-                              className="p-4 border rounded-lg hover:border-blue-300 transition-all"
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-4">
-                                  <div className="text-3xl">{getServiceIcon(service.serviceType)}</div>
-                                  <div>
-                                    <h3 className="text-lg font-bold">{service.name}</h3>
-                                    <p className="text-sm text-gray-600">${service.laborRate}/{service.unit}</p>
-                                    <p className="text-xs text-gray-500">Professional {service.serviceType} service</p>
-                                  </div>
+                        {services?.map((service: any) => (
+                          <div 
+                            key={service.id}
+                            className="p-4 border rounded-lg hover:border-blue-300 transition-all"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-4">
+                                <div className="text-3xl">{getServiceIcon(service.serviceType)}</div>
+                                <div>
+                                  <h3 className="text-lg font-bold">{service.name}</h3>
+                                  <p className="text-sm text-gray-600">${service.laborRate}/{service.unit}</p>
+                                  <p className="text-xs text-gray-500">Professional {service.serviceType} service</p>
                                 </div>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  onClick={() => addService(service)}
-                                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                                >
-                                  <Plus className="h-4 w-4 mr-2" />
-                                  Add
-                                </Button>
                               </div>
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={() => addService(service)}
+                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                              >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add
+                              </Button>
                             </div>
-                          );
-                        })}
+                          </div>
+                        ))}
                       </div>
                       
                       {selectedServices.length > 0 && (
