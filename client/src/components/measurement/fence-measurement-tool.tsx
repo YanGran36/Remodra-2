@@ -918,6 +918,7 @@ export default function FenceMeasurementTool({
           {/* Action Buttons Row */}
           <div className="flex gap-2 flex-wrap">
             <Button
+              type="button"
               onClick={() => setGateMode(!gateMode)}
               variant={gateMode ? "default" : "outline"}
               size="sm"
@@ -928,6 +929,7 @@ export default function FenceMeasurementTool({
             </Button>
             
             <Button 
+              type="button"
               onClick={finishFence} 
               variant={currentPoints.length >= 2 ? "default" : "outline"} 
               size="sm" 
@@ -938,12 +940,12 @@ export default function FenceMeasurementTool({
               Complete ({currentPoints.length})
             </Button>
             
-            <Button onClick={clearAll} variant="outline" size="sm" className="h-8 text-xs">
+            <Button type="button" onClick={clearAll} variant="outline" size="sm" className="h-8 text-xs">
               <Trash2 className="h-3 w-3 mr-1" />
               Clear
             </Button>
             
-            <Button onClick={captureScreenshot} variant="outline" size="sm" className="h-8 text-xs">
+            <Button type="button" onClick={captureScreenshot} variant="outline" size="sm" className="h-8 text-xs">
               <Camera className="h-3 w-3 mr-1" />
               Save
             </Button>
