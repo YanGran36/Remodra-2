@@ -127,11 +127,12 @@ export default function VendorEstimateFormPage() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="client">Client</TabsTrigger>
               <TabsTrigger value="services">Services</TabsTrigger>
               <TabsTrigger value="measurements">Measurements</TabsTrigger>
               <TabsTrigger value="materials">Materials</TabsTrigger>
+              <TabsTrigger value="review">Review</TabsTrigger>
             </TabsList>
 
             {/* Client Tab */}
@@ -568,6 +569,178 @@ export default function VendorEstimateFormPage() {
                 <CardFooter className="flex justify-between">
                   <Button type="button" variant="outline" onClick={() => setActiveTab("measurements")}>
                     Back to Measurements
+                  </Button>
+                  <Button type="button" onClick={() => setActiveTab("review")}>
+                    Continue to Review
+                  </Button>
+                </CardFooter>
+              </Card>
+            </TabsContent>
+
+            {/* Review Tab */}
+            <TabsContent value="review" className="space-y-6 pt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Review Estimate</CardTitle>
+                  <CardDescription>Complete summary ready for client presentation</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Client Information Summary */}
+                  <div className="border rounded-lg p-4">
+                    <h3 className="text-lg font-semibold mb-3">Project Information</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Client</p>
+                        <p className="font-medium">
+                          {clients?.find(c => c.id === form.getValues("clientId"))?.firstName} {clients?.find(c => c.id === form.getValues("clientId"))?.lastName}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Project Title</p>
+                        <p className="font-medium">{form.getValues("title") || "Untitled Project"}</p>
+                      </div>
+                      <div className="md:col-span-2">
+                        <p className="text-sm text-muted-foreground">Description</p>
+                        <p className="font-medium">{form.getValues("description") || "No description provided"}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Services Summary */}
+                  <div className="border rounded-lg p-4">
+                    <h3 className="text-lg font-semibold mb-3">Services Included</h3>
+                    {form.getValues("selectedServices")?.length > 0 ? (
+                      <div className="space-y-3">
+                        {form.getValues("selectedServices").map((service: any, index: number) => (
+                          <div key={index} className="bg-gray-50 p-3 rounded">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h4 className="font-medium">{service.name}</h4>
+                                <p className="text-sm text-muted-foreground">{service.serviceType} installation</p>
+                              </div>
+                              <Badge variant="secondary">{service.unit}</Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground">No services selected</p>
+                    )}
+                  </div>
+
+                  {/* Measurements Summary */}
+                  <div className="border rounded-lg p-4">
+                    <h3 className="text-lg font-semibold mb-3">Project Measurements</h3>
+                    {form.getValues("selectedServices")?.length > 0 ? (
+                      <div className="space-y-3">
+                        {form.getValues("selectedServices").map((service: any, index: number) => (
+                          <div key={index} className="bg-gray-50 p-3 rounded">
+                            <h4 className="font-medium mb-2">{service.name}</h4>
+                            <div className="text-sm text-muted-foreground">
+                              {service.serviceType === "fence" && (
+                                <p>• Professional on-site measurement and layout planning</p>
+                              )}
+                              {service.serviceType === "deck" && (
+                                <p>• Area measurement and structural assessment</p>
+                              )}
+                              {service.serviceType === "windows" && (
+                                <p>• Window count and sizing verification</p>
+                              )}
+                              {service.serviceType === "gutters" && (
+                                <p>• Linear footage measurement and slope calculation</p>
+                              )}
+                              {service.serviceType === "roof" && (
+                                <p>• Square footage measurement and pitch assessment</p>
+                              )}
+                              {service.serviceType === "siding" && (
+                                <p>• Coverage area measurement and material calculation</p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground">No measurements available</p>
+                    )}
+                  </div>
+
+                  {/* Materials Summary */}
+                  <div className="border rounded-lg p-4">
+                    <h3 className="text-lg font-semibold mb-3">Materials & Components</h3>
+                    {form.getValues("selectedServices")?.length > 0 ? (
+                      <div className="space-y-4">
+                        {form.getValues("selectedServices").map((service: any, index: number) => (
+                          <div key={index} className="bg-gray-50 p-3 rounded">
+                            <h4 className="font-medium mb-2">{service.name} Materials</h4>
+                            <div className="text-sm text-muted-foreground">
+                              {service.serviceType === "fence" && (
+                                <ul className="list-disc list-inside space-y-1">
+                                  <li>Premium pressure treated posts and foundation materials</li>
+                                  <li>High-quality fence panels and rail systems</li>
+                                  <li>Professional-grade hardware and fasteners</li>
+                                  <li>Finishing materials and protective coatings</li>
+                                </ul>
+                              )}
+                              {service.serviceType === "deck" && (
+                                <ul className="list-disc list-inside space-y-1">
+                                  <li>Structural framing and support components</li>
+                                  <li>Premium decking boards and surface materials</li>
+                                  <li>Safety railing system and balusters</li>
+                                  <li>Weather protection and finishing materials</li>
+                                </ul>
+                              )}
+                              {service.serviceType === "roof" && (
+                                <ul className="list-disc list-inside space-y-1">
+                                  <li>High-quality roofing materials and underlayment</li>
+                                  <li>Professional-grade installation hardware</li>
+                                  <li>Weather sealing and protection components</li>
+                                </ul>
+                              )}
+                              {service.serviceType === "windows" && (
+                                <ul className="list-disc list-inside space-y-1">
+                                  <li>Energy-efficient window units</li>
+                                  <li>Professional installation materials and trim</li>
+                                  <li>Sealing and weatherproofing components</li>
+                                </ul>
+                              )}
+                              {service.serviceType === "gutters" && (
+                                <ul className="list-disc list-inside space-y-1">
+                                  <li>Seamless gutter system components</li>
+                                  <li>Professional mounting and support hardware</li>
+                                  <li>Drainage accessories and end caps</li>
+                                </ul>
+                              )}
+                              {service.serviceType === "siding" && (
+                                <ul className="list-disc list-inside space-y-1">
+                                  <li>Premium siding panels and trim materials</li>
+                                  <li>Installation hardware and fastening systems</li>
+                                  <li>Weather barrier and insulation components</li>
+                                </ul>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground">No materials listed</p>
+                    )}
+                  </div>
+
+                  {/* Project Details */}
+                  <div className="border rounded-lg p-4">
+                    <h3 className="text-lg font-semibold mb-3">What's Included</h3>
+                    <div className="space-y-2 text-sm">
+                      <p>✓ Professional consultation and project planning</p>
+                      <p>✓ All materials and components listed above</p>
+                      <p>✓ Professional installation and workmanship</p>
+                      <p>✓ Site cleanup and debris removal</p>
+                      <p>✓ Quality guarantee on all work performed</p>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-between">
+                  <Button type="button" variant="outline" onClick={() => setActiveTab("materials")}>
+                    Back to Materials
                   </Button>
                   <Button type="submit" disabled={createEstimateMutation.isPending}>
                     {createEstimateMutation.isPending ? "Creating..." : "Create Estimate"}
