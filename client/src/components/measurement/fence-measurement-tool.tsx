@@ -805,8 +805,8 @@ export default function FenceMeasurementTool({
     setGates(prev => prev.map(gate => {
       if (gate.id === selectedGate) {
         const newRotation = direction === 'right' 
-          ? (gate.rotation + 45) % 360
-          : (gate.rotation - 45 + 360) % 360;
+          ? (gate.rotation + 5) % 360
+          : (gate.rotation - 5 + 360) % 360;
         return { ...gate, rotation: newRotation };
       }
       return gate;
