@@ -346,11 +346,7 @@ export default function MultiServiceEstimatePage() {
                           return (
                             <div 
                               key={service.id}
-                              className={`p-4 border-2 rounded-lg transition-all ${
-                                isSelected 
-                                  ? "border-blue-500 bg-blue-50" 
-                                  : "border-gray-200 hover:border-blue-300"
-                              }`}
+                              className="p-4 border rounded-lg hover:border-blue-300 transition-all"
                             >
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-4">
@@ -361,29 +357,15 @@ export default function MultiServiceEstimatePage() {
                                     <p className="text-xs text-gray-500">Professional {service.serviceType} service</p>
                                   </div>
                                 </div>
-                                <div>
-                                  {isSelected ? (
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => removeService(selectedServices.findIndex(s => s.serviceType === service.serviceType))}
-                                      className="text-red-600 hover:text-red-700"
-                                    >
-                                      <Trash2 className="h-4 w-4 mr-2" />
-                                      Remove
-                                    </Button>
-                                  ) : (
-                                    <Button
-                                      type="button"
-                                      size="sm"
-                                      onClick={() => addService(service)}
-                                    >
-                                      <Plus className="h-4 w-4 mr-2" />
-                                      Add Service
-                                    </Button>
-                                  )}
-                                </div>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  onClick={() => addService(service)}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                                >
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  Add
+                                </Button>
                               </div>
                             </div>
                           );
