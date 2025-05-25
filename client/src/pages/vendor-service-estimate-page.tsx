@@ -1007,21 +1007,8 @@ const recalculateTotal = (items: SelectedItem[]) => {
                       return (
                         <Card 
                           key={service.value}
-                          className={`
-                            transition-all relative overflow-hidden border-2 cursor-pointer
-                            ${isSelected ? "border-primary shadow-lg" : "border-transparent hover:border-primary/20"}
-                          `}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            toggleServiceType(service.value);
-                          }}
+                          className="transition-all relative overflow-hidden border-2 hover:border-blue-300"
                         >
-                          {isSelected && (
-                            <div className="absolute top-2 right-2 bg-primary text-white rounded-full p-1 z-10">
-                              <Plus className="h-4 w-4" />
-                            </div>
-                          )}
-                          
                           <CardContent className="p-4">
                             <div 
                               className="w-full h-1.5 rounded-full mb-3"
@@ -1037,12 +1024,25 @@ const recalculateTotal = (items: SelectedItem[]) => {
                               {serviceInfo?.description || "Service description"}
                             </p>
                             
-                            <div className="flex flex-wrap gap-2 mt-2">
+                            <div className="flex items-center justify-between">
                               <Badge variant="outline" className="bg-primary/10">
                                 {serviceInfo?.unitType === 'sq.ft' ? 'Area Based' : 
                                  serviceInfo?.unitType === 'ln.ft' ? 'Length Based' :
                                  serviceInfo?.unitType === 'unit' ? 'Per Unit' : 'Custom'}
                               </Badge>
+                              
+                              <Button 
+                                type="button"
+                                size="sm"
+                                variant={isSelected ? "default" : "outline"}
+                                className={isSelected ? "bg-blue-600 hover:bg-blue-700" : ""}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  toggleServiceType(service.value);
+                                }}
+                              >
+                                {isSelected ? "✓ Added" : "+ ADD"}
+                              </Button>
                             </div>
                           </CardContent>
                         </Card>
