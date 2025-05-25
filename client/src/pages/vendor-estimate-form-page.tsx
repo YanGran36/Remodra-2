@@ -423,6 +423,204 @@ export default function VendorEstimateFormPage() {
               </Card>
             </TabsContent>
 
+            <TabsContent value="measurements" className="space-y-6 pt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Measurements</CardTitle>
+                  <CardDescription>
+                    Take measurements for each selected service
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {!form.getValues("selectedServices") || form.getValues("selectedServices").length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">Please select services first</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {form.getValues("selectedServices").map((service: any, index: number) => (
+                        <div key={`${service.serviceType}-${index}`} className="border rounded-lg p-4">
+                          <h3 className="text-lg font-semibold mb-4">{service.name} Measurements</h3>
+                          
+                          {service.serviceType === "fence" && (
+                            <FenceMeasurementTool
+                              onMeasurementUpdate={(measurements) => {
+                                const currentServices = form.getValues("selectedServices");
+                                currentServices[index] = {
+                                  ...currentServices[index],
+                                  measurements: {
+                                    linearFeet: measurements.totalLength,
+                                    squareFeet: measurements.totalArea,
+                                    units: measurements.gateCount,
+                                    quantity: measurements.totalLength,
+                                  }
+                                };
+                                form.setValue("selectedServices", currentServices);
+                              }}
+                            />
+                          )}
+                          
+                          {service.serviceType === "deck" && (
+                            <div className="space-y-4">
+                              <p className="text-sm text-muted-foreground">Deck Area Measurement</p>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <Label>Width (ft)</Label>
+                                  <Input 
+                                    type="number" 
+                                    placeholder="0"
+                                    onChange={(e) => {
+                                      const width = parseFloat(e.target.value) || 0;
+                                      const currentServices = form.getValues("selectedServices");
+                                      const length = currentServices[index]?.measurements?.linearFeet || 0;
+                                      currentServices[index] = {
+                                        ...currentServices[index],
+                                        measurements: {
+                                          ...currentServices[index].measurements,
+                                          squareFeet: width * length,
+                                          quantity: width * length,
+                                        }
+                                      };
+                                      form.setValue("selectedServices", currentServices);
+                                    }}
+                                  />
+                                </div>
+                                <div>
+                                  <Label>Length (ft)</Label>
+                                  <Input 
+                                    type="number" 
+                                    placeholder="0"
+                                    onChange={(e) => {
+                                      const length = parseFloat(e.target.value) || 0;
+                                      const currentServices = form.getValues("selectedServices");
+                                      const width = currentServices[index]?.measurements?.squareFeet / (currentServices[index]?.measurements?.linearFeet || 1) || 0;
+                                      currentServices[index] = {
+                                        ...currentServices[index],
+                                        measurements: {
+                                          ...currentServices[index].measurements,
+                                          linearFeet: length,
+                                          squareFeet: width * length,
+                                          quantity: width * length,
+                                        }
+                                      };
+                                      form.setValue("selectedServices", currentServices);
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <Label>Total Area: {service.measurements?.squareFeet || 0} sq ft</Label>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {service.serviceType === "roof" && (
+                            <div className="space-y-4">
+                              <p className="text-sm text-muted-foreground">Roof Area Measurement</p>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <Label>Width (ft)</Label>
+                                  <Input type="number" placeholder="0" />
+                                </div>
+                                <div>
+                                  <Label>Length (ft)</Label>
+                                  <Input type="number" placeholder="0" />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {service.serviceType === "windows" && (
+                            <div className="space-y-4">
+                              <p className="text-sm text-muted-foreground">Window Count</p>
+                              <div>
+                                <Label>Number of Windows</Label>
+                                <Input 
+                                  type="number" 
+                                  placeholder="0"
+                                  onChange={(e) => {
+                                    const units = parseInt(e.target.value) || 0;
+                                    const currentServices = form.getValues("selectedServices");
+                                    currentServices[index] = {
+                                      ...currentServices[index],
+                                      measurements: {
+                                        ...currentServices[index].measurements,
+                                        units: units,
+                                        quantity: units,
+                                      }
+                                    };
+                                    form.setValue("selectedServices", currentServices);
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                          
+                          {service.serviceType === "gutters" && (
+                            <div className="space-y-4">
+                              <p className="text-sm text-muted-foreground">Gutter Length Measurement</p>
+                              <div>
+                                <Label>Linear Feet</Label>
+                                <Input 
+                                  type="number" 
+                                  placeholder="0"
+                                  onChange={(e) => {
+                                    const linearFeet = parseFloat(e.target.value) || 0;
+                                    const currentServices = form.getValues("selectedServices");
+                                    currentServices[index] = {
+                                      ...currentServices[index],
+                                      measurements: {
+                                        ...currentServices[index].measurements,
+                                        linearFeet: linearFeet,
+                                        quantity: linearFeet,
+                                      }
+                                    };
+                                    form.setValue("selectedServices", currentServices);
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                          
+                          {service.serviceType === "siding" && (
+                            <div className="space-y-4">
+                              <p className="text-sm text-muted-foreground">Siding Area Measurement</p>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <Label>Height (ft)</Label>
+                                  <Input type="number" placeholder="0" />
+                                </div>
+                                <div>
+                                  <Label>Perimeter (ft)</Label>
+                                  <Input type="number" placeholder="0" />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+                <CardFooter className="flex justify-between">
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => setActiveTab("services")}
+                  >
+                    ← Previous: Services
+                  </Button>
+                  <Button 
+                    type="button" 
+                    onClick={() => setActiveTab("materials")}
+                    disabled={!canProceedFromTab("measurements")}
+                  >
+                    Next: Materials →
+                  </Button>
+                </CardFooter>
+              </Card>
+            </TabsContent>
+
             <TabsContent value="materials" className="space-y-6 pt-4">
               <Card>
                 <CardHeader>
