@@ -54,6 +54,7 @@ export default function VendorEstimateFormPage() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("client");
+  const [selectedServiceTypes, setSelectedServiceTypes] = useState<string[]>([]);
 
   // Navigation functions
   const goToNextTab = () => {
@@ -318,7 +319,7 @@ export default function VendorEstimateFormPage() {
 
 
                           const currentServices = form.getValues("selectedServices") || [];
-                          const isAdded = currentServices.some(s => s.serviceType === service.serviceType);
+                          const isAdded = selectedServiceTypes.includes(service.serviceType);
 
                           const addService = () => {
                             const newService = {
@@ -337,11 +338,13 @@ export default function VendorEstimateFormPage() {
                               notes: "",
                             };
                             form.setValue("selectedServices", [...currentServices, newService]);
+                            setSelectedServiceTypes(prev => [...prev, service.serviceType]);
                           };
 
                           const removeService = () => {
                             const updatedServices = currentServices.filter(s => s.serviceType !== service.serviceType);
                             form.setValue("selectedServices", updatedServices);
+                            setSelectedServiceTypes(prev => prev.filter(type => type !== service.serviceType));
                           };
 
                           return (
