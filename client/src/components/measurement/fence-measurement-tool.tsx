@@ -842,112 +842,89 @@ export default function FenceMeasurementTool({
   };
 
   return (
-    <div className="space-y-4">
-      {/* Fence Planning Controls */}
-      <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-green-800">
-            <Home className="h-5 w-5" />
-            Fence Installation Planner
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Fence Configuration */}
-          <div className="grid grid-cols-3 gap-4">
+    <div className="space-y-3">
+      {/* Compact Control Panel */}
+      <Card className="bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
+        <CardContent className="p-4">
+          {/* Top Row - Basic Settings */}
+          <div className="grid grid-cols-6 gap-2 mb-3">
             <div>
-              <Label className="text-sm">Fence Height</Label>
+              <Label className="text-xs font-medium">Height</Label>
               <Input 
                 type="number" 
                 value={fenceHeight}
                 onChange={(e) => setFenceHeight(parseInt(e.target.value))}
-                className="h-8 text-sm"
+                className="h-7 text-xs"
+                placeholder="6"
               />
             </div>
             <div>
-              <Label className="text-sm">Post Spacing (ft)</Label>
+              <Label className="text-xs font-medium">Spacing</Label>
               <Input 
                 type="number" 
                 value={postSpacing}
                 onChange={(e) => setPostSpacing(parseInt(e.target.value))}
-                className="h-8 text-sm"
+                className="h-7 text-xs"
+                placeholder="8"
               />
             </div>
             <div>
-              <Label className="text-sm">Scale (px/ft)</Label>
+              <Label className="text-xs font-medium">Scale</Label>
               <Input 
                 type="number" 
                 value={scale}
                 onChange={(e) => setScale(parseInt(e.target.value))}
-                className="h-8 text-sm"
+                className="h-7 text-xs"
+                placeholder="10"
               />
             </div>
-          </div>
-
-          {/* Gate Configuration */}
-          <div className="grid grid-cols-2 gap-4 mb-3">
             <div>
-              <Label className="text-sm">Gate Width</Label>
-              <div className="flex gap-1">
+              <Label className="text-xs font-medium">Gate Width</Label>
+              <select 
+                value={selectedGateWidth}
+                onChange={(e) => setSelectedGateWidth(parseInt(e.target.value))}
+                className="h-7 text-xs border rounded px-1 w-full"
+              >
                 {[3, 4, 5, 6, 8, 10, 12].map(width => (
-                  <Button
-                    key={width}
-                    onClick={() => setSelectedGateWidth(width)}
-                    variant={selectedGateWidth === width ? "default" : "outline"}
-                    size="sm"
-                    className="h-8 px-2 text-xs"
-                  >
-                    {width}'
-                  </Button>
+                  <option key={width} value={width}>{width}'</option>
                 ))}
-              </div>
+              </select>
             </div>
             <div>
-              <Label className="text-sm">Gate Type & Rotation</Label>
-              <div className="space-y-2">
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => setSelectedGateType('gate')}
-                    variant={selectedGateType === 'gate' ? "default" : "outline"}
-                    size="sm"
-                    className="h-8 text-xs"
-                  >
-                    Single
-                  </Button>
-                  <Button
-                    onClick={() => setSelectedGateType('double-gate')}
-                    variant={selectedGateType === 'double-gate' ? "default" : "outline"}
-                    size="sm"
-                    className="h-8 text-xs"
-                  >
-                    Double
-                  </Button>
-                </div>
-                <div className="flex gap-1">
-                  {[0, 45, 90, 135, 180, 225, 270, 315].map(angle => (
-                    <Button
-                      key={angle}
-                      onClick={() => setSelectedGateRotation(angle)}
-                      variant={selectedGateRotation === angle ? "default" : "outline"}
-                      size="sm"
-                      className="h-6 px-1 text-xs"
-                    >
-                      {angle}°
-                    </Button>
-                  ))}
-                </div>
-              </div>
+              <Label className="text-xs font-medium">Gate Type</Label>
+              <select 
+                value={selectedGateType}
+                onChange={(e) => setSelectedGateType(e.target.value as 'gate' | 'double-gate')}
+                className="h-7 text-xs border rounded px-1 w-full"
+              >
+                <option value="gate">Single</option>
+                <option value="double-gate">Double</option>
+              </select>
+            </div>
+            <div>
+              <Label className="text-xs font-medium">Rotation</Label>
+              <select 
+                value={selectedGateRotation}
+                onChange={(e) => setSelectedGateRotation(parseInt(e.target.value))}
+                className="h-7 text-xs border rounded px-1 w-full"
+              >
+                {[0, 45, 90, 135, 180, 225, 270, 315].map(angle => (
+                  <option key={angle} value={angle}>{angle}°</option>
+                ))}
+              </select>
             </div>
           </div>
 
-          {/* Drawing Controls */}
-          <div className="flex gap-2">
+          {/* Action Buttons Row */}
+          <div className="flex gap-2 flex-wrap">
             <Button
               onClick={() => setGateMode(!gateMode)}
               variant={gateMode ? "default" : "outline"}
               size="sm"
+              className="h-8 text-xs"
             >
-              <MapPin className="h-4 w-4 mr-1" />
-              {gateMode ? `Exit Gate Mode (${selectedGateWidth}' ${selectedGateType === 'double-gate' ? 'Double' : 'Single'})` : "Add Gate"}
+              <MapPin className="h-3 w-3 mr-1" />
+              {gateMode ? "Exit Gate" : "Add Gate"}
             </Button>
             
             <Button 
@@ -955,147 +932,52 @@ export default function FenceMeasurementTool({
               variant={currentPoints.length >= 2 ? "default" : "outline"} 
               size="sm" 
               disabled={currentPoints.length < 2}
-              className={currentPoints.length >= 2 ? "bg-green-600 hover:bg-green-700 text-white" : ""}
+              className={`h-8 text-xs ${currentPoints.length >= 2 ? "bg-green-600 hover:bg-green-700 text-white" : ""}`}
             >
-              <Save className="h-4 w-4 mr-1" />
-              Complete Fence {currentPoints.length >= 2 ? `(${currentPoints.length} points)` : "(Need 2+ points)"}
+              <Save className="h-3 w-3 mr-1" />
+              Complete ({currentPoints.length})
             </Button>
             
-            <Button onClick={clearAll} variant="outline" size="sm">
-              <Trash2 className="h-4 w-4 mr-1" />
-              Clear All
+            <Button onClick={clearAll} variant="outline" size="sm" className="h-8 text-xs">
+              <Trash2 className="h-3 w-3 mr-1" />
+              Clear
             </Button>
             
-            <Button onClick={captureScreenshot} variant="outline" size="sm">
-              <Camera className="h-4 w-4 mr-1" />
-              Screenshot
+            <Button onClick={captureScreenshot} variant="outline" size="sm" className="h-8 text-xs">
+              <Camera className="h-3 w-3 mr-1" />
+              Save
             </Button>
           </div>
 
-          {/* Gate Editor for Selected Gate */}
+          {/* Compact Gate Editor */}
           {selectedGate && (
-            <div className="bg-blue-50 border border-blue-200 rounded p-3">
-              <div className="flex items-center justify-between mb-2">
-                <Label className="text-sm font-medium text-blue-800">Editing Selected Gate</Label>
-                <Button
-                  onClick={() => setSelectedGate(null)}
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0"
-                >
-                  ×
-                </Button>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <Label className="text-xs">Size</Label>
-                  <div className="flex gap-1 flex-wrap">
+            <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-medium text-blue-800">Edit Gate:</span>
+                <div className="flex gap-1">
+                  <select 
+                    value={gates.find(g => g.id === selectedGate)?.width || 4}
+                    onChange={(e) => updateSelectedGateSize(parseInt(e.target.value))}
+                    className="h-6 text-xs border rounded px-1"
+                  >
                     {[3, 4, 5, 6, 8, 10, 12].map(width => (
-                      <Button
-                        key={width}
-                        onClick={() => updateSelectedGateSize(width)}
-                        variant={gates.find(g => g.id === selectedGate)?.width === width ? "default" : "outline"}
-                        size="sm"
-                        className="h-6 px-1 text-xs"
-                      >
-                        {width}'
-                      </Button>
+                      <option key={width} value={width}>{width}'</option>
                     ))}
-                  </div>
-                </div>
-                
-                <div>
-                  <Label className="text-xs">Type</Label>
-                  <div className="flex gap-1">
-                    <Button
-                      onClick={() => updateSelectedGateType('gate')}
-                      variant={gates.find(g => g.id === selectedGate)?.type === 'gate' ? "default" : "outline"}
-                      size="sm"
-                      className="h-6 text-xs"
-                    >
-                      Single
-                    </Button>
-                    <Button
-                      onClick={() => updateSelectedGateType('double-gate')}
-                      variant={gates.find(g => g.id === selectedGate)?.type === 'double-gate' ? "default" : "outline"}
-                      size="sm"
-                      className="h-6 text-xs"
-                    >
-                      Double
-                    </Button>
-                  </div>
-                </div>
-                
-                <div>
-                  <Label className="text-xs">Rotation</Label>
-                  <div className="flex gap-1">
-                    <Button
-                      onClick={() => rotateSelectedGate('left')}
-                      variant="outline"
-                      size="sm"
-                      className="h-6 px-2 text-xs"
-                    >
-                      ↶ -45°
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        if (!selectedGate) return;
-                        const currentGate = gates.find(g => g.id === selectedGate);
-                        if (currentGate) {
-                          const newRotation = (currentGate.rotation - 5 + 360) % 360;
-                          setGates(prev => prev.map(gate => 
-                            gate.id === selectedGate ? { ...gate, rotation: newRotation } : gate
-                          ));
-                        }
-                      }}
-                      variant="outline"
-                      size="sm"
-                      className="h-6 px-1 text-xs"
-                    >
-                      ↶ -5°
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        if (!selectedGate) return;
-                        const currentGate = gates.find(g => g.id === selectedGate);
-                        if (currentGate) {
-                          const newRotation = (currentGate.rotation + 5) % 360;
-                          setGates(prev => prev.map(gate => 
-                            gate.id === selectedGate ? { ...gate, rotation: newRotation } : gate
-                          ));
-                        }
-                      }}
-                      variant="outline"
-                      size="sm"
-                      className="h-6 px-1 text-xs"
-                    >
-                      ↷ +5°
-                    </Button>
-                    <Button
-                      onClick={() => rotateSelectedGate('right')}
-                      variant="outline"
-                      size="sm"
-                      className="h-6 px-2 text-xs"
-                    >
-                      ↷ +45°
-                    </Button>
-                  </div>
-                  <div className="text-xs text-center mt-1">
-                    {gates.find(g => g.id === selectedGate)?.rotation || 0}°
-                  </div>
+                  </select>
+                  <select 
+                    value={gates.find(g => g.id === selectedGate)?.type || 'gate'}
+                    onChange={(e) => updateSelectedGateType(e.target.value as 'gate' | 'double-gate')}
+                    className="h-6 text-xs border rounded px-1"
+                  >
+                    <option value="gate">Single</option>
+                    <option value="double-gate">Double</option>
+                  </select>
+                  <Button onClick={() => rotateSelectedGate('left')} variant="outline" size="sm" className="h-6 w-6 p-0 text-xs">↺</Button>
+                  <Button onClick={() => rotateSelectedGate('right')} variant="outline" size="sm" className="h-6 w-6 p-0 text-xs">↻</Button>
+                  <Button onClick={deleteSelectedGate} variant="outline" size="sm" className="h-6 w-6 p-0 text-xs text-red-600">✕</Button>
+                  <Button onClick={() => setSelectedGate(null)} variant="ghost" size="sm" className="h-6 w-6 p-0 text-xs">✓</Button>
                 </div>
               </div>
-              
-              <Button
-                onClick={deleteSelectedGate}
-                variant="destructive"
-                size="sm"
-                className="w-full mt-2 h-6 text-xs"
-              >
-                <Trash2 className="h-3 w-3 mr-1" />
-                Delete Gate
-              </Button>
             </div>
           )}
 
