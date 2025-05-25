@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, PencilIcon, SaveIcon, PlusIcon, Home, Trash2, Building, Hammer, Wrench, Zap, TreePine, Brush, Settings, ShoppingCart } from "lucide-react";
+import { ArrowLeft, PencilIcon, SaveIcon, PlusIcon, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -31,139 +31,7 @@ interface Material extends MaterialPrice {
   // Campos adicionales si los necesitáramos
 }
 
-// Definición de categorías de servicios con iconos y colores
-interface ServiceCategory {
-  id: string;
-  name: string;
-  icon: any;
-  color: string;
-  bgColor: string;
-  services: Array<{
-    value: string;
-    label: string;
-    defaultUnit?: string;
-  }>;
-}
 
-const serviceCategories: ServiceCategory[] = [
-  {
-    id: 'exterior',
-    name: 'Exterior Services',
-    icon: Building,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50 hover:bg-blue-100',
-    services: [
-      { value: 'fence', label: 'Fence Installation', defaultUnit: 'ft' },
-      { value: 'deck', label: 'Deck Construction', defaultUnit: 'sqft' },
-      { value: 'roof', label: 'Roofing', defaultUnit: 'sqft' },
-      { value: 'windows', label: 'Windows Installation', defaultUnit: 'unit' },
-      { value: 'gutters', label: 'Gutters & Downspouts', defaultUnit: 'ft' },
-      { value: 'siding', label: 'Siding Installation', defaultUnit: 'sqft' },
-      { value: 'patio', label: 'Patio Construction', defaultUnit: 'sqft' },
-      { value: 'driveway', label: 'Driveway Installation', defaultUnit: 'sqft' },
-      { value: 'concrete', label: 'Concrete Work', defaultUnit: 'sqft' },
-      { value: 'masonry', label: 'Masonry & Stonework', defaultUnit: 'sqft' },
-      { value: 'painting_exterior', label: 'Exterior Painting', defaultUnit: 'sqft' },
-      { value: 'pool', label: 'Pool Installation', defaultUnit: 'unit' },
-      { value: 'shed', label: 'Shed Construction', defaultUnit: 'unit' },
-      { value: 'gazebo', label: 'Gazebo/Pergola', defaultUnit: 'unit' }
-    ]
-  },
-  {
-    id: 'interior',
-    name: 'Interior Services',
-    icon: Home,
-    color: 'text-green-600',
-    bgColor: 'bg-green-50 hover:bg-green-100',
-    services: [
-      { value: 'flooring', label: 'Flooring Installation', defaultUnit: 'sqft' },
-      { value: 'kitchen_remodel', label: 'Kitchen Remodeling', defaultUnit: 'unit' },
-      { value: 'bathroom_remodel', label: 'Bathroom Remodeling', defaultUnit: 'unit' },
-      { value: 'basement_finish', label: 'Basement Finishing', defaultUnit: 'sqft' },
-      { value: 'painting_interior', label: 'Interior Painting', defaultUnit: 'sqft' },
-      { value: 'drywall', label: 'Drywall Installation', defaultUnit: 'sqft' },
-      { value: 'insulation', label: 'Insulation', defaultUnit: 'sqft' },
-      { value: 'crown_molding', label: 'Crown Molding', defaultUnit: 'ft' },
-      { value: 'doors', label: 'Door Installation', defaultUnit: 'unit' },
-      { value: 'trim_work', label: 'Trim & Millwork', defaultUnit: 'ft' },
-      { value: 'stairs', label: 'Stair Construction', defaultUnit: 'unit' },
-      { value: 'ceiling', label: 'Ceiling Work', defaultUnit: 'sqft' }
-    ]
-  },
-  {
-    id: 'electrical_plumbing',
-    name: 'Electrical & Plumbing',
-    icon: Zap,
-    color: 'text-yellow-600',
-    bgColor: 'bg-yellow-50 hover:bg-yellow-100',
-    services: [
-      { value: 'electrical', label: 'Electrical Work', defaultUnit: 'hour' },
-      { value: 'plumbing', label: 'Plumbing', defaultUnit: 'hour' },
-      { value: 'hvac', label: 'HVAC Installation', defaultUnit: 'unit' },
-      { value: 'lighting', label: 'Lighting Installation', defaultUnit: 'unit' }
-    ]
-  },
-  {
-    id: 'landscaping',
-    name: 'Landscaping & Outdoor',
-    icon: TreePine,
-    color: 'text-emerald-600',
-    bgColor: 'bg-emerald-50 hover:bg-emerald-100',
-    services: [
-      { value: 'landscaping', label: 'Landscaping', defaultUnit: 'sqft' },
-      { value: 'pressure_washing', label: 'Pressure Washing', defaultUnit: 'sqft' },
-      { value: 'tree_service', label: 'Tree Services', defaultUnit: 'unit' },
-      { value: 'snow_removal', label: 'Snow Removal', defaultUnit: 'sqft' }
-    ]
-  },
-  {
-    id: 'specialty',
-    name: 'Specialty Services',
-    icon: Wrench,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-50 hover:bg-purple-100',
-    services: [
-      { value: 'solar', label: 'Solar Panel Installation', defaultUnit: 'unit' },
-      { value: 'home_addition', label: 'Home Addition', defaultUnit: 'sqft' },
-      { value: 'garage', label: 'Garage Construction', defaultUnit: 'unit' },
-      { value: 'basement_waterproofing', label: 'Basement Waterproofing', defaultUnit: 'sqft' },
-      { value: 'foundation', label: 'Foundation Work', defaultUnit: 'sqft' },
-      { value: 'structural', label: 'Structural Repairs', defaultUnit: 'hour' },
-      { value: 'demolition', label: 'Demolition', defaultUnit: 'sqft' },
-      { value: 'general_repair', label: 'General Repairs', defaultUnit: 'hour' },
-      { value: 'handyman', label: 'Handyman Services', defaultUnit: 'hour' },
-      { value: 'carpentry', label: 'Custom Carpentry', defaultUnit: 'hour' },
-      { value: 'cabinetry', label: 'Cabinetry Installation', defaultUnit: 'unit' },
-      { value: 'countertops', label: 'Countertop Installation', defaultUnit: 'sqft' },
-      { value: 'tile_work', label: 'Tile Work', defaultUnit: 'sqft' },
-      { value: 'home_security', label: 'Home Security Systems', defaultUnit: 'unit' },
-      { value: 'smart_home', label: 'Smart Home Installation', defaultUnit: 'unit' }
-    ]
-  },
-  {
-    id: 'commercial',
-    name: 'Commercial Services',
-    icon: Building,
-    color: 'text-indigo-600',
-    bgColor: 'bg-indigo-50 hover:bg-indigo-100',
-    services: [
-      { value: 'commercial_roofing', label: 'Commercial Roofing', defaultUnit: 'sqft' },
-      { value: 'commercial_flooring', label: 'Commercial Flooring', defaultUnit: 'sqft' },
-      { value: 'office_renovation', label: 'Office Renovation', defaultUnit: 'sqft' },
-      { value: 'retail_buildout', label: 'Retail Buildout', defaultUnit: 'sqft' }
-    ]
-  },
-  {
-    id: 'other',
-    name: 'Other Services',
-    icon: Settings,
-    color: 'text-gray-600',
-    bgColor: 'bg-gray-50 hover:bg-gray-100',
-    services: [
-      { value: 'others', label: 'Custom Service', defaultUnit: 'hour' }
-    ]
-  }
-];
 
 const PricingConfigPage = () => {
   const { toast } = useToast();
@@ -180,7 +48,6 @@ const PricingConfigPage = () => {
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [showServiceCategories, setShowServiceCategories] = useState(false);
 
   // Convertimos directamente los datos de la API para mostrarlos
   const services: Service[] = Array.isArray(configuredServices) 
@@ -230,13 +97,12 @@ const PricingConfigPage = () => {
     const newService: Service = {
       id: serviceId,
       name: 'New Service',
-      serviceType: '', // Empty so the modal will show
+      serviceType: '',
       unit: 'ft',
       laborRate: 0,
       laborMethod: 'by_length',
     };
     setEditingService(newService);
-    setShowServiceCategories(true); // Auto-open the modal for new services
   };
 
   // Save service changes
@@ -593,108 +459,24 @@ const PricingConfigPage = () => {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="service-type">Service Type</Label>
-                      
-                      {/* Current selection display or category picker */}
-                      {editingService.serviceType ? (
-                        <div className="flex items-center gap-3 p-3 border rounded-lg bg-gray-50">
-                          <div className="flex-1">
-                            <span className="text-sm font-medium">
-                              {serviceCategories
-                                .flatMap(cat => cat.services)
-                                .find(service => service.value === editingService.serviceType)?.label || editingService.serviceType}
-                            </span>
-                          </div>
-                          {editingService.id.startsWith('service-') && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setShowServiceCategories(true)}
-                            >
-                              Change
-                            </Button>
-                          )}
-                        </div>
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full justify-start h-auto p-4"
-                          onClick={() => setShowServiceCategories(true)}
-                          disabled={!editingService.id.startsWith('service-')}
-                        >
-                          <div className="flex items-center gap-3">
-                            <ShoppingCart className="h-5 w-5 text-gray-400" />
-                            <span>Choose your service type</span>
-                          </div>
-                        </Button>
-                      )}
-
-                      {/* Interactive Service Category Visualization */}
-                      {showServiceCategories && (
-                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto">
-                            <div className="p-6 border-b">
-                              <div className="flex items-center justify-between">
-                                <h3 className="text-lg font-semibold">Select Service Category</h3>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setShowServiceCategories(false)}
-                                >
-                                  ✕
-                                </Button>
-                              </div>
-                              <p className="text-sm text-gray-600 mt-1">
-                                Choose from our organized service categories
-                              </p>
-                            </div>
-                            
-                            <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                              {serviceCategories.map((category) => {
-                                const IconComponent = category.icon;
-                                return (
-                                  <div key={category.id} className="space-y-3">
-                                    <div className={`flex items-center gap-3 p-3 rounded-lg border-2 border-gray-200 ${category.bgColor}`}>
-                                      <IconComponent className={`h-6 w-6 ${category.color}`} />
-                                      <h4 className="font-medium text-gray-900">{category.name}</h4>
-                                    </div>
-                                    
-                                    <div className="space-y-1">
-                                      {category.services.map((service) => (
-                                        <button
-                                          key={service.value}
-                                          type="button"
-                                          className="w-full text-left p-3 rounded-lg hover:bg-gray-50 border border-gray-100 transition-colors"
-                                          onClick={() => {
-                                            // Auto-set default unit based on service type
-                                            const defaultUnit = service.defaultUnit || 'sqft';
-                                            setEditingService({
-                                              ...editingService,
-                                              serviceType: service.value,
-                                              unit: defaultUnit
-                                            });
-                                            setShowServiceCategories(false);
-                                          }}
-                                        >
-                                          <div className="flex items-center justify-between">
-                                            <span className="text-sm font-medium text-gray-900">
-                                              {service.label}
-                                            </span>
-                                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                              {service.defaultUnit}
-                                            </span>
-                                          </div>
-                                        </button>
-                                      ))}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                      <Select 
+                        value={editingService.serviceType}
+                        onValueChange={(value) => setEditingService({...editingService, serviceType: value})}
+                        disabled={!editingService.id.startsWith('service-')}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choose your service type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="fence">Fence Installation</SelectItem>
+                          <SelectItem value="deck">Deck Construction</SelectItem>
+                          <SelectItem value="roof">Roofing</SelectItem>
+                          <SelectItem value="windows">Windows Installation</SelectItem>
+                          <SelectItem value="gutters">Gutters & Downspouts</SelectItem>
+                          <SelectItem value="siding">Siding Installation</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="labor-rate">Labor Rate (per unit)</Label>
