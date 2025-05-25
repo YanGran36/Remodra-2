@@ -216,9 +216,10 @@ export default function VendorEstimateFormPage() {
                   <Button 
                     type="button" 
                     onClick={() => setActiveTab("services")}
-                    disabled={!form.getValues("clientId")}
+                    disabled={!form.getValues("clientId") || form.getValues("clientId") === 0}
+                    className="bg-blue-600 hover:bg-blue-700"
                   >
-                    Next: Services
+                    Next: Select Service →
                   </Button>
                 </CardFooter>
               </Card>
@@ -279,14 +280,15 @@ export default function VendorEstimateFormPage() {
                     variant="outline"
                     onClick={() => setActiveTab("client")}
                   >
-                    Previous
+                    ← Back to Client
                   </Button>
                   <Button 
                     type="button" 
-                    onClick={() => setActiveTab("materials")}
+                    onClick={() => setActiveTab("measurements")}
                     disabled={!form.getValues("serviceType")}
+                    className="bg-blue-600 hover:bg-blue-700"
                   >
-                    Next: Materials
+                    Next: Measurements →
                   </Button>
                 </CardFooter>
               </Card>
@@ -675,15 +677,15 @@ export default function VendorEstimateFormPage() {
                     <Button 
                       type="button" 
                       variant="outline"
-                      onClick={() => setActiveTab("labor")}
+                      onClick={() => setActiveTab("services")}
                     >
-                      Previous
+                      ← Back to Services
                     </Button>
                     <Button 
                       type="button" 
-                      onClick={() => setActiveTab("review")}
+                      onClick={() => setActiveTab("materials")}
                     >
-                      Next: Review
+                      Next: Materials & Labor →
                     </Button>
                   </CardFooter>
                 </Card>
