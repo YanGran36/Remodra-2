@@ -55,6 +55,39 @@ export default function VendorEstimateFormPage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("client");
 
+  // Navigation functions
+  const goToNextTab = () => {
+    const tabs = ["client", "services", "measurements", "materials", "review"];
+    const currentIndex = tabs.indexOf(activeTab);
+    if (currentIndex < tabs.length - 1) {
+      setActiveTab(tabs[currentIndex + 1]);
+    }
+  };
+
+  const goToPreviousTab = () => {
+    const tabs = ["client", "services", "measurements", "materials", "review"];
+    const currentIndex = tabs.indexOf(activeTab);
+    if (currentIndex > 0) {
+      setActiveTab(tabs[currentIndex - 1]);
+    }
+  };
+
+  // Check if current tab can proceed to next
+  const canProceedFromTab = (tab: string) => {
+    switch (tab) {
+      case "client":
+        return form.getValues("clientId") > 0;
+      case "services":
+        return (form.getValues("selectedServices") || []).length > 0;
+      case "measurements":
+        return true; // Always can proceed from measurements
+      case "materials":
+        return true; // Always can proceed from materials
+      default:
+        return true;
+    }
+  };
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -240,11 +273,11 @@ export default function VendorEstimateFormPage() {
                   <div></div>
                   <Button 
                     type="button" 
-                    onClick={() => setActiveTab("services")}
-                    disabled={!form.getValues("clientId") || form.getValues("clientId") === 0}
+                    onClick={goToNextTab}
+                    disabled={!canProceedFromTab("client")}
                     className="bg-blue-600 hover:bg-blue-700"
                   >
-                    Next: Select Service →
+                    Next: Services →
                   </Button>
                 </CardFooter>
               </Card>
@@ -360,14 +393,14 @@ export default function VendorEstimateFormPage() {
                   <Button 
                     type="button" 
                     variant="outline"
-                    onClick={() => setActiveTab("client")}
+                    onClick={goToPreviousTab}
                   >
                     ← Back to Client
                   </Button>
                   <Button 
                     type="button" 
-                    onClick={() => setActiveTab("measurements")}
-                    disabled={!form.getValues("serviceType")}
+                    onClick={goToNextTab}
+                    disabled={!canProceedFromTab("services")}
                     className="bg-blue-600 hover:bg-blue-700"
                   >
                     Next: Measurements →
