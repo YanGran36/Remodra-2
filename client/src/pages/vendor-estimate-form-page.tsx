@@ -444,7 +444,7 @@ export default function VendorEstimateFormPage() {
                           
                           {service.serviceType === "fence" && (
                             <FenceMeasurementTool
-                              onMeasurementUpdate={(measurements) => {
+                              onMeasurementsChange={(measurements) => {
                                 const currentServices = form.getValues("selectedServices");
                                 currentServices[index] = {
                                   ...currentServices[index],
