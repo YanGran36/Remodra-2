@@ -376,64 +376,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/protected/estimates", async (req, res) => {
-    console.log("POST /api/protected/estimates - Recibiendo solicitud:", JSON.stringify(req.body, null, 2));
     try {
-      // Verify that the project belongs to the contractor if one is provided
-      if (req.body.projectId) {
-        const projectId = Number(req.body.projectId);
-        // Buscar el proyecto directamente con storage
-        const project = await storage.getProject(projectId, req.user!.id);
-        
-        if (!project) {
-          return res.status(403).json({ 
-            message: "No tienes permisos para crear un estimado para este proyecto" 
+      const estimateData = {
+        contractorId: req.user!.id,
+        clientId: req.body.clientId,
+        estimateNumber: req.body.estimateNumber,
+        issueDate: new Date(),
+        status: req.body.status || "draft",
+        subtotal: req.body.subtotal,
+        tax: req.body.tax || 0,
+        discount: req.body.discount || 0,
+        total: req.body.total,
+        notes: req.body.notes || null,
+        terms: req.body.terms || null
+      };
+      
+      const estimate = await storage.createEstimate(estimateData);
+      
+      // Create estimate items if selectedServices exist
+      if (req.body.selectedServices && req.body.selectedServices.length > 0) {
+        for (const service of req.body.selectedServices) {
+          await storage.createEstimateItem({
+            estimateId: estimate.id,
+            description: service.name,
+            quantity: 1,
+            unitPrice: service.laborCost || 0,
+            amount: service.laborCost || 0,
+            notes: service.notes || null
           });
         }
       }
       
-      // Preparar datos con el ID del contratista
-      const dataWithContractorId = {
-        ...req.body,
-        contractorId: req.user!.id
-      };
-      
-      console.log("Datos con contractor ID añadido:", JSON.stringify(dataWithContractorId, null, 2));
-      
-      // Aseguramos que issueDate sea un objeto Date válido
-      if (dataWithContractorId.issueDate && typeof dataWithContractorId.issueDate === 'string') {
-        dataWithContractorId.issueDate = new Date(dataWithContractorId.issueDate);
-      }
-      
-      // Aseguramos que expiryDate sea un objeto Date válido si está presente
-      if (dataWithContractorId.expiryDate && typeof dataWithContractorId.expiryDate === 'string') {
-        dataWithContractorId.expiryDate = new Date(dataWithContractorId.expiryDate);
-      }
-      
-      // Validar datos
-      const validatedData = estimateInsertSchema.parse(dataWithContractorId);
-      console.log("Datos validados correctamente:", JSON.stringify(validatedData, null, 2));
-      
-      // Crear estimado
-      console.log("Creando estimado en la base de datos...");
-      const estimate = await storage.createEstimate(validatedData);
-      console.log("Estimado creado exitosamente:", JSON.stringify(estimate, null, 2));
-      
       res.status(201).json(estimate);
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        console.error("Error de validación:", JSON.stringify(error.errors, null, 2));
-        return res.status(400).json({ 
-          message: "Validation error", 
-          errors: error.errors,
-          details: error.format()
-        });
-      }
-      
       console.error("Error creating estimate:", error);
-      res.status(500).json({ 
-        message: "Failed to create estimate", 
-        error: error instanceof Error ? error.message : String(error)
-      });
+      res.status(500).json({ message: "Failed to create estimate" });
     }
   });
 

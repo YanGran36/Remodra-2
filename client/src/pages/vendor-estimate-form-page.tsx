@@ -19,8 +19,15 @@ import FenceMeasurementTool from "@/components/measurement/fence-measurement-too
 
 const formSchema = z.object({
   clientId: z.number(),
-  title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
+  estimateNumber: z.string().min(1, "Estimate number is required"),
+  issueDate: z.date().optional(),
+  expiryDate: z.date().optional(),
+  status: z.string().default("draft"),
+  subtotal: z.number().default(0),
+  tax: z.number().default(0),
+  discount: z.number().default(0),
+  total: z.number().default(0),
+  terms: z.string().optional(),
   notes: z.string().optional(),
   selectedServices: z.array(z.object({
     serviceType: z.string(),
@@ -36,10 +43,7 @@ const formSchema = z.object({
     laborCost: z.number().optional(),
     materialsCost: z.number().optional(),
     notes: z.string().optional(),
-  })),
-  totalLaborCost: z.number().optional(),
-  totalMaterialsCost: z.number().optional(),
-  totalAmount: z.number().optional(),
+  })).optional().default([]),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -53,12 +57,25 @@ export default function VendorEstimateFormPage() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      estimateNumber: generateEstimateNumber(),
+      issueDate: new Date(),
+      status: "draft",
+      subtotal: 0,
+      tax: 0,
+      discount: 0,
+      total: 0,
       selectedServices: [],
-      totalLaborCost: 0,
-      totalMaterialsCost: 0,
-      totalAmount: 0,
     },
   });
+
+  function generateEstimateNumber(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `EST-${year}${month}${day}-${random}`;
+  }
 
   // Fetch clients
   const { data: clients } = useQuery({
@@ -173,8 +190,7 @@ export default function VendorEstimateFormPage() {
     
     const enhancedValues = {
       ...values,
-      selectedServices: enhancedServices,
-      description: values.description || `Professional ${enhancedServices.map(s => s.name).join(' and ')} project with comprehensive scope and premium materials.`
+      selectedServices: enhancedServices
     };
     
     createEstimateMutation.mutate(enhancedValues);
