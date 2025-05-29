@@ -13,7 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, Home, ArrowLeft } from "lucide-react";
+import { Link } from "wouter";
 import FenceMeasurementTool from "@/components/measurement/fence-measurement-tool";
 
 const formSchema = z.object({
@@ -121,7 +122,15 @@ export default function VendorEstimateFormPage() {
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Create New Estimate</h1>
+        <div className="flex items-center gap-4">
+          <Link href="/">
+            <Button variant="outline" size="sm">
+              <Home className="h-4 w-4 mr-2" />
+              Home
+            </Button>
+          </Link>
+          <h1 className="text-3xl font-bold">Create New Estimate</h1>
+        </div>
       </div>
 
       <Form {...form}>
@@ -563,7 +572,7 @@ export default function VendorEstimateFormPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Materials List</CardTitle>
-                  <CardDescription>Basic materials needed for selected services</CardDescription>
+                  <CardDescription>Detailed materials needed based on your measurements</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {!form.watch("selectedServices") || form.watch("selectedServices").length === 0 ? (
@@ -577,108 +586,203 @@ export default function VendorEstimateFormPage() {
                           <h3 className="text-lg font-semibold mb-4">{service.name} - Materials Needed</h3>
                           
                           {service.serviceType === "fence" && (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <div className="bg-gray-50 p-3 rounded">
-                                <h4 className="font-medium mb-2">Posts & Foundation</h4>
-                                <ul className="text-sm space-y-1">
-                                  <li>• Pressure treated posts</li>
-                                  <li>• Concrete mix</li>
-                                  <li>• Post anchors</li>
-                                  <li>• Gravel</li>
-                                </ul>
+                            <div className="space-y-4">
+                              <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+                                <h4 className="font-semibold text-blue-900 mb-2">Fence Measurements</h4>
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                  <div>
+                                    <span className="font-medium">Total Length:</span> {service.measurements?.linearFeet || 0} ft
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Gates:</span> {service.measurements?.units || 0} units
+                                  </div>
+                                </div>
                               </div>
-                              <div className="bg-gray-50 p-3 rounded">
-                                <h4 className="font-medium mb-2">Panels & Hardware</h4>
-                                <ul className="text-sm space-y-1">
-                                  <li>• Fence panels</li>
-                                  <li>• Rails (2x4)</li>
-                                  <li>• Screws/nails</li>
-                                  <li>• Gate hardware</li>
-                                </ul>
-                              </div>
-                              <div className="bg-gray-50 p-3 rounded">
-                                <h4 className="font-medium mb-2">Finishing</h4>
-                                <ul className="text-sm space-y-1">
-                                  <li>• Post caps</li>
-                                  <li>• Wood stain</li>
-                                  <li>• Primer</li>
-                                </ul>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="bg-gray-50 p-3 rounded">
+                                  <h4 className="font-medium mb-2">Posts & Foundation</h4>
+                                  <ul className="text-sm space-y-1">
+                                    <li>• Posts: {Math.ceil((service.measurements?.linearFeet || 0) / 8)} pieces (8ft spacing)</li>
+                                    <li>• Concrete: {Math.ceil((service.measurements?.linearFeet || 0) / 8) * 2} bags</li>
+                                    <li>• Post anchors: {Math.ceil((service.measurements?.linearFeet || 0) / 8)} pieces</li>
+                                    <li>• Gravel: {Math.ceil((service.measurements?.linearFeet || 0) / 8) * 0.5} cubic ft</li>
+                                  </ul>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded">
+                                  <h4 className="font-medium mb-2">Panels & Hardware</h4>
+                                  <ul className="text-sm space-y-1">
+                                    <li>• Fence panels: {Math.ceil((service.measurements?.linearFeet || 0) / 8)} pieces</li>
+                                    <li>• Rails (2x4): {Math.ceil((service.measurements?.linearFeet || 0) / 8) * 2} pieces</li>
+                                    <li>• Screws/nails: {Math.ceil((service.measurements?.linearFeet || 0) / 10)} lbs</li>
+                                    <li>• Gate sets: {service.measurements?.units || 0} complete sets</li>
+                                  </ul>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded">
+                                  <h4 className="font-medium mb-2">Finishing</h4>
+                                  <ul className="text-sm space-y-1">
+                                    <li>• Post caps: {Math.ceil((service.measurements?.linearFeet || 0) / 8)} pieces</li>
+                                    <li>• Wood stain: {Math.ceil((service.measurements?.linearFeet || 0) / 100)} gallons</li>
+                                    <li>• Primer: {Math.ceil((service.measurements?.linearFeet || 0) / 120)} gallons</li>
+                                  </ul>
+                                </div>
                               </div>
                             </div>
                           )}
 
                           {service.serviceType === "deck" && (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <div className="bg-gray-50 p-3 rounded">
-                                <h4 className="font-medium mb-2">Structure</h4>
-                                <ul className="text-sm space-y-1">
-                                  <li>• Joists (2x8, 2x10)</li>
-                                  <li>• Beam boards</li>
-                                  <li>• Posts (4x4, 6x6)</li>
-                                  <li>• Concrete footings</li>
-                                </ul>
+                            <div className="space-y-4">
+                              <div className="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                                <h4 className="font-semibold text-green-900 mb-2">Deck Measurements</h4>
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                  <div>
+                                    <span className="font-medium">Total Area:</span> {service.measurements?.squareFeet || 0} sq ft
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Perimeter:</span> {Math.ceil(Math.sqrt(service.measurements?.squareFeet || 0) * 4)} ft (estimated)
+                                  </div>
+                                </div>
                               </div>
-                              <div className="bg-gray-50 p-3 rounded">
-                                <h4 className="font-medium mb-2">Decking</h4>
-                                <ul className="text-sm space-y-1">
-                                  <li>• Deck boards</li>
-                                  <li>• Joist hangers</li>
-                                  <li>• Bolts and screws</li>
-                                  <li>• Flashing</li>
-                                </ul>
-                              </div>
-                              <div className="bg-gray-50 p-3 rounded">
-                                <h4 className="font-medium mb-2">Railing</h4>
-                                <ul className="text-sm space-y-1">
-                                  <li>• Railing posts</li>
-                                  <li>• Balusters</li>
-                                  <li>• Top/bottom rails</li>
-                                  <li>• Deck stain</li>
-                                </ul>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="bg-gray-50 p-3 rounded">
+                                  <h4 className="font-medium mb-2">Structure</h4>
+                                  <ul className="text-sm space-y-1">
+                                    <li>• Joists (2x8): {Math.ceil((service.measurements?.squareFeet || 0) / 12)} pieces</li>
+                                    <li>• Beam boards: {Math.ceil((service.measurements?.squareFeet || 0) / 50)} pieces</li>
+                                    <li>• Posts (4x4): {Math.ceil((service.measurements?.squareFeet || 0) / 64)} pieces</li>
+                                    <li>• Concrete: {Math.ceil((service.measurements?.squareFeet || 0) / 32)} bags</li>
+                                  </ul>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded">
+                                  <h4 className="font-medium mb-2">Decking</h4>
+                                  <ul className="text-sm space-y-1">
+                                    <li>• Deck boards: {Math.ceil((service.measurements?.squareFeet || 0) * 1.1)} sq ft (10% waste)</li>
+                                    <li>• Joist hangers: {Math.ceil((service.measurements?.squareFeet || 0) / 12)} pieces</li>
+                                    <li>• Deck screws: {Math.ceil((service.measurements?.squareFeet || 0) / 25)} lbs</li>
+                                    <li>• Flashing: {Math.ceil(Math.sqrt(service.measurements?.squareFeet || 0) * 4)} linear ft</li>
+                                  </ul>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded">
+                                  <h4 className="font-medium mb-2">Railing</h4>
+                                  <ul className="text-sm space-y-1">
+                                    <li>• Railing posts: {Math.ceil(Math.sqrt(service.measurements?.squareFeet || 0) * 4 / 6)} pieces</li>
+                                    <li>• Balusters: {Math.ceil(Math.sqrt(service.measurements?.squareFeet || 0) * 4 * 2)} pieces</li>
+                                    <li>• Top rail: {Math.ceil(Math.sqrt(service.measurements?.squareFeet || 0) * 4)} linear ft</li>
+                                    <li>• Deck stain: {Math.ceil((service.measurements?.squareFeet || 0) / 200)} gallons</li>
+                                  </ul>
+                                </div>
                               </div>
                             </div>
                           )}
 
                           {service.serviceType === "roof" && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div className="bg-gray-50 p-3 rounded">
-                                <h4 className="font-medium mb-2">Roofing</h4>
-                                <ul className="text-sm space-y-1">
-                                  <li>• Shingles or metal</li>
-                                  <li>• Underlayment</li>
-                                  <li>• Ice shield</li>
-                                  <li>• Drip edge</li>
-                                </ul>
+                            <div className="space-y-4">
+                              <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-500">
+                                <h4 className="font-semibold text-red-900 mb-2">Roof Measurements</h4>
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                  <div>
+                                    <span className="font-medium">Total Area:</span> {service.measurements?.squareFeet || 0} sq ft
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Squares:</span> {Math.ceil((service.measurements?.squareFeet || 0) / 100)} squares
+                                  </div>
+                                </div>
                               </div>
-                              <div className="bg-gray-50 p-3 rounded">
-                                <h4 className="font-medium mb-2">Hardware</h4>
-                                <ul className="text-sm space-y-1">
-                                  <li>• Roofing nails</li>
-                                  <li>• Ridge caps</li>
-                                  <li>• Roof vents</li>
-                                  <li>• Sealants</li>
-                                </ul>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="bg-gray-50 p-3 rounded">
+                                  <h4 className="font-medium mb-2">Roofing Materials</h4>
+                                  <ul className="text-sm space-y-1">
+                                    <li>• Shingles: {Math.ceil((service.measurements?.squareFeet || 0) / 100)} squares</li>
+                                    <li>• Underlayment: {Math.ceil((service.measurements?.squareFeet || 0) * 1.1)} sq ft</li>
+                                    <li>• Ice shield: {Math.ceil((service.measurements?.squareFeet || 0) * 0.1)} sq ft</li>
+                                    <li>• Drip edge: {Math.ceil(Math.sqrt((service.measurements?.squareFeet || 0)) * 4)} linear ft</li>
+                                  </ul>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded">
+                                  <h4 className="font-medium mb-2">Hardware & Accessories</h4>
+                                  <ul className="text-sm space-y-1">
+                                    <li>• Roofing nails: {Math.ceil((service.measurements?.squareFeet || 0) / 100)} lbs</li>
+                                    <li>• Ridge caps: {Math.ceil(Math.sqrt((service.measurements?.squareFeet || 0)) / 4)} linear ft</li>
+                                    <li>• Roof vents: {Math.ceil((service.measurements?.squareFeet || 0) / 600)} units</li>
+                                    <li>• Sealants: {Math.ceil((service.measurements?.squareFeet || 0) / 1000)} tubes</li>
+                                  </ul>
+                                </div>
                               </div>
                             </div>
                           )}
 
                           {service.serviceType === "windows" && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div className="bg-gray-50 p-3 rounded">
-                                <h4 className="font-medium mb-2">Windows</h4>
-                                <ul className="text-sm space-y-1">
-                                  <li>• Window units</li>
-                                  <li>• Screens</li>
-                                  <li>• Hardware</li>
-                                </ul>
+                            <div className="space-y-4">
+                              <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-500">
+                                <h4 className="font-semibold text-yellow-900 mb-2">Windows Measurements</h4>
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                  <div>
+                                    <span className="font-medium">Total Units:</span> {service.measurements?.units || 0} windows
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Average Size:</span> Standard residential
+                                  </div>
+                                </div>
                               </div>
-                              <div className="bg-gray-50 p-3 rounded">
-                                <h4 className="font-medium mb-2">Installation</h4>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="bg-gray-50 p-3 rounded">
+                                  <h4 className="font-medium mb-2">Window Materials</h4>
+                                  <ul className="text-sm space-y-1">
+                                    <li>• Window units: {service.measurements?.units || 0} complete sets</li>
+                                    <li>• Screens: {service.measurements?.units || 0} pieces</li>
+                                    <li>• Hardware sets: {service.measurements?.units || 0} sets</li>
+                                    <li>• Window sills: {service.measurements?.units || 0} pieces</li>
+                                  </ul>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded">
+                                  <h4 className="font-medium mb-2">Installation Materials</h4>
+                                  <ul className="text-sm space-y-1">
+                                    <li>• Flashing tape: {Math.ceil((service.measurements?.units || 0) * 12)} linear ft</li>
+                                    <li>• Insulation foam: {Math.ceil((service.measurements?.units || 0) / 4)} cans</li>
+                                    <li>• Caulk tubes: {Math.ceil((service.measurements?.units || 0) / 3)} tubes</li>
+                                    <li>• Trim boards: {Math.ceil((service.measurements?.units || 0) * 8)} linear ft</li>
+                                  </ul>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {(service.serviceType === "gutters" || service.serviceType === "siding" || service.serviceType === "other") && (
+                            <div className="space-y-4">
+                              <div className="bg-purple-50 p-4 rounded-lg border-l-4 border-purple-500">
+                                <h4 className="font-semibold text-purple-900 mb-2">{service.name} Measurements</h4>
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                  {service.measurements?.linearFeet && (
+                                    <div>
+                                      <span className="font-medium">Linear Feet:</span> {service.measurements.linearFeet} ft
+                                    </div>
+                                  )}
+                                  {service.measurements?.squareFeet && (
+                                    <div>
+                                      <span className="font-medium">Square Feet:</span> {service.measurements.squareFeet} sq ft
+                                    </div>
+                                  )}
+                                  {service.measurements?.units && (
+                                    <div>
+                                      <span className="font-medium">Units:</span> {service.measurements.units} pieces
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              <div className="bg-gray-50 p-4 rounded">
+                                <h4 className="font-medium mb-2">Materials Needed</h4>
+                                <p className="text-sm text-gray-600 mb-3">
+                                  Custom service materials will vary based on specific requirements.
+                                </p>
                                 <ul className="text-sm space-y-1">
-                                  <li>• Flashing tape</li>
-                                  <li>• Insulation foam</li>
-                                  <li>• Caulk</li>
-                                  <li>• Trim boards</li>
+                                  <li>• Primary materials: Contact supplier for specific quantities</li>
+                                  <li>• Hardware & fasteners: As per manufacturer specifications</li>
+                                  <li>• Installation supplies: Based on site conditions</li>
+                                  <li>• Finishing materials: According to customer preferences</li>
                                 </ul>
                               </div>
                             </div>
