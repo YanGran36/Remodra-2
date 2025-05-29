@@ -265,16 +265,20 @@ export default function CostAnalysisAssistant({
                     <SelectValue placeholder="Seleccionar servicio" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="deck">Construcción de Deck</SelectItem>
-                    <SelectItem value="fence">Cercado / Valla</SelectItem>
-                    <SelectItem value="roof">Techado</SelectItem>
-                    <SelectItem value="siding">Revestimiento exterior</SelectItem>
-                    <SelectItem value="windows">Ventanas</SelectItem>
-                    <SelectItem value="gutters">Canaletas</SelectItem>
-                    <SelectItem value="painting">Pintura</SelectItem>
-                    <SelectItem value="flooring">Pisos</SelectItem>
-                    <SelectItem value="plumbing">Plomería</SelectItem>
-                    <SelectItem value="electrical">Electricidad</SelectItem>
+                    <SelectItem value="fence">Fence Installation</SelectItem>
+                    <SelectItem value="deck">Deck Construction</SelectItem>
+                    <SelectItem value="roof">Roofing</SelectItem>
+                    <SelectItem value="windows">Windows Installation</SelectItem>
+                    <SelectItem value="gutters">Gutters & Downspouts</SelectItem>
+                    <SelectItem value="siding">Siding Installation</SelectItem>
+                    <SelectItem value="flooring">Flooring Installation</SelectItem>
+                    <SelectItem value="painting">Painting Services</SelectItem>
+                    <SelectItem value="electrical">Electrical Work</SelectItem>
+                    <SelectItem value="plumbing">Plumbing Services</SelectItem>
+                    <SelectItem value="concrete">Concrete Work</SelectItem>
+                    <SelectItem value="landscaping">Landscaping</SelectItem>
+                    <SelectItem value="hvac">HVAC Services</SelectItem>
+                    <SelectItem value="other">Other Services</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

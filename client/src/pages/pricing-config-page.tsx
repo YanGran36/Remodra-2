@@ -478,6 +478,9 @@ const PricingConfigPage = () => {
                           <SelectItem value="painting">Painting Services</SelectItem>
                           <SelectItem value="electrical">Electrical Work</SelectItem>
                           <SelectItem value="plumbing">Plumbing Services</SelectItem>
+                          <SelectItem value="concrete">Concrete Work</SelectItem>
+                          <SelectItem value="landscaping">Landscaping</SelectItem>
+                          <SelectItem value="hvac">HVAC Services</SelectItem>
                           <SelectItem value="other">Other Services</SelectItem>
                         </SelectContent>
                       </Select>

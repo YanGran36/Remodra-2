@@ -202,12 +202,20 @@ export default function SimplePricingPage() {
                   <SelectValue placeholder="Select service type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="roof">Roof</SelectItem>
-                  <SelectItem value="fence">Fence</SelectItem>
-                  <SelectItem value="gutters">Gutters</SelectItem>
-                  <SelectItem value="windows">Windows</SelectItem>
-                  <SelectItem value="siding">Siding</SelectItem>
-                  <SelectItem value="deck">Deck</SelectItem>
+                  <SelectItem value="fence">Fence Installation</SelectItem>
+                  <SelectItem value="deck">Deck Construction</SelectItem>
+                  <SelectItem value="roof">Roofing</SelectItem>
+                  <SelectItem value="windows">Windows Installation</SelectItem>
+                  <SelectItem value="gutters">Gutters & Downspouts</SelectItem>
+                  <SelectItem value="siding">Siding Installation</SelectItem>
+                  <SelectItem value="flooring">Flooring Installation</SelectItem>
+                  <SelectItem value="painting">Painting Services</SelectItem>
+                  <SelectItem value="electrical">Electrical Work</SelectItem>
+                  <SelectItem value="plumbing">Plumbing Services</SelectItem>
+                  <SelectItem value="concrete">Concrete Work</SelectItem>
+                  <SelectItem value="landscaping">Landscaping</SelectItem>
+                  <SelectItem value="hvac">HVAC Services</SelectItem>
+                  <SelectItem value="other">Other Services</SelectItem>
                 </SelectContent>
               </Select>
             </div>
