@@ -200,13 +200,25 @@ export default function VendorEstimateFormPage() {
   };
 
   const addService = (service: any) => {
+    const laborRate = parseFloat(service.laborRate) || 0;
+    const defaultQuantity = service.serviceType === "fence" ? 100 : 
+                           service.serviceType === "roof" ? 1000 : 
+                           service.serviceType === "siding" ? 1200 : 100;
+    
+    const calculatedCost = defaultQuantity * laborRate;
+    
     const newService = {
       serviceType: service.serviceType,
       name: service.name,
       laborRate: service.laborRate,
       unit: service.unit,
-      measurements: {},
-      laborCost: 0,
+      measurements: {
+        quantity: defaultQuantity,
+        squareFeet: service.serviceType === "roof" || service.serviceType === "siding" ? defaultQuantity : 0,
+        linearFeet: service.serviceType === "fence" ? defaultQuantity : 0,
+        units: service.serviceType === "fence" ? 2 : 1,
+      },
+      laborCost: calculatedCost,
       materialsCost: 0,
       notes: "",
     };
