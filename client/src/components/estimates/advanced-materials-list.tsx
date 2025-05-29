@@ -31,11 +31,19 @@ export default function AdvancedMaterialsList({ services, onMaterialsChange }: A
   // Generate materials from services - consolidated to avoid gate duplication
   useEffect(() => {
     const merged: { [key: string]: MaterialItem } = {};
+    
+    // First pass: collect all gate counts across all fence services
+    let totalGatesCount = 0;
+    
+    services.forEach((service) => {
+      if (service.serviceType === "fence") {
+        totalGatesCount += service.measurements?.units || 0;
+      }
+    });
 
     services.forEach((service, serviceIndex) => {
       if (service.serviceType === "fence") {
         const linearFeet = service.measurements?.linearFeet || 0;
-        const totalGates = service.measurements?.units || 0;
 
         if (linearFeet > 0) {
           // Calculate sections and posts
@@ -115,27 +123,6 @@ export default function AdvancedMaterialsList({ services, onMaterialsChange }: A
             };
           }
         }
-
-        // Gates - ONLY ADD ONCE, not per service
-        if (totalGates > 0) {
-          const gateKey = "fence-gates";
-          if (merged[gateKey]) {
-            merged[gateKey].quantity += totalGates;
-            merged[gateKey].total = merged[gateKey].quantity * merged[gateKey].unitPrice;
-          } else {
-            merged[gateKey] = {
-              id: gateKey,
-              name: "Fence Gates (Complete Set)",
-              quantity: totalGates,
-              unit: "sets",
-              unitPrice: 125.00,
-              total: totalGates * 125.00,
-              category: "Gates",
-              serviceType: "fence",
-              notes: "Includes hinges and latch"
-            };
-          }
-        }
       }
 
       // Other service types can be added here
@@ -173,6 +160,22 @@ export default function AdvancedMaterialsList({ services, onMaterialsChange }: A
         }
       }
     });
+
+    // Add gates only ONCE at the end, after processing all services
+    if (totalGatesCount > 0) {
+      const gateKey = "fence-gates";
+      merged[gateKey] = {
+        id: gateKey,
+        name: "Fence Gates (Complete Set)",
+        quantity: totalGatesCount,
+        unit: "sets",
+        unitPrice: 125.00,
+        total: totalGatesCount * 125.00,
+        category: "Gates",
+        serviceType: "fence",
+        notes: "Includes hinges and latch"
+      };
+    }
 
     // Convert merged object back to array
     const mergedMaterials = Object.values(merged);
