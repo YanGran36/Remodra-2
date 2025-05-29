@@ -78,7 +78,7 @@ export default function VendorEstimateFormPage() {
 
   const createEstimateMutation = useMutation({
     mutationFn: async (data: FormValues) => {
-      const response = await fetch("/api/estimates", {
+      const response = await fetch("/api/protected/estimates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -88,7 +88,8 @@ export default function VendorEstimateFormPage() {
     },
     onSuccess: () => {
       toast({ title: "Success", description: "Estimate created successfully!" });
-      queryClient.invalidateQueries({ queryKey: ["/api/estimates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/protected/estimates"] });
+      window.location.href = "/estimates";
     },
     onError: (error: Error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -98,8 +99,8 @@ export default function VendorEstimateFormPage() {
   const onSubmit = (values: FormValues) => {
     // Generate professional descriptions based on measurements and materials
     const enhancedServices = values.selectedServices.map((service: any) => {
-      let professionalDescription = "";
-      let detailedScope = [];
+      let professionalDescription: string = "";
+      let detailedScope: string[] = [];
       
       if (service.serviceType === "fence") {
         const totalLength = service.measurements?.totalLength || 0;
@@ -114,7 +115,7 @@ export default function VendorEstimateFormPage() {
           totalGates > 0 ? `${totalGates} complete gate set(s) with professional hardware` : null,
           "Post caps and finishing materials for weather protection",
           "Site cleanup and debris removal"
-        ].filter(Boolean);
+        ].filter(Boolean) as string[];
       }
       
       if (service.serviceType === "roof") {
@@ -129,6 +130,36 @@ export default function VendorEstimateFormPage() {
           "Drip edge and flashing installation",
           "Quality nails and hardware throughout",
           "Professional cleanup and disposal of old materials"
+        ];
+      }
+
+      if (service.serviceType === "gutters") {
+        const area = service.measurements?.area || 0;
+        
+        professionalDescription = `Professional gutter installation and drainage system covering ${area} square feet of roof area. This project includes premium gutter materials, professional installation, and complete water management solutions.`;
+        
+        detailedScope = [
+          `Gutter system for ${area} square feet of coverage`,
+          "Premium aluminum or vinyl gutters",
+          "Professional downspout installation",
+          "Gutter guards and leaf protection",
+          "Proper slope and drainage optimization",
+          "Complete cleanup and testing"
+        ];
+      }
+
+      if (service.serviceType === "siding") {
+        const area = service.measurements?.area || 0;
+        
+        professionalDescription = `Complete siding renovation covering ${area} square feet of exterior surface. This project includes premium siding materials, professional installation, and weather protection systems.`;
+        
+        detailedScope = [
+          `${area} square feet of premium siding materials`,
+          "Complete house wrap and moisture barrier",
+          "Professional trim and finishing work",
+          "Caulking and weatherproofing",
+          "Quality fasteners and installation hardware",
+          "Site cleanup and debris removal"
         ];
       }
       
