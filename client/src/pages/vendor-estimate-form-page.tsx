@@ -5,6 +5,7 @@ import { z } from "zod";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, ArrowLeft } from "lucide-react";
 import FenceMeasurementTool from "@/components/measurement/fence-measurement-tool";
 
 const formSchema = z.object({
@@ -123,7 +124,17 @@ export default function VendorEstimateFormPage() {
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Create New Estimate</h1>
+        <div className="flex items-center gap-4">
+          <Link href="/estimates">
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+            >
+              ← Back to Estimates
+            </Button>
+          </Link>
+          <h1 className="text-3xl font-bold">Create New Estimate</h1>
+        </div>
       </div>
 
       <Form {...form}>
