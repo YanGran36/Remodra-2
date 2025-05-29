@@ -96,7 +96,7 @@ export default function ProjectWorkerSection({ project }: ProjectWorkerSectionPr
     const currentMaterials = form.getValues("materialsNeeded") || [];
     form.setValue("materialsNeeded", [
       ...currentMaterials,
-      { id: `mat-${Date.now()}`, name: "", quantity: 1, unit: "unidad" }
+      { id: `mat-${Date.now()}`, name: "", quantity: 1, unit: "unit" }
     ]);
   };
 
@@ -205,9 +205,9 @@ export default function ProjectWorkerSection({ project }: ProjectWorkerSectionPr
                         name={`materialsNeeded.${index}.unit`}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs">Unidad</FormLabel>
+                            <FormLabel className="text-xs">Unit</FormLabel>
                             <FormControl>
-                              <Input placeholder="unidad" {...field} />
+                              <Input placeholder="unit" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>

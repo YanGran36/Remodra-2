@@ -107,7 +107,7 @@ export default function ServiceEstimateForm({
       name: "",
       quantity: "1",
       unitPrice: "0.00",
-      unit: "unidad"
+      unit: "unit"
     }
   });
 
@@ -314,7 +314,7 @@ export default function ServiceEstimateForm({
       name: "",
       quantity: "1",
       unitPrice: "0.00",
-      unit: "unidad"
+      unit: "unit"
     });
   };
   
@@ -427,7 +427,7 @@ export default function ServiceEstimateForm({
           // Para materiales que usan pies lineales (perímetros, bordes)
           quantity = newMeasurements.length;
         } else if (defaultMaterial.unit === 'unit' && newMeasurements.units) {
-          // Para materiales que se cuentan por unidad
+          // Para materiales que se cuentan por unit
           quantity = newMeasurements.units;
         }
         
@@ -575,7 +575,7 @@ export default function ServiceEstimateForm({
                       <div>
                         <h4 className="font-medium">{material.name}</h4>
                         <p className="text-sm text-muted-foreground">
-                          / {material.unit === 'sq.ft' ? 'pie²' : material.unit === 'ln.ft' ? 'pie lineal' : 'unidad'}
+                          / {material.unit === 'sq.ft' ? 'pie²' : material.unit === 'ln.ft' ? 'pie lineal' : 'unit'}
                         </p>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -628,7 +628,7 @@ export default function ServiceEstimateForm({
                       <div>
                         <h4 className="font-medium">{option.name}</h4>
                         <p className="text-sm text-muted-foreground">
-                          / {option.unit === 'sq.ft' ? 'pie²' : option.unit === 'ln.ft' ? 'pie lineal' : 'unidad'}
+                          / {option.unit === 'sq.ft' ? 'pie²' : option.unit === 'ln.ft' ? 'pie lineal' : 'unit'}
                         </p>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -677,7 +677,7 @@ export default function ServiceEstimateForm({
               <CardContent className="pt-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div className="space-y-2">
-                    <Label htmlFor="custom-name">Nombre del artículo</Label>
+                    <Label htmlFor="custom-name">Item name</Label>
                     <Input 
                       id="custom-name"
                       placeholder="e.g., Special paint"
@@ -685,17 +685,17 @@ export default function ServiceEstimateForm({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="custom-unit">Unidad</Label>
+                    <Label htmlFor="custom-unit">Unit</Label>
                     <Select 
-                      defaultValue="unidad"
+                      defaultValue="unit"
                       onValueChange={(value) => customItemForm.setValue("unit", value)}
                     >
                       <SelectTrigger id="custom-unit">
                         <SelectValue placeholder="Select unit" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="unidad">Unidad</SelectItem>
-                        <SelectItem value="sq.ft">Pie cuadrado</SelectItem>
+                        <SelectItem value="unit">Unit</SelectItem>
+                        <SelectItem value="sq.ft">Square foot</SelectItem>
                         <SelectItem value="ln.ft">Pie lineal</SelectItem>
                         <SelectItem value="gallon">Galón</SelectItem>
                         <SelectItem value="hora">Hora</SelectItem>
@@ -713,7 +713,7 @@ export default function ServiceEstimateForm({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="custom-price">Precio por unidad ($)</Label>
+                    <Label htmlFor="custom-price">Precio por unit ($)</Label>
                     <Input 
                       id="custom-price"
                       type="number"

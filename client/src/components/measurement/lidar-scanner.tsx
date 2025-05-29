@@ -579,7 +579,7 @@ export default function LiDARScanner({
     };
     reader.readAsDataURL(file);
     
-    // Limpiar el input para poder seleccionar el mismo archivo nuevamente
+    // Clear the input to be able to select el mismo archivo nuevamente
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }

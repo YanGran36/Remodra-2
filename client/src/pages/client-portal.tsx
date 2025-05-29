@@ -86,7 +86,7 @@ export default function ClientPortal() {
           </CardHeader>
           <CardContent className="pb-3">
             <p className="font-medium mb-1">Instalación de Ventanas</p>
-            <p className="text-gray-600 text-sm mb-3">Instalación de 5 ventanas de doble panel</p>
+            <p className="text-gray-600 text-sm mb-3">Instalación de 5 windows de doble panel</p>
             <p className="font-semibold text-lg">Total: $3,250.00</p>
           </CardContent>
           <CardFooter className="flex justify-end gap-2 pt-0">
@@ -252,7 +252,7 @@ export default function ClientPortal() {
                   <span className="font-medium">Dirección:</span> 123 Main St, Anytown, CA 12345
                 </p>
                 <p className="text-sm text-gray-600">
-                  <span className="font-medium">Notas:</span> Primera visita para tomar medidas de ventanas a reemplazar.
+                  <span className="font-medium">Notas:</span> Primera visita para tomar medidas de windows a reemplazar.
                 </p>
                 <div className="flex justify-end gap-2 mt-2">
                   <Button variant="outline" size="sm">Reprogramar</Button>
@@ -319,7 +319,7 @@ export default function ClientPortal() {
                   <span className="font-medium">Fecha:</span> {format(new Date(2023, 6, 18, 15, 30), "PPpp", { locale: es })}
                 </p>
                 <p className="text-sm text-gray-600 line-clamp-2 mt-1">
-                  Buenos días Sr. Smith, le escribo para informarle que hemos recibido los materiales para su proyecto de ventanas y...
+                  Buenos días Sr. Smith, le escribo para informarle que hemos recibido los materiales para su proyecto de windows y...
                 </p>
                 <div className="flex justify-end mt-2">
                   <Button size="sm">Leer Mensaje</Button>

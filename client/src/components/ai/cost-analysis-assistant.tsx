@@ -70,7 +70,7 @@ export default function CostAnalysisAssistant({
   const [currentMaterial, setCurrentMaterial] = useState({
     name: "",
     quantity: 1,
-    unit: "unidad",
+    unit: "unit",
     unitPrice: 0,
   });
 
@@ -108,7 +108,7 @@ export default function CostAnalysisAssistant({
     setCurrentMaterial({
       name: "",
       quantity: 1,
-      unit: "unidad",
+      unit: "unit",
       unitPrice: 0,
     });
   };
@@ -138,7 +138,7 @@ export default function CostAnalysisAssistant({
       if (!params.serviceType) {
         toast({
           title: "Error in cost analysis",
-          description: "Debe seleccionar un tipo de servicio",
+          description: "Must select un tipo de servicio",
           variant: "destructive",
         });
         return;
@@ -183,7 +183,7 @@ export default function CostAnalysisAssistant({
       if (!params.serviceType) {
         toast({
           title: "Error generating description",
-          description: "Debe seleccionar un tipo de servicio",
+          description: "Must select un tipo de servicio",
           variant: "destructive",
         });
         return;
@@ -389,9 +389,9 @@ export default function CostAnalysisAssistant({
                 />
               </div>
 
-              {/* Tamaño propiedad: unidades */}
+              {/* Tamaño propiedad: unites */}
               <div className="space-y-2">
-                <Label htmlFor="units">Unidades</Label>
+                <Label htmlFor="units">Unites</Label>
                 <Input
                   id="units"
                   type="number"
@@ -563,10 +563,10 @@ export default function CostAnalysisAssistant({
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Unidad" />
+                      <SelectValue placeholder="Unit" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="unidad">Unidad</SelectItem>
+                      <SelectItem value="unit">Unit</SelectItem>
                       <SelectItem value="metro">Metro</SelectItem>
                       <SelectItem value="m2">Metro²</SelectItem>
                       <SelectItem value="pie">Pie</SelectItem>

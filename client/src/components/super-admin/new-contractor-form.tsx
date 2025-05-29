@@ -133,8 +133,8 @@ export function NewContractorForm({ onSuccess }: NewContractorFormProps) {
     { id: "deck", label: "Instalación/Reparación de Deck" },
     { id: "fence", label: "Instalación/Reparación de Verja" },
     { id: "roof", label: "Instalación/Reparación de Techo" },
-    { id: "siding", label: "Instalación/Reparación de Revestimiento Exterior" },
-    { id: "windows", label: "Instalación/Reparación de Ventanas" },
+    { id: "siding", label: "Siding Installation/Repair" },
+    { id: "windows", label: "Windows Installation/Repair" },
     { id: "gutters", label: "Instalación/Reparación de Canalones" },
   ];
   

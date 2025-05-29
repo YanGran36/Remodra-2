@@ -1194,7 +1194,7 @@ export default function VendorEstimateFormPageNew() {
                             <TableRow>
                               <TableHead>Material</TableHead>
                               <TableHead>Cantidad</TableHead>
-                              <TableHead>Unidad</TableHead>
+                              <TableHead>Unit</TableHead>
                               <TableHead>Precio unitario</TableHead>
                               <TableHead>Total</TableHead>
                               <TableHead></TableHead>
@@ -1448,7 +1448,7 @@ export default function VendorEstimateFormPageNew() {
                             <Badge variant="outline">{watchLinearFeet} pies lineales</Badge>
                           )}
                           {watchUnits && (
-                            <Badge variant="outline">{watchUnits} unidades</Badge>
+                            <Badge variant="outline">{watchUnits} unites</Badge>
                           )}
                         </div>
                       </div>

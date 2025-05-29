@@ -135,7 +135,7 @@ export default function ProjectForm({
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar estado" />
+                      <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -191,7 +191,7 @@ export default function ProjectForm({
                         {field.value ? (
                           format(field.value, "PPP", { locale: es })
                         ) : (
-                          <span>Seleccionar fecha</span>
+                          <span>Select date</span>
                         )}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                       </Button>
@@ -233,7 +233,7 @@ export default function ProjectForm({
                         {field.value ? (
                           format(field.value, "PPP", { locale: es })
                         ) : (
-                          <span>Seleccionar fecha</span>
+                          <span>Select date</span>
                         )}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                       </Button>

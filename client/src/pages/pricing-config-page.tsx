@@ -577,7 +577,7 @@ const PricingConfigPage = () => {
                   <TableRow>
                     <TableHead>Material</TableHead>
                     <TableHead>Categoría</TableHead>
-                    <TableHead>Precio por Unidad</TableHead>
+                    <TableHead>Precio por Unit</TableHead>
                     <TableHead>Proveedor</TableHead>
                     <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
@@ -624,7 +624,7 @@ const PricingConfigPage = () => {
                         onValueChange={(value) => setEditingMaterial({...editingMaterial, category: value})}
                       >
                         <SelectTrigger id="material-category">
-                          <SelectValue placeholder="Seleccionar" />
+                          <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="fence">Cerca</SelectItem>
@@ -637,7 +637,7 @@ const PricingConfigPage = () => {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="material-price">Precio por Unidad</Label>
+                      <Label htmlFor="material-price">Precio por Unit</Label>
                       <Input 
                         id="material-price"
                         type="number" 
@@ -649,18 +649,18 @@ const PricingConfigPage = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="material-unit">Unidad</Label>
+                      <Label htmlFor="material-unit">Unit</Label>
                       <Select
                         value={editingMaterial.unit}
                         onValueChange={(value) => setEditingMaterial({...editingMaterial, unit: value})}
                       >
                         <SelectTrigger id="material-unit">
-                          <SelectValue placeholder="Seleccionar" />
+                          <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="ft">Pie Lineal (ft)</SelectItem>
                           <SelectItem value="sqft">Pie Cuadrado (sqft)</SelectItem>
-                          <SelectItem value="unit">Unidad</SelectItem>
+                          <SelectItem value="unit">Unit</SelectItem>
                           <SelectItem value="box">Caja</SelectItem>
                           <SelectItem value="roll">Rollo</SelectItem>
                         </SelectContent>

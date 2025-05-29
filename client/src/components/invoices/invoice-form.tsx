@@ -526,7 +526,7 @@ export default function InvoiceForm({ invoiceToEdit, isOpen, onClose, fromEstima
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="no_project">Sin proyecto</SelectItem>
+                          <SelectItem value="no_project">No project</SelectItem>
                           {projects?.filter((project: any) => 
                             project.clientId === parseInt(form.getValues("clientId")?.toString() || "0")
                           ).map((project: any) => (
@@ -632,7 +632,7 @@ export default function InvoiceForm({ invoiceToEdit, isOpen, onClose, fromEstima
                                 {field.value ? (
                                   format(field.value, "dd/MM/yyyy")
                                 ) : (
-                                  <span>Seleccionar fecha</span>
+                                  <span>Select date</span>
                                 )}
                                 <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                               </Button>
@@ -671,7 +671,7 @@ export default function InvoiceForm({ invoiceToEdit, isOpen, onClose, fromEstima
                                 {field.value ? (
                                   format(field.value, "dd/MM/yyyy")
                                 ) : (
-                                  <span>Seleccionar fecha</span>
+                                  <span>Select date</span>
                                 )}
                                 <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                               </Button>
@@ -708,7 +708,7 @@ export default function InvoiceForm({ invoiceToEdit, isOpen, onClose, fromEstima
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar estado" />
+                            <SelectValue placeholder="Select status" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>

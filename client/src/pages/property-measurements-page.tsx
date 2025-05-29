@@ -65,7 +65,7 @@ import {
 // Definir los tipos de servicio disponibles (mismos que en vendor-estimate-form)
 const SERVICE_TYPES = [
   { value: "roof", label: "Techo" },
-  { value: "siding", label: "Revestimiento" },
+  { value: "siding", label: "Siding" },
   { value: "deck", label: "Terraza" },
   { value: "fence", label: "Cerca" },
   { value: "windows", label: "Ventanas" },
@@ -527,7 +527,7 @@ export default function PropertyMeasurementsPage() {
                     onValueChange={setSelectedClient}
                   >
                     <SelectTrigger id="client">
-                      <SelectValue placeholder="Seleccionar cliente" />
+                      <SelectValue placeholder="Select cliente" />
                     </SelectTrigger>
                     <SelectContent>
                       {clients.map((client: any) => (
@@ -546,10 +546,10 @@ export default function PropertyMeasurementsPage() {
                     onValueChange={setSelectedProject}
                   >
                     <SelectTrigger id="project">
-                      <SelectValue placeholder="Seleccionar proyecto (opcional)" />
+                      <SelectValue placeholder="Select proyecto (opcional)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="no_project">Sin proyecto</SelectItem>
+                      <SelectItem value="no_project">No project</SelectItem>
                       {filteredProjects.map((project: any) => (
                         <SelectItem key={project.id} value={project.id.toString()}>
                           {project.title}
@@ -567,7 +567,7 @@ export default function PropertyMeasurementsPage() {
                   onValueChange={setSelectedPropertyType}
                 >
                   <SelectTrigger id="propertyType">
-                    <SelectValue placeholder="Seleccionar tipo de propiedad" />
+                    <SelectValue placeholder="Select tipo de propiedad" />
                   </SelectTrigger>
                   <SelectContent>
                     {SERVICE_TYPES.map((service) => (
@@ -583,7 +583,7 @@ export default function PropertyMeasurementsPage() {
                 <Label htmlFor="title">Título</Label>
                 <Input
                   id="title"
-                  placeholder="Ej: Medición de techo para proyecto de renovación"
+                  placeholder="e.g.: Medición de techo para proyecto de renovación"
                   value={measurementTitle}
                   onChange={(e) => setMeasurementTitle(e.target.value)}
                 />

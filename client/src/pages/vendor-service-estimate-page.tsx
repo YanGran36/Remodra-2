@@ -448,34 +448,34 @@ const recalculateTotal = (items: SelectedItem[]) => {
     }
   } 
   else if (selectedServiceTypes.includes('roof') || selectedServiceTypes.includes('roofing')) {
-    // Para techos, usamos área (pies cuadrados)
+    // Para roofs, usamos área (pies cuadrados)
     if (measurementData.area > 0) {
-      const baseRate = 8.7; // Tasa combinada (materiales + labor) por pie cuadrado
+      const baseRate = 8.7; // Tasa combinada (materiales + labor) por square foot
       subtotal += measurementData.area * baseRate;
       
       console.log(`Techo - Área: ${measurementData.area}sqft, Base calculada: $${measurementData.area * baseRate}`);
     }
   }
   else if (selectedServiceTypes.includes('flooring')) {
-    // Para pisos, usamos área (pies cuadrados)
+    // Para floors, usamos área (pies cuadrados)
     if (measurementData.area > 0) {
-      const baseRate = 7.5; // Tasa combinada (materiales + labor) por pie cuadrado
+      const baseRate = 7.5; // Tasa combinada (materiales + labor) por square foot
       subtotal += measurementData.area * baseRate;
       
       console.log(`Piso - Área: ${measurementData.area}sqft, Base calculada: $${measurementData.area * baseRate}`);
     }
   }
   else if (selectedServiceTypes.includes('windows')) {
-    // Para ventanas, usamos área o conteo
+    // Para windows, usamos área o conteo
     if (measurementData.area > 0) {
-      const baseRate = 40; // Tasa combinada por pie cuadrado
+      const baseRate = 40; // Tasa combinada por square foot
       subtotal += measurementData.area * baseRate;
       
       console.log(`Ventanas - Área: ${measurementData.area}sqft, Base calculada: $${measurementData.area * baseRate}`);
     }
   }
   else if (selectedServiceTypes.includes('gutters')) {
-    // Para canaletas, usamos longitud (pies lineales)
+    // Para gutters, usamos longitud (pies lineales)
     if (measurementData.length > 0) {
       const baseRate = 12; // Tasa combinada por pie lineal
       subtotal += measurementData.length * baseRate;
@@ -1454,14 +1454,14 @@ const recalculateTotal = (items: SelectedItem[]) => {
                                 description: `Cerca completa - ${length} pies lineales`,
                                 quantity: length,
                                 unit: 'ft',
-                                unitPrice: 57, // Precio por unidad que incluye material y mano de obra
+                                unitPrice: 57, // Precio por unit que incluye material y mano de obra
                                 total: length * 57,
                                 type: 'material'
                               });
                             }
                             else if ((serviceType === 'roof' || serviceType === 'roofing') && 
                                     measurement.type === 'area' && measurement.realArea) {
-                              // Para techos - medición de área
+                              // Para roofs - medición de área
                               const area = Math.ceil(measurement.realArea);
                               measurementItems.push({
                                 id: `measurement-${idx}`,

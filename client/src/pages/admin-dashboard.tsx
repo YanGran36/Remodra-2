@@ -162,7 +162,7 @@ export default function AdminDashboard() {
                     <p className="text-sm text-gray-500">
                       {format(new Date(2023, 6, 22), "PPP", { locale: es })}
                     </p>
-                    <p className="text-sm mt-1">Medición para ventanas - 123 Main St</p>
+                    <p className="text-sm mt-1">Medición para windows - 123 Main St</p>
                   </div>
                 </div>
                 
@@ -179,7 +179,7 @@ export default function AdminDashboard() {
                     <p className="text-sm text-gray-500">
                       {format(new Date(2023, 6, 23), "PPP", { locale: es })}
                     </p>
-                    <p className="text-sm mt-1">Discusión de precios de materiales para techos</p>
+                    <p className="text-sm mt-1">Discusión de precios de materiales para roofs</p>
                   </div>
                 </div>
                 

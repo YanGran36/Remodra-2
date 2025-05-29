@@ -62,7 +62,7 @@ export default function AiAnalysisPanel({
     if (!serviceType) {
       toast({
         title: "Error",
-        description: "Debe seleccionar un tipo de servicio",
+        description: "Must select un tipo de servicio",
         variant: "destructive",
       });
       return;

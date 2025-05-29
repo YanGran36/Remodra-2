@@ -198,7 +198,7 @@ export default function InvoiceDetail({ invoice, isOpen, onClose, onEdit }: Invo
               </CardHeader>
               <CardContent>
                 <div>
-                  <p className="font-medium">{invoice.project?.title || "Sin proyecto asignado"}</p>
+                  <p className="font-medium">{invoice.project?.title || "No project asignado"}</p>
                   {invoice.project && (
                     <>
                       <p className="text-sm text-muted-foreground line-clamp-2">

@@ -195,7 +195,7 @@ export default function EventForm({
               <FormLabel>Título del evento</FormLabel>
               <FormControl>
                 <Input 
-                  placeholder="Ej: Visita para tomar medidas" 
+                  placeholder="e.g.: Visita para tomar medidas" 
                   {...field} 
                 />
               </FormControl>

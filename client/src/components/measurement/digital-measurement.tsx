@@ -41,18 +41,18 @@ interface DigitalMeasurementProps {
   canvasHeight?: number;
 }
 
-// Definir tarifas por tipo de servicio y unidad de medida
+// Definir tarifas por tipo de servicio y unit de medida
 const SERVICE_RATES = {
-  roofing: { rate: 5.5, unit: 'sqft' }, // $5.5 por pie cuadrado
-  siding: { rate: 8.0, unit: 'sqft' }, // $8.0 por pie cuadrado
+  roofing: { rate: 5.5, unit: 'sqft' }, // $5.5 por square foot
+  siding: { rate: 8.0, unit: 'sqft' }, // $8.0 por square foot
   windows: { rate: 45.0, unit: 'ft' }, // $45 por pie lineal de marco
   gutters: { rate: 12.0, unit: 'ft' }, // $12 por pie lineal
-  painting: { rate: 3.0, unit: 'sqft' }, // $3 por pie cuadrado
-  flooring: { rate: 6.0, unit: 'sqft' }, // $6 por pie cuadrado
+  painting: { rate: 3.0, unit: 'sqft' }, // $3 por square foot
+  flooring: { rate: 6.0, unit: 'sqft' }, // $6 por square foot
   electrical: { rate: 15.0, unit: 'ft' }, // $15 por pie lineal (cableado)
   plumbing: { rate: 25.0, unit: 'ft' }, // $25 por pie lineal de tubería
-  hvac: { rate: 10.0, unit: 'sqft' }, // $10 por pie cuadrado de área
-  landscaping: { rate: 4.5, unit: 'sqft' } // $4.5 por pie cuadrado
+  hvac: { rate: 10.0, unit: 'sqft' }, // $10 por square foot de área
+  landscaping: { rate: 4.5, unit: 'sqft' } // $4.5 por square foot
 };
 
 // Factores de costo para diferentes materiales
@@ -92,10 +92,10 @@ const calculateCost = (
   // Determinar qué valor usar según el tipo de servicio
   let measureValue = 0;
   if (service.unit === 'sqft' && measurement.realArea) {
-    // Servicios basados en área (techos, pisos, etc.)
+    // Area-based services (roofs, floors, etc.)
     measureValue = measurement.realArea;
   } else if (service.unit === 'ft' && measurement.realLength) {
-    // Servicios basados en longitud (ventanas, canaletas, etc.)
+    // Length-based services (windows, gutters, etc.)
     measureValue = measurement.realLength;
   } else if (service.unit === 'ft' && measurement.realPerimeter) {
     // Servicios basados en perímetro
