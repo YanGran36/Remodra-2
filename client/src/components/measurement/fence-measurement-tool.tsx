@@ -703,8 +703,10 @@ export default function FenceMeasurementTool({
 
     const panels = Math.ceil(totalLength / 8); // 8ft panels
     const totalPosts = posts.length;
-    const singleGates = gates.filter(g => g.type === 'gate').length;
-    const doubleGates = gates.filter(g => g.type === 'double-gate').length;
+    // Include ALL gates in calculation, not just those in sections
+    const allGates = [...gates]; // Use all gates from the canvas
+    const singleGates = allGates.filter(g => g.type === 'gate').length;
+    const doubleGates = allGates.filter(g => g.type === 'double-gate').length;
 
     const hardwareList = [
       `${totalPosts} post anchors`,
@@ -1093,12 +1095,27 @@ export default function FenceMeasurementTool({
                     <strong>Panels needed:</strong> {measurement.materialsList.panels}
                   </div>
                   <div>
-                    <strong>Gates:</strong> {measurement.materialsList.gates}
+                    <strong>Total Gates:</strong> {measurement.materialsList.gates}
                   </div>
                   <div>
                     <strong>Height:</strong> {fenceHeight} ft
                   </div>
                 </div>
+                
+                {/* Detailed Gate Information */}
+                {measurement.materialsList.gates > 0 && (
+                  <div className="bg-blue-50 p-3 rounded mt-2">
+                    <h5 className="font-medium text-blue-900 mb-2">Gate Details:</h5>
+                    <div className="text-sm space-y-1">
+                      {gates.filter(g => g.type === 'gate').length > 0 && (
+                        <div>• Single Gates: {gates.filter(g => g.type === 'gate').length}</div>
+                      )}
+                      {gates.filter(g => g.type === 'double-gate').length > 0 && (
+                        <div>• Double Gates: {gates.filter(g => g.type === 'double-gate').length}</div>
+                      )}
+                    </div>
+                  </div>
+                )}
                 
                 <div>
                   <strong>Hardware:</strong>
