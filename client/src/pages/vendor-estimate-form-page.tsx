@@ -114,14 +114,21 @@ export default function VendorEstimateFormPage() {
   });
 
   const onSubmit = (values: FormValues) => {
-    // Generate professional descriptions based on measurements and materials
-    const enhancedServices = values.selectedServices.map((service: any) => {
+    // Calculate totals from selected services with measurements
+    let calculatedSubtotal = 0;
+    
+    const enhancedServices = selectedServices.map((service: any) => {
       let professionalDescription: string = "";
       let detailedScope: string[] = [];
+      let calculatedLaborCost = 0;
+      
+      const laborRate = parseFloat(service.laborRate) || 0;
       
       if (service.serviceType === "fence") {
-        const totalLength = service.measurements?.totalLength || 0;
-        const totalGates = service.measurements?.totalGates || 0;
+        const totalLength = service.measurements?.linearFeet || 0;
+        const totalGates = service.measurements?.units || 0;
+        
+        calculatedLaborCost = totalLength * laborRate;
         
         professionalDescription = `Professional fence installation covering ${totalLength} linear feet of premium fencing. This comprehensive project includes complete site preparation, professional-grade materials, and expert installation techniques ensuring long-lasting durability and aesthetic appeal.`;
         
@@ -136,7 +143,9 @@ export default function VendorEstimateFormPage() {
       }
       
       if (service.serviceType === "roof") {
-        const area = service.measurements?.area || 0;
+        const area = service.measurements?.squareFeet || 0;
+        
+        calculatedLaborCost = area * laborRate;
         
         professionalDescription = `Complete roof renovation covering ${area} square feet of roofing surface. This project includes comprehensive roof assessment, premium materials installation, and professional workmanship backed by industry-standard warranties.`;
         
@@ -150,23 +159,10 @@ export default function VendorEstimateFormPage() {
         ];
       }
 
-      if (service.serviceType === "gutters") {
-        const area = service.measurements?.area || 0;
-        
-        professionalDescription = `Professional gutter installation and drainage system covering ${area} square feet of roof area. This project includes premium gutter materials, professional installation, and complete water management solutions.`;
-        
-        detailedScope = [
-          `Gutter system for ${area} square feet of coverage`,
-          "Premium aluminum or vinyl gutters",
-          "Professional downspout installation",
-          "Gutter guards and leaf protection",
-          "Proper slope and drainage optimization",
-          "Complete cleanup and testing"
-        ];
-      }
-
       if (service.serviceType === "siding") {
-        const area = service.measurements?.area || 0;
+        const area = service.measurements?.squareFeet || 0;
+        
+        calculatedLaborCost = area * laborRate;
         
         professionalDescription = `Complete siding renovation covering ${area} square feet of exterior surface. This project includes premium siding materials, professional installation, and weather protection systems.`;
         
@@ -180,16 +176,23 @@ export default function VendorEstimateFormPage() {
         ];
       }
       
+      calculatedSubtotal += calculatedLaborCost;
+      
       return {
         ...service,
         professionalDescription,
         detailedScope,
+        laborCost: calculatedLaborCost,
         notes: service.notes || professionalDescription
       };
     });
     
+    const calculatedTotal = calculatedSubtotal + (values.tax || 0) - (values.discount || 0);
+    
     const enhancedValues = {
       ...values,
+      subtotal: calculatedSubtotal,
+      total: calculatedTotal,
       selectedServices: enhancedServices
     };
     

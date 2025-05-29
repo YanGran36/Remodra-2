@@ -396,12 +396,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create estimate items if selectedServices exist
       if (req.body.selectedServices && req.body.selectedServices.length > 0) {
         for (const service of req.body.selectedServices) {
+          const quantity = service.measurements?.linearFeet || service.measurements?.squareFeet || 1;
+          const unitPrice = parseFloat(service.laborRate) || 0;
+          const amount = service.laborCost || (quantity * unitPrice);
+          
           await storage.createEstimateItem({
             estimateId: estimate.id,
-            description: service.name,
-            quantity: 1,
-            unitPrice: service.laborCost || 0,
-            amount: service.laborCost || 0,
+            description: service.professionalDescription || service.name,
+            quantity: String(quantity),
+            unitPrice: String(unitPrice),
+            amount: String(amount),
             notes: service.notes || null
           });
         }
