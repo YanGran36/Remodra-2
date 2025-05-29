@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trash2, Plus, Home, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
 import FenceMeasurementTool from "@/components/measurement/fence-measurement-tool";
+import AdvancedMaterialsList from "@/components/estimates/advanced-materials-list";
 
 const formSchema = z.object({
   clientId: z.number(),
@@ -569,26 +570,114 @@ export default function VendorEstimateFormPage() {
 
             {/* Materials Tab */}
             <TabsContent value="materials" className="space-y-6 pt-4">
+              <AdvancedMaterialsList 
+                services={form.watch("selectedServices") || []}
+                onMaterialsChange={(materials) => {
+                  console.log("Materials updated:", materials);
+                }}
+              />
+              <Card>
+                <CardFooter className="flex justify-between">
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => setActiveTab("measurements")}
+                  >
+                    Previous
+                  </Button>
+                  <Button 
+                    type="button" 
+                    onClick={() => setActiveTab("review")}
+                  >
+                    Next: Review
+                  </Button>
+                </CardFooter>
+              </Card>
+            </TabsContent>
+
+            {/* Review Tab */}
+            <TabsContent value="review" className="space-y-6 pt-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Materials List</CardTitle>
-                  <CardDescription>Detailed materials needed based on your measurements</CardDescription>
+                  <CardTitle>Review & Submit</CardTitle>
+                  <CardDescription>Review all details before creating the estimate</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {!form.watch("selectedServices") || form.watch("selectedServices").length === 0 ? (
-                    <div className="text-center py-8">
-                      <p className="text-muted-foreground">Please select services first</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Client & Project Info */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Project Information</h3>
+                      <div className="space-y-2">
+                        <div>
+                          <span className="font-medium">Client:</span> {(clients as any)?.find?.((c: any) => c.id === form.watch("clientId"))?.firstName} {(clients as any)?.find?.((c: any) => c.id === form.watch("clientId"))?.lastName}
+                        </div>
+                        <div>
+                          <span className="font-medium">Title:</span> {form.watch("title")}
+                        </div>
+                        {form.watch("description") && (
+                          <div>
+                            <span className="font-medium">Description:</span> {form.watch("description")}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  ) : (
-                    <div className="space-y-6">
-                      {form.watch("selectedServices").map((service: any, index: number) => (
-                        <div key={`materials-${service.serviceType}-${index}`} className="border rounded-lg p-4">
-                          <h3 className="text-lg font-semibold mb-4">{service.name} - Materials Needed</h3>
+
+                    {/* Labor Cost Summary */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Labor Cost Summary</h3>
+                      <div className="space-y-2">
+                        {form.watch("selectedServices")?.map((service: any, index: number) => {
+                          const laborRate = parseFloat(service.laborRate) || 0;
+                          let quantity = 1;
+                          let unitLabel = "unit";
                           
-                          {service.serviceType === "fence" && (
-                            <div className="space-y-4">
-                              <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
-                                <h4 className="font-semibold text-blue-900 mb-2">Fence Measurements</h4>
+                          if (service.measurements) {
+                            if (service.serviceType === "fence" || service.serviceType === "gutters") {
+                              quantity = service.measurements.linearFeet || 1;
+                              unitLabel = "linear ft";
+                            } else if (service.serviceType === "deck" || service.serviceType === "roof" || service.serviceType === "siding") {
+                              quantity = service.measurements.squareFeet || 1;
+                              unitLabel = "sq ft";
+                            } else if (service.serviceType === "windows") {
+                              quantity = service.measurements.units || 1;
+                              unitLabel = "unit";
+                            }
+                          }
+                          
+                          const serviceTotal = laborRate * quantity;
+                          
+                          return (
+                            <div key={index} className="flex justify-between items-center">
+                              <div>
+                                <span className="font-medium">{service.name}</span>
+                                <span className="text-muted-foreground ml-2">
+                                  ({quantity.toLocaleString()} {unitLabel} × ${laborRate.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+                                </span>
+                              </div>
+                              <span className="font-medium">${serviceTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </div>
+                          );
+                        }) || []}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-between">
+                  <Button type="button" variant="outline" onClick={() => setActiveTab("materials")}>
+                    Back to Materials
+                  </Button>
+                  <Button type="submit" disabled={createEstimateMutation.isPending}>
+                    {createEstimateMutation.isPending ? "Creating..." : "Create Estimate"}
+                  </Button>
+                </CardFooter>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </form>
+      </Form>
+    </div>
+  );
+}
                                 <div className="grid grid-cols-2 gap-4 text-sm">
                                   <div>
                                     <span className="font-medium">Total Length:</span> {service.measurements?.linearFeet || 0} ft
