@@ -96,7 +96,57 @@ export default function VendorEstimateFormPage() {
   });
 
   const onSubmit = (values: FormValues) => {
-    createEstimateMutation.mutate(values);
+    // Generate professional descriptions based on measurements and materials
+    const enhancedServices = values.selectedServices.map((service: any) => {
+      let professionalDescription = "";
+      let detailedScope = [];
+      
+      if (service.serviceType === "fence") {
+        const totalLength = service.measurements?.totalLength || 0;
+        const totalGates = service.measurements?.totalGates || 0;
+        
+        professionalDescription = `Professional fence installation covering ${totalLength} linear feet of premium fencing. This comprehensive project includes complete site preparation, professional-grade materials, and expert installation techniques ensuring long-lasting durability and aesthetic appeal.`;
+        
+        detailedScope = [
+          `${totalLength} linear feet of high-quality fence panels`,
+          `Professional post installation with concrete footings`,
+          `Premium hardware including hinges and latches`,
+          totalGates > 0 ? `${totalGates} complete gate set(s) with professional hardware` : null,
+          "Post caps and finishing materials for weather protection",
+          "Site cleanup and debris removal"
+        ].filter(Boolean);
+      }
+      
+      if (service.serviceType === "roof") {
+        const area = service.measurements?.area || 0;
+        
+        professionalDescription = `Complete roof renovation covering ${area} square feet of roofing surface. This project includes comprehensive roof assessment, premium materials installation, and professional workmanship backed by industry-standard warranties.`;
+        
+        detailedScope = [
+          `${area} square feet of premium roofing materials`,
+          "Complete tear-off of existing roofing materials",
+          "Professional underlayment and ice shield installation",
+          "Drip edge and flashing installation",
+          "Quality nails and hardware throughout",
+          "Professional cleanup and disposal of old materials"
+        ];
+      }
+      
+      return {
+        ...service,
+        professionalDescription,
+        detailedScope,
+        notes: service.notes || professionalDescription
+      };
+    });
+    
+    const enhancedValues = {
+      ...values,
+      selectedServices: enhancedServices,
+      description: values.description || `Professional ${enhancedServices.map(s => s.name).join(' and ')} project with comprehensive scope and premium materials.`
+    };
+    
+    createEstimateMutation.mutate(enhancedValues);
   };
 
   const addService = (service: any) => {
