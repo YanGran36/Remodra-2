@@ -665,9 +665,10 @@ export default function FenceMeasurementTool({
   };
 
   const finishFence = () => {
-    if (currentPoints.length < 2) return;
+    // Allow completion with any number of points, including 1
+    if (currentPoints.length === 0) return;
 
-    const totalLength = currentPoints.reduce((sum, point, index) => {
+    const totalLength = currentPoints.length < 2 ? 0 : currentPoints.reduce((sum, point, index) => {
       if (index === 0) return 0;
       const prevPoint = currentPoints[index - 1];
       const distance = Math.sqrt(
@@ -931,10 +932,9 @@ export default function FenceMeasurementTool({
             <Button 
               type="button"
               onClick={finishFence} 
-              variant={currentPoints.length >= 2 ? "default" : "outline"} 
+              variant="default"
               size="sm" 
-              disabled={currentPoints.length < 2}
-              className={`h-8 text-xs ${currentPoints.length >= 2 ? "bg-green-600 hover:bg-green-700 text-white" : ""}`}
+              className="h-8 text-xs bg-green-600 hover:bg-green-700 text-white"
             >
               <Save className="h-3 w-3 mr-1" />
               Complete ({currentPoints.length})
@@ -1062,7 +1062,27 @@ export default function FenceMeasurementTool({
               <div key={measurement.id} className="space-y-2 border-b pb-4 mb-4 last:border-b-0">
                 <div className="flex items-center justify-between">
                   <h4 className="font-medium">{measurement.label}</h4>
-                  <Badge variant="secondary">{measurement.totalLength.toFixed(1)} ft</Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary">{measurement.totalLength.toFixed(1)} ft</Badge>
+                    <Button
+                      onClick={() => editMeasurement(measurement.id)}
+                      variant="outline"
+                      size="sm"
+                      className="h-6 w-6 p-0 text-xs"
+                      title="Edit this fence line"
+                    >
+                      <Edit className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      onClick={() => deleteMeasurement(measurement.id)}
+                      variant="outline"
+                      size="sm"
+                      className="h-6 w-6 p-0 text-xs text-red-600 hover:bg-red-50"
+                      title="Delete this fence line"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4 text-sm">
