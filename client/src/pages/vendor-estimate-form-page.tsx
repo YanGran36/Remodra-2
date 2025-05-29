@@ -130,16 +130,55 @@ export default function VendorEstimateFormPage() {
         
         calculatedLaborCost = totalLength * laborRate;
         
-        professionalDescription = `Professional fence installation covering ${totalLength} linear feet of premium fencing. This comprehensive project includes complete site preparation, professional-grade materials, and expert installation techniques ensuring long-lasting durability and aesthetic appeal.`;
+        professionalDescription = `FENCE INSTALLATION PROJECT - ${totalLength} Linear Feet
+
+SERVICE OVERVIEW:
+Premium fence installation with professional-grade materials and expert craftsmanship.
+
+DETAILED WORK SCOPE:
+1. Site Assessment and Planning
+   - Property boundary survey and marking
+   - Underground utility location and marking
+   - Soil condition evaluation for proper post depth
+
+2. Site Preparation
+   - Vegetation clearing along fence line
+   - Ground leveling and debris removal
+   - Access route preparation for materials and equipment
+
+3. Post Installation
+   - Hand-digging or machine-drilling post holes (2-3 feet deep)
+   - Installation of ${Math.ceil(totalLength / 8)} pressure-treated posts with concrete footings
+   - 24-48 hour curing time for concrete before panel installation
+
+4. Fence Panel Installation
+   - Installation of ${totalLength} linear feet of premium fence panels
+   - Precise alignment and leveling of all panels
+   - Secure attachment with galvanized hardware
+
+5. Gate Installation (${totalGates} gates)
+   - Professional gate frame construction and installation
+   - Heavy-duty hinges and premium latch hardware
+   - Gate alignment and swing testing
+
+6. Finishing Work
+   - Installation of decorative post caps
+   - Final hardware adjustments and tightening
+   - Touch-up staining/painting as needed
+
+7. Site Cleanup and Final Inspection
+   - Complete debris removal and site restoration
+   - Final quality inspection and customer walkthrough
+   - Warranty information and maintenance guidelines provided`;
         
         detailedScope = [
-          `${totalLength} linear feet of high-quality fence panels`,
-          `Professional post installation with concrete footings`,
-          `Premium hardware including hinges and latches`,
-          totalGates > 0 ? `${totalGates} complete gate set(s) with professional hardware` : null,
-          "Post caps and finishing materials for weather protection",
-          "Site cleanup and debris removal"
-        ].filter(Boolean) as string[];
+          `${totalLength} linear feet of premium fence materials`,
+          `${Math.ceil(totalLength / 8)} pressure-treated posts with concrete footings`,
+          `${totalGates} complete gate sets with professional hardware`,
+          "Post caps and finishing materials",
+          "Galvanized fasteners and hardware throughout",
+          "Complete site cleanup and restoration"
+        ];
       }
       
       if (service.serviceType === "roof") {
@@ -147,15 +186,54 @@ export default function VendorEstimateFormPage() {
         
         calculatedLaborCost = area * laborRate;
         
-        professionalDescription = `Complete roof renovation covering ${area} square feet of roofing surface. This project includes comprehensive roof assessment, premium materials installation, and professional workmanship backed by industry-standard warranties.`;
+        professionalDescription = `ROOF RENOVATION PROJECT - ${area} Square Feet
+
+SERVICE OVERVIEW:
+Complete roof replacement with premium materials and professional installation techniques.
+
+DETAILED WORK SCOPE:
+1. Initial Assessment and Preparation
+   - Comprehensive roof inspection and damage assessment
+   - Weather protection setup and safety equipment installation
+   - Material delivery and staging on property
+
+2. Existing Roof Removal
+   - Complete tear-off of ${area} square feet of existing roofing materials
+   - Removal of old underlayment and damaged decking
+   - Inspection of roof deck and structural components
+
+3. Deck Preparation and Repair
+   - Replacement of damaged or rotten decking boards
+   - Reinforcement of weak areas and structural repairs
+   - Installation of new drip edge around entire perimeter
+
+4. Underlayment Installation
+   - Installation of premium synthetic underlayment across entire roof
+   - Ice and water shield installation in critical areas
+   - Proper overlap and sealing of all seams
+
+5. Roofing Material Installation
+   - Installation of ${area} square feet of premium roofing materials
+   - Proper alignment, spacing, and pattern consistency
+   - Installation of ridge vents and exhaust ventilation
+
+6. Flashing and Detail Work
+   - Custom flashing fabrication and installation around chimneys
+   - Valley flashing and step flashing installation
+   - Pipe boot and vent flashing replacement
+
+7. Final Inspection and Cleanup
+   - Complete debris removal and magnetic sweep for nails
+   - Final quality inspection and weatherproofing verification
+   - Warranty documentation and maintenance guidelines provided`;
         
         detailedScope = [
           `${area} square feet of premium roofing materials`,
-          "Complete tear-off of existing roofing materials",
-          "Professional underlayment and ice shield installation",
-          "Drip edge and flashing installation",
-          "Quality nails and hardware throughout",
-          "Professional cleanup and disposal of old materials"
+          "Complete tear-off and disposal of existing materials",
+          "Synthetic underlayment and ice shield installation",
+          "Custom flashing fabrication and installation",
+          "Ridge vents and ventilation system",
+          "Complete debris cleanup and site restoration"
         ];
       }
 
@@ -164,14 +242,53 @@ export default function VendorEstimateFormPage() {
         
         calculatedLaborCost = area * laborRate;
         
-        professionalDescription = `Complete siding renovation covering ${area} square feet of exterior surface. This project includes premium siding materials, professional installation, and weather protection systems.`;
+        professionalDescription = `SIDING RENOVATION PROJECT - ${area} Square Feet
+
+SERVICE OVERVIEW:
+Complete exterior siding replacement with premium materials and professional installation techniques.
+
+DETAILED WORK SCOPE:
+1. Project Assessment and Preparation
+   - Comprehensive exterior evaluation and measurement verification
+   - Material selection consultation and color coordination
+   - Permit acquisition and inspection scheduling
+
+2. Existing Siding Removal
+   - Careful removal of ${area} square feet of existing siding materials
+   - Inspection of underlying structure and insulation
+   - Removal and disposal of old trim and accessories
+
+3. Structural Preparation
+   - Installation of house wrap and moisture barrier system
+   - Repair of any damaged sheathing or structural components
+   - Installation of new window and door flashing
+
+4. Siding Installation
+   - Installation of ${area} square feet of premium siding materials
+   - Proper spacing, alignment, and expansion joint placement
+   - Installation of corner trim and decorative elements
+
+5. Trim and Detail Work
+   - Installation of window and door trim packages
+   - Soffit and fascia board installation or replacement
+   - Installation of decorative shutters and architectural elements
+
+6. Finishing and Weatherproofing
+   - Complete caulking of all joints and penetrations
+   - Installation of ventilation accessories and electrical boxes
+   - Final paint touch-ups and stain application as needed
+
+7. Final Inspection and Cleanup
+   - Complete debris removal and site restoration
+   - Final quality inspection and warranty documentation
+   - Customer walkthrough and maintenance guidelines provided`;
         
         detailedScope = [
           `${area} square feet of premium siding materials`,
-          "Complete house wrap and moisture barrier",
-          "Professional trim and finishing work",
-          "Caulking and weatherproofing",
-          "Quality fasteners and installation hardware",
+          "House wrap and moisture barrier installation",
+          "Window and door trim packages",
+          "Soffit and fascia components",
+          "Complete weatherproofing and caulking",
           "Site cleanup and debris removal"
         ];
       }
