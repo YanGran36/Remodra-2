@@ -95,33 +95,7 @@ export default function FenceMeasurementTool({
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
 
   // ESC key handler - only cancel current action, don't delete completed work
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (isDrawing) {
-          // Only cancel current line being drawn, keep completed measurements
-          setCurrentPoints([]);
-          setIsDrawing(false);
-        }
-        if (gateMode) {
-          setGateMode(false);
-        }
-        if (selectedGate) {
-          setSelectedGate(null);
-        }
-        if (draggingPoint) {
-          setDraggingPoint(null);
-          setEditingMeasurement(null);
-        }
-        if (draggingGate) {
-          setDraggingGate(null);
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isDrawing, gateMode, selectedGate, draggingPoint, draggingGate]);
+  // Removed ESC key handling - now we use double-click to exit editing
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -639,6 +613,13 @@ export default function FenceMeasurementTool({
     setLastMousePos(null);
   };
 
+  const handleCanvasDoubleClick = () => {
+    // Double-click to finish fence or exit editing mode
+    if (isDrawing || editingMeasurement) {
+      finishFence();
+    }
+  };
+
   const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -988,8 +969,7 @@ export default function FenceMeasurementTool({
           {/* Instructions */}
           <div className="text-xs text-green-700 bg-green-50 p-2 rounded">
             <strong>Instructions:</strong> Click to start drawing fence line. Each click adds a fence section. 
-            <strong>Double-click to finish the fence.</strong> Drag red points to adjust lines. Click gates to select and edit them. 
-            <strong>Press ESC to cancel current action.</strong>
+            <strong>Double-click to finish the fence.</strong> Drag red points to adjust lines. Click gates to select and edit them.
           </div>
         </CardContent>
       </Card>
@@ -1003,6 +983,7 @@ export default function FenceMeasurementTool({
           <canvas
             ref={canvasRef}
             onClick={handleCanvasClick}
+            onDoubleClick={handleCanvasDoubleClick}
             onMouseMove={handleCanvasMouseMove}
             onMouseDown={handleCanvasMouseDown}
             onMouseUp={handleCanvasMouseUp}
@@ -1102,8 +1083,8 @@ export default function FenceMeasurementTool({
                   </div>
                 </div>
                 
-                {/* Detailed Gate Information */}
-                {measurement.materialsList.gates > 0 && (
+                {/* Detailed Gate Information - Show ALL gates on canvas */}
+                {gates.length > 0 && (
                   <div className="bg-blue-50 p-3 rounded mt-2">
                     <h5 className="font-medium text-blue-900 mb-2">Gate Details:</h5>
                     <div className="text-sm space-y-1">
