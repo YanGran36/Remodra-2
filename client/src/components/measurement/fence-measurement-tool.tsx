@@ -684,10 +684,17 @@ export default function FenceMeasurementTool({
 
     const panels = Math.ceil(totalLength / 8); // 8ft panels
     const totalPosts = posts.length;
-    // Include ALL gates in calculation, not just those in sections
-    const allGates = [...gates]; // Use all gates from the canvas
-    const singleGates = allGates.filter(g => g.type === 'gate').length;
-    const doubleGates = allGates.filter(g => g.type === 'double-gate').length;
+    
+    // Only include gates that are actually ON THIS fence line
+    const gatesOnThisFence = gates.filter(gate => {
+      return sections.some(section => {
+        const sectionGates = section.gates || [];
+        return sectionGates.some(sg => sg.id === gate.id);
+      });
+    });
+    
+    const singleGates = gatesOnThisFence.filter(g => g.type === 'gate').length;
+    const doubleGates = gatesOnThisFence.filter(g => g.type === 'double-gate').length;
 
     const hardwareList = [
       `${totalPosts} post anchors`,
