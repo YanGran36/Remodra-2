@@ -125,7 +125,7 @@ export default function VendorEstimateFormPage() {
       const laborRate = parseFloat(service.laborRate) || 0;
       
       if (service.serviceType === "fence") {
-        const totalLength = service.measurements?.linearFeet || 0;
+        const totalLength = service.measurements?.linearFeet || service.measurements?.quantity || 0;
         const totalGates = service.measurements?.units || 0;
         
         calculatedLaborCost = totalLength * laborRate;
