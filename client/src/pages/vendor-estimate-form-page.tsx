@@ -429,7 +429,6 @@ export default function VendorEstimateFormPage() {
                                   <li>• Pressure treated posts</li>
                                   <li>• Concrete mix</li>
                                   <li>• Post anchors</li>
-                                  <li>• Gravel</li>
                                 </ul>
                               </div>
                               <div className="bg-gray-50 p-3 rounded">
@@ -442,7 +441,7 @@ export default function VendorEstimateFormPage() {
                                 </ul>
                               </div>
                               <div className="bg-gray-50 p-3 rounded">
-                                <h4 className="font-medium mb-2">Finishing</h4>
+                                <h4 className="font-medium mb-2">Hardware & Installation</h4>
                                 <ul className="text-sm space-y-1">
                                   <li>• Post caps</li>
                                   <li>• Wood stain</li>
