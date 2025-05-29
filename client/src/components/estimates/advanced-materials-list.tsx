@@ -28,319 +28,182 @@ export default function AdvancedMaterialsList({ services, onMaterialsChange }: A
   const [materials, setMaterials] = useState<MaterialItem[]>([]);
   const [editingMaterial, setEditingMaterial] = useState<string | null>(null);
 
-  // Generate materials from services when they change
+  // Generate materials from services - consolidated to avoid gate duplication
   useEffect(() => {
-    const generatedMaterials: MaterialItem[] = [];
+    const merged: { [key: string]: MaterialItem } = {};
 
     services.forEach((service, serviceIndex) => {
       if (service.serviceType === "fence") {
         const linearFeet = service.measurements?.linearFeet || 0;
-        const gates = service.measurements?.units || 0;
+        const totalGates = service.measurements?.units || 0;
 
         if (linearFeet > 0) {
-          // Posts & Foundation
-          const posts = Math.ceil(linearFeet / 8);
-          generatedMaterials.push({
-            id: `fence-posts-${serviceIndex}`,
-            name: "Fence Posts (6x6 PT)",
-            quantity: posts,
-            unit: "pieces",
-            unitPrice: 25.00,
-            total: posts * 25.00,
-            category: "Posts & Foundation",
-            serviceType: "fence",
-            notes: "8ft spacing"
-          });
+          // Calculate sections and posts
+          const sections = Math.ceil(linearFeet / 8);
+          const posts = sections + 1;
 
-          generatedMaterials.push({
-            id: `concrete-${serviceIndex}`,
-            name: "Concrete Mix",
-            quantity: posts * 2,
-            unit: "bags",
-            unitPrice: 4.50,
-            total: posts * 2 * 4.50,
-            category: "Posts & Foundation",
-            serviceType: "fence"
-          });
+          // Fence Posts - merge if exists
+          const postKey = "fence-posts";
+          if (merged[postKey]) {
+            merged[postKey].quantity += posts;
+            merged[postKey].total = merged[postKey].quantity * merged[postKey].unitPrice;
+          } else {
+            merged[postKey] = {
+              id: postKey,
+              name: "Fence Posts (4x4x8 PT)",
+              quantity: posts,
+              unit: "pieces",
+              unitPrice: 18.00,
+              total: posts * 18.00,
+              category: "Posts & Foundation",
+              serviceType: "fence",
+              notes: "8ft spacing"
+            };
+          }
 
-          generatedMaterials.push({
-            id: `post-anchors-${serviceIndex}`,
-            name: "Post Anchors",
-            quantity: posts,
-            unit: "pieces",
-            unitPrice: 3.00,
-            total: posts * 3.00,
-            category: "Posts & Foundation",
-            serviceType: "fence"
-          });
+          // Fence Panels - merge if exists
+          const panelKey = "fence-panels";
+          if (merged[panelKey]) {
+            merged[panelKey].quantity += sections;
+            merged[panelKey].total = merged[panelKey].quantity * merged[panelKey].unitPrice;
+          } else {
+            merged[panelKey] = {
+              id: panelKey,
+              name: "Fence Panels (6x8 ft)",
+              quantity: sections,
+              unit: "pieces",
+              unitPrice: 45.00,
+              total: sections * 45.00,
+              category: "Panels",
+              serviceType: "fence"
+            };
+          }
 
-          // Panels & Hardware
-          const panels = Math.ceil(linearFeet / 8);
-          generatedMaterials.push({
-            id: `fence-panels-${serviceIndex}`,
-            name: "Fence Panels (8ft)",
-            quantity: panels,
-            unit: "pieces",
-            unitPrice: 45.00,
-            total: panels * 45.00,
-            category: "Panels & Hardware",
-            serviceType: "fence"
-          });
+          // Concrete - merge if exists
+          const concreteKey = "concrete-mix";
+          if (merged[concreteKey]) {
+            merged[concreteKey].quantity += posts * 2;
+            merged[concreteKey].total = merged[concreteKey].quantity * merged[concreteKey].unitPrice;
+          } else {
+            merged[concreteKey] = {
+              id: concreteKey,
+              name: "Concrete Mix (50lb bags)",
+              quantity: posts * 2,
+              unit: "bags",
+              unitPrice: 5.50,
+              total: posts * 2 * 5.50,
+              category: "Foundation",
+              serviceType: "fence"
+            };
+          }
 
-          generatedMaterials.push({
-            id: `rails-${serviceIndex}`,
-            name: "Rails (2x4 PT)",
-            quantity: panels * 2,
-            unit: "pieces",
-            unitPrice: 8.00,
-            total: panels * 2 * 8.00,
-            category: "Panels & Hardware",
-            serviceType: "fence"
-          });
-
-          generatedMaterials.push({
-            id: `screws-${serviceIndex}`,
-            name: "Deck Screws",
-            quantity: Math.ceil(linearFeet / 10),
-            unit: "lbs",
-            unitPrice: 12.00,
-            total: Math.ceil(linearFeet / 10) * 12.00,
-            category: "Panels & Hardware",
-            serviceType: "fence"
-          });
-
-          // Optional Post Caps
-          generatedMaterials.push({
-            id: `post-caps-${serviceIndex}`,
-            name: "Post Caps (Optional)",
-            quantity: posts,
-            unit: "pieces",
-            unitPrice: 8.00,
-            total: posts * 8.00,
-            category: "Finishing (Optional)",
-            serviceType: "fence"
-          });
+          // Hardware - merge if exists
+          const hardwareKey = "fence-hardware";
+          if (merged[hardwareKey]) {
+            merged[hardwareKey].quantity += Math.ceil(sections / 4);
+            merged[hardwareKey].total = merged[hardwareKey].quantity * merged[hardwareKey].unitPrice;
+          } else {
+            merged[hardwareKey] = {
+              id: hardwareKey,
+              name: "Galvanized Screws (1lb box)",
+              quantity: Math.ceil(sections / 4),
+              unit: "boxes",
+              unitPrice: 12.00,
+              total: Math.ceil(sections / 4) * 12.00,
+              category: "Hardware",
+              serviceType: "fence"
+            };
+          }
         }
 
-        // Gates - Independent items
-        if (gates > 0) {
-          generatedMaterials.push({
-            id: `gate-hardware-${serviceIndex}`,
-            name: "Gate Hardware Set",
-            quantity: gates,
-            unit: "sets",
-            unitPrice: 85.00,
-            total: gates * 85.00,
-            category: "Gates",
-            serviceType: "fence",
-            notes: "Adjustable price per gate type"
-          });
-
-          generatedMaterials.push({
-            id: `gate-frames-${serviceIndex}`,
-            name: "Gate Frame & Panel",
-            quantity: gates,
-            unit: "pieces",
-            unitPrice: 120.00,
-            total: gates * 120.00,
-            category: "Gates",
-            serviceType: "fence",
-            notes: "Custom sized"
-          });
+        // Gates - ONLY ADD ONCE, not per service
+        if (totalGates > 0) {
+          const gateKey = "fence-gates";
+          if (merged[gateKey]) {
+            merged[gateKey].quantity += totalGates;
+            merged[gateKey].total = merged[gateKey].quantity * merged[gateKey].unitPrice;
+          } else {
+            merged[gateKey] = {
+              id: gateKey,
+              name: "Fence Gates (Complete Set)",
+              quantity: totalGates,
+              unit: "sets",
+              unitPrice: 125.00,
+              total: totalGates * 125.00,
+              category: "Gates",
+              serviceType: "fence",
+              notes: "Includes hinges and latch"
+            };
+          }
         }
       }
 
+      // Other service types can be added here
       if (service.serviceType === "deck") {
         const squareFeet = service.measurements?.squareFeet || 0;
-        
         if (squareFeet > 0) {
-          // Deck materials
-          generatedMaterials.push({
-            id: `deck-boards-${serviceIndex}`,
-            name: "Deck Boards",
-            quantity: Math.ceil(squareFeet * 1.1), // 10% waste
-            unit: "sq ft",
-            unitPrice: 3.50,
-            total: Math.ceil(squareFeet * 1.1) * 3.50,
+          const deckKey = `deck-boards-${serviceIndex}`;
+          merged[deckKey] = {
+            id: deckKey,
+            name: "Deck Boards (5/4x6x12)",
+            quantity: Math.ceil(squareFeet * 1.1),
+            unit: "boards",
+            unitPrice: 8.50,
+            total: Math.ceil(squareFeet * 1.1) * 8.50,
             category: "Decking",
             serviceType: "deck"
-          });
-
-          const joists = Math.ceil(squareFeet / 16);
-          generatedMaterials.push({
-            id: `deck-joists-${serviceIndex}`,
-            name: "Deck Joists (2x8)",
-            quantity: joists,
-            unit: "pieces",
-            unitPrice: 15.00,
-            total: joists * 15.00,
-            category: "Structure",
-            serviceType: "deck"
-          });
-        }
-      }
-
-      if (service.serviceType === "roof") {
-        const squareFeet = service.measurements?.squareFeet || 0;
-        
-        if (squareFeet > 0) {
-          const squares = Math.ceil(squareFeet / 100); // Roofing squares
-          
-          generatedMaterials.push({
-            id: `shingles-${serviceIndex}`,
-            name: "Asphalt Shingles",
-            quantity: squares,
-            unit: "squares",
-            unitPrice: 120.00,
-            total: squares * 120.00,
-            category: "Roofing",
-            serviceType: "roof"
-          });
-
-          generatedMaterials.push({
-            id: `underlayment-${serviceIndex}`,
-            name: "Roofing Underlayment",
-            quantity: squares,
-            unit: "squares",
-            unitPrice: 45.00,
-            total: squares * 45.00,
-            category: "Roofing",
-            serviceType: "roof"
-          });
+          };
         }
       }
 
       if (service.serviceType === "windows") {
         const units = service.measurements?.units || 0;
-        
         if (units > 0) {
-          generatedMaterials.push({
-            id: `windows-${serviceIndex}`,
+          const windowKey = `windows-${serviceIndex}`;
+          merged[windowKey] = {
+            id: windowKey,
             name: "Window Units",
             quantity: units,
-            unit: "pieces",
-            unitPrice: 450.00,
-            total: units * 450.00,
+            unit: "windows",
+            unitPrice: 250.00,
+            total: units * 250.00,
             category: "Windows",
             serviceType: "windows"
-          });
-
-          generatedMaterials.push({
-            id: `window-trim-${serviceIndex}`,
-            name: "Window Trim Kit",
-            quantity: units,
-            unit: "kits",
-            unitPrice: 35.00,
-            total: units * 35.00,
-            category: "Windows",
-            serviceType: "windows"
-          });
-        }
-      }
-
-      if (service.serviceType === "gutters") {
-        const linearFeet = service.measurements?.linearFeet || 0;
-        
-        if (linearFeet > 0) {
-          generatedMaterials.push({
-            id: `gutters-${serviceIndex}`,
-            name: "Seamless Gutters",
-            quantity: linearFeet,
-            unit: "linear ft",
-            unitPrice: 8.50,
-            total: linearFeet * 8.50,
-            category: "Gutters",
-            serviceType: "gutters"
-          });
-
-          const downspouts = Math.ceil(linearFeet / 35);
-          generatedMaterials.push({
-            id: `downspouts-${serviceIndex}`,
-            name: "Downspouts",
-            quantity: downspouts,
-            unit: "pieces",
-            unitPrice: 25.00,
-            total: downspouts * 25.00,
-            category: "Gutters",
-            serviceType: "gutters"
-          });
+          };
         }
       }
     });
 
-    // Remove duplicates and merge similar items
-    const mergedMaterials = mergeSimilarMaterials(generatedMaterials);
+    // Convert merged object back to array
+    const mergedMaterials = Object.values(merged);
     setMaterials(mergedMaterials);
     onMaterialsChange(mergedMaterials);
-  }, [services]);
+  }, [services, onMaterialsChange]);
 
-  const mergeSimilarMaterials = (materials: MaterialItem[]): MaterialItem[] => {
-    const merged: { [key: string]: MaterialItem } = {};
-
-    materials.forEach(material => {
-      const key = `${material.name}-${material.unitPrice}`;
-      
-      if (merged[key]) {
-        // Merge quantities
-        merged[key].quantity += material.quantity;
-        merged[key].total += material.total;
-      } else {
-        merged[key] = { ...material };
-      }
-    });
-
-    return Object.values(merged);
-  };
-
-  const updateMaterial = (id: string, updates: Partial<MaterialItem>) => {
-    const updatedMaterials = materials.map(material => {
-      if (material.id === id) {
-        const updated = { ...material, ...updates };
-        if (updates.quantity !== undefined || updates.unitPrice !== undefined) {
-          updated.total = updated.quantity * updated.unitPrice;
-        }
-        return updated;
-      }
-      return material;
-    });
-    
+  const updateMaterialQuantity = (materialId: string, newQuantity: number) => {
+    const updatedMaterials = materials.map(material => 
+      material.id === materialId 
+        ? { ...material, quantity: newQuantity, total: newQuantity * material.unitPrice }
+        : material
+    );
     setMaterials(updatedMaterials);
     onMaterialsChange(updatedMaterials);
   };
 
-  const deleteMaterial = (id: string) => {
-    const updatedMaterials = materials.filter(m => m.id !== id);
+  const removeMaterial = (materialId: string) => {
+    const updatedMaterials = materials.filter(m => m.id !== materialId);
     setMaterials(updatedMaterials);
     onMaterialsChange(updatedMaterials);
-  };
-
-  const addCustomMaterial = () => {
-    const newMaterial: MaterialItem = {
-      id: `custom-${Date.now()}`,
-      name: "Custom Material",
-      quantity: 1,
-      unit: "pieces",
-      unitPrice: 0.00,
-      total: 0.00,
-      category: "Custom",
-      serviceType: "custom"
-    };
-    
-    const updatedMaterials = [...materials, newMaterial];
-    setMaterials(updatedMaterials);
-    onMaterialsChange(updatedMaterials);
-    setEditingMaterial(newMaterial.id);
+    setEditingMaterial(null);
   };
 
   // Group materials by category
-  const groupedMaterials = materials.reduce((groups, material) => {
-    const category = material.category;
-    if (!groups[category]) {
-      groups[category] = [];
-    }
+  const groupedMaterials = materials.reduce((groups: any, material) => {
+    const category = material.category || 'Other';
+    if (!groups[category]) groups[category] = [];
     groups[category].push(material);
     return groups;
-  }, {} as { [key: string]: MaterialItem[] });
+  }, {});
 
   const totalCost = materials.reduce((sum, material) => sum + material.total, 0);
 
@@ -349,103 +212,92 @@ export default function AdvancedMaterialsList({ services, onMaterialsChange }: A
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Package className="h-5 w-5" />
-          Advanced Materials List
+          Materials List
         </CardTitle>
-        <div className="flex items-center justify-between">
-          <Badge variant="outline" className="text-lg px-4 py-2">
-            <DollarSign className="h-4 w-4 mr-1" />
-            Total: ${totalCost.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-          </Badge>
-          <Button onClick={addCustomMaterial} variant="outline" size="sm">
-            Add Custom Material
-          </Button>
-        </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {Object.entries(groupedMaterials).map(([category, categoryMaterials]) => (
-          <div key={category} className="space-y-3">
-            <h3 className="text-lg font-semibold text-primary border-b pb-2">
-              {category}
-            </h3>
-            <div className="space-y-2">
-              {categoryMaterials.map(material => (
-                <div key={material.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  {editingMaterial === material.id ? (
-                    <div className="flex-1 grid grid-cols-5 gap-2">
-                      <Input
-                        value={material.name}
-                        onChange={(e) => updateMaterial(material.id, { name: e.target.value })}
-                        placeholder="Material name"
-                      />
-                      <Input
-                        type="number"
-                        value={material.quantity}
-                        onChange={(e) => updateMaterial(material.id, { quantity: parseInt(e.target.value) || 0 })}
-                        placeholder="Qty"
-                      />
-                      <Input
-                        value={material.unit}
-                        onChange={(e) => updateMaterial(material.id, { unit: e.target.value })}
-                        placeholder="Unit"
-                      />
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={material.unitPrice}
-                        onChange={(e) => updateMaterial(material.id, { unitPrice: parseFloat(e.target.value) || 0 })}
-                        placeholder="Price"
-                      />
-                      <div className="flex gap-1">
-                        <Button size="sm" onClick={() => setEditingMaterial(null)}>
-                          ✓
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => deleteMaterial(material.id)}>
-                          <Trash2 className="h-3 w-3" />
+        {Object.keys(groupedMaterials).length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+            <p>Add services and measurements to see materials list</p>
+          </div>
+        ) : (
+          <>
+            {Object.entries(groupedMaterials).map(([category, categoryMaterials]: [string, any]) => (
+              <div key={category}>
+                <div className="flex items-center gap-2 mb-3">
+                  <Badge variant="outline" className="text-sm font-medium">
+                    {category}
+                  </Badge>
+                </div>
+                
+                <div className="space-y-3">
+                  {categoryMaterials.map((material: MaterialItem) => (
+                    <div key={material.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-900">{material.name}</div>
+                        {material.notes && (
+                          <div className="text-sm text-gray-500">{material.notes}</div>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                          {editingMaterial === material.id ? (
+                            <Input
+                              type="number"
+                              value={material.quantity}
+                              onChange={(e) => updateMaterialQuantity(material.id, parseInt(e.target.value) || 0)}
+                              onBlur={() => setEditingMaterial(null)}
+                              className="w-20 h-8"
+                              autoFocus
+                            />
+                          ) : (
+                            <span 
+                              className="cursor-pointer hover:text-blue-600 font-medium min-w-[60px] text-center"
+                              onClick={() => setEditingMaterial(material.id)}
+                            >
+                              {material.quantity} {material.unit}
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div className="text-right min-w-[80px]">
+                          <div className="font-medium text-gray-900">
+                            ${material.total.toFixed(2)}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            @ ${material.unitPrice.toFixed(2)}
+                          </div>
+                        </div>
+                        
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeMaterial(material.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
-                  ) : (
-                    <>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{material.name}</span>
-                          {material.notes && (
-                            <Badge variant="secondary" className="text-xs">
-                              {material.notes}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {material.quantity} {material.unit} × ${material.unitPrice.toFixed(2)}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-lg">
-                          ${material.total.toFixed(2)}
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setEditingMaterial(material.id)}
-                        >
-                          <Edit3 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </>
-                  )}
+                  ))}
                 </div>
-              ))}
+                
+                <Separator className="my-4" />
+              </div>
+            ))}
+            
+            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-center gap-2">
+                <Calculator className="h-5 w-5 text-blue-600" />
+                <span className="font-semibold text-blue-900">Total Materials Cost</span>
+              </div>
+              <span className="text-xl font-bold text-blue-900">
+                ${totalCost.toFixed(2)}
+              </span>
             </div>
-            <Separator />
-          </div>
-        ))}
-        
-        {materials.length === 0 && (
-          <div className="text-center py-8">
-            <Calculator className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-500">No materials calculated yet</p>
-            <p className="text-sm text-gray-400">Add services with measurements to generate materials</p>
-          </div>
+          </>
         )}
       </CardContent>
     </Card>
