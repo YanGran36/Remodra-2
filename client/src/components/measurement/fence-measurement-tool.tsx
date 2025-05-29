@@ -691,17 +691,9 @@ export default function FenceMeasurementTool({
 
     const hardwareList = [
       `${totalPosts} post anchors`,
-      `${panels} panel brackets`
+      `${panels} panel brackets`,
+      `${Math.ceil(totalLength / 10)} lbs screws/nails`
     ];
-
-    if (singleGates > 0) {
-      hardwareList.push(`${singleGates} single gate hinges (2 per gate)`);
-      hardwareList.push(`${singleGates} single gate latches`);
-    }
-    if (doubleGates > 0) {
-      hardwareList.push(`${doubleGates * 2} double gate hinges (4 per double gate)`);
-      hardwareList.push(`${doubleGates} double gate latches with drop rod`);
-    }
 
     const measurementId = editingMeasurement || `fence-${Date.now()}`;
     const newMeasurement: FenceMeasurement = {

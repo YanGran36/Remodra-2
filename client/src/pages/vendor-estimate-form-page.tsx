@@ -599,14 +599,14 @@ export default function VendorEstimateFormPage() {
                                 </div>
                               </div>
                               
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="bg-gray-50 p-3 rounded">
                                   <h4 className="font-medium mb-2">Posts & Foundation</h4>
                                   <ul className="text-sm space-y-1">
                                     <li>• Posts: {Math.ceil((service.measurements?.linearFeet || 0) / 8)} pieces (8ft spacing)</li>
                                     <li>• Concrete: {Math.ceil((service.measurements?.linearFeet || 0) / 8) * 2} bags</li>
                                     <li>• Post anchors: {Math.ceil((service.measurements?.linearFeet || 0) / 8)} pieces</li>
-                                    <li>• Gravel: {Math.ceil((service.measurements?.linearFeet || 0) / 8) * 0.5} cubic ft</li>
+                                    <li>• Post caps (optional): {Math.ceil((service.measurements?.linearFeet || 0) / 8)} pieces</li>
                                   </ul>
                                 </div>
                                 <div className="bg-gray-50 p-3 rounded">
@@ -615,18 +615,27 @@ export default function VendorEstimateFormPage() {
                                     <li>• Fence panels: {Math.ceil((service.measurements?.linearFeet || 0) / 8)} pieces</li>
                                     <li>• Rails (2x4): {Math.ceil((service.measurements?.linearFeet || 0) / 8) * 2} pieces</li>
                                     <li>• Screws/nails: {Math.ceil((service.measurements?.linearFeet || 0) / 10)} lbs</li>
-                                    <li>• Gate sets: {service.measurements?.units || 0} complete sets</li>
-                                  </ul>
-                                </div>
-                                <div className="bg-gray-50 p-3 rounded">
-                                  <h4 className="font-medium mb-2">Finishing</h4>
-                                  <ul className="text-sm space-y-1">
-                                    <li>• Post caps: {Math.ceil((service.measurements?.linearFeet || 0) / 8)} pieces</li>
-                                    <li>• Wood stain: {Math.ceil((service.measurements?.linearFeet || 0) / 100)} gallons</li>
-                                    <li>• Primer: {Math.ceil((service.measurements?.linearFeet || 0) / 120)} gallons</li>
                                   </ul>
                                 </div>
                               </div>
+                              
+                              {/* Gates Section - Independent of fence sections */}
+                              {service.measurements?.units > 0 && (
+                                <div className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-500 mt-4">
+                                  <h4 className="font-semibold text-orange-900 mb-2">Gates ({service.measurements.units} total)</h4>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                      <span className="font-medium">Gate hardware sets:</span> {service.measurements.units} complete sets
+                                    </div>
+                                    <div>
+                                      <span className="font-medium">Gate frames & panels:</span> Custom sized per gate
+                                    </div>
+                                  </div>
+                                  <p className="text-xs text-orange-700 mt-2">
+                                    Gate prices are adjustable based on size and type (single/double)
+                                  </p>
+                                </div>
+                              )}
                             </div>
                           )}
 
