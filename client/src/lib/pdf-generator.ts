@@ -757,10 +757,10 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   
   pdf.setFontSize(8);
   pdf.setTextColor(120, 120, 120);
-  pdf.text(`Generado el ${new Date().toLocaleDateString()} por ${data.contractor.businessName}`, 
+  pdf.text(`Generated on ${new Date().toLocaleDateString()} by ${data.contractor.businessName}`, 
     PAGE_MARGIN, footerY);
   
-  pdf.text("Página 1", PAGE_WIDTH - PAGE_MARGIN, footerY, { align: 'right' });
+  pdf.text("Page 1", PAGE_WIDTH - PAGE_MARGIN, footerY, { align: 'right' });
   
   return pdf.output('blob');
 }
@@ -1208,10 +1208,10 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   
   pdf.setFontSize(8);
   pdf.setTextColor(120, 120, 120);
-  pdf.text(`Generado el ${new Date().toLocaleDateString()} por ${data.contractor.businessName}`, 
+  pdf.text(`Generated on ${new Date().toLocaleDateString()} by ${data.contractor.businessName}`, 
     PAGE_MARGIN, footerY);
   
-  pdf.text("Página 1", PAGE_WIDTH - PAGE_MARGIN, footerY, { align: 'right' });
+  pdf.text("Page 1", PAGE_WIDTH - PAGE_MARGIN, footerY, { align: 'right' });
   
   return pdf.output('blob');
 }

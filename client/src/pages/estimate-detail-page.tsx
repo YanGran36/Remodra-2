@@ -295,7 +295,7 @@ export default function EstimateDetailPage() {
                 onClick={handleConvertToWorkOrder}
               >
                 <BanknoteIcon className="h-4 w-4 mr-2" />
-                Convertir a factura
+                Convert to Invoice
               </Button>
             )}
           </div>
@@ -541,7 +541,7 @@ export default function EstimateDetailPage() {
       <AlertDialog open={isConfirmConvert} onOpenChange={setIsConfirmConvert}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Convertir a factura?</AlertDialogTitle>
+            <AlertDialogTitle>Convert to Invoice?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción convertirá el estimado aceptado en una factura. Los ítems, precios y datos del cliente se transferirán automáticamente.
             </AlertDialogDescription>

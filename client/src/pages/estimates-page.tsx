@@ -416,7 +416,7 @@ export default function EstimatesPage() {
                                   }
                                 }}>
                                   <BanknoteIcon className="mr-2 h-4 w-4" />
-                                  Convertir a factura
+                                  Convert to Invoice
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem>
