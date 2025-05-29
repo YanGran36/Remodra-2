@@ -542,7 +542,7 @@ export default function ServiceEstimateForm({
             
             {serviceType === 'windows' && (
               <div className="space-y-2">
-                <Label htmlFor="units">Número de ventanas</Label>
+                <Label htmlFor="units">Number of windows</Label>
                 <Input 
                   id="units"
                   type="number" 
@@ -680,7 +680,7 @@ export default function ServiceEstimateForm({
                     <Label htmlFor="custom-name">Nombre del artículo</Label>
                     <Input 
                       id="custom-name"
-                      placeholder="Ej: Pintura especial"
+                      placeholder="e.g., Special paint"
                       {...customItemForm.register("name")}
                     />
                   </div>
@@ -691,7 +691,7 @@ export default function ServiceEstimateForm({
                       onValueChange={(value) => customItemForm.setValue("unit", value)}
                     >
                       <SelectTrigger id="custom-unit">
-                        <SelectValue placeholder="Seleccionar unidad" />
+                        <SelectValue placeholder="Select unit" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="unidad">Unidad</SelectItem>

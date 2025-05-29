@@ -494,7 +494,7 @@ export default function InvoiceForm({ invoiceToEdit, isOpen, onClose, fromEstima
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar cliente" />
+                            <SelectValue placeholder="Select client" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -522,7 +522,7 @@ export default function InvoiceForm({ invoiceToEdit, isOpen, onClose, fromEstima
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar proyecto" />
+                            <SelectValue placeholder="Select project" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
