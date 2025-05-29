@@ -13,10 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, Home, ArrowLeft } from "lucide-react";
-import { Link } from "wouter";
+import { Trash2, Plus } from "lucide-react";
 import FenceMeasurementTool from "@/components/measurement/fence-measurement-tool";
-import AdvancedMaterialsList from "@/components/estimates/advanced-materials-list";
 
 const formSchema = z.object({
   clientId: z.number(),
@@ -34,11 +32,13 @@ const formSchema = z.object({
       linearFeet: z.number().optional(),
       units: z.number().optional(),
     }).optional(),
+    laborCost: z.number().optional(),
+    materialsCost: z.number().optional(),
     notes: z.string().optional(),
   })),
-  totalLaborCost: z.number().default(0),
-  totalMaterialsCost: z.number().default(0),
-  totalAmount: z.number().default(0),
+  totalLaborCost: z.number().optional(),
+  totalMaterialsCost: z.number().optional(),
+  totalAmount: z.number().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -46,6 +46,7 @@ type FormValues = z.infer<typeof formSchema>;
 export default function VendorEstimateFormPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("client");
+  const [availableServices, setAvailableServices] = useState<any[]>([]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -58,14 +59,20 @@ export default function VendorEstimateFormPage() {
   });
 
   // Fetch clients
-  const { data: clients = [] } = useQuery({
-    queryKey: ["/api/clients"],
+  const { data: clients } = useQuery({
+    queryKey: ["/api/protected/clients"],
   });
 
-  // Fetch services
-  const { data: services = [] } = useQuery({
-    queryKey: ["/api/services"],
+  // Fetch available services
+  const { data: services } = useQuery({
+    queryKey: ["/api/direct/services"],
   });
+
+  useEffect(() => {
+    if (services) {
+      setAvailableServices(services);
+    }
+  }, [services]);
 
   const createEstimateMutation = useMutation({
     mutationFn: async (data: FormValues) => {
@@ -90,79 +97,49 @@ export default function VendorEstimateFormPage() {
     createEstimateMutation.mutate(values);
   };
 
-  const addService = () => {
+  const addService = (service: any) => {
     const currentServices = form.getValues("selectedServices");
-    form.setValue("selectedServices", [
-      ...currentServices,
-      {
-        serviceType: "",
-        name: "",
-        laborRate: "0",
-        unit: "unit",
-        measurements: {},
-        notes: "",
-      },
-    ]);
+    const newService = {
+      serviceType: service.serviceType,
+      name: service.name,
+      laborRate: service.laborRate,
+      unit: service.unit,
+      measurements: {},
+      laborCost: 0,
+      materialsCost: 0,
+      notes: "",
+    };
+    form.setValue("selectedServices", [...currentServices, newService]);
   };
 
   const removeService = (index: number) => {
     const currentServices = form.getValues("selectedServices");
-    const newServices = currentServices.filter((_, i) => i !== index);
-    form.setValue("selectedServices", newServices);
-  };
-
-  const updateServiceMeasurements = (index: number, measurements: any) => {
-    const currentServices = form.getValues("selectedServices");
-    currentServices[index].measurements = measurements;
+    currentServices.splice(index, 1);
     form.setValue("selectedServices", currentServices);
   };
 
-  const serviceTypeOptions = [
-    "Fence",
-    "Deck", 
-    "Roofing",
-    "Windows",
-    "Gutters & Downspouts",
-    "Siding",
-    "Flooring",
-    "Painting",
-    "Electrical",
-    "Plumbing",
-    "Concrete",
-    "Landscaping",
-    "HVAC",
-    "Other Services"
-  ];
-
   return (
-    <div className="container mx-auto py-6">
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/">
-          <Button variant="outline" size="sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-        </Link>
+    <div className="container mx-auto py-6 space-y-6">
+      <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Create New Estimate</h1>
       </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="client">Client</TabsTrigger>
               <TabsTrigger value="services">Services</TabsTrigger>
               <TabsTrigger value="measurements">Measurements</TabsTrigger>
               <TabsTrigger value="materials">Materials</TabsTrigger>
-              <TabsTrigger value="review">Review</TabsTrigger>
             </TabsList>
 
             {/* Client Tab */}
             <TabsContent value="client" className="space-y-6 pt-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Project Information</CardTitle>
-                  <CardDescription>Select client and project details</CardDescription>
+                  <CardTitle>Client Information</CardTitle>
+                  <CardDescription>Select client and provide estimate details</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <FormField
@@ -178,11 +155,11 @@ export default function VendorEstimateFormPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {(clients as any[])?.map((client: any) => (
+                            {clients?.map((client: any) => (
                               <SelectItem key={client.id} value={client.id.toString()}>
                                 {client.firstName} {client.lastName}
                               </SelectItem>
-                            )) || []}
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -195,9 +172,9 @@ export default function VendorEstimateFormPage() {
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Project Title</FormLabel>
+                        <FormLabel>Estimate Title</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter project title" {...field} />
+                          <Input placeholder="Enter estimate title" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -211,38 +188,16 @@ export default function VendorEstimateFormPage() {
                       <FormItem>
                         <FormLabel>Description</FormLabel>
                         <FormControl>
-                          <Textarea 
-                            placeholder="Project description (optional)" 
-                            className="min-h-[100px]"
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="notes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Notes</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Additional notes (optional)" 
-                            className="min-h-[80px]"
-                            {...field} 
-                          />
+                          <Textarea placeholder="Enter project description" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </CardContent>
-                <CardFooter className="flex justify-end">
-                  <Button type="button" onClick={() => setActiveTab("services")}>
-                    Next: Services
+                <CardFooter>
+                  <Button type="button" onClick={() => setActiveTab("services")} className="ml-auto">
+                    Continue to Services
                   </Button>
                 </CardFooter>
               </Card>
@@ -252,144 +207,73 @@ export default function VendorEstimateFormPage() {
             <TabsContent value="services" className="space-y-6 pt-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Services & Labor</CardTitle>
-                  <CardDescription>Add services and set labor rates</CardDescription>
+                  <CardTitle>Select Services</CardTitle>
+                  <CardDescription>Choose the services for this estimate</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {form.watch("selectedServices")?.map((service, index) => (
-                    <Card key={index} className="p-4 border-2">
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="font-semibold">Service {index + 1}</h4>
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => removeService(index)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                <CardContent className="space-y-6">
+                  {/* Available Services */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Available Services</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {availableServices.map((service) => (
+                        <div key={service.id} className="border rounded-lg p-4 space-y-3">
+                          <div>
+                            <h4 className="font-medium">{service.name}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              ${service.laborRate}/{service.unit}
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => addService(service)}
+                            className="w-full"
+                          >
+                            <Plus className="h-4 w-4 mr-1" />
+                            ADD
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Selected Services */}
+                  {form.getValues("selectedServices").length > 0 && (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Selected Services</h3>
+                      <div className="space-y-3">
+                        {form.getValues("selectedServices").map((service: any, index: number) => (
+                          <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                            <div>
+                              <h4 className="font-medium">{service.name}</h4>
+                              <p className="text-sm text-muted-foreground">
+                                ${service.laborRate}/{service.unit}
+                              </p>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => removeService(index)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
                       </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name={`selectedServices.${index}.serviceType`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Service Type</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select service type" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {serviceTypeOptions.map((option) => (
-                                    <SelectItem key={option.toLowerCase()} value={option.toLowerCase()}>
-                                      {option}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name={`selectedServices.${index}.name`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Service Name</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Custom service name" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name={`selectedServices.${index}.laborRate`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Labor Rate ($)</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  type="number" 
-                                  step="0.01"
-                                  placeholder="0.00" 
-                                  {...field} 
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name={`selectedServices.${index}.unit`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Unit</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select unit" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="linear_foot">Linear Foot</SelectItem>
-                                  <SelectItem value="square_foot">Square Foot</SelectItem>
-                                  <SelectItem value="unit">Unit</SelectItem>
-                                  <SelectItem value="hour">Hour</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <FormField
-                        control={form.control}
-                        name={`selectedServices.${index}.notes`}
-                        render={({ field }) => (
-                          <FormItem className="mt-4">
-                            <FormLabel>Service Notes</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                placeholder="Additional notes for this service"
-                                className="min-h-[60px]"
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </Card>
-                  )) || []}
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={addService}
-                    className="w-full"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Service
-                  </Button>
+                    </div>
+                  )}
                 </CardContent>
                 <CardFooter className="flex justify-between">
                   <Button type="button" variant="outline" onClick={() => setActiveTab("client")}>
-                    Previous
+                    Back to Client
                   </Button>
-                  <Button type="button" onClick={() => setActiveTab("measurements")}>
-                    Next: Measurements
+                  <Button 
+                    type="button" 
+                    onClick={() => setActiveTab("measurements")}
+                    disabled={form.getValues("selectedServices").length === 0}
+                  >
+                    Continue to Measurements
                   </Button>
                 </CardFooter>
               </Card>
@@ -399,141 +283,107 @@ export default function VendorEstimateFormPage() {
             <TabsContent value="measurements" className="space-y-6 pt-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Service Measurements</CardTitle>
-                  <CardDescription>Measure each service for accurate pricing</CardDescription>
+                  <CardTitle>Measurements</CardTitle>
+                  <CardDescription>Measure each selected service</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {form.watch("selectedServices")?.map((service, index) => (
-                    <div key={index} className="space-y-4">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary">{service.serviceType}</Badge>
-                        <h4 className="font-semibold">{service.name}</h4>
-                      </div>
-
-                      {service.serviceType === "fence" && (
-                        <div className="bg-blue-50 p-4 rounded-lg border">
-                          <h5 className="font-medium mb-3">Fence Measurement Tool</h5>
-                          <FenceMeasurementTool
-                            serviceUnit="linear_foot"
-                            onMeasurementsChange={(measurements) => {
-                              if (measurements.length > 0) {
-                                const totalLength = measurements.reduce((sum, m) => sum + m.totalLength, 0);
-                                const totalGates = measurements.reduce((sum, m) => sum + m.totalGates, 0);
-                                updateServiceMeasurements(index, {
-                                  linearFeet: totalLength,
-                                  units: totalGates,
-                                });
-                              }
-                            }}
-                          />
-                        </div>
-                      )}
-
-                      {service.serviceType === "deck" && (
-                        <div className="bg-green-50 p-4 rounded-lg border">
-                          <h5 className="font-medium mb-3">Deck Measurements</h5>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-sm font-medium mb-1">Width (ft)</label>
-                              <Input
-                                type="number"
-                                step="0.1"
-                                placeholder="0"
-                                onChange={(e) => {
-                                  const width = parseFloat(e.target.value) || 0;
-                                  const length = service.measurements?.squareFeet ? service.measurements.squareFeet / width : 0;
-                                  updateServiceMeasurements(index, {
-                                    squareFeet: width * length,
-                                  });
-                                }}
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium mb-1">Length (ft)</label>
-                              <Input
-                                type="number"
-                                step="0.1"
-                                placeholder="0"
-                                onChange={(e) => {
-                                  const length = parseFloat(e.target.value) || 0;
-                                  const width = service.measurements?.squareFeet ? service.measurements.squareFeet / length : 0;
-                                  updateServiceMeasurements(index, {
-                                    squareFeet: width * length,
-                                  });
-                                }}
-                              />
-                            </div>
-                          </div>
-                          <div className="mt-2">
-                            <span className="text-sm text-muted-foreground">
-                              Total Area: {service.measurements?.squareFeet || 0} sq ft
-                            </span>
-                          </div>
-                        </div>
-                      )}
-
-                      {service.serviceType === "windows" && (
-                        <div className="bg-yellow-50 p-4 rounded-lg border">
-                          <h5 className="font-medium mb-3">Windows Count</h5>
-                          <div className="w-32">
-                            <label className="block text-sm font-medium mb-1">Number of Windows</label>
-                            <Input
-                              type="number"
-                              min="1"
-                              placeholder="1"
-                              onChange={(e) => {
-                                const units = parseInt(e.target.value) || 1;
-                                updateServiceMeasurements(index, { units });
-                              }}
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      {(service.serviceType === "gutters" || service.serviceType === "gutters & downspouts") && (
-                        <div className="bg-purple-50 p-4 rounded-lg border">
-                          <h5 className="font-medium mb-3">Gutters Linear Footage</h5>
-                          <div className="w-32">
-                            <label className="block text-sm font-medium mb-1">Linear Feet</label>
-                            <Input
-                              type="number"
-                              step="0.1"
-                              placeholder="0"
-                              onChange={(e) => {
-                                const linearFeet = parseFloat(e.target.value) || 0;
-                                updateServiceMeasurements(index, { linearFeet });
-                              }}
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      {(service.serviceType === "roofing" || service.serviceType === "siding") && (
-                        <div className="bg-orange-50 p-4 rounded-lg border">
-                          <h5 className="font-medium mb-3">{service.serviceType === "roofing" ? "Roof" : "Siding"} Area</h5>
-                          <div className="w-32">
-                            <label className="block text-sm font-medium mb-1">Square Feet</label>
-                            <Input
-                              type="number"
-                              step="0.1"
-                              placeholder="0"
-                              onChange={(e) => {
-                                const squareFeet = parseFloat(e.target.value) || 0;
-                                updateServiceMeasurements(index, { squareFeet });
-                              }}
-                            />
-                          </div>
-                        </div>
-                      )}
+                  {form.getValues("selectedServices").length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">Please select services first</p>
                     </div>
-                  )) || []}
+                  ) : (
+                    <div className="space-y-6">
+                      {form.getValues("selectedServices").map((service: any, index: number) => (
+                        <div key={`${service.serviceType}-${index}`} className="border rounded-lg p-4">
+                          <h3 className="text-lg font-semibold mb-4">{service.name} Measurements</h3>
+                          
+                          {service.serviceType === "fence" && (
+                            <FenceMeasurementTool
+                              serviceUnit={service.unit}
+                              onMeasurementsChange={(measurements) => {
+                                const currentServices = form.getValues("selectedServices");
+                                // Calculate totals from measurements array
+                                const totalLength = measurements.reduce((sum, m) => sum + (m.length || 0), 0);
+                                const totalArea = measurements.reduce((sum, m) => sum + (m.area || 0), 0);
+                                const gateCount = measurements.filter(m => m.isGate).length;
+                                
+                                currentServices[index] = {
+                                  ...currentServices[index],
+                                  measurements: {
+                                    linearFeet: totalLength,
+                                    squareFeet: totalArea,
+                                    units: gateCount,
+                                    quantity: totalLength,
+                                  }
+                                };
+                                form.setValue("selectedServices", currentServices);
+                              }}
+                            />
+                          )}
+                          
+                          {service.serviceType === "deck" && (
+                            <div className="space-y-4">
+                              <p className="text-sm text-muted-foreground">Deck Area Measurement</p>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <label className="text-sm font-medium">Width (ft)</label>
+                                  <Input type="number" placeholder="Enter width" />
+                                </div>
+                                <div>
+                                  <label className="text-sm font-medium">Length (ft)</label>
+                                  <Input type="number" placeholder="Enter length" />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {service.serviceType === "windows" && (
+                            <div className="space-y-4">
+                              <p className="text-sm text-muted-foreground">Number of Windows</p>
+                              <Input type="number" placeholder="Enter number of windows" />
+                            </div>
+                          )}
+
+                          {service.serviceType === "gutters" && (
+                            <div className="space-y-4">
+                              <p className="text-sm text-muted-foreground">Linear Feet of Gutters</p>
+                              <Input type="number" placeholder="Enter linear feet" />
+                            </div>
+                          )}
+
+                          {service.serviceType === "roof" && (
+                            <div className="space-y-4">
+                              <p className="text-sm text-muted-foreground">Roof Area (sq ft)</p>
+                              <Input type="number" placeholder="Enter roof area" />
+                            </div>
+                          )}
+
+                          {service.serviceType === "siding" && (
+                            <div className="space-y-4">
+                              <p className="text-sm text-muted-foreground">Siding Measurements</p>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <label className="text-sm font-medium">Height (ft)</label>
+                                  <Input type="number" placeholder="Enter height" />
+                                </div>
+                                <div>
+                                  <label className="text-sm font-medium">Perimeter (ft)</label>
+                                  <Input type="number" placeholder="Enter perimeter" />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
                 <CardFooter className="flex justify-between">
                   <Button type="button" variant="outline" onClick={() => setActiveTab("services")}>
-                    Previous
+                    Back to Services
                   </Button>
                   <Button type="button" onClick={() => setActiveTab("materials")}>
-                    Next: Materials
+                    Continue to Materials
                   </Button>
                 </CardFooter>
               </Card>
@@ -541,101 +391,183 @@ export default function VendorEstimateFormPage() {
 
             {/* Materials Tab */}
             <TabsContent value="materials" className="space-y-6 pt-4">
-              <AdvancedMaterialsList 
-                services={form.watch("selectedServices") || []}
-                onMaterialsChange={(materials) => {
-                  console.log("Materials updated:", materials);
-                }}
-              />
-              <Card>
-                <CardFooter className="flex justify-between">
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={() => setActiveTab("measurements")}
-                  >
-                    Previous
-                  </Button>
-                  <Button 
-                    type="button" 
-                    onClick={() => setActiveTab("review")}
-                  >
-                    Next: Review
-                  </Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
-
-            {/* Review Tab */}
-            <TabsContent value="review" className="space-y-6 pt-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Review & Submit</CardTitle>
-                  <CardDescription>Review all details before creating the estimate</CardDescription>
+                  <CardTitle>Materials List</CardTitle>
+                  <CardDescription>Basic materials needed for selected services</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Client & Project Info */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold">Project Information</h3>
-                      <div className="space-y-2">
-                        <div>
-                          <span className="font-medium">Client:</span> {(clients as any)?.find?.((c: any) => c.id === form.watch("clientId"))?.firstName} {(clients as any)?.find?.((c: any) => c.id === form.watch("clientId"))?.lastName}
-                        </div>
-                        <div>
-                          <span className="font-medium">Title:</span> {form.watch("title")}
-                        </div>
-                        {form.watch("description") && (
-                          <div>
-                            <span className="font-medium">Description:</span> {form.watch("description")}
-                          </div>
-                        )}
-                      </div>
+                  {!form.getValues("selectedServices") || form.getValues("selectedServices").length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">Please select services first</p>
                     </div>
-
-                    {/* Labor Cost Summary */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold">Labor Cost Summary</h3>
-                      <div className="space-y-2">
-                        {form.watch("selectedServices")?.map((service: any, index: number) => {
-                          const laborRate = parseFloat(service.laborRate) || 0;
-                          let quantity = 1;
-                          let unitLabel = "unit";
+                  ) : (
+                    <div className="space-y-6">
+                      {form.getValues("selectedServices").map((service: any, index: number) => (
+                        <div key={`materials-${service.serviceType}-${index}`} className="border rounded-lg p-4">
+                          <h3 className="text-lg font-semibold mb-4">{service.name} - Materials Needed</h3>
                           
-                          if (service.measurements) {
-                            if (service.serviceType === "fence" || service.serviceType === "gutters") {
-                              quantity = service.measurements.linearFeet || 1;
-                              unitLabel = "linear ft";
-                            } else if (service.serviceType === "deck" || service.serviceType === "roofing" || service.serviceType === "siding") {
-                              quantity = service.measurements.squareFeet || 1;
-                              unitLabel = "sq ft";
-                            } else if (service.serviceType === "windows") {
-                              quantity = service.measurements.units || 1;
-                              unitLabel = "unit";
-                            }
-                          }
-                          
-                          const serviceTotal = laborRate * quantity;
-                          
-                          return (
-                            <div key={index} className="flex justify-between items-center">
-                              <div>
-                                <span className="font-medium">{service.name}</span>
-                                <span className="text-muted-foreground ml-2">
-                                  ({quantity.toLocaleString()} {unitLabel} × ${laborRate.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
-                                </span>
+                          {service.serviceType === "fence" && (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="bg-gray-50 p-3 rounded">
+                                <h4 className="font-medium mb-2">Posts & Foundation</h4>
+                                <ul className="text-sm space-y-1">
+                                  <li>• Pressure treated posts</li>
+                                  <li>• Concrete mix</li>
+                                  <li>• Post anchors</li>
+                                  <li>• Gravel</li>
+                                </ul>
                               </div>
-                              <span className="font-medium">${serviceTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                              <div className="bg-gray-50 p-3 rounded">
+                                <h4 className="font-medium mb-2">Panels & Hardware</h4>
+                                <ul className="text-sm space-y-1">
+                                  <li>• Fence panels</li>
+                                  <li>• Rails (2x4)</li>
+                                  <li>• Screws/nails</li>
+                                  <li>• Gate hardware</li>
+                                </ul>
+                              </div>
+                              <div className="bg-gray-50 p-3 rounded">
+                                <h4 className="font-medium mb-2">Finishing</h4>
+                                <ul className="text-sm space-y-1">
+                                  <li>• Post caps</li>
+                                  <li>• Wood stain</li>
+                                  <li>• Primer</li>
+                                </ul>
+                              </div>
                             </div>
-                          );
-                        }) || []}
-                      </div>
+                          )}
+
+                          {service.serviceType === "deck" && (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="bg-gray-50 p-3 rounded">
+                                <h4 className="font-medium mb-2">Structure</h4>
+                                <ul className="text-sm space-y-1">
+                                  <li>• Joists (2x8, 2x10)</li>
+                                  <li>• Beam boards</li>
+                                  <li>• Posts (4x4, 6x6)</li>
+                                  <li>• Concrete footings</li>
+                                </ul>
+                              </div>
+                              <div className="bg-gray-50 p-3 rounded">
+                                <h4 className="font-medium mb-2">Decking</h4>
+                                <ul className="text-sm space-y-1">
+                                  <li>• Deck boards</li>
+                                  <li>• Joist hangers</li>
+                                  <li>• Bolts and screws</li>
+                                  <li>• Flashing</li>
+                                </ul>
+                              </div>
+                              <div className="bg-gray-50 p-3 rounded">
+                                <h4 className="font-medium mb-2">Railing</h4>
+                                <ul className="text-sm space-y-1">
+                                  <li>• Railing posts</li>
+                                  <li>• Balusters</li>
+                                  <li>• Top/bottom rails</li>
+                                  <li>• Deck stain</li>
+                                </ul>
+                              </div>
+                            </div>
+                          )}
+
+                          {service.serviceType === "roof" && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="bg-gray-50 p-3 rounded">
+                                <h4 className="font-medium mb-2">Roofing</h4>
+                                <ul className="text-sm space-y-1">
+                                  <li>• Shingles or metal</li>
+                                  <li>• Underlayment</li>
+                                  <li>• Ice shield</li>
+                                  <li>• Drip edge</li>
+                                </ul>
+                              </div>
+                              <div className="bg-gray-50 p-3 rounded">
+                                <h4 className="font-medium mb-2">Hardware</h4>
+                                <ul className="text-sm space-y-1">
+                                  <li>• Roofing nails</li>
+                                  <li>• Ridge caps</li>
+                                  <li>• Roof vents</li>
+                                  <li>• Sealants</li>
+                                </ul>
+                              </div>
+                            </div>
+                          )}
+
+                          {service.serviceType === "windows" && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="bg-gray-50 p-3 rounded">
+                                <h4 className="font-medium mb-2">Windows</h4>
+                                <ul className="text-sm space-y-1">
+                                  <li>• Window units</li>
+                                  <li>• Screens</li>
+                                  <li>• Hardware</li>
+                                </ul>
+                              </div>
+                              <div className="bg-gray-50 p-3 rounded">
+                                <h4 className="font-medium mb-2">Installation</h4>
+                                <ul className="text-sm space-y-1">
+                                  <li>• Flashing tape</li>
+                                  <li>• Insulation foam</li>
+                                  <li>• Caulk</li>
+                                  <li>• Trim boards</li>
+                                </ul>
+                              </div>
+                            </div>
+                          )}
+
+                          {service.serviceType === "gutters" && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="bg-gray-50 p-3 rounded">
+                                <h4 className="font-medium mb-2">Gutter System</h4>
+                                <ul className="text-sm space-y-1">
+                                  <li>• Gutters</li>
+                                  <li>• Downspouts</li>
+                                  <li>• End caps</li>
+                                  <li>• Guards</li>
+                                </ul>
+                              </div>
+                              <div className="bg-gray-50 p-3 rounded">
+                                <h4 className="font-medium mb-2">Hardware</h4>
+                                <ul className="text-sm space-y-1">
+                                  <li>• Hangers</li>
+                                  <li>• Screws</li>
+                                  <li>• Splash blocks</li>
+                                  <li>• Sealants</li>
+                                </ul>
+                              </div>
+                            </div>
+                          )}
+
+                          {service.serviceType === "siding" && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="bg-gray-50 p-3 rounded">
+                                <h4 className="font-medium mb-2">Siding</h4>
+                                <ul className="text-sm space-y-1">
+                                  <li>• Siding panels</li>
+                                  <li>• Starter strips</li>
+                                  <li>• J-channel</li>
+                                  <li>• Corner posts</li>
+                                </ul>
+                              </div>
+                              <div className="bg-gray-50 p-3 rounded">
+                                <h4 className="font-medium mb-2">Installation</h4>
+                                <ul className="text-sm space-y-1">
+                                  <li>• House wrap</li>
+                                  <li>• Fasteners</li>
+                                  <li>• Caulk</li>
+                                  <li>• Paint/stain</li>
+                                </ul>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  </div>
+                  )}
                 </CardContent>
                 <CardFooter className="flex justify-between">
-                  <Button type="button" variant="outline" onClick={() => setActiveTab("materials")}>
-                    Back to Materials
+                  <Button type="button" variant="outline" onClick={() => setActiveTab("measurements")}>
+                    Back to Measurements
                   </Button>
                   <Button type="submit" disabled={createEstimateMutation.isPending}>
                     {createEstimateMutation.isPending ? "Creating..." : "Create Estimate"}
