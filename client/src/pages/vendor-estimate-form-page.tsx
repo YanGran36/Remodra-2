@@ -47,6 +47,7 @@ export default function VendorEstimateFormPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("client");
   const [availableServices, setAvailableServices] = useState<any[]>([]);
+  const [selectedServices, setSelectedServices] = useState<any[]>([]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -98,7 +99,6 @@ export default function VendorEstimateFormPage() {
   };
 
   const addService = (service: any) => {
-    const currentServices = form.getValues("selectedServices");
     const newService = {
       serviceType: service.serviceType,
       name: service.name,
@@ -109,13 +109,15 @@ export default function VendorEstimateFormPage() {
       materialsCost: 0,
       notes: "",
     };
-    form.setValue("selectedServices", [...currentServices, newService]);
+    const updatedServices = [...selectedServices, newService];
+    setSelectedServices(updatedServices);
+    form.setValue("selectedServices", updatedServices);
   };
 
   const removeService = (index: number) => {
-    const currentServices = form.getValues("selectedServices");
-    currentServices.splice(index, 1);
-    form.setValue("selectedServices", currentServices);
+    const updatedServices = selectedServices.filter((_, i) => i !== index);
+    setSelectedServices(updatedServices);
+    form.setValue("selectedServices", updatedServices);
   };
 
   return (
@@ -238,11 +240,11 @@ export default function VendorEstimateFormPage() {
                   </div>
 
                   {/* Selected Services */}
-                  {form.getValues("selectedServices").length > 0 && (
+                  {selectedServices.length > 0 && (
                     <div className="space-y-4">
                       <h3 className="text-lg font-semibold">Selected Services</h3>
                       <div className="space-y-3">
-                        {form.getValues("selectedServices").map((service: any, index: number) => (
+                        {selectedServices.map((service: any, index: number) => (
                           <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                             <div>
                               <h4 className="font-medium">{service.name}</h4>
@@ -271,7 +273,7 @@ export default function VendorEstimateFormPage() {
                   <Button 
                     type="button" 
                     onClick={() => setActiveTab("measurements")}
-                    disabled={form.getValues("selectedServices").length === 0}
+                    disabled={selectedServices.length === 0}
                   >
                     Continue to Measurements
                   </Button>
@@ -287,28 +289,28 @@ export default function VendorEstimateFormPage() {
                   <CardDescription>Measure each selected service</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {form.getValues("selectedServices").length === 0 ? (
+                  {selectedServices.length === 0 ? (
                     <div className="text-center py-8">
                       <p className="text-muted-foreground">Please select services first</p>
                     </div>
                   ) : (
                     <div className="space-y-6">
-                      {form.getValues("selectedServices").map((service: any, index: number) => (
+                      {selectedServices.map((service: any, index: number) => (
                         <div key={`${service.serviceType}-${index}`} className="border rounded-lg p-4">
                           <h3 className="text-lg font-semibold mb-4">{service.name} Measurements</h3>
                           
                           {service.serviceType === "fence" && (
                             <FenceMeasurementTool
                               serviceUnit={service.unit}
-                              onMeasurementsChange={(measurements) => {
-                                const currentServices = form.getValues("selectedServices");
+                              onMeasurementsChange={(measurements: any) => {
                                 // Calculate totals from measurements array
-                                const totalLength = measurements.reduce((sum, m) => sum + (m.length || 0), 0);
-                                const totalArea = measurements.reduce((sum, m) => sum + (m.area || 0), 0);
-                                const gateCount = measurements.filter(m => m.isGate).length;
+                                const totalLength = measurements.reduce((sum: number, m: any) => sum + (m.length || 0), 0);
+                                const totalArea = measurements.reduce((sum: number, m: any) => sum + (m.area || 0), 0);
+                                const gateCount = measurements.filter((m: any) => m.isGate).length;
                                 
-                                currentServices[index] = {
-                                  ...currentServices[index],
+                                const updatedServices = [...selectedServices];
+                                updatedServices[index] = {
+                                  ...updatedServices[index],
                                   measurements: {
                                     linearFeet: totalLength,
                                     squareFeet: totalArea,
@@ -316,7 +318,8 @@ export default function VendorEstimateFormPage() {
                                     quantity: totalLength,
                                   }
                                 };
-                                form.setValue("selectedServices", currentServices);
+                                setSelectedServices(updatedServices);
+                                form.setValue("selectedServices", updatedServices);
                               }}
                             />
                           )}
