@@ -52,10 +52,10 @@ export default function MobileSidebar() {
   };
 
   const getLinkClass = (path: string) => {
-    return `flex items-center px-4 py-3 ${
+    return `flex items-center px-4 py-3 mx-2 my-1 rounded-xl transition-all duration-300 ease-in-out group ${
       isActivePath(path) 
-        ? "bg-sidebar-accent text-sidebar-foreground" 
-        : "text-gray-300 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+        ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-400/30 shadow-lg backdrop-blur-sm" 
+        : "text-slate-300 hover:bg-white/10 hover:text-white hover:shadow-md hover:scale-105 hover:translate-x-1"
     }`;
   };
 
@@ -97,12 +97,12 @@ export default function MobileSidebar() {
   return (
     <>
       {/* Mobile menu toggle button */}
-      <div className="absolute top-0 left-0 md:hidden p-4 z-30">
+      <div className="fixed top-0 left-0 lg:hidden p-4 z-30">
         <Button
           id="mobile-sidebar-toggle"
           variant="ghost"
           size="icon"
-          className="text-gray-500 hover:text-gray-700 focus:outline-none"
+          className="bg-white/10 backdrop-blur-md border border-white/20 text-slate-700 hover:text-slate-900 hover:bg-white/20 focus:outline-none shadow-lg rounded-xl"
           onClick={toggleSidebar}
         >
           <MenuIcon className="h-6 w-6" />
@@ -111,7 +111,7 @@ export default function MobileSidebar() {
 
       {/* Sidebar overlay */}
       <div 
-        className={`fixed inset-0 z-20 bg-black bg-opacity-50 md:hidden transition-opacity duration-200 ${
+        className={`fixed inset-0 z-20 bg-black/60 backdrop-blur-sm lg:hidden transition-opacity duration-300 ${
           isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         onClick={closeSidebar}
@@ -120,24 +120,26 @@ export default function MobileSidebar() {
       {/* Mobile sidebar */}
       <aside 
         id="mobile-sidebar"
-        className={`fixed left-0 top-0 bottom-0 w-64 bg-sidebar-background text-sidebar-foreground z-30 transform transition-transform duration-200 ease-in-out md:hidden ${
+        className={`fixed left-0 top-0 bottom-0 w-72 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white z-30 transform transition-all duration-300 ease-in-out lg:hidden shadow-2xl ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="p-4 flex items-center justify-between border-b border-sidebar-border">
+        <div className="p-6 flex items-center justify-between border-b border-slate-700/50 bg-gradient-to-r from-blue-600/20 to-purple-600/20">
           <div className="flex items-center">
-            <div className="bg-primary rounded-md p-2 mr-3">
-              <BuildingIcon className="text-white h-5 w-5" />
+            <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl p-3 mr-4 shadow-lg">
+              <BuildingIcon className="text-white h-6 w-6" />
             </div>
-            <h1 className="text-xl font-semibold">ContractorHub</h1>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              ContractorHub
+            </h1>
           </div>
           <Button
             variant="ghost" 
             size="icon"
-            className="text-gray-400 hover:text-white"
+            className="text-slate-400 hover:text-white hover:bg-white/10 rounded-lg"
             onClick={closeSidebar}
           >
-            <X className="h-5 w-5" />
+            <X className="h-6 w-6" />
           </Button>
         </div>
         
