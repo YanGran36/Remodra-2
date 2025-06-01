@@ -22,7 +22,8 @@ import {
   Building,
   HardDrive,
   Clock,
-  Palette
+  Palette,
+  Settings
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -143,93 +144,86 @@ export default function MobileSidebar() {
           </Button>
         </div>
         
-        <div className="py-2 flex-1 overflow-y-auto">
-          <nav>
+        <div className="py-4 flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent">
+          <nav className="space-y-1">
             <Link href="/" className={getLinkClass("/")}>
-              <LayoutDashboardIcon className="mr-3 h-5 w-5" />
-              <span>Dashboard</span>
+              <LayoutDashboardIcon className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
+              <span className="font-medium">Dashboard</span>
             </Link>
             <Link href="/calendar" className={getLinkClass("/calendar")}>
-              <CalendarIcon className="mr-3 h-5 w-5" />
-              <span>Calendar</span>
+              <CalendarIcon className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
+              <span className="font-medium">Calendar</span>
             </Link>
             <Link href="/clients" className={getLinkClass("/clients")}>
-              <UsersIcon className="mr-3 h-5 w-5" />
-              <span>Clients</span>
+              <UsersIcon className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
+              <span className="font-medium">Clients</span>
             </Link>
             <Link href="/estimates" className={getLinkClass("/estimates")}>
-              <FileTextIcon className="mr-3 h-5 w-5" />
-              <span>Estimates</span>
+              <FileTextIcon className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
+              <span className="font-medium">Estimates</span>
             </Link>
             <Link href="/invoices" className={getLinkClass("/invoices")}>
-              <BanknoteIcon className="mr-3 h-5 w-5" />
-              <span>Invoices</span>
+              <BanknoteIcon className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
+              <span className="font-medium">Invoices</span>
             </Link>
             <Link href="/projects" className={getLinkClass("/projects")}>
-              <HammerIcon className="mr-3 h-5 w-5" />
-              <span>Projects</span>
+              <HammerIcon className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
+              <span className="font-medium">Projects</span>
             </Link>
             <Link href="/materials" className={getLinkClass("/materials")}>
-              <Drill className="mr-3 h-5 w-5" />
-              <span>Materials</span>
+              <Drill className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
+              <span className="font-medium">Materials</span>
+            </Link>
+            <Link href="/pricing" className={getLinkClass("/pricing")}>
+              <BanknoteIcon className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
+              <span className="font-medium">Pricing Config</span>
             </Link>
             <Link href="/timeclock" className={getLinkClass("/timeclock")}>
-              <Clock className="mr-3 h-5 w-5" />
-              <span>Time Clock</span>
+              <Clock className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
+              <span className="font-medium">Time Clock</span>
             </Link>
             
             {/* Tools section with divider for better organization */}
-            <div className="mt-2 mb-2 px-3">
-              <div className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold">
-                Tools
+            <div className="mt-6 mb-3 px-4">
+              <div className="h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent"></div>
+              <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold mt-3 mb-2">
+                Tools & Settings
               </div>
             </div>
             
-            <Link href="/tools-dashboard" className={getLinkClass("/tools-dashboard")}>
-              <FileText className="mr-3 h-5 w-5" />
-              <span>Tools</span>
-            </Link>
             <Link href="/ai-assistant" className={getLinkClass("/ai-assistant")}>
-              <BotIcon className="mr-3 h-5 w-5" />
-              <span>AI Assistant</span>
+              <BotIcon className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
+              <span className="font-medium">AI Assistant</span>
             </Link>
             <Link href="/vendor-estimate-form-new" className={getLinkClass("/vendor-estimate-form-new")}>
-              <ClipboardCheckIcon className="mr-3 h-5 w-5" />
-              <span>Vendor Form</span>
-            </Link>
-            <Link href="/admin-dashboard" className={getLinkClass("/admin-dashboard")}>
-              <BarChart className="mr-3 h-5 w-5" />
-              <span>Admin Dashboard</span>
-            </Link>
-            <Link href="/admin-architectural" className={getLinkClass("/admin-architectural")}>
-              <HardDrive className="mr-3 h-5 w-5" />
-              <span>Architectural Dashboard</span>
-            </Link>
-            <Link href="/super-admin" className={getLinkClass("/super-admin")}>
-              <Building className="mr-3 h-5 w-5" />
-              <span>Super Admin Dashboard</span>
+              <ClipboardCheckIcon className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
+              <span className="font-medium">Vendor Form</span>
             </Link>
             <Link href="/settings" className={getLinkClass("/settings")}>
-              <SettingsIcon className="mr-3 h-5 w-5" />
-              <span>Settings</span>
+              <SettingsIcon className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
+              <span className="font-medium">Settings</span>
             </Link>
           </nav>
         </div>
         
-        <div className="mt-auto border-t border-sidebar-border">
+        <div className="mt-auto border-t border-slate-700/50 bg-gradient-to-r from-slate-800/50 to-slate-900/50 backdrop-blur-sm">
           {/* User Info and Logout */}
           <div className="p-4">
             <div className="flex items-center">
-              <Avatar className="h-10 w-10 mr-3">
+              <Avatar className="h-12 w-12 mr-3 ring-2 ring-blue-400/30 shadow-lg">
                 <AvatarImage src="" alt={user?.firstName} />
-                <AvatarFallback className="bg-primary">{getInitials()}</AvatarFallback>
+                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
+                  {getInitials()}
+                </AvatarFallback>
               </Avatar>
-              <div>
-                <p className="font-medium text-sm">{user?.firstName} {user?.lastName}</p>
-                <p className="text-xs text-gray-400">{user?.email}</p>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm text-white truncate">
+                  {user?.firstName} {user?.lastName}
+                </p>
+                <p className="text-xs text-slate-400 truncate">{user?.email}</p>
               </div>
               <button 
-                className="ml-auto text-gray-400 hover:text-white"
+                className="ml-2 p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all duration-200 hover:scale-110"
                 onClick={handleLogout}
                 aria-label="Logout"
               >
