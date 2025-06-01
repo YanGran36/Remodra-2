@@ -185,20 +185,32 @@ export default function EstimatesPage() {
             title="Estimates" 
             description="Create and manage customer estimates"
             actions={
-              <div className="flex space-x-3">
-                <Button 
-                  variant="outline" 
-                  className="flex items-center" 
-                  onClick={() => setLocation("/multi-service-estimate")}
-                >
-                  <Calculator className="h-4 w-4 mr-2" />
-                  Multi-Service Estimate
-                </Button>
-                <Button className="flex items-center" onClick={createNewEstimate}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Estimate
-                </Button>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="flex items-center">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Estimate
+                    <ChevronDown className="h-4 w-4 ml-2" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={() => setLocation("/multi-service-estimate")}>
+                    <Calculator className="mr-2 h-4 w-4" />
+                    Multi-Service Estimate
+                    <div className="text-xs text-gray-500 mt-1">Advanced estimate with measurements</div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={createNewEstimate}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    Quick Estimate
+                    <div className="text-xs text-gray-500 mt-1">Simple estimate form</div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setLocation("/vendor-estimate-form")}>
+                    <FileEdit className="mr-2 h-4 w-4" />
+                    Vendor Estimate
+                    <div className="text-xs text-gray-500 mt-1">Third-party estimate format</div>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             }
           />
           
@@ -274,23 +286,6 @@ export default function EstimatesPage() {
                 </div>
                 
                 <div className="flex gap-2">
-                  <Button 
-                    onClick={() => setLocation("/estimates/create-service")} 
-                    size="sm"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Estimate
-                  </Button>
-                  
-                  <Button 
-                    onClick={() => setLocation("/vendor-estimate-form")}
-                    variant="secondary" 
-                    size="sm"
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    Vendor Estimate
-                  </Button>
-                  
                   <Button variant="outline" size="sm">
                     <Download className="h-4 w-4 mr-2" />
                     Export
