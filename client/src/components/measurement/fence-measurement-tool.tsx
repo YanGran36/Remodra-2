@@ -94,8 +94,68 @@ export default function FenceMeasurementTool({
   const [zoomLevel, setZoomLevel] = useState(1);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
 
-  // ESC key handler - only cancel current action, don't delete completed work
-  // Removed ESC key handling - now we use double-click to exit editing
+  // Click outside handler and ESC key to exit measurement mode
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const clickX = event.clientX;
+      const clickY = event.clientY;
+
+      // Check if click is outside the canvas area
+      const isOutsideCanvas = (
+        clickX < rect.left ||
+        clickX > rect.right ||
+        clickY < rect.top ||
+        clickY > rect.bottom
+      );
+
+      if (isOutsideCanvas) {
+        exitMeasurementMode();
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        exitMeasurementMode();
+      }
+    };
+
+    const exitMeasurementMode = () => {
+      // Exit current measurement mode if active
+      if (isDrawing && currentPoints.length >= 2) {
+        finishFence();
+      } else if (isDrawing && currentPoints.length < 2) {
+        // Cancel incomplete measurement
+        setIsDrawing(false);
+        setCurrentPoints([]);
+      }
+      
+      // Exit gate mode
+      if (gateMode) {
+        setGateMode(false);
+      }
+      
+      // Clear selections
+      setSelectedGate(null);
+      setDraggingPoint(null);
+      setDraggingGate(null);
+      setEditingMeasurement(null);
+    };
+
+    // Add event listeners
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isDrawing, currentPoints, gateMode]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -966,9 +1026,16 @@ export default function FenceMeasurementTool({
           )}
 
           {/* Instructions */}
-          <div className="text-xs text-green-700 bg-green-50 p-2 rounded">
-            <strong>Instructions:</strong> Click to start drawing fence line. Each click adds a fence section. 
-            <strong>Double-click to finish the fence.</strong> Drag red points to adjust lines. Click gates to select and edit them.
+          <div className="text-xs text-green-700 bg-green-50 p-2 rounded space-y-1">
+            <div>
+              <strong>Drawing:</strong> Click to start drawing fence line. Each click adds a fence section.
+            </div>
+            <div>
+              <strong>Exit:</strong> Double-click to finish fence, or click outside the canvas area, or press ESC key to exit measurement mode.
+            </div>
+            <div>
+              <strong>Editing:</strong> Drag red points to adjust lines. Click gates to select and edit them.
+            </div>
           </div>
         </CardContent>
       </Card>
