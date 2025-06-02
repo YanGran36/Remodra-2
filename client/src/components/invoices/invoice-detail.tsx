@@ -149,8 +149,8 @@ export default function InvoiceDetail({ invoice, isOpen, onClose, onEdit }: Invo
     
     if (parseFloat(paymentAmount) > remainingAmount) {
       toast({
-        title: "Monto excede el saldo",
-        description: "El monto del pago excede el saldo pendiente.",
+        title: "Amount exceeds balance",
+        description: "The payment amount exceeds the pending balance.",
         variant: "destructive",
       });
       return;
@@ -164,7 +164,7 @@ export default function InvoiceDetail({ invoice, isOpen, onClose, onEdit }: Invo
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex justify-between items-center">
-            <span>Orden de Trabajo #{invoice.invoiceNumber}</span>
+            <span>Work Order #{invoice.invoiceNumber}</span>
             {getStatusBadge(invoice.status)}
           </DialogTitle>
         </DialogHeader>
@@ -174,7 +174,7 @@ export default function InvoiceDetail({ invoice, isOpen, onClose, onEdit }: Invo
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Información del Cliente</CardTitle>
+                <CardTitle className="text-sm font-medium">Client Information</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center space-x-3">
@@ -194,11 +194,11 @@ export default function InvoiceDetail({ invoice, isOpen, onClose, onEdit }: Invo
             
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Información del Proyecto</CardTitle>
+                <CardTitle className="text-sm font-medium">Project Information</CardTitle>
               </CardHeader>
               <CardContent>
                 <div>
-                  <p className="font-medium">{invoice.project?.title || "No project asignado"}</p>
+                  <p className="font-medium">{invoice.project?.title || "No project assigned"}</p>
                   {invoice.project && (
                     <>
                       <p className="text-sm text-muted-foreground line-clamp-2">
@@ -219,19 +219,19 @@ export default function InvoiceDetail({ invoice, isOpen, onClose, onEdit }: Invo
           {/* Invoice Status */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle>Estado de la Orden de Trabajo</CardTitle>
+              <CardTitle>Work Order Status</CardTitle>
               <CardDescription>
-                Emitida: {format(new Date(invoice.issueDate), 'dd MMMM, yyyy')} | 
-                Vencimiento: {format(new Date(invoice.dueDate), 'dd MMMM, yyyy')}
+                Issued: {format(new Date(invoice.issueDate), 'MMM d, yyyy')} | 
+                Due: {format(new Date(invoice.dueDate), 'MMM d, yyyy')}
                 {diffDays < 0 && invoice.status !== 'paid' ? (
                   <span className="ml-2 text-red-500 font-medium flex items-center">
                     <AlertTriangle className="h-3.5 w-3.5 mr-1" />
-                    Vencida hace {Math.abs(diffDays)} días
+                    Overdue by {Math.abs(diffDays)} days
                   </span>
                 ) : diffDays >= 0 && invoice.status !== 'paid' ? (
                   <span className="ml-2 text-amber-500 font-medium flex items-center">
                     <Clock className="h-3.5 w-3.5 mr-1" />
-                    Vence en {diffDays} días
+                    Due in {diffDays} days
                   </span>
                 ) : null}
               </CardDescription>
@@ -239,7 +239,7 @@ export default function InvoiceDetail({ invoice, isOpen, onClose, onEdit }: Invo
             <CardContent className="space-y-4">
               <div>
                 <div className="flex justify-between mb-1 text-sm">
-                  <span>Progreso de Pago</span>
+                  <span>Payment Progress</span>
                   <span>{paymentProgress.toFixed(0)}%</span>
                 </div>
                 <Progress value={paymentProgress} className="h-2" />
@@ -251,11 +251,11 @@ export default function InvoiceDetail({ invoice, isOpen, onClose, onEdit }: Invo
                   <div className="text-lg font-semibold">{formatCurrency(invoice.total)}</div>
                 </div>
                 <div className="rounded-md border p-3">
-                  <div className="text-sm text-muted-foreground">Pagado</div>
+                  <div className="text-sm text-muted-foreground">Paid</div>
                   <div className="text-lg font-semibold text-green-600">{formatCurrency(invoice.amountPaid)}</div>
                 </div>
                 <div className="rounded-md border p-3">
-                  <div className="text-sm text-muted-foreground">Saldo Pendiente</div>
+                  <div className="text-sm text-muted-foreground">Remaining Balance</div>
                   <div className="text-lg font-semibold text-amber-600">{formatCurrency(remainingAmount)}</div>
                 </div>
               </div>
@@ -263,7 +263,7 @@ export default function InvoiceDetail({ invoice, isOpen, onClose, onEdit }: Invo
               {isRecordingPayment ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                   <div>
-                    <label className="text-sm font-medium mb-1 block">Monto del Pago</label>
+                    <label className="text-sm font-medium mb-1 block">Payment Amount</label>
                     <div className="flex space-x-2">
                       <div className="relative flex-1">
                         <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
