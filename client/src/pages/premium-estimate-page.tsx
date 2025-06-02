@@ -198,16 +198,16 @@ export default function PremiumEstimatePage() {
         <div className="flex gap-2">
           <Button variant="outline" size="sm">
             <Printer className="mr-2 h-4 w-4" />
-            Imprimir
+            Print
           </Button>
           <Button variant="outline" size="sm">
             <Download className="mr-2 h-4 w-4" />
-            Descargar PDF
+            Download PDF
           </Button>
           {estimate.status !== 'rejected' && estimate.status !== 'expired' && (
             <Button variant="outline" size="sm">
               <Mail className="mr-2 h-4 w-4" />
-              Enviar por Email
+              Send by Email
             </Button>
           )}
         </div>
@@ -330,7 +330,7 @@ export default function PremiumEstimatePage() {
       {/* Client and Project Info */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <InfoCard
-          title="Información del Cliente"
+          title="Client Information"
           icon={<User className="h-4 w-4" />}
           content={
             <div className="mt-2">
@@ -342,7 +342,7 @@ export default function PremiumEstimatePage() {
                 </Avatar>
                 <div>
                   <p className="font-medium">{estimate.client?.firstName} {estimate.client?.lastName}</p>
-                  <p className="text-sm text-muted-foreground">{estimate.client?.company || "Cliente Particular"}</p>
+                  <p className="text-sm text-muted-foreground">{estimate.client?.company || "Individual Client"}</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-1 text-sm">
@@ -351,11 +351,11 @@ export default function PremiumEstimatePage() {
                   <span>{estimate.client?.email}</span>
                 </div>
                 <div className="flex items-center">
-                  <span className="text-muted-foreground w-20">Teléfono:</span>
+                  <span className="text-muted-foreground w-20">Phone:</span>
                   <span>{estimate.client?.phone}</span>
                 </div>
                 <div className="flex items-center">
-                  <span className="text-muted-foreground w-20">Dirección:</span>
+                  <span className="text-muted-foreground w-20">Address:</span>
                   <span>{estimate.client?.address}</span>
                 </div>
               </div>
@@ -365,7 +365,7 @@ export default function PremiumEstimatePage() {
         
         {estimate.project && (
           <InfoCard
-            title="Información del Proyecto"
+            title="Project Information"
             icon={<Briefcase className="h-4 w-4" />}
             content={
               <div className="mt-2">
@@ -389,18 +389,18 @@ export default function PremiumEstimatePage() {
         )}
         
         <InfoCard
-          title="Fechas Importantes"
+          title="Important Dates"
           icon={<CalendarRange className="h-4 w-4" />}
           content={
             <div className="mt-2 space-y-2">
               <DateDisplay 
-                label="Emisión" 
+                label="Issue Date" 
                 date={estimate.issueDate}
               />
               
               {estimate.expiryDate && (
                 <DateDisplay 
-                  label="Expiración" 
+                  label="Expiration" 
                   date={estimate.expiryDate}
                   isPast={isExpired}
                   isFuture={!isExpired}
