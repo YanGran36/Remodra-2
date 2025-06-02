@@ -194,15 +194,10 @@ export default function EstimatesPage() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={() => setLocation("/multi-service-estimate")}>
+                  <DropdownMenuItem onClick={() => setLocation("/estimates/create-professional")}>
                     <Calculator className="mr-2 h-4 w-4" />
-                    Multi-Service Estimate
-                    <div className="text-xs text-gray-500 mt-1">Advanced estimate with measurements</div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={createNewEstimate}>
-                    <FileText className="mr-2 h-4 w-4" />
-                    Quick Estimate
-                    <div className="text-xs text-gray-500 mt-1">Simple estimate form</div>
+                    Professional Estimate
+                    <div className="text-xs text-gray-500 mt-1">Complete estimate with measurements</div>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setLocation("/vendor-estimate-form")}>
                     <FileEdit className="mr-2 h-4 w-4" />
