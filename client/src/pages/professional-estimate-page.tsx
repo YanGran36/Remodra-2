@@ -9,11 +9,10 @@ import {
   Trash2, 
   Save, 
   Calculator,
-  Ruler,
-  FileText,
   User,
   Building2,
-  DollarSign
+  DollarSign,
+  Ruler
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,15 +41,6 @@ interface ServiceItem {
   quantity: number;
   unit: string;
   unitPrice: number;
-  laborHours: number;
-  measurements?: {
-    area?: number;
-    linearFeet?: number;
-    squareFeet?: number;
-    height?: number;
-    width?: number;
-    length?: number;
-  };
   total: number;
 }
 
@@ -84,19 +74,24 @@ export default function ProfessionalEstimatePage() {
     terms: "Payment due within 30 days. Work to begin upon acceptance of estimate."
   });
 
-  const [currentService, setCurrentService] = useState<Partial<ServiceItem>>({
+  const [currentService, setCurrentService] = useState({
     serviceType: "",
     serviceName: "",
     description: "",
     quantity: 1,
-    unit: "unit",
+    unit: "each",
     unitPrice: 0,
-    laborHours: 0,
-    measurements: {}
+    measurements: {
+      length: 0,
+      width: 0,
+      height: 0,
+      pitch: 0,
+      count: 1
+    }
   });
 
-  const [activeTab, setActiveTab] = useState("details");
-  const [showMeasurements, setShowMeasurements] = useState(false);
+  const [activeTab, setActiveTab] = useState("client");
+  const [showFenceTool, setShowFenceTool] = useState(false);
 
   // Fetch data
   const { data: clients = [] } = useQuery<any[]>({
@@ -111,22 +106,22 @@ export default function ProfessionalEstimatePage() {
     queryKey: ["/api/direct/services"],
   });
 
-  // Service types for measurement tools
+  // Professional service types with industry standards
   const serviceTypes = [
-    { value: "fence", label: "Fence", unit: "ft", hasMeasurements: true },
-    { value: "deck", label: "Deck", unit: "sqft", hasMeasurements: false },
-    { value: "roof", label: "Roofing", unit: "sqft", hasMeasurements: false },
-    { value: "windows", label: "Windows", unit: "unit", hasMeasurements: false },
-    { value: "gutters", label: "Gutters & Downspouts", unit: "ft", hasMeasurements: false },
-    { value: "siding", label: "Siding", unit: "sqft", hasMeasurements: false },
-    { value: "flooring", label: "Flooring", unit: "sqft", hasMeasurements: false },
-    { value: "painting", label: "Painting", unit: "sqft", hasMeasurements: false },
-    { value: "electrical", label: "Electrical", unit: "unit", hasMeasurements: false },
-    { value: "plumbing", label: "Plumbing", unit: "unit", hasMeasurements: false },
-    { value: "concrete", label: "Concrete", unit: "sqft", hasMeasurements: false },
-    { value: "landscaping", label: "Landscaping", unit: "sqft", hasMeasurements: false },
-    { value: "hvac", label: "HVAC", unit: "unit", hasMeasurements: false },
-    { value: "other", label: "Other Services", unit: "unit", hasMeasurements: false }
+    { value: "fence", label: "Fence", unit: "linear ft", type: "linear" },
+    { value: "roof", label: "Roofing", unit: "squares", type: "roofing" },
+    { value: "siding", label: "Siding", unit: "sq ft", type: "area" },
+    { value: "deck", label: "Deck", unit: "sq ft", type: "area" },
+    { value: "gutters", label: "Gutters & Downspouts", unit: "linear ft", type: "linear" },
+    { value: "windows", label: "Windows", unit: "each", type: "count" },
+    { value: "flooring", label: "Flooring", unit: "sq ft", type: "area" },
+    { value: "painting", label: "Painting", unit: "sq ft", type: "area" },
+    { value: "electrical", label: "Electrical", unit: "each", type: "count" },
+    { value: "plumbing", label: "Plumbing", unit: "each", type: "count" },
+    { value: "concrete", label: "Concrete", unit: "sq ft", type: "area" },
+    { value: "landscaping", label: "Landscaping", unit: "sq ft", type: "area" },
+    { value: "hvac", label: "HVAC", unit: "each", type: "count" },
+    { value: "other", label: "Other Services", unit: "each", type: "count" }
   ];
 
   // Calculate totals
@@ -151,53 +146,56 @@ export default function ProfessionalEstimatePage() {
       ...prev,
       serviceType,
       serviceName: selectedType?.label || "",
-      unit: selectedType?.unit || "unit",
+      unit: selectedType?.unit || "each",
       unitPrice: matchingService ? parseFloat(matchingService.laborRate) : 0,
-      measurements: {}
+      measurements: {
+        length: 0,
+        width: 0,
+        height: 0,
+        pitch: 0,
+        count: 1
+      }
     }));
 
-    setShowMeasurements(selectedType?.hasMeasurements || false);
+    setShowFenceTool(serviceType === "fence");
+    calculateQuantity(serviceType, prev.measurements);
   };
 
-  const handleMeasurementsChange = (measurements: any[]) => {
+  const calculateQuantity = (serviceType: string, measurements: any) => {
+    const serviceConfig = serviceTypes.find(s => s.value === serviceType);
+    let quantity = 1;
+
+    switch (serviceConfig?.type) {
+      case "linear":
+        quantity = measurements.length || 0;
+        break;
+      case "area":
+        quantity = (measurements.length || 0) * (measurements.width || measurements.height || 0);
+        break;
+      case "roofing":
+        // Roofing: Calculate squares (100 sq ft units)
+        const sqft = (measurements.length || 0) * (measurements.width || 0);
+        quantity = Math.ceil(sqft / 100);
+        break;
+      case "count":
+        quantity = measurements.count || 1;
+        break;
+    }
+
+    setCurrentService(prev => ({ ...prev, quantity: Math.max(quantity, 0.1) }));
+  };
+
+  const handleMeasurementChange = (field: string, value: number) => {
+    const newMeasurements = { ...currentService.measurements, [field]: value };
+    setCurrentService(prev => ({ ...prev, measurements: newMeasurements }));
+    calculateQuantity(currentService.serviceType, newMeasurements);
+  };
+
+  const handleFenceMeasurements = (measurements: any[]) => {
     if (measurements.length > 0) {
       const totalLinearFeet = measurements.reduce((sum, m) => sum + m.totalLength, 0);
-      setCurrentService(prev => ({
-        ...prev,
-        quantity: totalLinearFeet,
-        measurements: {
-          linearFeet: totalLinearFeet
-        }
-      }));
+      setCurrentService(prev => ({ ...prev, quantity: totalLinearFeet }));
     }
-  };
-
-  const handleDimensionChange = (field: string, value: number) => {
-    setCurrentService(prev => {
-      const measurements = { ...prev.measurements, [field]: value };
-      let quantity = 1;
-
-      // Calculate quantity based on service type
-      if (prev.serviceType === "deck" || prev.serviceType === "roof" || prev.serviceType === "siding" || 
-          prev.serviceType === "flooring" || prev.serviceType === "painting" || prev.serviceType === "concrete" || 
-          prev.serviceType === "landscaping") {
-        // Area calculation
-        const length = measurements.length || 0;
-        const width = measurements.width || 0;
-        quantity = length * width;
-        measurements.squareFeet = quantity;
-      } else if (prev.serviceType === "gutters") {
-        // Linear feet
-        quantity = measurements.length || 0;
-        measurements.linearFeet = quantity;
-      }
-
-      return {
-        ...prev,
-        quantity,
-        measurements
-      };
-    });
   };
 
   const addService = () => {
@@ -210,18 +208,16 @@ export default function ProfessionalEstimatePage() {
       return;
     }
 
-    const total = (currentService.quantity || 1) * (currentService.unitPrice || 0);
+    const total = currentService.quantity * currentService.unitPrice;
     
     const newService: ServiceItem = {
       id: Date.now().toString(),
-      serviceType: currentService.serviceType || "",
-      serviceName: currentService.serviceName || "",
-      description: currentService.description || "",
-      quantity: currentService.quantity || 1,
-      unit: currentService.unit || "unit",
-      unitPrice: currentService.unitPrice || 0,
-      laborHours: currentService.laborHours || 0,
-      measurements: currentService.measurements || {},
+      serviceType: currentService.serviceType,
+      serviceName: currentService.serviceName,
+      description: currentService.description,
+      quantity: currentService.quantity,
+      unit: currentService.unit,
+      unitPrice: currentService.unitPrice,
       total
     };
 
@@ -230,18 +226,23 @@ export default function ProfessionalEstimatePage() {
       services: [...prev.services, newService]
     }));
 
-    // Reset current service
+    // Reset form
     setCurrentService({
       serviceType: "",
       serviceName: "",
       description: "",
       quantity: 1,
-      unit: "unit",
+      unit: "each",
       unitPrice: 0,
-      laborHours: 0,
-      measurements: {}
+      measurements: {
+        length: 0,
+        width: 0,
+        height: 0,
+        pitch: 0,
+        count: 1
+      }
     });
-    setShowMeasurements(false);
+    setShowFenceTool(false);
   };
 
   const removeService = (serviceId: string) => {
@@ -294,7 +295,7 @@ export default function ProfessionalEstimatePage() {
         quantity: service.quantity.toString(),
         unitPrice: service.unitPrice.toString(),
         amount: service.total.toString(),
-        notes: service.measurements ? JSON.stringify(service.measurements) : null
+        notes: null
       }))
     };
 
@@ -313,6 +314,106 @@ export default function ProfessionalEstimatePage() {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
       .format(amount);
+  };
+
+  const renderMeasurementInputs = () => {
+    const serviceConfig = serviceTypes.find(s => s.value === currentService.serviceType);
+    
+    if (!serviceConfig || showFenceTool) return null;
+
+    switch (serviceConfig.type) {
+      case "linear":
+        return (
+          <div>
+            <Label>Length (ft)</Label>
+            <Input
+              type="number"
+              step="0.1"
+              value={currentService.measurements.length || ""}
+              onChange={(e) => handleMeasurementChange("length", parseFloat(e.target.value) || 0)}
+              placeholder="Enter length in feet"
+            />
+          </div>
+        );
+
+      case "area":
+        return (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Length (ft)</Label>
+              <Input
+                type="number"
+                step="0.1"
+                value={currentService.measurements.length || ""}
+                onChange={(e) => handleMeasurementChange("length", parseFloat(e.target.value) || 0)}
+              />
+            </div>
+            <div>
+              <Label>{serviceConfig.value === "painting" || serviceConfig.value === "siding" ? "Height (ft)" : "Width (ft)"}</Label>
+              <Input
+                type="number"
+                step="0.1"
+                value={serviceConfig.value === "painting" || serviceConfig.value === "siding" ? 
+                  currentService.measurements.height || "" : currentService.measurements.width || ""}
+                onChange={(e) => {
+                  const field = serviceConfig.value === "painting" || serviceConfig.value === "siding" ? "height" : "width";
+                  handleMeasurementChange(field, parseFloat(e.target.value) || 0);
+                }}
+              />
+            </div>
+          </div>
+        );
+
+      case "roofing":
+        return (
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label>Length (ft)</Label>
+              <Input
+                type="number"
+                step="0.1"
+                value={currentService.measurements.length || ""}
+                onChange={(e) => handleMeasurementChange("length", parseFloat(e.target.value) || 0)}
+              />
+            </div>
+            <div>
+              <Label>Width (ft)</Label>
+              <Input
+                type="number"
+                step="0.1"
+                value={currentService.measurements.width || ""}
+                onChange={(e) => handleMeasurementChange("width", parseFloat(e.target.value) || 0)}
+              />
+            </div>
+            <div>
+              <Label>Pitch (optional)</Label>
+              <Input
+                type="number"
+                step="0.1"
+                value={currentService.measurements.pitch || ""}
+                onChange={(e) => handleMeasurementChange("pitch", parseFloat(e.target.value) || 0)}
+                placeholder="e.g., 6/12"
+              />
+            </div>
+          </div>
+        );
+
+      case "count":
+        return (
+          <div>
+            <Label>Quantity</Label>
+            <Input
+              type="number"
+              value={currentService.measurements.count || 1}
+              onChange={(e) => handleMeasurementChange("count", parseInt(e.target.value) || 1)}
+              min="1"
+            />
+          </div>
+        );
+
+      default:
+        return null;
+    }
   };
 
   return (
@@ -335,28 +436,20 @@ export default function ProfessionalEstimatePage() {
               </Button>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Professional Estimate</h1>
-                <p className="text-gray-600">Create a comprehensive estimate with measurements and calculations</p>
+                <p className="text-gray-600">Create a complete estimate with professional measurements</p>
               </div>
             </div>
-            <Button onClick={saveEstimate} disabled={createEstimateMutation.isPending}>
-              <Save className="h-4 w-4 mr-2" />
-              {createEstimateMutation.isPending ? "Saving..." : "Save Estimate"}
-            </Button>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="details" className="flex items-center">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="client" className="flex items-center">
                 <User className="h-4 w-4 mr-2" />
-                Client & Project
+                Client
               </TabsTrigger>
               <TabsTrigger value="services" className="flex items-center">
                 <Building2 className="h-4 w-4 mr-2" />
-                Services
-              </TabsTrigger>
-              <TabsTrigger value="measurements" className="flex items-center">
-                <Ruler className="h-4 w-4 mr-2" />
-                Measurements
+                Services & Measurements
               </TabsTrigger>
               <TabsTrigger value="summary" className="flex items-center">
                 <DollarSign className="h-4 w-4 mr-2" />
@@ -364,104 +457,77 @@ export default function ProfessionalEstimatePage() {
               </TabsTrigger>
             </TabsList>
 
-            {/* Client & Project Details */}
-            <TabsContent value="details" className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Client Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label htmlFor="client">Select Client *</Label>
-                      <Select 
-                        value={estimateData.clientId?.toString() || ""} 
-                        onValueChange={(value) => setEstimateData(prev => ({ ...prev, clientId: parseInt(value) }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Choose a client" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {(clients as any[]).map((client: any) => (
-                            <SelectItem key={client.id} value={client.id.toString()}>
-                              {client.firstName} {client.lastName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Project Association</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label htmlFor="project">Associated Project (Optional)</Label>
-                      <Select 
-                        value={estimateData.projectId?.toString() || "no_project"} 
-                        onValueChange={(value) => setEstimateData(prev => ({ 
-                          ...prev, 
-                          projectId: value && value !== "no_project" ? parseInt(value) : null 
-                        }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Choose a project" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="no_project">No Project</SelectItem>
-                          {(projects as any[]).map((project: any) => (
-                            <SelectItem key={project.id} value={project.id.toString()}>
-                              {project.title}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
+            {/* Client Selection */}
+            <TabsContent value="client" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Estimate Terms & Notes</CardTitle>
+                  <CardTitle>Select Client</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="terms">Terms & Conditions</Label>
-                    <Textarea
-                      id="terms"
-                      value={estimateData.terms}
-                      onChange={(e) => setEstimateData(prev => ({ ...prev, terms: e.target.value }))}
-                      rows={3}
-                    />
+                    <Label htmlFor="client">Client *</Label>
+                    <Select 
+                      value={estimateData.clientId?.toString() || ""} 
+                      onValueChange={(value) => setEstimateData(prev => ({ ...prev, clientId: parseInt(value) }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a client" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(clients as any[]).map((client: any) => (
+                          <SelectItem key={client.id} value={client.id.toString()}>
+                            {client.firstName} {client.lastName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
+
                   <div>
-                    <Label htmlFor="notes">Additional Notes</Label>
-                    <Textarea
-                      id="notes"
-                      value={estimateData.notes}
-                      onChange={(e) => setEstimateData(prev => ({ ...prev, notes: e.target.value }))}
-                      rows={3}
-                      placeholder="Any additional information for the client..."
-                    />
+                    <Label htmlFor="project">Associated Project (Optional)</Label>
+                    <Select 
+                      value={estimateData.projectId?.toString() || "no_project"} 
+                      onValueChange={(value) => setEstimateData(prev => ({ 
+                        ...prev, 
+                        projectId: value && value !== "no_project" ? parseInt(value) : null 
+                      }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a project" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="no_project">No Project</SelectItem>
+                        {(projects as any[]).map((project: any) => (
+                          <SelectItem key={project.id} value={project.id.toString()}>
+                            {project.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
+
+                  {estimateData.clientId && (
+                    <div className="mt-4">
+                      <Button onClick={() => setActiveTab("services")}>
+                        Continue to Services
+                        <Building2 className="h-4 w-4 ml-2" />
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
 
-            {/* Services */}
+            {/* Services & Measurements */}
             <TabsContent value="services" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Add Service</CardTitle>
+                  <CardTitle>Add Services</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="serviceType">Service Type *</Label>
+                      <Label>Service Type *</Label>
                       <Select value={currentService.serviceType} onValueChange={handleServiceTypeChange}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select service type" />
@@ -477,9 +543,8 @@ export default function ProfessionalEstimatePage() {
                     </div>
 
                     <div>
-                      <Label htmlFor="serviceName">Service Name *</Label>
+                      <Label>Service Name *</Label>
                       <Input
-                        id="serviceName"
                         value={currentService.serviceName}
                         onChange={(e) => setCurrentService(prev => ({ ...prev, serviceName: e.target.value }))}
                         placeholder="e.g., Wood Fence Installation"
@@ -487,9 +552,8 @@ export default function ProfessionalEstimatePage() {
                     </div>
 
                     <div className="md:col-span-2">
-                      <Label htmlFor="description">Description</Label>
+                      <Label>Description</Label>
                       <Textarea
-                        id="description"
                         value={currentService.description}
                         onChange={(e) => setCurrentService(prev => ({ ...prev, description: e.target.value }))}
                         rows={2}
@@ -497,143 +561,52 @@ export default function ProfessionalEstimatePage() {
                       />
                     </div>
 
-                    {!showMeasurements && (
-                      <>
-                        {/* Simple dimension inputs for non-fence services */}
-                        {currentService.serviceType && currentService.serviceType !== "fence" && (
-                          <div className="md:col-span-2">
-                            <Label>Measurements & Dimensions</Label>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
-                              {(currentService.serviceType === "deck" || currentService.serviceType === "roof" || 
-                                currentService.serviceType === "siding" || currentService.serviceType === "flooring" || 
-                                currentService.serviceType === "painting" || currentService.serviceType === "concrete" || 
-                                currentService.serviceType === "landscaping") && (
-                                <>
-                                  <div>
-                                    <Label className="text-xs">Length (ft)</Label>
-                                    <Input
-                                      type="number"
-                                      step="0.1"
-                                      value={currentService.measurements?.length || ""}
-                                      onChange={(e) => handleDimensionChange("length", parseFloat(e.target.value) || 0)}
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label className="text-xs">Width (ft)</Label>
-                                    <Input
-                                      type="number"
-                                      step="0.1"
-                                      value={currentService.measurements?.width || ""}
-                                      onChange={(e) => handleDimensionChange("width", parseFloat(e.target.value) || 0)}
-                                    />
-                                  </div>
-                                </>
-                              )}
-                              {currentService.serviceType === "gutters" && (
-                                <div>
-                                  <Label className="text-xs">Length (ft)</Label>
-                                  <Input
-                                    type="number"
-                                    step="0.1"
-                                    value={currentService.measurements?.length || ""}
-                                    onChange={(e) => handleDimensionChange("length", parseFloat(e.target.value) || 0)}
-                                  />
-                                </div>
-                              )}
-                              {(currentService.serviceType === "windows" || currentService.serviceType === "electrical" || 
-                                currentService.serviceType === "plumbing" || currentService.serviceType === "hvac" || 
-                                currentService.serviceType === "other") && (
-                                <div>
-                                  <Label className="text-xs">Quantity</Label>
-                                  <Input
-                                    type="number"
-                                    value={currentService.quantity || 1}
-                                    onChange={(e) => setCurrentService(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
-                                  />
-                                </div>
-                              )}
+                    {/* Measurement Inputs */}
+                    {currentService.serviceType && !showFenceTool && (
+                      <div className="md:col-span-2">
+                        <Label>Measurements</Label>
+                        <div className="mt-2 space-y-4">
+                          {renderMeasurementInputs()}
+                          {currentService.quantity > 0 && (
+                            <div className="text-sm text-blue-600">
+                              Calculated: {currentService.quantity.toFixed(2)} {currentService.unit}
                             </div>
-                            {currentService.measurements?.squareFeet && (
-                              <div className="mt-2 text-sm text-gray-600">
-                                Total Area: {currentService.measurements.squareFeet.toFixed(1)} sq ft
-                              </div>
-                            )}
-                            {currentService.measurements?.linearFeet && (
-                              <div className="mt-2 text-sm text-gray-600">
-                                Total Length: {currentService.measurements.linearFeet.toFixed(1)} ft
-                              </div>
-                            )}
-                          </div>
-                        )}
+                          )}
+                        </div>
+                      </div>
+                    )}
 
-                        <div>
-                          <Label htmlFor="quantity">Quantity</Label>
-                          <Input
-                            id="quantity"
-                            type="number"
-                            step="0.1"
-                            value={currentService.quantity}
-                            onChange={(e) => setCurrentService(prev => ({ ...prev, quantity: parseFloat(e.target.value) || 1 }))}
+                    {/* Fence Measurement Tool */}
+                    {showFenceTool && (
+                      <div className="md:col-span-2">
+                        <Label>Fence Measurements</Label>
+                        <div className="mt-2 p-4 border rounded-lg">
+                          <FenceMeasurementTool
+                            onMeasurementsChange={handleFenceMeasurements}
+                            serviceUnit="ft"
                           />
                         </div>
-
-                        <div>
-                          <Label htmlFor="unitPrice">Unit Price ($)</Label>
-                          <Input
-                            id="unitPrice"
-                            type="number"
-                            step="0.01"
-                            value={currentService.unitPrice}
-                            onChange={(e) => setCurrentService(prev => ({ ...prev, unitPrice: parseFloat(e.target.value) || 0 }))}
-                          />
-                        </div>
-                      </>
+                      </div>
                     )}
 
                     <div>
-                      <Label htmlFor="laborHours">Labor Hours</Label>
+                      <Label>Unit Price ($)</Label>
                       <Input
-                        id="laborHours"
                         type="number"
-                        step="0.5"
-                        value={currentService.laborHours}
-                        onChange={(e) => setCurrentService(prev => ({ ...prev, laborHours: parseFloat(e.target.value) || 0 }))}
+                        step="0.01"
+                        value={currentService.unitPrice}
+                        onChange={(e) => setCurrentService(prev => ({ ...prev, unitPrice: parseFloat(e.target.value) || 0 }))}
                       />
                     </div>
 
-                    {!showMeasurements && (
-                      <div>
-                        <Label>Total: {formatCurrency((currentService.quantity || 1) * (currentService.unitPrice || 0))}</Label>
-                      </div>
-                    )}
-                  </div>
-
-                  {showMeasurements && (
-                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <Label className="text-blue-800 font-medium">Use Advanced Measurement Tool</Label>
-                        <Badge variant="outline" className="bg-blue-100 text-blue-800">
-                          Interactive Fence Measurements
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-blue-700 mb-4">
-                        Click the "Measurements" tab to use the visual measurement tool for fence planning.
-                      </p>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => setActiveTab("measurements")}
-                        className="border-blue-300 text-blue-700 hover:bg-blue-100"
-                      >
-                        <Ruler className="h-4 w-4 mr-2" />
-                        Open Measurement Tool
-                      </Button>
+                    <div>
+                      <Label>Total: {formatCurrency(currentService.quantity * currentService.unitPrice)}</Label>
                     </div>
-                  )}
+                  </div>
 
                   <Button onClick={addService} className="w-full">
                     <Plus className="h-4 w-4 mr-2" />
-                    Add Service to Estimate
+                    Add Service
                   </Button>
                 </CardContent>
               </Card>
@@ -645,23 +618,18 @@ export default function ProfessionalEstimatePage() {
                     <CardTitle>Added Services ({estimateData.services.length})</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {estimateData.services.map((service) => (
-                        <div key={service.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div key={service.id} className="flex items-center justify-between p-3 border rounded-lg">
                           <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
+                            <div className="flex items-center gap-2 mb-1">
                               <Badge variant="outline">{service.serviceType}</Badge>
                               <h4 className="font-medium">{service.serviceName}</h4>
                             </div>
-                            <p className="text-sm text-gray-600 mb-2">{service.description}</p>
+                            <p className="text-sm text-gray-600 mb-1">{service.description}</p>
                             <div className="text-sm text-gray-500">
-                              {service.quantity} {service.unit} × {formatCurrency(service.unitPrice)} = {formatCurrency(service.total)}
+                              {service.quantity.toFixed(2)} {service.unit} × {formatCurrency(service.unitPrice)} = {formatCurrency(service.total)}
                             </div>
-                            {service.measurements && Object.keys(service.measurements).length > 0 && (
-                              <div className="text-xs text-blue-600 mt-1">
-                                Measurements: {JSON.stringify(service.measurements)}
-                              </div>
-                            )}
                           </div>
                           <Button
                             variant="outline"
@@ -674,34 +642,15 @@ export default function ProfessionalEstimatePage() {
                         </div>
                       ))}
                     </div>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-
-            {/* Measurements */}
-            <TabsContent value="measurements" className="space-y-6">
-              {showMeasurements && currentService.serviceType === "fence" ? (
-                <FenceMeasurementTool
-                  onMeasurementsChange={handleMeasurementsChange}
-                  serviceUnit="ft"
-                />
-              ) : (
-                <Card>
-                  <CardContent className="py-8 text-center">
-                    <Ruler className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No Measurement Tool Available</h3>
-                    <p className="text-gray-600 mb-4">
-                      Advanced measurement tools are available for fence services. 
-                      For other services, use the dimension inputs in the Services tab.
-                    </p>
-                    <Button 
-                      variant="outline"
-                      onClick={() => setActiveTab("services")}
-                    >
-                      <Building2 className="h-4 w-4 mr-2" />
-                      Return to Services
-                    </Button>
+                    
+                    {estimateData.services.length > 0 && (
+                      <div className="mt-4">
+                        <Button onClick={() => setActiveTab("summary")}>
+                          Continue to Summary
+                          <DollarSign className="h-4 w-4 ml-2" />
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )}
@@ -723,7 +672,7 @@ export default function ProfessionalEstimatePage() {
                               <h4 className="font-medium">{service.serviceName}</h4>
                               <p className="text-sm text-gray-600">{service.description}</p>
                               <p className="text-sm text-gray-500">
-                                {service.quantity} {service.unit} × {formatCurrency(service.unitPrice)}
+                                {service.quantity.toFixed(2)} {service.unit} × {formatCurrency(service.unitPrice)}
                               </p>
                             </div>
                             <div className="text-right">
@@ -731,9 +680,31 @@ export default function ProfessionalEstimatePage() {
                             </div>
                           </div>
                         ))}
-                        {estimateData.services.length === 0 && (
-                          <p className="text-gray-500 text-center py-4">No services added yet</p>
-                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="mt-6">
+                    <CardHeader>
+                      <CardTitle>Terms & Notes</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label>Terms & Conditions</Label>
+                        <Textarea
+                          value={estimateData.terms}
+                          onChange={(e) => setEstimateData(prev => ({ ...prev, terms: e.target.value }))}
+                          rows={3}
+                        />
+                      </div>
+                      <div>
+                        <Label>Additional Notes</Label>
+                        <Textarea
+                          value={estimateData.notes}
+                          onChange={(e) => setEstimateData(prev => ({ ...prev, notes: e.target.value }))}
+                          rows={3}
+                          placeholder="Any additional information for the client..."
+                        />
                       </div>
                     </CardContent>
                   </Card>
@@ -751,9 +722,8 @@ export default function ProfessionalEstimatePage() {
                       </div>
                       
                       <div className="space-y-2">
-                        <Label htmlFor="tax">Tax (%)</Label>
+                        <Label>Tax (%)</Label>
                         <Input
-                          id="tax"
                           type="number"
                           step="0.1"
                           value={estimateData.tax}
@@ -762,9 +732,8 @@ export default function ProfessionalEstimatePage() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="discount">Discount (%)</Label>
+                        <Label>Discount (%)</Label>
                         <Input
-                          id="discount"
                           type="number"
                           step="0.1"
                           value={estimateData.discount}
