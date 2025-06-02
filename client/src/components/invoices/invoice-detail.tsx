@@ -382,23 +382,23 @@ export default function InvoiceDetail({ invoice, isOpen, onClose, onEdit }: Invo
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <h4 className="font-medium mb-2">Firma del Contratista</h4>
+                        <h4 className="font-medium mb-2">Contractor Signature</h4>
                         <div className="rounded-md bg-muted p-4 h-20 flex items-center justify-center">
                           {invoice.contractorSignature ? (
                             <p className="italic">{invoice.contractorSignature}</p>
                           ) : (
-                            <p className="text-muted-foreground">No hay firma</p>
+                            <p className="text-muted-foreground">No signature</p>
                           )}
                         </div>
                       </div>
                       
                       <div>
-                        <h4 className="font-medium mb-2">Firma del Cliente</h4>
+                        <h4 className="font-medium mb-2">Client Signature</h4>
                         <div className="rounded-md bg-muted p-4 h-20 flex items-center justify-center">
                           {invoice.clientSignature ? (
                             <p className="italic">{invoice.clientSignature}</p>
                           ) : (
-                            <p className="text-muted-foreground">No hay firma</p>
+                            <p className="text-muted-foreground">No signature</p>
                           )}
                         </div>
                       </div>
@@ -409,9 +409,9 @@ export default function InvoiceDetail({ invoice, isOpen, onClose, onEdit }: Invo
                 <TabsContent value="notes">
                   <div className="space-y-4">
                     <div>
-                      <h4 className="font-medium mb-2">Notas</h4>
+                      <h4 className="font-medium mb-2">Notes</h4>
                       <div className="rounded-md bg-muted p-4">
-                        <p className="whitespace-pre-line">{invoice.notes || "No hay notas para esta orden de trabajo."}</p>
+                        <p className="whitespace-pre-line">{invoice.notes || "No notes for this work order."}</p>
                       </div>
                     </div>
                   </div>
@@ -424,7 +424,7 @@ export default function InvoiceDetail({ invoice, isOpen, onClose, onEdit }: Invo
           {invoice.status === 'pending' && (
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Acciones Disponibles</CardTitle>
+                <CardTitle className="text-sm font-medium">Available Actions</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-3">
@@ -434,7 +434,7 @@ export default function InvoiceDetail({ invoice, isOpen, onClose, onEdit }: Invo
                     onClick={() => handleStatusChange('paid')}
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    Marcar como Pagada
+                    Mark as Paid
                   </Button>
                   <Button
                     variant="default"
@@ -442,11 +442,11 @@ export default function InvoiceDetail({ invoice, isOpen, onClose, onEdit }: Invo
                     onClick={() => handleStatusChange('overdue')}
                   >
                     <AlertTriangle className="h-4 w-4 mr-2" />
-                    Marcar como Vencida
+                    Mark as Overdue
                   </Button>
                   <Button variant="outline" onClick={() => onEdit(invoice)}>
                     <FileEdit className="h-4 w-4 mr-2" />
-                    Editar
+                    Edit
                   </Button>
                 </div>
               </CardContent>
