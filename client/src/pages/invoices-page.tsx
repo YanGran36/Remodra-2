@@ -171,13 +171,13 @@ export default function InvoicesPage() {
       <main className="flex-1 overflow-y-auto bg-gray-50">
         <div className="page-layout">
           <PageHeader 
-            title={t('invoices.title')}
-            description="Gestiona órdenes de trabajo y pagos"
+            title="Invoices"
+            description="Manage work orders and payments"
             actions={
               <Link href="/invoices/new">
                 <Button className="flex items-center">
                   <Plus className="h-4 w-4 mr-2" />
-                  {t('invoices.addInvoice')}
+                  Add Invoice
                 </Button>
               </Link>
             }
@@ -186,7 +186,7 @@ export default function InvoicesPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Total Órdenes</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-500">Total Orders</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{count}</div>
@@ -195,7 +195,7 @@ export default function InvoicesPage() {
             
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Valor Total</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-500">Total Value</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{formatCurrency(total)}</div>
@@ -204,7 +204,7 @@ export default function InvoicesPage() {
             
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Pagado</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-500">Paid</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">{formatCurrency(paid)}</div>
@@ -213,7 +213,7 @@ export default function InvoicesPage() {
             
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Pendiente</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-500">Pending</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-yellow-600">{formatCurrency(pending)}</div>
@@ -226,14 +226,14 @@ export default function InvoicesPage() {
               <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
                 <div className="flex flex-col sm:flex-row gap-4">
                   <SearchInput 
-                    placeholder="Buscar órdenes..." 
+                    placeholder="Search orders..." 
                     onSearch={setSearchQuery}
                     className="w-full sm:w-80"
                   />
                   
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-full sm:w-40">
-                      <SelectValue placeholder="Filtrar por estado" />
+                      <SelectValue placeholder="Filter by status" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos los estados</SelectItem>
