@@ -20,7 +20,8 @@ import {
   CheckCircle,
   Calculator,
   XCircle,
-  Clock
+  Clock,
+  Check
 } from "lucide-react";
 import { 
   Select, 
@@ -103,7 +104,8 @@ export default function EstimatesPage() {
   // Use the estimates hook for all estimate-related operations
   const { 
     deleteEstimateMutation, 
-    convertToInvoiceMutation 
+    convertToInvoiceMutation,
+    updateEstimateStatusMutation 
   } = useEstimates();
 
   // Fetch estimates
@@ -383,9 +385,23 @@ export default function EstimatesPage() {
                                   <Mail className="mr-2 h-4 w-4" />
                                   Send
                                 </DropdownMenuItem>
+                                {estimate.status === 'sent' && (
+                                  <DropdownMenuItem onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (confirm("Are you sure you want to accept this estimate?")) {
+                                      updateEstimateStatusMutation.mutate({
+                                        id: estimate.id,
+                                        status: "accepted"
+                                      });
+                                    }
+                                  }} className="text-green-600">
+                                    <Check className="mr-2 h-4 w-4" />
+                                    Accept Estimate
+                                  </DropdownMenuItem>
+                                )}
                                 <DropdownMenuItem onClick={(e) => {
                                   e.stopPropagation();
-                                  // Verificar que el estimado esté aceptado
+                                  // Check if estimate is accepted
                                   if (estimate.status !== "accepted") {
                                     toast({
                                       title: "Cannot convert",
@@ -395,11 +411,11 @@ export default function EstimatesPage() {
                                     return;
                                   }
                                   
-                                  // Confirmar antes de convertir
+                                  // Confirm before converting
                                   if (confirm("Are you sure you want to convert this estimate to an invoice?")) {
                                     convertToInvoiceMutation.mutate(estimate.id, {
                                       onSuccess: (invoice) => {
-                                        // Redireccionar a la factura creada
+                                        // Redirect to created invoice
                                         setLocation(`/invoices/${invoice.id}`);
                                       }
                                     });
