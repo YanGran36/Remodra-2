@@ -388,15 +388,15 @@ export default function EstimatesPage() {
                                   // Verificar que el estimado esté aceptado
                                   if (estimate.status !== "accepted") {
                                     toast({
-                                      title: "No se puede convertir",
-                                      description: "Solo los estimados con estado 'Aceptado' pueden ser convertidos a facturas.",
+                                      title: "Cannot convert",
+                                      description: "Only estimates with 'Accepted' status can be converted to invoices.",
                                       variant: "destructive"
                                     });
                                     return;
                                   }
                                   
                                   // Confirmar antes de convertir
-                                  if (confirm("¿Estás seguro que deseas convertir este estimado a una factura?")) {
+                                  if (confirm("Are you sure you want to convert this estimate to an invoice?")) {
                                     convertToInvoiceMutation.mutate(estimate.id, {
                                       onSuccess: (invoice) => {
                                         // Redireccionar a la factura creada
@@ -422,7 +422,7 @@ export default function EstimatesPage() {
                                   className="text-destructive"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    if (confirm(`¿Está seguro que desea eliminar el estimado ${estimate.estimateNumber}?`)) {
+                                    if (confirm(`Are you sure you want to delete estimate ${estimate.estimateNumber}?`)) {
                                       deleteEstimateMutation.mutate(estimate.id);
                                     }
                                   }}
