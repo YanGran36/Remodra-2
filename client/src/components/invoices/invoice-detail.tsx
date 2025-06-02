@@ -47,13 +47,13 @@ const formatCurrency = (amount: number | string) => {
 const getStatusBadge = (status: string) => {
   switch (status) {
     case 'pending':
-      return <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100">Pendiente</Badge>;
+      return <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100">Pending</Badge>;
     case 'paid':
-      return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">Pagada</Badge>;
+      return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">Paid</Badge>;
     case 'overdue':
-      return <Badge variant="outline" className="bg-red-100 text-red-800 hover:bg-red-100">Vencida</Badge>;
+      return <Badge variant="outline" className="bg-red-100 text-red-800 hover:bg-red-100">Overdue</Badge>;
     case 'cancelled':
-      return <Badge variant="outline" className="bg-gray-100 text-gray-800 hover:bg-gray-100">Cancelada</Badge>;
+      return <Badge variant="outline" className="bg-gray-100 text-gray-800 hover:bg-gray-100">Cancelled</Badge>;
     default:
       return <Badge variant="outline">{status}</Badge>;
   }
@@ -101,7 +101,7 @@ export default function InvoiceDetail({ invoice, isOpen, onClose, onEdit }: Invo
     },
     onError: (error: Error) => {
       toast({
-        title: "Error al actualizar",
+        title: "Error updating",
         description: error.message,
         variant: "destructive",
       });
@@ -117,15 +117,15 @@ export default function InvoiceDetail({ invoice, isOpen, onClose, onEdit }: Invo
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/protected/invoices"] });
       toast({
-        title: "Pago registrado",
-        description: "El pago ha sido registrado correctamente.",
+        title: "Payment recorded",
+        description: "The payment has been recorded successfully.",
       });
       setIsRecordingPayment(false);
       setPaymentAmount("");
     },
     onError: (error: Error) => {
       toast({
-        title: "Error al registrar pago",
+        title: "Error recording payment",
         description: error.message,
         variant: "destructive",
       });
@@ -140,8 +140,8 @@ export default function InvoiceDetail({ invoice, isOpen, onClose, onEdit }: Invo
   const handleRecordPayment = () => {
     if (!paymentAmount || parseFloat(paymentAmount) <= 0) {
       toast({
-        title: "Monto inválido",
-        description: "Por favor ingrese un monto válido.",
+        title: "Invalid amount",
+        description: "Please enter a valid amount.",
         variant: "destructive",
       });
       return;
