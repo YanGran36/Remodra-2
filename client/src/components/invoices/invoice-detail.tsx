@@ -279,10 +279,10 @@ export default function InvoiceDetail({ invoice, isOpen, onClose, onEdit }: Invo
                         />
                       </div>
                       <Button onClick={handleRecordPayment} disabled={recordPaymentMutation.isPending}>
-                        {recordPaymentMutation.isPending ? "Registrando..." : "Registrar"}
+                        {recordPaymentMutation.isPending ? "Recording..." : "Record"}
                       </Button>
                       <Button variant="outline" onClick={() => setIsRecordingPayment(false)}>
-                        Cancelar
+                        Cancel
                       </Button>
                     </div>
                   </div>
@@ -291,7 +291,7 @@ export default function InvoiceDetail({ invoice, isOpen, onClose, onEdit }: Invo
                 invoice.status !== 'paid' && (
                   <Button onClick={() => setIsRecordingPayment(true)}>
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    Registrar Pago
+                    Record Payment
                   </Button>
                 )
               )}
@@ -301,14 +301,14 @@ export default function InvoiceDetail({ invoice, isOpen, onClose, onEdit }: Invo
           {/* Invoice Details */}
           <Card>
             <CardHeader className="pb-4">
-              <CardTitle>Detalles de la Orden de Trabajo</CardTitle>
+              <CardTitle>Work Order Details</CardTitle>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="items">
                 <TabsList className="mb-4">
-                  <TabsTrigger value="items">Artículos</TabsTrigger>
-                  <TabsTrigger value="details">Detalles</TabsTrigger>
-                  <TabsTrigger value="notes">Notas</TabsTrigger>
+                  <TabsTrigger value="items">Items</TabsTrigger>
+                  <TabsTrigger value="details">Details</TabsTrigger>
+                  <TabsTrigger value="notes">Notes</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="items">
@@ -316,9 +316,9 @@ export default function InvoiceDetail({ invoice, isOpen, onClose, onEdit }: Invo
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Descripción</TableHead>
-                          <TableHead className="text-right">Cantidad</TableHead>
-                          <TableHead className="text-right">Precio Unitario</TableHead>
+                          <TableHead>Description</TableHead>
+                          <TableHead className="text-right">Quantity</TableHead>
+                          <TableHead className="text-right">Unit Price</TableHead>
                           <TableHead className="text-right">Total</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -340,7 +340,7 @@ export default function InvoiceDetail({ invoice, isOpen, onClose, onEdit }: Invo
                         ) : (
                           <TableRow>
                             <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
-                              No hay artículos en esta orden de trabajo
+                              No items in this work order
                             </TableCell>
                           </TableRow>
                         )}
@@ -352,13 +352,13 @@ export default function InvoiceDetail({ invoice, isOpen, onClose, onEdit }: Invo
                         </TableRow>
                         {parseFloat(invoice.tax) > 0 && (
                           <TableRow>
-                            <TableCell colSpan={3} className="text-right font-medium">Impuestos</TableCell>
+                            <TableCell colSpan={3} className="text-right font-medium">Taxes</TableCell>
                             <TableCell className="text-right">{formatCurrency(invoice.tax)}</TableCell>
                           </TableRow>
                         )}
                         {parseFloat(invoice.discount) > 0 && (
                           <TableRow>
-                            <TableCell colSpan={3} className="text-right font-medium">Descuento</TableCell>
+                            <TableCell colSpan={3} className="text-right font-medium">Discount</TableCell>
                             <TableCell className="text-right">-{formatCurrency(invoice.discount)}</TableCell>
                           </TableRow>
                         )}
@@ -374,9 +374,9 @@ export default function InvoiceDetail({ invoice, isOpen, onClose, onEdit }: Invo
                 <TabsContent value="details">
                   <div className="space-y-4">
                     <div>
-                      <h4 className="font-medium mb-2">Términos y Condiciones</h4>
+                      <h4 className="font-medium mb-2">Terms and Conditions</h4>
                       <div className="rounded-md bg-muted p-4">
-                        <p className="whitespace-pre-line">{invoice.terms || "No se han especificado términos y condiciones."}</p>
+                        <p className="whitespace-pre-line">{invoice.terms || "No terms and conditions specified."}</p>
                       </div>
                     </div>
                     
