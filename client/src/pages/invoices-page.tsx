@@ -236,24 +236,24 @@ export default function InvoicesPage() {
                       <SelectValue placeholder="Filter by status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Todos los estados</SelectItem>
-                      <SelectItem value="pending">Pendiente</SelectItem>
-                      <SelectItem value="paid">Pagado</SelectItem>
-                      <SelectItem value="overdue">Vencido</SelectItem>
-                      <SelectItem value="partially_paid">Parcialmente pagado</SelectItem>
-                      <SelectItem value="cancelled">Cancelado</SelectItem>
+                      <SelectItem value="all">All statuses</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="paid">Paid</SelectItem>
+                      <SelectItem value="overdue">Overdue</SelectItem>
+                      <SelectItem value="partially_paid">Partially paid</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
                     </SelectContent>
                   </Select>
                   
                   <Select value={sortBy} onValueChange={setSortBy}>
                     <SelectTrigger className="w-full sm:w-40">
-                      <SelectValue placeholder="Ordenar por" />
+                      <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="date_desc">Más recientes</SelectItem>
-                      <SelectItem value="date_asc">Más antiguos</SelectItem>
-                      <SelectItem value="amount_desc">Mayor importe</SelectItem>
-                      <SelectItem value="amount_asc">Menor importe</SelectItem>
+                      <SelectItem value="date_desc">Most recent</SelectItem>
+                      <SelectItem value="date_asc">Oldest</SelectItem>
+                      <SelectItem value="amount_desc">Highest amount</SelectItem>
+                      <SelectItem value="amount_asc">Lowest amount</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -261,7 +261,7 @@ export default function InvoicesPage() {
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm">
                     <Download className="h-4 w-4 mr-2" />
-                    Exportar
+                    Export
                   </Button>
                 </div>
               </div>
@@ -270,13 +270,13 @@ export default function InvoicesPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[120px]">Orden #</TableHead>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Proyecto</TableHead>
-                      <TableHead>Fecha</TableHead>
-                      <TableHead>Importe</TableHead>
-                      <TableHead>Estado</TableHead>
-                      <TableHead className="text-right">Acciones</TableHead>
+                      <TableHead className="w-[120px]">Order #</TableHead>
+                      <TableHead>Client</TableHead>
+                      <TableHead>Project</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -295,7 +295,7 @@ export default function InvoicesPage() {
                     ) : invoicesError ? (
                       <TableRow>
                         <TableCell colSpan={7} className="text-center py-4 text-gray-500">
-                          Error al cargar órdenes de trabajo. Por favor, inténtalo de nuevo.
+                          Error loading work orders. Please try again.
                         </TableCell>
                       </TableRow>
                     ) : filteredInvoices.length === 0 ? (
@@ -303,17 +303,17 @@ export default function InvoicesPage() {
                         <TableCell colSpan={7} className="text-center py-8">
                           <div className="flex flex-col items-center">
                             <Receipt className="h-12 w-12 text-gray-300 mb-3" />
-                            <h3 className="text-lg font-medium text-gray-900 mb-1">No se encontraron órdenes de trabajo</h3>
+                            <h3 className="text-lg font-medium text-gray-900 mb-1">No work orders found</h3>
                             <p className="text-sm text-gray-500 mb-4">
                               {searchQuery || statusFilter !== "all" 
-                                ? "Intenta ajustar tus filtros"
-                                : "Crea tu primera orden de trabajo para comenzar"}
+                                ? "Try adjusting your filters"
+                                : "Create your first work order to get started"}
                             </p>
                             {!searchQuery && statusFilter === "all" && (
                               <Link href="/invoices/new">
                                 <Button>
                                   <Plus className="h-4 w-4 mr-2" />
-                                  Nueva Orden de Trabajo
+                                  New Work Order
                                 </Button>
                               </Link>
                             )}
