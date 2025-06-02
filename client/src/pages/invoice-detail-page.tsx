@@ -220,7 +220,7 @@ export default function InvoiceDetailPage() {
               <Link href="/estimates">
                 <Button>
                   <FileText className="h-4 w-4 mr-2" />
-                  Ver estimados
+                  View estimates
                 </Button>
               </Link>
             </div>
