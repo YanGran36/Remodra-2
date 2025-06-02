@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import CostAnalysisAssistant from "@/components/ai/cost-analysis-assistant";
 import { AiAnalysisResult } from "@/hooks/use-ai-cost-analysis";
@@ -6,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
+  ArrowLeft,
   ArrowRight, 
   PieChart, 
   FileText, 
@@ -15,10 +17,12 @@ import {
   BarChart,
   Sparkles,
   CheckCircle2,
-  DollarSign
+  DollarSign,
+  Home
 } from "lucide-react";
 
 export default function AiAssistantPage() {
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("cost-analysis");
   const [lastAnalysisResult, setLastAnalysisResult] = useState<AiAnalysisResult | null>(null);
@@ -43,11 +47,33 @@ export default function AiAssistantPage() {
   return (
     <div className="container py-8 max-w-6xl">
       <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-3xl font-bold tracking-tight flex items-center">
+              <Brain className="w-8 h-8 mr-2 text-primary" />
+              AI Assistant for Contractors
+            </h1>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setLocation("/")}
+            >
+              <Home className="h-4 w-4 mr-2" />
+              Home
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.history.back()}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+          </div>
+        </div>
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight flex items-center">
-            <Brain className="w-8 h-8 mr-2 text-primary" />
-            Asistente de IA para Contratistas
-          </h1>
           <p className="text-muted-foreground text-lg">
             Herramientas impulsadas por IA para optimizar tus estimaciones y servicios
           </p>
