@@ -107,7 +107,7 @@ export default function ClientsPage() {
       <MobileSidebar />
       
       <main className="flex-1 overflow-y-auto bg-gray-50">
-        <div className="p-6">
+        <div className="page-layout">
           <PageHeader 
             title="Clientes" 
             description="Administra tu base de datos de clientes"

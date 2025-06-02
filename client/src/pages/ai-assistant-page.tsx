@@ -45,7 +45,7 @@ export default function AiAssistantPage() {
   };
 
   return (
-    <div className="container py-8 max-w-6xl">
+    <div className="page-layout">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-2">

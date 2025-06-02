@@ -162,7 +162,7 @@ export default function Dashboard() {
       <MobileSidebar />
       
       <main className="flex-1 overflow-y-auto bg-gray-50">
-        <div className="p-6">
+        <div className="page-layout">
           <header className="mb-6 flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{t('navigation.dashboard')}</h1>

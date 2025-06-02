@@ -200,7 +200,7 @@ export default function SettingsPage() {
       <MobileSidebar />
       
       <main className="flex-1 overflow-y-auto bg-gray-50">
-        <div className="p-6">
+        <div className="page-layout">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900 flex items-center">
               <Settings className="h-6 w-6 mr-2" />

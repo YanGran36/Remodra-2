@@ -422,7 +422,7 @@ export default function ProfessionalEstimatePage() {
       <MobileSidebar />
       
       <main className="flex-1 overflow-y-auto bg-gray-50">
-        <div className="p-6 max-w-6xl mx-auto">
+        <div className="page-layout">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-4">

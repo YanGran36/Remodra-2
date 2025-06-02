@@ -180,7 +180,7 @@ export default function EstimatesPage() {
       <MobileSidebar />
       
       <main className="flex-1 overflow-y-auto bg-gray-50">
-        <div className="p-6">
+        <div className="page-layout">
           <PageHeader 
             title="Estimates" 
             description="Create and manage customer estimates"
