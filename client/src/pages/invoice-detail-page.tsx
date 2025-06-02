@@ -198,23 +198,23 @@ export default function InvoiceDetailPage() {
           <Link href="/invoices">
             <Button variant="ghost" className="mb-4">
               <ChevronLeft className="h-4 w-4 mr-2" />
-              Volver a facturas
+              Back to invoices
             </Button>
           </Link>
           
-          <h1 className="text-2xl font-bold">Factura no encontrada</h1>
+          <h1 className="text-2xl font-bold">Invoice not found</h1>
           <p className="text-gray-600 mt-2">
             {error 
-              ? `Ocurrió un error: ${error.message}` 
-              : "No se pudo encontrar la factura solicitada. Es posible que la factura haya sido eliminada o que aún no se haya creado."
+              ? `An error occurred: ${error.message}` 
+              : "The requested invoice could not be found. The invoice may have been deleted or not yet created."
             }
           </p>
           <div className="mt-6">
-            <h2 className="text-lg font-medium mb-2">Sugerencias:</h2>
+            <h2 className="text-lg font-medium mb-2">Suggestions:</h2>
             <ul className="list-disc list-inside text-gray-600 space-y-1">
-              <li>Verifica que estás accediendo a una factura existente</li>
-              <li>Para crear una nueva factura, puedes convertir un estimado aceptado a factura</li>
-              <li>Revisa la página de estimados para ver si hay alguno que se pueda convertir a factura</li>
+              <li>Verify that you are accessing an existing invoice</li>
+              <li>To create a new invoice, you can convert an accepted estimate to an invoice</li>
+              <li>Check the estimates page to see if there are any that can be converted to invoices</li>
             </ul>
             <div className="mt-6">
               <Link href="/estimates">

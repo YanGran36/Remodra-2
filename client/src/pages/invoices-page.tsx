@@ -390,8 +390,8 @@ export default function InvoicesPage() {
               <h3 className="text-lg font-semibold mb-4">Work order status</h3>
               <Tabs defaultValue="byStatus">
                 <TabsList className="mb-4">
-                  <TabsTrigger value="byStatus">Por estado</TabsTrigger>
-                  <TabsTrigger value="byMonth">Por mes</TabsTrigger>
+                  <TabsTrigger value="byStatus">By status</TabsTrigger>
+                  <TabsTrigger value="byMonth">By month</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="byStatus">
@@ -402,7 +402,7 @@ export default function InvoicesPage() {
                           <Clock className="h-5 w-5 text-blue-600" />
                         </div>
                         <div>
-                          <p className="text-gray-500 text-sm">Pendiente</p>
+                          <p className="text-gray-500 text-sm">Pending</p>
                           <p className="text-xl font-bold">
                             {Array.isArray(invoices) 
                               ? (invoices as any[]).filter((e: any) => e.status.toLowerCase() === 'pending' || e.status.toLowerCase() === 'pendiente').length 
@@ -418,7 +418,7 @@ export default function InvoicesPage() {
                           <CheckCircle className="h-5 w-5 text-green-600" />
                         </div>
                         <div>
-                          <p className="text-gray-500 text-sm">Pagado</p>
+                          <p className="text-gray-500 text-sm">Paid</p>
                           <p className="text-xl font-bold">
                             {Array.isArray(invoices) 
                               ? (invoices as any[]).filter((e: any) => e.status.toLowerCase() === 'paid' || e.status.toLowerCase() === 'pagado').length 
@@ -434,7 +434,7 @@ export default function InvoicesPage() {
                           <XCircle className="h-5 w-5 text-red-600" />
                         </div>
                         <div>
-                          <p className="text-gray-500 text-sm">Vencido</p>
+                          <p className="text-gray-500 text-sm">Overdue</p>
                           <p className="text-xl font-bold">
                             {Array.isArray(invoices) 
                               ? (invoices as any[]).filter((e: any) => e.status.toLowerCase() === 'overdue' || e.status.toLowerCase() === 'vencido').length 
@@ -450,7 +450,7 @@ export default function InvoicesPage() {
                           <Calendar className="h-5 w-5 text-yellow-600" />
                         </div>
                         <div>
-                          <p className="text-gray-500 text-sm">Parcial</p>
+                          <p className="text-gray-500 text-sm">Partial</p>
                           <p className="text-xl font-bold">
                             {Array.isArray(invoices) 
                               ? (invoices as any[]).filter((e: any) => e.status.toLowerCase() === 'partially_paid' || e.status.toLowerCase() === 'parcialmente_pagado').length 
@@ -464,7 +464,7 @@ export default function InvoicesPage() {
                 
                 <TabsContent value="byMonth">
                   <div className="h-80 flex items-center justify-center text-gray-500">
-                    <p>El gráfico de resumen por mes aparecerá aquí</p>
+                    <p>Monthly summary chart will appear here</p>
                   </div>
                 </TabsContent>
               </Tabs>
