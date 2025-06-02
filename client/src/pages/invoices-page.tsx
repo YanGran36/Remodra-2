@@ -333,7 +333,7 @@ export default function InvoicesPage() {
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                  <span className="sr-only">Abrir menú</span>
+                                  <span className="sr-only">Open menu</span>
                                   <ChevronDown className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
@@ -343,35 +343,35 @@ export default function InvoicesPage() {
                                   viewInvoiceDetails(invoice.id);
                                 }}>
                                   <Eye className="mr-2 h-4 w-4" />
-                                  Ver detalles
+                                  View details
                                 </DropdownMenuItem>
                                 <DropdownMenuItem>
                                   <FileEdit className="mr-2 h-4 w-4" />
-                                  Editar
+                                  Edit
                                 </DropdownMenuItem>
                                 <DropdownMenuItem>
                                   <Mail className="mr-2 h-4 w-4" />
-                                  Enviar
+                                  Send
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 {invoice.status !== 'paid' && (
                                   <DropdownMenuItem>
                                     <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
-                                    Marcar como pagada
+                                    Mark as paid
                                   </DropdownMenuItem>
                                 )}
                                 <DropdownMenuItem>
                                   <Download className="mr-2 h-4 w-4" />
-                                  Descargar PDF
+                                  Download PDF
                                 </DropdownMenuItem>
                                 <DropdownMenuItem>
                                   <Printer className="mr-2 h-4 w-4" />
-                                  Imprimir
+                                  Print
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem className="text-destructive">
                                   <Trash2 className="mr-2 h-4 w-4" />
-                                  Eliminar
+                                  Delete
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -387,7 +387,7 @@ export default function InvoicesPage() {
           
           <Card>
             <CardContent className="p-4">
-              <h3 className="text-lg font-semibold mb-4">Estado de órdenes de trabajo</h3>
+              <h3 className="text-lg font-semibold mb-4">Work order status</h3>
               <Tabs defaultValue="byStatus">
                 <TabsList className="mb-4">
                   <TabsTrigger value="byStatus">Por estado</TabsTrigger>
