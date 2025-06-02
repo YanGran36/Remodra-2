@@ -163,10 +163,10 @@ export default function EstimatesPage() {
   };
 
   const calculateTotal = () => {
-    if (!estimates) return { total: 0, count: 0 };
+    if (!estimates || !Array.isArray(estimates)) return { total: 0, count: 0 };
     
     const total = estimates.reduce((sum: number, estimate: any) => {
-      return sum + parseFloat(estimate.total);
+      return sum + parseFloat(estimate.total || 0);
     }, 0);
     
     return { total, count: estimates.length };
@@ -234,7 +234,7 @@ export default function EstimatesPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {estimates
+                  {estimates && Array.isArray(estimates)
                     ? Math.round((estimates.filter((e: any) => e.status === "accepted").length / (count || 1)) * 100) + "%"
                     : "0%"
                   }
@@ -461,7 +461,7 @@ export default function EstimatesPage() {
                         <div>
                           <p className="text-gray-500 text-sm">Draft</p>
                           <p className="text-xl font-bold">
-                            {estimates 
+                            {estimates && Array.isArray(estimates)
                               ? estimates.filter((e: any) => e.status === 'draft').length 
                               : 0}
                           </p>
@@ -477,7 +477,7 @@ export default function EstimatesPage() {
                         <div>
                           <p className="text-gray-500 text-sm">Sent</p>
                           <p className="text-xl font-bold">
-                            {estimates 
+                            {estimates && Array.isArray(estimates)
                               ? estimates.filter((e: any) => e.status === 'sent').length 
                               : 0}
                           </p>
@@ -493,7 +493,7 @@ export default function EstimatesPage() {
                         <div>
                           <p className="text-gray-500 text-sm">Accepted</p>
                           <p className="text-xl font-bold">
-                            {estimates 
+                            {estimates && Array.isArray(estimates)
                               ? estimates.filter((e: any) => e.status === 'accepted').length 
                               : 0}
                           </p>
@@ -509,7 +509,7 @@ export default function EstimatesPage() {
                         <div>
                           <p className="text-gray-500 text-sm">Rejected</p>
                           <p className="text-xl font-bold">
-                            {estimates 
+                            {estimates && Array.isArray(estimates)
                               ? estimates.filter((e: any) => e.status === 'rejected').length 
                               : 0}
                           </p>
