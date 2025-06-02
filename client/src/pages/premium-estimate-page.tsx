@@ -192,7 +192,7 @@ export default function PremiumEstimatePage() {
           onClick={() => setLocation('/estimates')}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Volver a Estimados
+          Back to Estimates
         </Button>
         
         <div className="flex gap-2">
@@ -215,8 +215,8 @@ export default function PremiumEstimatePage() {
 
       {/* Premium header */}
       <PremiumHeader 
-        title={`Estimado #${estimate.estimateNumber}`}
-        subtitle="Revise los detalles del estimado y confirme su aprobación o realice los cambios necesarios."
+        title={`Estimate #${estimate.estimateNumber}`}
+        subtitle="Review the estimate details and confirm your approval or make necessary changes."
         className="mb-6"
       />
       
@@ -225,7 +225,7 @@ export default function PremiumEstimatePage() {
         <Card className="md:col-span-2">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center justify-between">
-              <span>Estado del Estimado</span>
+              <span>Estimate Status</span>
               {getEstimateStatusBadge(estimate.status)}
             </CardTitle>
           </CardHeader>
@@ -239,14 +239,14 @@ export default function PremiumEstimatePage() {
                     icon={<Mail className="h-4 w-4" />}
                     loading={updateStatusMutation.isPending}
                   >
-                    Marcar como Enviado
+                    Mark as Sent
                   </PremiumButton>
                   <PremiumButton
                     variant="outline"
                     onClick={() => setIsEditModalOpen(true)}
                     icon={<FileEdit className="h-4 w-4" />}
                   >
-                    Editar Estimado
+                    Edit Estimate
                   </PremiumButton>
                 </>
               )}
@@ -259,7 +259,7 @@ export default function PremiumEstimatePage() {
                     icon={<Check className="h-4 w-4" />}
                     loading={updateStatusMutation.isPending && updateStatusMutation.variables === 'accepted'}
                   >
-                    Marcar como Aceptado
+                    Mark as Accepted
                   </PremiumButton>
                   <PremiumButton
                     variant="destructive"
@@ -267,14 +267,14 @@ export default function PremiumEstimatePage() {
                     icon={<X className="h-4 w-4" />}
                     loading={updateStatusMutation.isPending && updateStatusMutation.variables === 'rejected'}
                   >
-                    Marcar como Rechazado
+                    Mark as Rejected
                   </PremiumButton>
                   <PremiumButton
                     variant="outline"
                     onClick={() => setIsEditModalOpen(true)}
                     icon={<FileEdit className="h-4 w-4" />}
                   >
-                    Editar Estimado
+                    Edit Estimate
                   </PremiumButton>
                 </>
               )}
@@ -286,7 +286,7 @@ export default function PremiumEstimatePage() {
                   icon={<BanknoteIcon className="h-4 w-4" />}
                   loading={isConvertingToInvoice}
                 >
-                  Crear Orden de Trabajo
+                  Create Work Order
                 </PremiumButton>
               )}
             </div>
@@ -295,7 +295,7 @@ export default function PremiumEstimatePage() {
         
         <Card className="premium-shadow">
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Información Financiera</CardTitle>
+            <CardTitle className="text-lg">Financial Information</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -305,13 +305,13 @@ export default function PremiumEstimatePage() {
               </div>
               {parseFloat(estimate.tax) > 0 && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Impuestos:</span>
+                  <span className="text-muted-foreground">Taxes:</span>
                   <span>{formatCurrency(estimate.tax)}</span>
                 </div>
               )}
               {parseFloat(estimate.discount) > 0 && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Descuento:</span>
+                  <span className="text-muted-foreground">Discount:</span>
                   <span>-{formatCurrency(estimate.discount)}</span>
                 </div>
               )}
