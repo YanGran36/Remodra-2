@@ -112,7 +112,7 @@ export default function EstimatesPage() {
   });
 
   // Filter and sort estimates
-  const filteredEstimates = estimates
+  const filteredEstimates = estimates && Array.isArray(estimates)
     ? estimates
         .filter((estimate: any) => {
           // Status filter
@@ -288,7 +288,7 @@ export default function EstimatesPage() {
                 </div>
               </div>
               
-              <div className="rounded-md border">
+              <div className="table-responsive rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>

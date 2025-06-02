@@ -424,7 +424,7 @@ export default function ProfessionalEstimatePage() {
       <main className="flex-1 overflow-y-auto bg-gray-50">
         <div className="page-layout">
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="mobile-header mb-6">
             <div className="flex items-center space-x-4">
               <Button
                 variant="outline"
@@ -525,7 +525,7 @@ export default function ProfessionalEstimatePage() {
                   <CardTitle>Add Services</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="form-grid">
                     <div>
                       <Label>Service Type *</Label>
                       <Select value={currentService.serviceType} onValueChange={handleServiceTypeChange}>
