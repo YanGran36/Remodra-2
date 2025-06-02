@@ -381,7 +381,15 @@ export default function EstimatesPage() {
                                   <FileEdit className="mr-2 h-4 w-4" />
                                   Edit
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (confirm("Are you sure you want to send this estimate to the client?")) {
+                                    updateEstimateStatusMutation.mutate({
+                                      id: estimate.id,
+                                      status: "sent"
+                                    });
+                                  }
+                                }}>
                                   <Mail className="mr-2 h-4 w-4" />
                                   Send
                                 </DropdownMenuItem>
