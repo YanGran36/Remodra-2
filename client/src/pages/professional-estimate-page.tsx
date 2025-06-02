@@ -401,17 +401,17 @@ export default function ProfessionalEstimatePage() {
                     <div>
                       <Label htmlFor="project">Associated Project (Optional)</Label>
                       <Select 
-                        value={estimateData.projectId?.toString() || ""} 
+                        value={estimateData.projectId?.toString() || "no_project"} 
                         onValueChange={(value) => setEstimateData(prev => ({ 
                           ...prev, 
-                          projectId: value ? parseInt(value) : null 
+                          projectId: value && value !== "no_project" ? parseInt(value) : null 
                         }))}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Choose a project" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">No Project</SelectItem>
+                          <SelectItem value="no_project">No Project</SelectItem>
                           {(projects as any[]).map((project: any) => (
                             <SelectItem key={project.id} value={project.id.toString()}>
                               {project.title}
