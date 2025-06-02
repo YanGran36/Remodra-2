@@ -93,7 +93,7 @@ export default function ProjectsPage() {
   });
 
   // Filter and sort projects
-  const filteredProjects = projects
+  const filteredProjects = projects && Array.isArray(projects)
     ? projects
         .filter((project: any) => {
           // Status filter
@@ -173,7 +173,7 @@ export default function ProjectsPage() {
 
   // Calculate totals
   const calculateTotals = () => {
-    if (!projects) return { total: 0, count: 0, active: 0, completed: 0 };
+    if (!projects || !Array.isArray(projects)) return { total: 0, count: 0, active: 0, completed: 0 };
     
     const totalBudget = projects.reduce((sum: number, project: any) => {
       return project.budget ? sum + parseFloat(project.budget) : sum;

@@ -158,7 +158,7 @@ export default function ProfessionalEstimatePage() {
     }));
 
     setShowFenceTool(serviceType === "fence");
-    calculateQuantity(serviceType, prev.measurements);
+    calculateQuantity(serviceType, currentService.measurements);
   };
 
   const calculateQuantity = (serviceType: string, measurements: any) => {
