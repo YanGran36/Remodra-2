@@ -2,8 +2,8 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useToast } from "@/hooks/use-toast";
-import { queryClient } from "@/lib/queryClient";
+import { useToast } from '../../hooks/use-toast';
+import { queryClient } from '../../lib/queryClient';
 import { useMutation } from "@tanstack/react-query";
 
 import {
@@ -14,19 +14,19 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from '../ui/form';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ArchitecturalCard } from "@/components/ui/architectural-card";
+} from '../ui/select';
+import { Input } from '../ui/input';
+import { Button } from '../ui/button';
+import { Textarea } from '../ui/textarea';
+import { Checkbox } from '../ui/checkbox';
+import { ArchitecturalCard } from '../ui/architectural-card';
 import { 
   Building, 
   User, 
@@ -40,7 +40,7 @@ import {
   Users,
   AlertCircle
 } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest } from '../../lib/queryClient';
 
 // Validation schema with Zod
 const contractorFormSchema = z.object({
@@ -52,7 +52,7 @@ const contractorFormSchema = z.object({
   address: z.string().min(5, "La dirección debe tener al menos 5 caracteres").or(z.literal('')),
   city: z.string().min(2, "La ciudad debe tener al menos 2 caracteres").or(z.literal('')),
   state: z.string().min(2, "El estado/provincia debe tener al menos 2 caracteres").or(z.literal('')),
-  zipCode: z.string().min(3, "El código postal debe tener al menos 3 caracteres").or(z.literal('')),
+  zip: z.string().min(3, "Zip code must be at least 3 characters").or(z.literal('')),
   country: z.string().min(2, "El país debe tener al menos 2 caracteres").default("USA"),
   
   // Información del usuario principal
@@ -99,7 +99,7 @@ export function NewContractorForm({ onSuccess }: NewContractorFormProps) {
     address: "",
     city: "",
     state: "",
-    zipCode: "",
+    zip: "",
     country: "USA",
     
     // Información del usuario
@@ -225,7 +225,7 @@ export function NewContractorForm({ onSuccess }: NewContractorFormProps) {
   const nextStep = () => {
     // Validar campos del paso actual antes de avanzar
     if (step === 1) {
-      const companyFields = ["companyName", "email", "phone", "address", "city", "state", "zipCode", "country"];
+      const companyFields = ["companyName", "email", "phone", "address", "city", "state", "zip", "country"];
       const isValid = companyFields.every(field => form.getFieldState(field as any).invalid !== true);
       
       if (!isValid) {
@@ -397,10 +397,10 @@ export function NewContractorForm({ onSuccess }: NewContractorFormProps) {
                     
                     <FormField
                       control={form.control}
-                      name="zipCode"
+                      name="zip"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Código Postal</FormLabel>
+                          <FormLabel>Zip Code</FormLabel>
                           <FormControl>
                             <Input placeholder="12345" {...field} />
                           </FormControl>
@@ -535,7 +535,7 @@ export function NewContractorForm({ onSuccess }: NewContractorFormProps) {
                           className={`border rounded-lg p-4 cursor-pointer transition-all duration-200 ${
                             field.value === "basic" 
                               ? "border-primary bg-primary/5" 
-                              : "border-border hover:border-primary/50"
+                              : "border-gray-200 dark:border-gray-700 hover:border-primary/50"
                           }`}
                           onClick={() => form.setValue("plan", "basic")}
                         >
@@ -567,7 +567,7 @@ export function NewContractorForm({ onSuccess }: NewContractorFormProps) {
                           className={`border rounded-lg p-4 cursor-pointer transition-all duration-200 relative overflow-hidden ${
                             field.value === "professional" 
                               ? "border-primary bg-primary/5" 
-                              : "border-border hover:border-primary/50"
+                              : "border-gray-200 dark:border-gray-700 hover:border-primary/50"
                           }`}
                           onClick={() => form.setValue("plan", "professional")}
                         >
@@ -608,7 +608,7 @@ export function NewContractorForm({ onSuccess }: NewContractorFormProps) {
                           className={`border rounded-lg p-4 cursor-pointer transition-all duration-200 ${
                             field.value === "premium" 
                               ? "border-primary bg-primary/5" 
-                              : "border-border hover:border-primary/50"
+                              : "border-gray-200 dark:border-gray-700 hover:border-primary/50"
                           }`}
                           onClick={() => form.setValue("plan", "premium")}
                         >

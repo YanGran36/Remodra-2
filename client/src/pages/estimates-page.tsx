@@ -1,27 +1,29 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { useEstimates } from "@/hooks/use-estimates";
-import { useToast } from "@/hooks/use-toast";
+import { useEstimates } from '../hooks/use-estimates';
+import { useToast } from '../hooks/use-toast';
 import { 
   ChevronDown, 
   FileText, 
   Plus, 
-  Search, 
-  Filter, 
-  Printer, 
   FileEdit, 
   Mail, 
   Download, 
   Eye, 
   Trash2,
   BanknoteIcon,
-  Calendar, 
-  CheckCircle,
   Calculator,
   XCircle,
+  Check,
+  Printer,
+  CheckCircle,
   Clock,
-  Check
+  Search,
+  Settings,
+  Edit,
+  User,
+  Calendar
 } from "lucide-react";
 import { 
   Select, 
@@ -29,17 +31,16 @@ import {
   SelectItem, 
   SelectTrigger, 
   SelectValue 
-} from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+} from '../components/ui/select';
+import { Button } from '../components/ui/button';
+import { Card, CardContent } from '../components/ui/card';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+} from '../components/ui/dropdown-menu';
 import { 
   Table, 
   TableBody, 
@@ -47,23 +48,24 @@ import {
   TableHead, 
   TableHeader, 
   TableRow 
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+} from '../components/ui/table';
+import { Badge } from '../components/ui/badge';
 import { format } from "date-fns";
-import Sidebar from "@/components/layout/sidebar";
-import MobileSidebar from "@/components/layout/mobile-sidebar";
-import PageHeader from "@/components/shared/page-header";
-import SearchInput from "@/components/shared/search-input";
-import EstimateDetail from "@/components/estimates/estimate-detail";
-import EstimateForm from "@/components/estimates/estimate-form";
+import Sidebar from '../components/layout/sidebar';
+import MobileSidebar from '../components/layout/mobile-sidebar';
+import PageHeader from '../components/shared/page-header';
+import EstimateDetail from '../components/estimates/estimate-detail';
+import EstimateForm from '../components/estimates/estimate-form';
 import { 
   Dialog, 
   DialogContent,
   DialogTitle,
   DialogDescription
-} from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Skeleton } from "@/components/ui/skeleton";
+} from '../components/ui/dialog';
+import { Skeleton } from '../components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import TopNav from '../components/layout/top-nav';
+import { Input } from '../components/ui/input';
 
 // Helper function to format currency
 const formatCurrency = (amount: number | string) => {
@@ -150,18 +152,40 @@ export default function EstimatesPage() {
     : [];
 
   const viewEstimateDetails = (estimate: any) => {
-    setSelectedEstimate(estimate);
-    setIsDetailOpen(true);
+    // Navigate to estimate detail page
+    setLocation(`/estimates/${estimate.id}`);
   };
 
   const createNewEstimate = () => {
-    setEditingEstimate(null);
-    setIsFormOpen(true);
+    setLocation('/estimates/create');
   };
 
   const editEstimate = (estimate: any) => {
-    setEditingEstimate(estimate);
-    setIsFormOpen(true);
+    // Navigate to estimate detail page for editing
+    setLocation(`/estimates/${estimate.id}`);
+  };
+
+  const printEstimate = (estimate: any) => {
+    // Open estimate in new window for printing
+    window.open(`/estimates/${estimate.id}/print`, '_blank');
+  };
+
+  const deleteEstimate = async (estimate: any) => {
+    if (window.confirm(`Are you sure you want to delete estimate ${estimate.estimateNumber || estimate.id}?`)) {
+      try {
+        await deleteEstimateMutation.mutateAsync(estimate.id);
+        toast({
+          title: "Estimate Deleted",
+          description: "The estimate has been successfully deleted.",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to delete estimate. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   const calculateTotal = () => {
@@ -177,428 +201,243 @@ export default function EstimatesPage() {
   const { total, count } = calculateTotal();
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="remodra-layout">
       <Sidebar />
       <MobileSidebar />
-      
-      <main className="flex-1 overflow-y-auto bg-gray-50">
-        <div className="page-layout">
-          <PageHeader 
-            title="Estimates" 
-            description="Create and manage customer estimates"
-            actions={
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button className="flex items-center">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Estimate
-                    <ChevronDown className="h-4 w-4 ml-2" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={() => setLocation("/estimates/create-professional")}>
-                    <Calculator className="mr-2 h-4 w-4" />
-                    Professional Estimate
-                    <div className="text-xs text-gray-500 mt-1">Complete estimate with measurements</div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setLocation("/vendor-estimate-form")}>
-                    <FileEdit className="mr-2 h-4 w-4" />
-                    Vendor Estimate
-                    <div className="text-xs text-gray-500 mt-1">Third-party estimate format</div>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            }
-          />
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Total Estimates</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{count}</div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Total Value</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(total)}</div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Acceptance Rate</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {estimates && Array.isArray(estimates)
-                    ? Math.round((estimates.filter((e: any) => e.status === "accepted").length / (count || 1)) * 100) + "%"
-                    : "0%"
-                  }
-                </div>
-              </CardContent>
-            </Card>
+      <div className="remodra-main">
+        <TopNav />
+        <main className="p-8 space-y-8">
+          {/* Header with Remodra branding */}
+          <div className="text-center mb-8">
+            <div className="remodra-logo mb-6">
+              <span className="remodra-logo-text">R</span>
+            </div>
+            <h1 className="remodra-title mb-3">
+              Estimates
+            </h1>
+            <p className="remodra-subtitle">
+              Create professional estimates for your clients
+            </p>
           </div>
-          
-          <Card className="mb-6">
-            <CardContent className="p-4">
-              <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <SearchInput 
-                    placeholder="Search estimates..." 
-                    onSearch={setSearchQuery}
-                    className="w-full sm:w-80"
-                  />
-                  
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full sm:w-40">
-                      <SelectValue placeholder="Filter by status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="sent">Sent</SelectItem>
-                      <SelectItem value="accepted">Accepted</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
-                      <SelectItem value="expired">Expired</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  
-                  <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="w-full sm:w-40">
-                      <SelectValue placeholder="Sort by" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="date_desc">Newest First</SelectItem>
-                      <SelectItem value="date_asc">Oldest First</SelectItem>
-                      <SelectItem value="amount_desc">Highest Amount</SelectItem>
-                      <SelectItem value="amount_asc">Lowest Amount</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
-                    <Download className="h-4 w-4 mr-2" />
-                    Export
-                  </Button>
-                </div>
+
+          {/* Quick Action Buttons */}
+          <div className="flex justify-center gap-4 mb-8">
+            <Button className="remodra-button" onClick={() => window.location.href = '/estimates/create'}>
+              <FileText className="h-5 w-5 mr-2" />
+              New Estimate
+            </Button>
+            <Button className="remodra-button-outline" onClick={() => {
+              // Export functionality
+              const csvContent = "data:text/csv;charset=utf-8," + 
+                "Estimate Number,Client,Status,Total,Issue Date,Expiry Date\n" +
+                (estimates as any[]).map(e => 
+                  `"${e.estimateNumber}","${e.client?.firstName || ''} ${e.client?.lastName || ''}","${e.status}","${e.total || 0}","${new Date(e.issueDate).toLocaleDateString()}","${new Date(e.expiryDate).toLocaleDateString()}"`
+                ).join("\n");
+              const encodedUri = encodeURI(csvContent);
+              const link = document.createElement("a");
+              link.setAttribute("href", encodedUri);
+              link.setAttribute("download", "estimates.csv");
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }}>
+              <Download className="h-5 w-5 mr-2" />
+              Export Estimates
+            </Button>
+            <Button className="remodra-button-outline" onClick={() => window.location.href = '/settings'}>
+              <Settings className="h-5 w-5 mr-2" />
+              Estimate Settings
+            </Button>
+          </div>
+
+          {/* Filters */}
+          <div className="remodra-card p-6">
+            <div className="flex flex-col lg:flex-row gap-4">
+              <Select value={statusFilter} onValueChange={(value: string) => setStatusFilter(value)}>
+                <SelectTrigger className="remodra-input w-full lg:w-48">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-600">
+                  <SelectItem value="all" className="text-slate-200 hover:bg-slate-700">All Estimates</SelectItem>
+                  <SelectItem value="draft" className="text-slate-200 hover:bg-slate-700">Draft</SelectItem>
+                  <SelectItem value="sent" className="text-slate-200 hover:bg-slate-700">Sent</SelectItem>
+                  <SelectItem value="accepted" className="text-slate-200 hover:bg-slate-700">Accepted</SelectItem>
+                  <SelectItem value="rejected" className="text-slate-200 hover:bg-slate-700">Rejected</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="remodra-stats-card">
+              <div className="remodra-stats-number">{(estimates as any[])?.length || 0}</div>
+              <div className="remodra-stats-label">Total Estimates</div>
+              <div className="remodra-stats-accent"></div>
+            </div>
+            <div className="remodra-stats-card">
+              <div className="remodra-stats-number">{(estimates as any[])?.filter((e: any) => e.status === 'draft').length || 0}</div>
+              <div className="remodra-stats-label">Draft Estimates</div>
+              <div className="remodra-stats-accent"></div>
+            </div>
+            <div className="remodra-stats-card">
+              <div className="remodra-stats-number">{(estimates as any[])?.filter((e: any) => e.status === 'sent').length || 0}</div>
+              <div className="remodra-stats-label">Sent Estimates</div>
+              <div className="remodra-stats-accent"></div>
+            </div>
+            <div className="remodra-stats-card">
+              <div className="remodra-stats-number">${(estimates as any[])?.reduce((sum: number, e: any) => sum + (e.total || 0), 0).toLocaleString() || '0'}</div>
+              <div className="remodra-stats-label">Total Value</div>
+              <div className="remodra-stats-accent"></div>
+            </div>
+          </div>
+
+          {/* Estimates List */}
+          <div className="remodra-card p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-amber-400">Estimate Directory</h2>
+              <Badge className="remodra-badge">
+                {filteredEstimates.length} Estimates
+              </Badge>
+            </div>
+
+            {isLoading ? (
+              <div className="remodra-loading">
+                <div className="remodra-spinner"></div>
+                <p className="text-slate-300">Loading estimates...</p>
               </div>
-              
-              <div className="table-responsive rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[120px]">Estimate #</TableHead>
-                      <TableHead>Client</TableHead>
-                      <TableHead>Project</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {isLoading ? (
-                      Array(5).fill(0).map((_, index) => (
-                        <TableRow key={index}>
-                          <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                          <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                          <TableCell><Skeleton className="h-5 w-40" /></TableCell>
-                          <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                          <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                          <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                          <TableCell className="text-right"><Skeleton className="h-9 w-12 ml-auto" /></TableCell>
-                        </TableRow>
-                      ))
-                    ) : error ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center py-4 text-gray-500">
-                          Error loading estimates. Please try again.
-                        </TableCell>
-                      </TableRow>
-                    ) : filteredEstimates.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8">
-                          <div className="flex flex-col items-center">
-                            <FileText className="h-12 w-12 text-gray-300 mb-3" />
-                            <h3 className="text-lg font-medium text-gray-900 mb-1">No estimates found</h3>
-                            <p className="text-sm text-gray-500 mb-4">
-                              {searchQuery || statusFilter !== "all" 
-                                ? "Try adjusting your filters"
-                                : "Create your first estimate to get started"}
-                            </p>
-                            {!searchQuery && statusFilter === "all" && (
-                              <Button onClick={createNewEstimate}>
-                                <Plus className="h-4 w-4 mr-2" />
-                                New Estimate
-                              </Button>
-                            )}
+            ) : error ? (
+              <div className="text-center py-8">
+                <p className="text-red-400">Error loading estimates: {error.message}</p>
+              </div>
+            ) : filteredEstimates.length === 0 ? (
+              <div className="remodra-empty">
+                <div className="remodra-empty-icon">📋</div>
+                <div className="remodra-empty-title">No Estimates Found</div>
+                <div className="remodra-empty-description">
+                  {searchQuery ? `No estimates match "${searchQuery}"` : "Start by creating your first estimate"}
+                </div>
+                <Button className="remodra-button mt-4" onClick={() => window.location.href = '/estimates/create'}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  Create First Estimate
+                </Button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-slate-600">
+                      <th className="text-left py-3 px-4 text-slate-300 font-semibold">Estimate</th>
+                      <th className="text-left py-3 px-4 text-slate-300 font-semibold">Client</th>
+                      <th className="text-left py-3 px-4 text-slate-300 font-semibold">Amount</th>
+                      <th className="text-left py-3 px-4 text-slate-300 font-semibold">Status</th>
+                      <th className="text-left py-3 px-4 text-slate-300 font-semibold">Date</th>
+                      <th className="text-right py-3 px-4 text-slate-300 font-semibold">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredEstimates.map((estimate) => (
+                      <tr key={estimate.id} className="border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors">
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-yellow-600 rounded flex items-center justify-center">
+                              <FileText className="h-4 w-4 text-slate-900" />
+                            </div>
+                            <div>
+                              <div className="font-medium text-slate-200">
+                                {estimate.estimateNumber || `EST-${estimate.id}`}
+                              </div>
+                              {estimate.title && (
+                                <div className="text-xs text-slate-400 truncate max-w-[200px]">{estimate.title}</div>
+                              )}
+                            </div>
                           </div>
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredEstimates.map((estimate: any) => (
-                        <TableRow key={estimate.id} className="cursor-pointer hover:bg-gray-50" onClick={() => viewEstimateDetails(estimate)}>
-                          <TableCell className="font-medium">{estimate.estimateNumber}</TableCell>
-                          <TableCell>{estimate.client?.firstName} {estimate.client?.lastName}</TableCell>
-                          <TableCell>{estimate.project?.title || "—"}</TableCell>
-                          <TableCell>{format(new Date(estimate.issueDate), 'MMM d, yyyy')}</TableCell>
-                          <TableCell>{formatCurrency(estimate.total)}</TableCell>
-                          <TableCell>{getStatusBadge(estimate.status)}</TableCell>
-                          <TableCell className="text-right">
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="text-sm text-slate-300">
+                            {estimate.client?.firstName && estimate.client?.lastName 
+                              ? `${estimate.client.firstName} ${estimate.client.lastName}`
+                              : estimate.client?.name 
+                              ? estimate.client.name
+                              : 'No Client'
+                            }
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="text-amber-400 font-semibold">
+                            ${estimate.total?.toLocaleString() || '0'}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <Badge className={`text-xs ${
+                            estimate.status === 'accepted' ? 'remodra-badge' :
+                            estimate.status === 'rejected' ? 'border-red-600/50 text-red-400' :
+                            'remodra-badge-outline'
+                          }`}>
+                            {estimate.status}
+                          </Badge>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="text-sm text-slate-300">
+                            {new Date(estimate.createdAt).toLocaleDateString()}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center justify-end">
                             <DropdownMenu>
-                              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                  <span className="sr-only">Open menu</span>
-                                  <ChevronDown className="h-4 w-4" />
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="remodra-button-outline h-8 w-8 p-0"
+                                  title="Actions"
+                                >
+                                  <ChevronDown className="h-3 w-3" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={(e) => {
-                                  e.stopPropagation();
-                                  viewEstimateDetails(estimate);
-                                }}>
-                                  <Eye className="mr-2 h-4 w-4" />
-                                  View Standard
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={(e) => {
-                                  e.stopPropagation();
-                                  window.location.href = `/estimates/${estimate.id}`;
-                                }} className="text-primary">
-                                  <FileText className="mr-2 h-4 w-4" />
-                                  View Premium
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={(e) => {
-                                  e.stopPropagation();
-                                  editEstimate(estimate);
-                                }}>
-                                  <FileEdit className="mr-2 h-4 w-4" />
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (confirm("Are you sure you want to send this estimate to the client?")) {
-                                    updateEstimateStatusMutation.mutate({
-                                      id: estimate.id,
-                                      status: "sent"
-                                    });
-                                  }
-                                }}>
-                                  <Mail className="mr-2 h-4 w-4" />
-                                  Send
-                                </DropdownMenuItem>
-                                {estimate.status === 'sent' && (
-                                  <DropdownMenuItem onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (confirm("Are you sure you want to accept this estimate?")) {
-                                      updateEstimateStatusMutation.mutate({
-                                        id: estimate.id,
-                                        status: "accepted"
-                                      });
-                                    }
-                                  }} className="text-green-600">
-                                    <Check className="mr-2 h-4 w-4" />
-                                    Accept Estimate
-                                  </DropdownMenuItem>
-                                )}
-                                <DropdownMenuItem onClick={(e) => {
-                                  e.stopPropagation();
-                                  // Check if estimate is accepted
-                                  if (estimate.status !== "accepted") {
-                                    toast({
-                                      title: "Cannot convert",
-                                      description: "Only estimates with 'Accepted' status can be converted to invoices.",
-                                      variant: "destructive"
-                                    });
-                                    return;
-                                  }
-                                  
-                                  // Confirm before converting
-                                  if (confirm("Are you sure you want to convert this estimate to an invoice?")) {
-                                    convertToInvoiceMutation.mutate(estimate.id, {
-                                      onSuccess: (invoice) => {
-                                        // Redirect to created invoice
-                                        setLocation(`/invoices/${invoice.id}`);
-                                      }
-                                    });
-                                  }
-                                }}>
-                                  <BanknoteIcon className="mr-2 h-4 w-4" />
-                                  Convert to Invoice
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem>
-                                  <Download className="mr-2 h-4 w-4" />
-                                  Download PDF
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Printer className="mr-2 h-4 w-4" />
-                                  Print
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
+                              <DropdownMenuContent className="bg-slate-800 border-slate-600">
                                 <DropdownMenuItem 
-                                  className="text-destructive"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (confirm(`Are you sure you want to delete estimate ${estimate.estimateNumber}?`)) {
-                                      deleteEstimateMutation.mutate(estimate.id);
-                                    }
-                                  }}
+                                  onClick={() => viewEstimateDetails(estimate)}
+                                  className="text-slate-200 hover:bg-slate-700 cursor-pointer"
                                 >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete
+                                  <Eye className="h-3 w-3 mr-2" />
+                                  View Estimate
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => editEstimate(estimate)}
+                                  className="text-slate-200 hover:bg-slate-700 cursor-pointer"
+                                >
+                                  <Edit className="h-3 w-3 mr-2" />
+                                  Edit Estimate
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => printEstimate(estimate)}
+                                  className="text-slate-200 hover:bg-slate-700 cursor-pointer"
+                                >
+                                  <Printer className="h-3 w-3 mr-2" />
+                                  Print Estimate
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator className="bg-slate-600" />
+                                <DropdownMenuItem 
+                                  onClick={() => deleteEstimate(estimate)}
+                                  className="text-red-400 hover:bg-red-600/20 cursor-pointer"
+                                >
+                                  <Trash2 className="h-3 w-3 mr-2" />
+                                  Delete Estimate
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <h3 className="text-lg font-semibold mb-4">Estimate Status Overview</h3>
-              <Tabs defaultValue="byStatus">
-                <TabsList className="mb-4">
-                  <TabsTrigger value="byStatus">By Status</TabsTrigger>
-                  <TabsTrigger value="byMonth">By Month</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="byStatus">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <Card>
-                      <CardContent className="p-4 flex items-center">
-                        <div className="bg-yellow-100 rounded-full p-3 mr-3">
-                          <Clock className="h-5 w-5 text-yellow-600" />
-                        </div>
-                        <div>
-                          <p className="text-gray-500 text-sm">Draft</p>
-                          <p className="text-xl font-bold">
-                            {estimates && Array.isArray(estimates)
-                              ? estimates.filter((e: any) => e.status === 'draft').length 
-                              : 0}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardContent className="p-4 flex items-center">
-                        <div className="bg-blue-100 rounded-full p-3 mr-3">
-                          <Mail className="h-5 w-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="text-gray-500 text-sm">Sent</p>
-                          <p className="text-xl font-bold">
-                            {estimates && Array.isArray(estimates)
-                              ? estimates.filter((e: any) => e.status === 'sent').length 
-                              : 0}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardContent className="p-4 flex items-center">
-                        <div className="bg-green-100 rounded-full p-3 mr-3">
-                          <CheckCircle className="h-5 w-5 text-green-600" />
-                        </div>
-                        <div>
-                          <p className="text-gray-500 text-sm">Accepted</p>
-                          <p className="text-xl font-bold">
-                            {estimates && Array.isArray(estimates)
-                              ? estimates.filter((e: any) => e.status === 'accepted').length 
-                              : 0}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardContent className="p-4 flex items-center">
-                        <div className="bg-red-100 rounded-full p-3 mr-3">
-                          <XCircle className="h-5 w-5 text-red-600" />
-                        </div>
-                        <div>
-                          <p className="text-gray-500 text-sm">Rejected</p>
-                          <p className="text-xl font-bold">
-                            {estimates && Array.isArray(estimates)
-                              ? estimates.filter((e: any) => e.status === 'rejected').length 
-                              : 0}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="byMonth">
-                  <div className="h-80 flex items-center justify-center text-gray-500">
-                    <p>Monthly breakdown chart would go here</p>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
-      
-      {/* Estimate Detail Dialog */}
-      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
-          {selectedEstimate && (
-            <EstimateDetail 
-              estimateId={selectedEstimate.id} 
-              isOpen={true}
-              onClose={() => setIsDetailOpen(false)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-      
-      {/* Estimate Form Dialog */}
-      <Dialog open={isFormOpen} onOpenChange={(open) => {
-        setIsFormOpen(open);
-        if (!open) setEditingEstimate(null); // Limpiar el estimado en edición si se cierra
-      }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
-          <div className="sr-only">
-            <DialogTitle>
-              {editingEstimate ? "Editar estimado" : "Crear nuevo estimado"}
-            </DialogTitle>
-            <DialogDescription>
-              {editingEstimate 
-                ? "Actualice los detalles del estimado existente" 
-                : "Complete el formulario para crear un nuevo estimado"
-              }
-            </DialogDescription>
+            )}
           </div>
-          <EstimateForm 
-            clientId={editingEstimate?.clientId}
-            projectId={editingEstimate?.projectId}
-            estimateId={editingEstimate?.id} // Pasar el ID del estimado para edición
-            onCancel={() => {
-              setIsFormOpen(false);
-              setEditingEstimate(null); // Limpiar el estimado en edición
-            }}
-            onSuccess={() => {
-              setIsFormOpen(false);
-              setEditingEstimate(null); // Limpiar el estimado en edición
-            }}
-          />
-        </DialogContent>
-      </Dialog>
+        </main>
+      </div>
     </div>
   );
 }

@@ -28,10 +28,41 @@ export const contractors = pgTable("contractors", {
   country: text("country").default("USA"),
   role: text("role").default("contractor").notNull(),
   plan: text("plan").default("basic").notNull(),
+  // Subscription and billing fields
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  subscriptionStatus: text("subscription_status").default("active").notNull(), // active, cancelled, past_due, incomplete
+  planStartDate: timestamp("plan_start_date"),
+  planEndDate: timestamp("plan_end_date"),
+  // Usage tracking for plan limits
+  currentClientCount: integer("current_client_count").default(0).notNull(),
+  aiUsageThisMonth: integer("ai_usage_this_month").default(0).notNull(),
+  aiUsageResetDate: timestamp("ai_usage_reset_date"),
   settings: jsonb("settings").default('{}'),
   language: text("language").default("en").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull()
+  createdAt: timestamp("created_at"),
+  updatedAt: timestamp("updated_at")
+});
+
+// Agents (field representatives working for contractors)
+export const agents = pgTable("agents", {
+  id: serial("id").primaryKey(),
+  contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  email: text("email"),
+  phone: text("phone").notNull(),
+  employeeId: text("employee_id"),
+  role: text("role").default("field_agent").notNull(), // field_agent, senior_agent, lead_estimator
+  isActive: boolean("is_active").default(true).notNull(),
+  specialties: jsonb("specialties").default('[]'), // ['roofing', 'fencing', 'siding', etc.]
+  colorCode: text("color_code").default("#3B82F6"), // Hex color for calendar display
+  hourlyRate: decimal("hourly_rate", { precision: 8, scale: 2 }),
+  commissionRate: decimal("commission_rate", { precision: 5, scale: 2 }), // percentage
+  hireDate: date("hire_date"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at"),
+  updatedAt: timestamp("updated_at")
 });
 
 // Clients (belonging to contractors)
@@ -46,8 +77,9 @@ export const clients = pgTable("clients", {
   city: text("city"),
   state: text("state"),
   zip: text("zip"),
-  notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  notes: text("notes"), // General notes about the client
+  cancellationHistory: text("cancellation_history"), // Separate field for cancellation records
+  createdAt: timestamp("created_at")
 });
 
 // Projects
@@ -58,6 +90,7 @@ export const projects = pgTable("projects", {
   title: text("title").notNull(),
   description: text("description"),
   status: text("status").notNull().default("pending"), // pending, in_progress, on_hold, completed, cancelled
+  serviceType: text("service_type").default("fence"), // fence, roof, deck, windows, gutters, siding, flooring, painting, electrical, plumbing, concrete, landscaping, hvac, other
   startDate: timestamp("start_date"),
   endDate: timestamp("end_date"),
   budget: decimal("budget", { precision: 10, scale: 2 }),
@@ -73,7 +106,8 @@ export const projects = pgTable("projects", {
   aiGeneratedDescription: text("ai_generated_description"),
   aiSharingSettings: jsonb("ai_sharing_settings").default('{"installers": false, "clients": true, "estimators": true}'),
   lastAiUpdate: timestamp("last_ai_update"),
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  position: integer("position").default(0),
+  createdAt: timestamp("created_at")
 });
 
 // Estimates
@@ -82,10 +116,14 @@ export const estimates = pgTable("estimates", {
   contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
   clientId: integer("client_id").references(() => clients.id).notNull(),
   projectId: integer("project_id").references(() => projects.id),
+  agentId: integer("agent_id").references(() => agents.id), // Which agent is handling this estimate
   estimateNumber: text("estimate_number").notNull(),
-  issueDate: timestamp("issue_date").notNull().defaultNow(),
+  issueDate: timestamp("issue_date").notNull(),
   expiryDate: timestamp("expiry_date"),
   status: text("status").notNull().default("draft"), // draft, sent, accepted, rejected, expired, converted
+  estimateType: text("estimate_type").notNull().default("agent"), // office, agent
+  appointmentDate: timestamp("appointment_date"), // When the agent appointment is scheduled
+  appointmentDuration: integer("appointment_duration").default(60), // Duration in minutes
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
   tax: decimal("tax", { precision: 10, scale: 2 }).notNull().default("0"),
   discount: decimal("discount", { precision: 10, scale: 2 }).notNull().default("0"),
@@ -94,7 +132,7 @@ export const estimates = pgTable("estimates", {
   notes: text("notes"),
   clientSignature: text("client_signature"),
   contractorSignature: text("contractor_signature"),
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  createdAt: timestamp("created_at")
 });
 
 // Estimate line items
@@ -116,7 +154,7 @@ export const invoices = pgTable("invoices", {
   projectId: integer("project_id").references(() => projects.id),
   estimateId: integer("estimate_id").references(() => estimates.id),
   invoiceNumber: text("invoice_number").notNull(),
-  issueDate: timestamp("issue_date").notNull().defaultNow(),
+  issueDate: timestamp("issue_date").notNull(),
   dueDate: timestamp("due_date").notNull(),
   status: text("status").notNull().default("pending"), // pending, paid, overdue, partially_paid, cancelled
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
@@ -128,7 +166,7 @@ export const invoices = pgTable("invoices", {
   notes: text("notes"),
   clientSignature: text("client_signature"),
   contractorSignature: text("contractor_signature"),
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  createdAt: timestamp("created_at")
 });
 
 // Invoice line items
@@ -142,6 +180,17 @@ export const invoiceItems = pgTable("invoice_items", {
   notes: text("notes")
 });
 
+// Payments
+export const payments = pgTable("payments", {
+  id: serial("id").primaryKey(),
+  invoiceId: integer("invoice_id").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  method: text("method").notNull().default("cash"),
+  paymentDate: timestamp("payment_date").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at")
+});
+
 // Events/Calendar
 export const events = pgTable("events", {
   id: serial("id").primaryKey(),
@@ -150,13 +199,17 @@ export const events = pgTable("events", {
   description: text("description"),
   startTime: timestamp("start_time").notNull(),
   endTime: timestamp("end_time").notNull(),
-  location: text("location"),
+  address: text("address"),
+  city: text("city"),
+  state: text("state"),
+  zip: text("zip"),
   type: text("type").notNull(), // meeting, site-visit, delivery, estimate, invoice, other
   status: text("status").notNull().default("pending"), // pending, confirmed, completed, cancelled
   clientId: integer("client_id").references(() => clients.id),
   projectId: integer("project_id").references(() => projects.id),
+  agentId: integer("agent_id").references(() => agents.id),
   notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  createdAt: timestamp("created_at")
 });
 
 // Materials/Supplies
@@ -174,7 +227,7 @@ export const materials = pgTable("materials", {
   projectId: integer("project_id").references(() => projects.id),
   serviceType: text("service_type"), // deck, fence, roof, siding, windows, gutters
   notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  createdAt: timestamp("created_at")
 });
 
 // Attachments for projects, clients, etc.
@@ -187,7 +240,7 @@ export const attachments = pgTable("attachments", {
   fileSize: integer("file_size").notNull(),
   entityType: text("entity_type").notNull(), // client, project, estimate, invoice, material
   entityId: integer("entity_id").notNull(),
-  uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
+  uploadedAt: timestamp("uploaded_at"),
   description: text("description")
 });
 
@@ -205,7 +258,7 @@ export const followUps = pgTable("follow_ups", {
   sentDate: timestamp("sent_date"),
   responseDate: timestamp("response_date"),
   notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  createdAt: timestamp("created_at")
 });
 
 // Property measurements
@@ -227,9 +280,9 @@ export const propertyMeasurements = pgTable("property_measurements", {
   // Image or diagram links
   diagramUrl: text("diagram_url"),
   
-  measuredAt: timestamp("measured_at").defaultNow().notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull()
+  measuredAt: timestamp("measured_at"),
+  createdAt: timestamp("created_at"),
+  updatedAt: timestamp("updated_at")
 });
 
 // Service pricing configuration - simplified schema
@@ -249,8 +302,8 @@ export const servicePricing = pgTable("service_pricing", {
   laborCalculationMethod: text("labor_calculation_method").default("by_length").notNull(), // by_length, by_area, fixed
   
   // Metadata
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull()
+  createdAt: timestamp("created_at"),
+  updatedAt: timestamp("updated_at")
 });
 
 export const servicePricingSchema = createSelectSchema(servicePricing);
@@ -281,8 +334,8 @@ export const materialPricing = pgTable("material_pricing", {
   supplier: text("supplier"),
   status: text("status").default("active").notNull(), // active, inactive
   isDefault: boolean("is_default").default(false),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull()
+  createdAt: timestamp("created_at"),
+  updatedAt: timestamp("updated_at")
 });
 
 // Configuración de precios global por contratista (configuración general)
@@ -311,12 +364,13 @@ export const priceConfigurations = pgTable("price_configurations", {
   // Metadatos
   isDefault: boolean("is_default").default(false).notNull(),
   notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull()
+  createdAt: timestamp("created_at"),
+  updatedAt: timestamp("updated_at")
 });
 
 // Define relations
 export const contractorsRelations = relations(contractors, ({ many }) => ({
+  agents: many(agents),
   clients: many(clients),
   projects: many(projects),
   estimates: many(estimates),
@@ -332,6 +386,12 @@ export const contractorsRelations = relations(contractors, ({ many }) => ({
   achievementProgress: many(contractorAchievements),
   streaks: many(contractorStreaks),
   // Referencia a Google Sheets eliminada
+}));
+
+export const agentsRelations = relations(agents, ({ one, many }) => ({
+  contractor: one(contractors, { fields: [agents.contractorId], references: [contractors.id] }),
+  estimates: many(estimates),
+  events: many(events)
 }));
 
 export const clientsRelations = relations(clients, ({ one, many }) => ({
@@ -359,6 +419,7 @@ export const estimatesRelations = relations(estimates, ({ one, many }) => ({
   contractor: one(contractors, { fields: [estimates.contractorId], references: [contractors.id] }),
   client: one(clients, { fields: [estimates.clientId], references: [clients.id] }),
   project: one(projects, { fields: [estimates.projectId], references: [projects.id] }),
+  agent: one(agents, { fields: [estimates.agentId], references: [agents.id] }),
   items: many(estimateItems),
   invoices: many(invoices),
   attachments: many(attachments)
@@ -381,10 +442,15 @@ export const invoiceItemsRelations = relations(invoiceItems, ({ one }) => ({
   invoice: one(invoices, { fields: [invoiceItems.invoiceId], references: [invoices.id] })
 }));
 
+export const paymentsRelations = relations(payments, ({ one }) => ({
+  invoice: one(invoices, { fields: [payments.invoiceId], references: [invoices.id] })
+}));
+
 export const eventsRelations = relations(events, ({ one }) => ({
   contractor: one(contractors, { fields: [events.contractorId], references: [contractors.id] }),
   client: one(clients, { fields: [events.clientId], references: [clients.id] }),
-  project: one(projects, { fields: [events.projectId], references: [projects.id] })
+  project: one(projects, { fields: [events.projectId], references: [projects.id] }),
+  agent: one(agents, { fields: [events.agentId], references: [agents.id] })
 }));
 
 export const materialsRelations = relations(materials, ({ one, many }) => ({
@@ -416,7 +482,7 @@ export const achievements = pgTable("achievements", {
   requiredCount: integer("required_count").notNull().default(1), // Cantidad requerida para completar este logro
   level: text("level").notNull().default("bronze"), // bronze, silver, gold, platinum
   badgeColor: text("badge_color").notNull().default("#CD7F32"), // Color hexadecimal para la insignia
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  createdAt: timestamp("created_at")
 });
 
 export const contractorAchievements = pgTable("contractor_achievements", {
@@ -428,8 +494,8 @@ export const contractorAchievements = pgTable("contractor_achievements", {
   completedAt: timestamp("completed_at"),
   notified: boolean("notified").notNull().default(false), // Si se ha mostrado la notificación
   unlockedReward: boolean("unlocked_reward").notNull().default(false), // Si se ha reclamado la recompensa
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull()
+  createdAt: timestamp("created_at"),
+  updatedAt: timestamp("updated_at")
 });
 
 export const achievementRewards = pgTable("achievement_rewards", {
@@ -439,7 +505,7 @@ export const achievementRewards = pgTable("achievement_rewards", {
   description: text("description").notNull(),
   value: text("value").notNull(), // Puede ser un porcentaje, créditos, o nombre de característica
   duration: integer("duration"), // Duración en días (para descuentos temporales)
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  createdAt: timestamp("created_at")
 });
 
 export const contractorStreaks = pgTable("contractor_streaks", {
@@ -451,7 +517,7 @@ export const contractorStreaks = pgTable("contractor_streaks", {
   level: integer("level").notNull().default(1),
   xp: integer("xp").notNull().default(0),
   nextLevelXp: integer("next_level_xp").notNull().default(100),
-  updatedAt: timestamp("updated_at").defaultNow().notNull()
+  updatedAt: timestamp("updated_at")
 });
 
 // Achievement relations
@@ -555,7 +621,10 @@ export const eventInsertSchema = z.object({
   description: z.string().optional(),
   startTime: z.coerce.date(),
   endTime: z.coerce.date(),
-  location: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zip: z.string().optional(),
   type: z.enum(["meeting", "site-visit", "delivery", "estimate", "invoice", "other"], {
     errorMap: () => ({ message: "Tipo de evento inválido" })
   }),
@@ -564,6 +633,7 @@ export const eventInsertSchema = z.object({
   }),
   clientId: z.number().optional(),
   projectId: z.number().optional(),
+  agentId: z.number().optional(),
   notes: z.string().optional()
 });
 export const materialInsertSchema = createInsertSchema(materials);
@@ -578,9 +648,29 @@ export const priceConfigurationInsertSchema = createInsertSchema(priceConfigurat
   configName: (schema) => schema.min(2, "Nombre de configuración debe tener al menos 2 caracteres"),
   serviceType: (schema) => schema.min(1, "Tipo de servicio es requerido")
 });
+// Enhanced agentInsertSchema with full validation and error messages
+export const agentInsertSchema: z.ZodType<any> = z.object({
+  contractorId: z.number({ required_error: "Contractor ID is required" }),
+  firstName: z.string({ required_error: "First name is required" }).min(2, { message: "First name must be at least 2 characters" }),
+  lastName: z.string({ required_error: "Last name is required" }).min(2, { message: "Last name must be at least 2 characters" }),
+  email: z.string({ required_error: "Email is required" }).email({ message: "Must provide a valid email address" }),
+  phone: z.string({ required_error: "Phone number is required" }).min(10, { message: "Phone number must be at least 10 characters" }),
+  employeeId: z.string().optional(),
+  role: z.string().default("field_agent"),
+  isActive: z.boolean().default(true),
+  specialties: z.string().optional(),
+  colorCode: z.string().default("#3B82F6"),
+  hourlyRate: z.number().nullable().optional(),
+  commissionRate: z.number().nullable().optional(),
+  hireDate: z.number().nullable().optional(),
+  notes: z.string().optional(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional()
+});
 
 // Select schemas (used for types)
 export const contractorSelectSchema = createSelectSchema(contractors);
+export const agentSelectSchema = createSelectSchema(agents);
 export const clientSelectSchema = createSelectSchema(clients);
 export const projectSelectSchema = createSelectSchema(projects);
 export const estimateSelectSchema = createSelectSchema(estimates);
@@ -601,6 +691,8 @@ export const contractorStreakSelectSchema = createSelectSchema(contractorStreaks
 // Export types
 export type Contractor = z.infer<typeof contractorSelectSchema>;
 export type ContractorInsert = z.infer<typeof contractorInsertSchema>;
+export type Agent = z.infer<typeof agentSelectSchema>;
+export type AgentInsert = z.infer<typeof agentInsertSchema>;
 export type Client = z.infer<typeof clientSelectSchema>;
 export type ClientInsert = z.infer<typeof clientInsertSchema>;
 export type Project = z.infer<typeof projectSelectSchema>;
@@ -641,7 +733,7 @@ export const timeclockEntries = pgTable("timeclock_entries", {
   contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
   employeeName: text("employee_name").notNull(),
   type: text("type").notNull(), // "IN" or "OUT"
-  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  timestamp: timestamp("timestamp").notNull(),
   date: date("date").notNull(),
   location: text("location"),
   notes: text("notes"),
@@ -649,7 +741,8 @@ export const timeclockEntries = pgTable("timeclock_entries", {
   clockInEntryId: integer("clock_in_entry_id").references(() => timeclockEntries.id),
   // Store hours worked (only for Clock Out entries)
   hoursWorked: decimal("hours_worked", { precision: 5, scale: 2 }),
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  viewerRole: text("viewer_role").default("all"), // Access control: 'all', 'manager', 'owner', 'self'
+  createdAt: timestamp("created_at")
 });
 
 export const timeclockEntriesRelations = relations(timeclockEntries, ({ one, many }) => ({
@@ -669,15 +762,146 @@ export const timeclockContractorsRelations = relations(contractors, ({ many }) =
 
 // Schemas for timeclockEntries
 export const timeclockEntryInsertSchema = createInsertSchema(timeclockEntries, {
-  employeeName: (schema) => schema.min(2, "Employee name must be at least 2 characters"),
-  type: (schema) => schema.refine(val => ["IN", "OUT"].includes(val), {
+  employeeName: z.string().min(2, "Employee name must be at least 2 characters"),
+  type: z.string().refine(val => ["IN", "OUT"].includes(val), {
     message: "Type must be either 'IN' or 'OUT'"
-  }),
-  hoursWorked: (schema) => schema.nullable().optional().transform(val => 
-    val === null || val === undefined ? null : typeof val === 'number' ? val : null
-  )
+  })
 });
 export type TimeclockEntryInsert = z.infer<typeof timeclockEntryInsertSchema>;
 
 export const timeclockEntrySelectSchema = createSelectSchema(timeclockEntries);
 export type TimeclockEntry = z.infer<typeof timeclockEntrySelectSchema>;
+
+// Client Portal Messages
+export const clientMessages = pgTable("client_messages", {
+  id: serial("id").primaryKey(),
+  contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
+  clientId: integer("client_id").references(() => clients.id).notNull(),
+  subject: text("subject").notNull(),
+  message: text("message").notNull(),
+  messageType: text("message_type").default("general").notNull(), // general, project_update, estimate, invoice, urgent
+  priority: text("priority").default("normal").notNull(), // low, normal, high, urgent
+  isRead: boolean("is_read").default(false).notNull(),
+  readAt: timestamp("read_at"),
+  attachments: jsonb("attachments").default('[]'), // Array of file URLs/paths
+  sentViaEmail: boolean("sent_via_email").default(false).notNull(),
+  emailSentAt: timestamp("email_sent_at"),
+  createdAt: timestamp("created_at"),
+  updatedAt: timestamp("updated_at")
+});
+
+// Client Portal Access Tokens (for secure access without login)
+export const clientPortalTokens = pgTable("client_portal_tokens", {
+  id: serial("id").primaryKey(),
+  clientId: integer("client_id").references(() => clients.id).notNull(),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  lastUsedAt: timestamp("last_used_at"),
+  createdAt: timestamp("created_at")
+});
+
+// Message Replies (for two-way communication)
+export const messageReplies = pgTable("message_replies", {
+  id: serial("id").primaryKey(),
+  messageId: integer("message_id").references(() => clientMessages.id).notNull(),
+  senderType: text("sender_type").notNull(), // "contractor" or "client"
+  senderId: integer("sender_id").notNull(), // contractor_id or client_id
+  reply: text("reply").notNull(),
+  attachments: jsonb("attachments").default('[]'),
+  isRead: boolean("is_read").default(false).notNull(),
+  readAt: timestamp("read_at"),
+  createdAt: timestamp("created_at")
+});
+
+// Relations for client messaging system
+export const clientMessagesRelations = relations(clientMessages, ({ one, many }) => ({
+  contractor: one(contractors, { fields: [clientMessages.contractorId], references: [contractors.id] }),
+  client: one(clients, { fields: [clientMessages.clientId], references: [clients.id] }),
+  replies: many(messageReplies)
+}));
+
+export const clientPortalTokensRelations = relations(clientPortalTokens, ({ one }) => ({
+  client: one(clients, { fields: [clientPortalTokens.clientId], references: [clients.id] })
+}));
+
+export const messageRepliesRelations = relations(messageReplies, ({ one }) => ({
+  message: one(clientMessages, { fields: [messageReplies.messageId], references: [clientMessages.id] })
+}));
+
+// Schemas for client messaging
+export const clientMessageInsertSchema = createInsertSchema(clientMessages, {
+  subject: z.string().min(1, "Subject is required"),
+  message: z.string().min(1, "Message is required"),
+  messageType: z.enum(["general", "project_update", "estimate", "invoice", "urgent"]),
+  priority: z.enum(["low", "normal", "high", "urgent"])
+});
+export type ClientMessageInsert = z.infer<typeof clientMessageInsertSchema>;
+
+export const clientMessageSelectSchema = createSelectSchema(clientMessages);
+export type ClientMessage = z.infer<typeof clientMessageSelectSchema>;
+
+export const clientPortalTokenInsertSchema = createInsertSchema(clientPortalTokens);
+export type ClientPortalTokenInsert = z.infer<typeof clientPortalTokenInsertSchema>;
+
+export const clientPortalTokenSelectSchema = createSelectSchema(clientPortalTokens);
+export type ClientPortalToken = z.infer<typeof clientPortalTokenSelectSchema>;
+
+export const messageReplyInsertSchema = createInsertSchema(messageReplies, {
+  reply: z.string().min(1, "Reply is required"),
+  senderType: z.enum(["contractor", "client"])
+});
+export type MessageReplyInsert = z.infer<typeof messageReplyInsertSchema>;
+
+export const messageReplySelectSchema = createSelectSchema(messageReplies);
+export type MessageReply = z.infer<typeof messageReplySelectSchema>;
+
+// AI Usage Tracking for subscription limits
+export const aiUsageLog = pgTable("ai_usage_log", {
+  id: serial("id").primaryKey(),
+  contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
+  usageType: text("usage_type").notNull(), // "estimate_generation", "cost_analysis", "job_description", etc.
+  entityType: text("entity_type"), // "estimate", "project", "invoice"
+  entityId: integer("entity_id"), // ID of the related entity
+  tokensUsed: integer("tokens_used"),
+  costUsd: decimal("cost_usd", { precision: 8, scale: 4 }),
+  requestData: jsonb("request_data"), // Store request parameters for audit
+  responseData: jsonb("response_data"), // Store response for audit
+  usageMonth: text("usage_month").notNull(), // Format: "2024-01" for easy monthly counting
+  createdAt: timestamp("created_at")
+});
+
+// Subscription Plans Definition (for plan limits reference)
+export const subscriptionPlans = pgTable("subscription_plans", {
+  id: serial("id").primaryKey(),
+  planName: text("plan_name").notNull().unique(), // "basic", "pro", "business"
+  displayName: text("display_name").notNull(), // "Basic Plan", "Pro Plan", "Business Plan"
+  priceMonthly: decimal("price_monthly", { precision: 8, scale: 2 }).notNull(),
+  clientLimit: integer("client_limit"), // null means unlimited
+  aiUsageLimit: integer("ai_usage_limit"), // null means unlimited
+  hasTimeClockAccess: boolean("has_time_clock_access").default(false).notNull(),
+  hasStripeIntegration: boolean("has_stripe_integration").default(false).notNull(),
+  hasCustomPortal: boolean("has_custom_portal").default(false).notNull(),
+  hasBrandedPortal: boolean("has_branded_portal").default(false).notNull(),
+  features: jsonb("features").default('[]'), // Array of feature strings
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at")
+});
+
+// Relations for new tables
+export const aiUsageLogRelations = relations(aiUsageLog, ({ one }) => ({
+  contractor: one(contractors, { fields: [aiUsageLog.contractorId], references: [contractors.id] })
+}));
+
+// Schemas for new tables
+export const aiUsageLogInsertSchema = createInsertSchema(aiUsageLog);
+export type AiUsageLogInsert = z.infer<typeof aiUsageLogInsertSchema>;
+
+export const aiUsageLogSelectSchema = createSelectSchema(aiUsageLog);
+export type AiUsageLog = z.infer<typeof aiUsageLogSelectSchema>;
+
+export const subscriptionPlansInsertSchema = createInsertSchema(subscriptionPlans);
+export type SubscriptionPlansInsert = z.infer<typeof subscriptionPlansInsertSchema>;
+
+export const subscriptionPlansSelectSchema = createSelectSchema(subscriptionPlans);
+export type SubscriptionPlans = z.infer<typeof subscriptionPlansSelectSchema>;

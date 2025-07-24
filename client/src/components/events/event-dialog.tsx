@@ -5,10 +5,11 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import EventForm from "@/components/events/event-form";
+} from '../ui/dialog';
+import SimpleEventForm from './simple-event-form';
+import EventForm from './event-form';
 import { Loader2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface EventDialogProps {
   isOpen: boolean;
@@ -27,13 +28,17 @@ export default function EventDialog({
   defaultProjectId,
   defaultType,
 }: EventDialogProps) {
-  // Si hay un eventId, buscamos la información del evento
+  // If there's an eventId, we fetch the event information
   const { isLoading } = useQuery({
     queryKey: ["/api/protected/events", eventId],
     enabled: !!eventId && isOpen,
   });
 
+  const queryClient = useQueryClient();
+  
   const handleSuccess = () => {
+    // Force refresh events list to ensure cancelled events are removed
+    queryClient.invalidateQueries({ queryKey: ["/api/protected/events"] });
     onClose();
   };
 
@@ -41,13 +46,9 @@ export default function EventDialog({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {eventId ? "Editar Evento" : "Crear Nuevo Evento"}
-          </DialogTitle>
+          <DialogTitle>{eventId ? "Edit Event" : "New Event"}</DialogTitle>
           <DialogDescription>
-            {eventId
-              ? "Actualice los detalles del evento existente"
-              : "Complete los detalles para programar un nuevo evento"}
+            {eventId ? "Edit appointment details, reassign agents, or change event type" : "Create a new appointment"}
           </DialogDescription>
         </DialogHeader>
 
@@ -58,11 +59,11 @@ export default function EventDialog({
         ) : (
           <EventForm
             eventId={eventId}
+            onSuccess={handleSuccess}
+            onCancel={onClose}
             defaultClientId={defaultClientId}
             defaultProjectId={defaultProjectId}
             defaultType={defaultType}
-            onSuccess={handleSuccess}
-            onCancel={onClose}
           />
         )}
       </DialogContent>

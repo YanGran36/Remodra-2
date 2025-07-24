@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { Loader2, BarChart2, ClipboardList, DollarSign, PlusCircle, FileText, FileCheck, AlertTriangle } from "lucide-react";
-import { useAiCostAnalysis, AiAnalysisParams, AiAnalysisResult, MaterialInput } from "@/hooks/use-ai-cost-analysis";
-import { useToast } from "@/hooks/use-toast";
-import { formatCurrency } from "@/lib/utils";
+import { useAiCostAnalysis, AiAnalysisParams, AiAnalysisResult, MaterialInput } from '../../hooks/use-ai-cost-analysis';
+import { useToast } from '../../hooks/use-toast';
+import { formatCurrency } from '../../lib/utils';
 
 // Componentes UI
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress";
+import { Button } from '../ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
+import { Separator } from '../ui/separator';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { Progress } from '../ui/progress';
 import {
   Table,
   TableBody,
@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
   TableFooter,
-} from "@/components/ui/table";
+} from '../ui/table';
 
 interface AiAnalysisPanelProps {
   serviceType: string;

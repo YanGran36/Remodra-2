@@ -4,11 +4,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, Plus, Trash2, Loader2, Save, Edit, Tool } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useEstimates } from "@/hooks/use-estimates";
-import { useClients } from "@/hooks/use-clients";
-import { useProjects } from "@/hooks/use-projects";
-import { formatCurrency } from "@/lib/utils";
+import { useToast } from '../../hooks/use-toast';
+import { useEstimates } from '../../hooks/use-estimates';
+import { useClients } from '../../hooks/use-clients';
+import { useProjects } from '../../hooks/use-projects';
+import { formatCurrency } from '../../lib/utils';
 import { 
   SERVICE_TYPES, 
   MATERIALS_BY_SERVICE, 
@@ -16,9 +16,9 @@ import {
   LABOR_RATES_BY_SERVICE,
   getMaterial,
   getServiceLabel
-} from "@/lib/service-options";
+} from '../../lib/service-options';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '../ui/button';
 import {
   Card,
   CardContent,
@@ -26,7 +26,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '../ui/card';
 import {
   Form,
   FormControl,
@@ -35,15 +35,15 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+} from '../ui/form';
+import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+} from '../ui/popover';
+import { Calendar } from '../ui/calendar';
 import {
   Table,
   TableBody,
@@ -51,7 +51,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '../ui/table';
 import {
   Select,
   SelectContent,
@@ -59,8 +59,8 @@ import {
   SelectTrigger,
   SelectValue,
   SelectSeparator,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
+} from '../ui/select';
+import { Separator } from '../ui/separator';
 
 // Validation schema for the form
 const estimateFormSchema = z.object({
@@ -312,29 +312,59 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
   const onSubmit = (data: EstimateFormValues) => {
     if (items.length === 0) {
       toast({
-        title: "Cannot add items",
+        title: "Cannot create estimate",
         description: "You must add at least one item to the estimate.",
         variant: "destructive",
       });
       return;
     }
     
+    // Additional validation to ensure totals are not zero
+    const currentSubtotal = items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    if (currentSubtotal <= 0) {
+      toast({
+        title: "Invalid estimate total",
+        description: "Estimate total must be greater than $0.00.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Recalculate totals before submission to ensure accurate amounts
+    recalculateTotals(items);
+    
+    // Get the updated form values after recalculation
+    const updatedData = form.getValues();
+    
     // Create the estimate number if it does not exist
-    if (!data.estimateNumber) {
+    if (!updatedData.estimateNumber) {
       const today = new Date();
       const year = today.getFullYear();
       const month = (today.getMonth() + 1).toString().padStart(2, '0');
-      const random = Math.floor(Math.random() * 900) + 100; // Número aleatorio de 3 dígitos
-      data.estimateNumber = `EST-${year}${month}-${random}`;
+      const random = Math.floor(Math.random() * 900) + 100;
+      updatedData.estimateNumber = `EST-${year}${month}-${random}`;
     }
+    
+    // Ensure we have valid numeric values
+    const subtotal = parseFloat(updatedData.subtotal || "0");
+    const tax = parseFloat(updatedData.tax || "0");
+    const discount = parseFloat(updatedData.discount || "0");
+    const total = parseFloat(updatedData.total || "0");
+    
+    console.log(`Creating estimate with calculated totals: Subtotal: $${subtotal}, Tax: ${tax}%, Discount: ${discount}%, Total: $${total}`);
     
     // Prepare complete estimate object with its items
     const estimateData = {
-      ...data,
+      ...updatedData,
+      // Ensure numeric fields are properly formatted
+      subtotal: subtotal.toString(),
+      tax: tax.toString(),
+      discount: discount.toString(),
+      total: total.toString(),
       // Si proyecto es 0, enviar null para evitar error de clave foránea
-      projectId: data.projectId === 0 ? null : data.projectId,
-      // If we are editing, maintain the current status, otherwise set as "pending"
-      status: isEditing ? form.getValues("status") || "pending" : "pending",
+      projectId: updatedData.projectId === 0 ? null : updatedData.projectId,
+      // If we are editing, maintain the current status, otherwise set as "draft"
+      status: isEditing ? form.getValues("status") || "draft" : "draft",
       items: items.map(item => ({
         ...item,
         estimateId: isEditing && estimateId ? estimateId : 0, // Maintain relationship with the estimate if in edit mode

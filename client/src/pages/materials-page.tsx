@@ -22,17 +22,17 @@ import {
   SelectItem, 
   SelectTrigger, 
   SelectValue 
-} from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+} from '../components/ui/select';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+} from '../components/ui/dropdown-menu';
+import { Input } from '../components/ui/input';
 import { 
   Table, 
   TableBody, 
@@ -40,15 +40,16 @@ import {
   TableHead, 
   TableHeader, 
   TableRow 
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import Sidebar from "@/components/layout/sidebar";
-import MobileSidebar from "@/components/layout/mobile-sidebar";
-import PageHeader from "@/components/shared/page-header";
-import SearchInput from "@/components/shared/search-input";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Skeleton } from "@/components/ui/skeleton";
+} from '../components/ui/table';
+import { Badge } from '../components/ui/badge';
+import Sidebar from '../components/layout/sidebar';
+import MobileSidebar from '../components/layout/mobile-sidebar';
+import PageHeader from '../components/shared/page-header';
+
+import { Dialog, DialogContent } from '../components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Skeleton } from '../components/ui/skeleton';
+import TopNav from '../components/layout/top-nav';
 
 // Helper function to format currency
 const formatCurrency = (amount: number | string | null | undefined) => {
@@ -89,7 +90,7 @@ export default function MaterialsPage() {
   });
 
   // Filter and sort materials
-  const filteredMaterials = materials
+  const filteredMaterials = materials && Array.isArray(materials)
     ? materials
         .filter((material: any) => {
           // Status filter
@@ -158,7 +159,7 @@ export default function MaterialsPage() {
 
   // Calculate totals
   const calculateTotals = () => {
-    if (!materials) return { totalValue: 0, count: 0, ordered: 0, outOfStock: 0 };
+    if (!materials || !Array.isArray(materials)) return { totalValue: 0, count: 0, ordered: 0, outOfStock: 0 };
     
     const totalValue = materials.reduce((sum: number, material: any) => {
       const cost = material.cost ? parseFloat(material.cost) : 0;
@@ -177,493 +178,262 @@ export default function MaterialsPage() {
   const totals = calculateTotals();
 
   // Get unique suppliers for filtering
-  const suppliers = materials 
+  const suppliers = materials && Array.isArray(materials)
     ? Array.from(new Set(materials.map((m: any) => m.supplier).filter(Boolean)))
     : [];
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="remodra-layout">
       <Sidebar />
       <MobileSidebar />
-      
-      <main className="flex-1 overflow-y-auto bg-gray-50">
-        <div className="p-6">
-          <PageHeader 
-            title="Materials & Supplies" 
-            description="Track materials, supplies, and inventory"
-            actions={
-              <Button className="flex items-center" onClick={createNewMaterial}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Material
-              </Button>
-            }
-          />
-          
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Total Materials</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{totals.count}</div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Total Value</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(totals.totalValue)}</div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Items Ordered</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{totals.ordered}</div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Out of Stock</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-red-600">{totals.outOfStock}</div>
-              </CardContent>
-            </Card>
+      <div className="remodra-main">
+        <TopNav />
+        <main className="p-8 space-y-8">
+          {/* Header with Remodra branding */}
+          <div className="text-center mb-8">
+            <div className="remodra-logo mb-6">
+              <span className="remodra-logo-text">R</span>
+            </div>
+            <h1 className="remodra-title mb-3">
+              Materials & Supplies
+            </h1>
+            <p className="remodra-subtitle">
+              Track materials, supplies, and inventory
+            </p>
           </div>
-          
-          <Card className="mb-6">
-            <CardContent className="p-4">
-              <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <SearchInput 
-                    placeholder="Search materials..." 
-                    onSearch={setSearchQuery}
-                    className="w-full sm:w-80"
-                  />
-                  
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full sm:w-40">
-                      <SelectValue placeholder="Filter by status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="in_stock">In Stock</SelectItem>
-                      <SelectItem value="ordered">Ordered</SelectItem>
-                      <SelectItem value="delivered">Delivered</SelectItem>
-                      <SelectItem value="out_of_stock">Out of Stock</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  
-                  <Select value={supplierFilter} onValueChange={setSupplierFilter}>
-                    <SelectTrigger className="w-full sm:w-40">
-                      <SelectValue placeholder="Filter by supplier" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Suppliers</SelectItem>
-                      {suppliers.map((supplier) => (
-                        <SelectItem key={supplier} value={supplier}>{supplier}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  
-                  <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="w-full sm:w-40">
-                      <SelectValue placeholder="Sort by" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="name_asc">Name (A-Z)</SelectItem>
-                      <SelectItem value="name_desc">Name (Z-A)</SelectItem>
-                      <SelectItem value="cost_desc">Highest Cost</SelectItem>
-                      <SelectItem value="cost_asc">Lowest Cost</SelectItem>
-                      <SelectItem value="quantity_desc">Highest Quantity</SelectItem>
-                      <SelectItem value="quantity_asc">Lowest Quantity</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
-                    <Filter className="h-4 w-4 mr-2" />
-                    Advanced Filter
-                  </Button>
-                </div>
+
+          {/* Quick Action Buttons */}
+          <div className="flex justify-center gap-4 mb-8">
+            <Button className="remodra-button" onClick={createNewMaterial}>
+              <Plus className="h-5 w-5 mr-2" />
+              Add Material
+            </Button>
+            <Button className="remodra-button-outline" onClick={() => {
+              // Import functionality - for now just show an alert
+              alert('Import functionality coming soon! You can manually add materials for now.');
+            }}>
+              <Package className="h-5 w-5 mr-2" />
+              Import Materials
+            </Button>
+            <Button className="remodra-button-outline" onClick={() => {
+              // Export functionality
+              const csvContent = "data:text/csv;charset=utf-8," + 
+                "Name,Description,Cost,Quantity,Supplier,Status,Order Number,Min Quantity\n" +
+                (materials as any[]).map(m => 
+                  `"${m.name}","${m.description || ''}","${m.cost || 0}","${m.quantity || 0}","${m.supplier || ''}","${m.status}","${m.orderNumber || ''}","${m.minQuantity || 0}"`
+                ).join("\n");
+              const encodedUri = encodeURI(csvContent);
+              const link = document.createElement("a");
+              link.setAttribute("href", encodedUri);
+              link.setAttribute("download", "materials.csv");
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }}>
+              <ArchiveIcon className="h-5 w-5 mr-2" />
+              Export Inventory
+            </Button>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="remodra-stats-card">
+              <div className="remodra-stats-number">{totals.count}</div>
+              <div className="remodra-stats-label">Total Materials</div>
+              <div className="remodra-stats-accent"></div>
+            </div>
+            <div className="remodra-stats-card">
+              <div className="remodra-stats-number">{formatCurrency(totals.totalValue)}</div>
+              <div className="remodra-stats-label">Total Value</div>
+              <div className="remodra-stats-accent"></div>
+            </div>
+            <div className="remodra-stats-card">
+              <div className="remodra-stats-number">{totals.ordered}</div>
+              <div className="remodra-stats-label">On Order</div>
+              <div className="remodra-stats-accent"></div>
+            </div>
+            <div className="remodra-stats-card">
+              <div className="remodra-stats-number">{totals.outOfStock}</div>
+              <div className="remodra-stats-label">Out of Stock</div>
+              <div className="remodra-stats-accent"></div>
+            </div>
+          </div>
+
+          {/* Filters */}
+          <div className="remodra-card p-6">
+            <div className="flex flex-col lg:flex-row gap-4">
+              <Select value={statusFilter} onValueChange={(value: string) => setStatusFilter(value)}>
+                <SelectTrigger className="remodra-input w-full lg:w-48">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-600">
+                  <SelectItem value="all" className="text-slate-200 hover:bg-slate-700">All Status</SelectItem>
+                  <SelectItem value="in_stock" className="text-slate-200 hover:bg-slate-700">In Stock</SelectItem>
+                  <SelectItem value="ordered" className="text-slate-200 hover:bg-slate-700">Ordered</SelectItem>
+                  <SelectItem value="delivered" className="text-slate-200 hover:bg-slate-700">Delivered</SelectItem>
+                  <SelectItem value="out_of_stock" className="text-slate-200 hover:bg-slate-700">Out of Stock</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={supplierFilter} onValueChange={(value: string) => setSupplierFilter(value)}>
+                <SelectTrigger className="remodra-input w-full lg:w-48">
+                  <SelectValue placeholder="Filter by supplier" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-600">
+                  <SelectItem value="all" className="text-slate-200 hover:bg-slate-700">All Suppliers</SelectItem>
+                  {suppliers.map((supplier: string) => (
+                    <SelectItem key={supplier} value={supplier} className="text-slate-200 hover:bg-slate-700">
+                      {supplier}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={sortBy} onValueChange={(value: string) => setSortBy(value)}>
+                <SelectTrigger className="remodra-input w-full lg:w-48">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-600">
+                  <SelectItem value="name_asc" className="text-slate-200 hover:bg-slate-700">Name A-Z</SelectItem>
+                  <SelectItem value="name_desc" className="text-slate-200 hover:bg-slate-700">Name Z-A</SelectItem>
+                  <SelectItem value="cost_desc" className="text-slate-200 hover:bg-slate-700">Highest Cost</SelectItem>
+                  <SelectItem value="cost_asc" className="text-slate-200 hover:bg-slate-700">Lowest Cost</SelectItem>
+                  <SelectItem value="quantity_desc" className="text-slate-200 hover:bg-slate-700">Highest Quantity</SelectItem>
+                  <SelectItem value="quantity_asc" className="text-slate-200 hover:bg-slate-700">Lowest Quantity</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Materials List */}
+          <div className="remodra-card p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-amber-400">Materials Directory</h2>
+              <Badge className="remodra-badge">
+                {filteredMaterials.length} Materials
+              </Badge>
+            </div>
+
+            {isLoading ? (
+              <div className="remodra-loading">
+                <div className="remodra-spinner"></div>
+                <p className="text-slate-300">Loading materials...</p>
               </div>
-              
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Supplier</TableHead>
-                      <TableHead>Quantity</TableHead>
-                      <TableHead>Unit</TableHead>
-                      <TableHead>Unit Cost</TableHead>
-                      <TableHead>Total Cost</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Project</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {isLoading ? (
-                      Array(5).fill(0).map((_, index) => (
-                        <TableRow key={index}>
-                          <TableCell><Skeleton className="h-5 w-40" /></TableCell>
-                          <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                          <TableCell><Skeleton className="h-5 w-16" /></TableCell>
-                          <TableCell><Skeleton className="h-5 w-16" /></TableCell>
-                          <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                          <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                          <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                          <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                          <TableCell className="text-right"><Skeleton className="h-9 w-12 ml-auto" /></TableCell>
-                        </TableRow>
-                      ))
-                    ) : error ? (
-                      <TableRow>
-                        <TableCell colSpan={9} className="text-center py-4 text-gray-500">
-                          Error loading materials. Please try again.
-                        </TableCell>
-                      </TableRow>
-                    ) : filteredMaterials.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={9} className="text-center py-8">
-                          <div className="flex flex-col items-center">
-                            <Drill className="h-12 w-12 text-gray-300 mb-3" />
-                            <h3 className="text-lg font-medium text-gray-900 mb-1">No materials found</h3>
-                            <p className="text-sm text-gray-500 mb-4">
-                              {searchQuery || statusFilter !== "all" || supplierFilter !== "all"
-                                ? "Try adjusting your filters"
-                                : "Add your first material to get started"}
-                            </p>
-                            {!searchQuery && statusFilter === "all" && supplierFilter === "all" && (
-                              <Button onClick={createNewMaterial}>
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add Material
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredMaterials.map((material: any) => (
-                        <TableRow key={material.id} className="cursor-pointer hover:bg-gray-50" onClick={() => viewMaterialDetails(material)}>
-                          <TableCell className="font-medium">{material.name}</TableCell>
-                          <TableCell>{material.supplier || "—"}</TableCell>
-                          <TableCell>{material.quantity || "—"}</TableCell>
-                          <TableCell>{material.unit || "—"}</TableCell>
-                          <TableCell>{material.cost ? formatCurrency(material.cost) : "—"}</TableCell>
-                          <TableCell>
-                            {material.cost && material.quantity 
-                              ? formatCurrency(parseFloat(material.cost) * parseFloat(material.quantity)) 
-                              : "—"}
-                          </TableCell>
-                          <TableCell>{getStatusBadge(material.status)}</TableCell>
-                          <TableCell>{material.project?.title || "—"}</TableCell>
-                          <TableCell className="text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                  <span className="sr-only">Open menu</span>
-                                  <ChevronDown className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={(e) => {
-                                  e.stopPropagation();
-                                  viewMaterialDetails(material);
-                                }}>
-                                  <Eye className="mr-2 h-4 w-4" />
-                                  View
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={(e) => {
-                                  e.stopPropagation();
-                                  editMaterial(material);
-                                }}>
-                                  <FileEdit className="mr-2 h-4 w-4" />
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem>
-                                  <ShoppingBag className="mr-2 h-4 w-4" />
-                                  Place Order
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <PackageCheck className="mr-2 h-4 w-4" />
-                                  Mark as Delivered
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-destructive">
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
+            ) : error ? (
+              <div className="text-center py-8">
+                <p className="text-red-400">Error loading materials: {error instanceof Error ? error.message : 'Unknown error'}</p>
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <h3 className="text-lg font-semibold mb-4">Material Status Overview</h3>
-              <Tabs defaultValue="byStatus">
-                <TabsList className="mb-4">
-                  <TabsTrigger value="byStatus">By Status</TabsTrigger>
-                  <TabsTrigger value="bySupplier">By Supplier</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="byStatus">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <Card>
-                      <CardContent className="p-4 flex items-center">
-                        <div className="bg-green-100 rounded-full p-3 mr-3">
-                          <Package className="h-5 w-5 text-green-600" />
-                        </div>
-                        <div>
-                          <p className="text-gray-500 text-sm">In Stock</p>
-                          <p className="text-xl font-bold">
-                            {materials 
-                              ? materials.filter((m: any) => m.status === 'in_stock').length 
-                              : 0}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardContent className="p-4 flex items-center">
-                        <div className="bg-blue-100 rounded-full p-3 mr-3">
-                          <ShoppingBag className="h-5 w-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="text-gray-500 text-sm">Ordered</p>
-                          <p className="text-xl font-bold">
-                            {materials 
-                              ? materials.filter((m: any) => m.status === 'ordered').length 
-                              : 0}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardContent className="p-4 flex items-center">
-                        <div className="bg-purple-100 rounded-full p-3 mr-3">
-                          <PackageCheck className="h-5 w-5 text-purple-600" />
-                        </div>
-                        <div>
-                          <p className="text-gray-500 text-sm">Delivered</p>
-                          <p className="text-xl font-bold">
-                            {materials 
-                              ? materials.filter((m: any) => m.status === 'delivered').length 
-                              : 0}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardContent className="p-4 flex items-center">
-                        <div className="bg-red-100 rounded-full p-3 mr-3">
-                          <PackageX className="h-5 w-5 text-red-600" />
-                        </div>
-                        <div>
-                          <p className="text-gray-500 text-sm">Out of Stock</p>
-                          <p className="text-xl font-bold">
-                            {materials 
-                              ? materials.filter((m: any) => m.status === 'out_of_stock').length 
-                              : 0}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="bySupplier">
-                  <div className="h-80 flex items-center justify-center text-gray-500">
-                    <p>Supplier breakdown chart would go here</p>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
-      
-      {/* Material Detail Dialog */}
-      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          {selectedMaterial && (
-            <div>
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold">{selectedMaterial.name}</h2>
-                  <div className="flex items-center mt-1">
-                    {getStatusBadge(selectedMaterial.status)}
-                    {selectedMaterial.orderNumber && (
-                      <span className="text-sm text-gray-500 ml-3">
-                        Order #: {selectedMaterial.orderNumber}
-                      </span>
-                    )}
-                  </div>
+            ) : filteredMaterials.length === 0 ? (
+              <div className="remodra-empty">
+                <div className="remodra-empty-icon">📦</div>
+                <div className="remodra-empty-title">No Materials Found</div>
+                <div className="remodra-empty-description">
+                  {searchQuery ? `No materials match "${searchQuery}"` : "Start by adding your first material"}
                 </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => {
-                    setIsDetailOpen(false);
-                    setEditingMaterial(selectedMaterial);
-                    setIsFormOpen(true);
-                  }}
-                >
-                  <FileEdit className="h-4 w-4 mr-2" />
-                  Edit Material
+                <Button className="remodra-button mt-4" onClick={createNewMaterial}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add First Material
                 </Button>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Material Details</h3>
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="space-y-3">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Supplier:</span>
-                          <span>{selectedMaterial.supplier || "Not specified"}</span>
+            ) : (
+              <div className="space-y-4">
+                {filteredMaterials.map((material: any) => (
+                  <div key={material.id} className="p-6 bg-gradient-to-r from-slate-800 to-slate-700 rounded-lg border border-slate-600 hover:border-amber-500/50 transition-all duration-300">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-yellow-600 rounded-lg flex items-center justify-center">
+                          <Package className="h-6 w-6 text-slate-900" />
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Quantity:</span>
-                          <span>
-                            {selectedMaterial.quantity 
-                              ? `${selectedMaterial.quantity} ${selectedMaterial.unit || ''}` 
-                              : "Not specified"}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Unit Cost:</span>
-                          <span>{selectedMaterial.cost ? formatCurrency(selectedMaterial.cost) : "Not specified"}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Total Cost:</span>
-                          <span>
-                            {selectedMaterial.cost && selectedMaterial.quantity 
-                              ? formatCurrency(parseFloat(selectedMaterial.cost) * parseFloat(selectedMaterial.quantity)) 
-                              : "Not specified"}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Status:</span>
-                          <span>{getStatusBadge(selectedMaterial.status)}</span>
+                        <div>
+                          <h3 className="font-semibold text-slate-200 text-lg">
+                            {material.name}
+                          </h3>
+                          <p className="text-slate-400 text-sm">{material.description || 'No description'}</p>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Project Assignment</h3>
-                  <Card>
-                    <CardContent className="p-4">
-                      {selectedMaterial.project ? (
-                        <div className="space-y-3">
-                          <div className="font-medium">{selectedMaterial.project.title}</div>
-                          <div className="text-sm text-gray-600">
-                            Status: {getStatusBadge(selectedMaterial.project.status)}
-                          </div>
-                          {selectedMaterial.project.startDate && (
-                            <div className="text-sm text-gray-600">
-                              Started: {new Date(selectedMaterial.project.startDate).toLocaleDateString()}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="text-gray-500 flex flex-col items-center py-4">
-                          <ArchiveIcon className="h-8 w-8 mb-2 text-gray-300" />
-                          <p>No project assigned</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
+                      <div className="flex items-center gap-3">
+                        <Badge className={`${
+                          material.status === 'in_stock' ? 'remodra-badge' :
+                          material.status === 'out_of_stock' ? 'border-red-600/50 text-red-400' :
+                          'remodra-badge-outline'
+                        }`}>
+                          {material.status.replace('_', ' ')}
+                        </Badge>
+                        <span className="text-amber-400 font-bold text-lg">
+                          {formatCurrency(material.cost)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                      <div className="flex items-center gap-2 text-slate-300">
+                        <ShoppingBag className="h-4 w-4 text-amber-400" />
+                        <span className="text-sm">
+                          Qty: {material.quantity || 0}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-slate-300">
+                        <Package className="h-4 w-4 text-amber-400" />
+                        <span className="text-sm">
+                          {material.supplier || 'No supplier'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-slate-300">
+                        <PackageCheck className="h-4 w-4 text-amber-400" />
+                        <span className="text-sm">
+                          {material.orderNumber || 'No order #'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-slate-300">
+                        <AlertCircle className="h-4 w-4 text-amber-400" />
+                        <span className="text-sm">
+                          Min: {material.minQuantity || 0}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-600">
+                      <div className="text-sm text-slate-400">
+                        <span className="text-amber-400 font-semibold">{formatCurrency((material.cost || 0) * (material.quantity || 0))}</span> total value
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => viewMaterialDetails(material)}
+                          className="remodra-button-outline"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => editMaterial(material)}
+                          className="remodra-button-outline"
+                        >
+                          <FileEdit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="remodra-button-outline"
+                        >
+                          <Package className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-red-600/50 text-red-400 hover:bg-red-600 hover:border-red-600 hover:text-white transition-all duration-300"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-2">Description</h3>
-                <Card>
-                  <CardContent className="p-4">
-                    {selectedMaterial.description ? (
-                      <p>{selectedMaterial.description}</p>
-                    ) : (
-                      <p className="text-gray-500">No description provided</p>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-              
-              <div>
-                <h3 className="text-lg font-semibold mb-2">Notes</h3>
-                <Card>
-                  <CardContent className="p-4">
-                    {selectedMaterial.notes ? (
-                      <p>{selectedMaterial.notes}</p>
-                    ) : (
-                      <p className="text-gray-500">No notes available</p>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-              
-              <div className="flex space-x-3 mt-6">
-                {selectedMaterial.status === 'out_of_stock' && (
-                  <Button>
-                    <ShoppingBag className="h-4 w-4 mr-2" />
-                    Place Order
-                  </Button>
-                )}
-                
-                {selectedMaterial.status === 'ordered' && (
-                  <Button>
-                    <PackageCheck className="h-4 w-4 mr-2" />
-                    Mark as Delivered
-                  </Button>
-                )}
-                
-                {(selectedMaterial.status === 'in_stock' || selectedMaterial.status === 'delivered') && (
-                  <Button variant="destructive">
-                    <AlertCircle className="h-4 w-4 mr-2" />
-                    Mark as Out of Stock
-                  </Button>
-                )}
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-      
-      {/* Material Form Dialog (This would be a separate component in a real app) */}
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <h2 className="text-xl font-bold mb-4">{editingMaterial ? "Edit Material" : "Add New Material"}</h2>
-          <p className="text-gray-500 mb-4">Material form would be here</p>
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => setIsFormOpen(false)}>Cancel</Button>
-            <Button>Save Material</Button>
+            )}
           </div>
-        </DialogContent>
-      </Dialog>
+        </main>
+      </div>
     </div>
   );
 }

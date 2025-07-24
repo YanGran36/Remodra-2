@@ -16,8 +16,8 @@ import {
   DialogHeader, 
   DialogTitle,
   DialogFooter
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from '../ui/dialog';
+import { Button } from '../ui/button';
 import { 
   Table, 
   TableBody, 
@@ -26,16 +26,16 @@ import {
   TableHeader, 
   TableRow, 
   TableFooter
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { Progress } from "@/components/ui/progress";
+} from '../ui/table';
+import { Badge } from '../ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Separator } from '../ui/separator';
+import { Progress } from '../ui/progress';
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from '../../lib/queryClient';
+import { useToast } from '../../hooks/use-toast';
 
 // Helper function to format currency
 const formatCurrency = (amount: number | string) => {
@@ -115,7 +115,10 @@ export default function InvoiceDetail({ invoice, isOpen, onClose, onEdit }: Invo
       return await res.json();
     },
     onSuccess: () => {
+      // Invalidate all invoice-related queries to ensure data refresh
       queryClient.invalidateQueries({ queryKey: ["/api/protected/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/protected/invoices", invoice.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/protected/projects"] });
       toast({
         title: "Payment recorded",
         description: "The payment has been recorded successfully.",

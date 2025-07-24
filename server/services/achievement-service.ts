@@ -1,14 +1,12 @@
-import { db } from "../../db";
-import {
-  contractors, 
+import { db } from "../../db/index";
+import { 
   achievements, 
-  contractorAchievements, 
-  achievementRewards, 
-  contractorStreaks
-} from "@shared/schema";
-import { eq, and, desc } from "drizzle-orm";
+  contractor_achievements, 
+  achievement_rewards, 
+  contractor_streaks 
+} from "../../shared/schema-sqlite";
+import { eq, and } from "drizzle-orm";
 
-// Interfaz para los datos necesarios para verificar un logro
 export interface AchievementCheckData {
   contractorId: number;
   category: string;
@@ -21,17 +19,15 @@ export interface AchievementCheckData {
  */
 export async function getAllAchievements() {
   try {
-    const allAchievements = await db.query.achievements.findMany({
-      orderBy: [desc(achievements.points)],
-      with: {
-        rewards: true
-      }
-    });
-    
+    if (!db) {
+      console.warn("Database not available, returning empty achievements");
+      return [];
+    }
+    const allAchievements = await db.select().from(achievements);
     return allAchievements;
   } catch (error) {
-    console.error("Error al obtener logros:", error);
-    throw new Error("No se pudieron obtener los logros");
+    console.error("Error fetching all achievements:", error);
+    return [];
   }
 }
 
@@ -40,48 +36,64 @@ export async function getAllAchievements() {
  */
 export async function getContractorAchievements(contractorId: number) {
   try {
-    const contractorAchievementsList = await db.query.contractorAchievements.findMany({
-      where: eq(contractorAchievements.contractorId, contractorId),
-      with: {
-        achievement: {
-          with: {
-            rewards: true
-          }
-        }
-      }
-    });
+    if (!db) {
+      console.warn("Database not available, returning empty contractor achievements");
+      return [];
+    }
+    const contractorAchievements = await db
+      .select()
+      .from(contractor_achievements)
+      .where(eq(contractor_achievements.contractor_id, contractorId));
     
-    return contractorAchievementsList;
+    return contractorAchievements;
   } catch (error) {
-    console.error("Error al obtener logros del contratista:", error);
-    throw new Error("No se pudieron obtener los logros del contratista");
+    console.error("Error fetching contractor achievements:", error);
+    return [];
   }
 }
 
 /**
- * Obtiene los logros no leídos (completados pero no notificados)
+ * Obtiene los logros no leídos del contratista
  */
 export async function getUnreadAchievements(contractorId: number) {
   try {
-    const unreadAchievements = await db.query.contractorAchievements.findMany({
-      where: and(
-        eq(contractorAchievements.contractorId, contractorId),
-        eq(contractorAchievements.isCompleted, true),
-        eq(contractorAchievements.notified, false)
-      ),
-      with: {
+    if (!db) {
+      console.warn("Database not available, returning empty unread achievements");
+      return [];
+    }
+    
+    const unreadAchievements = await db
+      .select({
+        id: contractor_achievements.id,
+        achievementId: contractor_achievements.achievement_id,
+        contractorId: contractor_achievements.contractor_id,
+        progress: contractor_achievements.progress,
+        isCompleted: contractor_achievements.is_completed,
+        earnedAt: contractor_achievements.earned_at,
+        notified: contractor_achievements.notified,
         achievement: {
-          with: {
-            rewards: true
-          }
+          id: achievements.id,
+          name: achievements.name,
+          description: achievements.description,
+          category: achievements.category,
+          code: achievements.code,
+          points: achievements.points,
+          icon: achievements.icon
         }
-      }
-    });
+      })
+      .from(contractor_achievements)
+      .innerJoin(achievements, eq(contractor_achievements.achievement_id, achievements.id))
+      .where(
+        and(
+          eq(contractor_achievements.contractor_id, contractorId),
+          eq(contractor_achievements.notified, false)
+        )
+      );
     
     return unreadAchievements;
   } catch (error) {
-    console.error("Error al obtener logros no leídos:", error);
-    throw new Error("No se pudieron obtener los logros no leídos");
+    console.error("Error fetching unread achievements:", error);
+    return [];
   }
 }
 
@@ -91,23 +103,22 @@ export async function getUnreadAchievements(contractorId: number) {
 export async function markAchievementAsNotified(contractorId: number, achievementId: number) {
   try {
     const [updated] = await db
-      .update(contractorAchievements)
+      .update(contractor_achievements)
       .set({ 
-        notified: true,
-        updatedAt: new Date()
+        notified: true
       })
       .where(
         and(
-          eq(contractorAchievements.contractorId, contractorId),
-          eq(contractorAchievements.achievementId, achievementId)
+          eq(contractor_achievements.contractor_id, contractorId),
+          eq(contractor_achievements.achievement_id, achievementId)
         )
       )
       .returning();
       
     return updated;
   } catch (error) {
-    console.error("Error al marcar logro como notificado:", error);
-    throw new Error("No se pudo marcar el logro como notificado");
+    console.error("Error marking achievement as notified:", error);
+    throw new Error("Failed to mark achievement as notified");
   }
 }
 
@@ -117,36 +128,37 @@ export async function markAchievementAsNotified(contractorId: number, achievemen
 export async function unlockReward(contractorId: number, achievementId: number) {
   try {
     const [updated] = await db
-      .update(contractorAchievements)
+      .update(contractor_achievements)
       .set({ 
-        unlockedReward: true,
-        updatedAt: new Date()
+        unlockedReward: true
       })
       .where(
         and(
-          eq(contractorAchievements.contractorId, contractorId),
-          eq(contractorAchievements.achievementId, achievementId)
+          eq(contractor_achievements.contractor_id, contractorId),
+          eq(contractor_achievements.achievement_id, achievementId)
         )
       )
       .returning();
       
     // Obtener la recompensa para aplicarla
-    const reward = await db.query.achievementRewards.findFirst({
-      where: eq(achievementRewards.achievementId, achievementId)
-    });
+    const reward = await db
+      .select()
+      .from(achievement_rewards)
+      .where(eq(achievement_rewards.achievement_id, achievementId))
+      .limit(1);
     
-    if (reward) {
+    if (reward.length > 0) {
       // Aquí se podría aplicar la recompensa según su tipo
       // Por ejemplo, si es un descuento, actualizaríamos la suscripción
       // Si es una característica, actualizaríamos las capacidades del contratista
       // Por ahora solo devolvemos la recompensa para mostrarla
-      return { updated, reward };
+      return { updated, reward: reward[0] };
     }
     
     return { updated };
   } catch (error) {
-    console.error("Error al desbloquear recompensa:", error);
-    throw new Error("No se pudo desbloquear la recompensa");
+    console.error("Error unlocking reward:", error);
+    throw new Error("Failed to unlock reward");
   }
 }
 
@@ -156,87 +168,96 @@ export async function unlockReward(contractorId: number, achievementId: number) 
 export async function checkAndUpdateAchievement(data: AchievementCheckData) {
   try {
     // Obtener el logro por código
-    const achievement = await db.query.achievements.findFirst({
-      where: eq(achievements.code, data.code)
-    });
+    const achievement = await db
+      .select()
+      .from(achievements)
+      .where(eq(achievements.code, data.code))
+      .limit(1);
     
-    if (!achievement) {
-      throw new Error(`Logro con código ${data.code} no encontrado`);
+    if (achievement.length === 0) {
+      throw new Error(`Achievement with code ${data.code} not found`);
     }
     
+    const achievementData = achievement[0];
+    
     // Check if the contractor already has this achievement
-    let contractorAchievement = await db.query.contractorAchievements.findFirst({
-      where: and(
-        eq(contractorAchievements.contractorId, data.contractorId),
-        eq(contractorAchievements.achievementId, achievement.id)
-      )
-    });
+    let contractorAchievement = await db
+      .select()
+      .from(contractor_achievements)
+      .where(and(
+        eq(contractor_achievements.contractor_id, data.contractorId),
+        eq(contractor_achievements.achievement_id, achievementData.id)
+      ))
+      .limit(1);
     
     let isNewlyCompleted = false;
     
-    if (contractorAchievement) {
+    if (contractorAchievement.length > 0) {
+      const existingAchievement = contractorAchievement[0];
+      
       // Si ya existe, actualizamos el progreso
-      if (contractorAchievement.isCompleted) {
+      if (existingAchievement.is_completed) {
         // Si ya está completado, no hacemos nada
-        return { contractorAchievement, isNewlyCompleted: false };
+        return { contractorAchievement: existingAchievement, isNewlyCompleted: false };
       }
       
       // Si no está completado, actualizamos el progreso
-      const isCompleted = data.progress >= achievement.requiredCount;
+      const isCompleted = data.progress >= achievementData.required_count;
       
       const [updated] = await db
-        .update(contractorAchievements)
+        .update(contractor_achievements)
         .set({
           progress: data.progress,
-          isCompleted: isCompleted,
-          completedAt: isCompleted ? new Date() : null,
-          updatedAt: new Date()
+          is_completed: isCompleted,
+          earned_at: isCompleted ? Date.now() : existingAchievement.earned_at
         })
         .where(
           and(
-            eq(contractorAchievements.contractorId, data.contractorId),
-            eq(contractorAchievements.achievementId, achievement.id)
+            eq(contractor_achievements.contractor_id, data.contractorId),
+            eq(contractor_achievements.achievement_id, achievementData.id)
           )
         )
         .returning();
       
-      isNewlyCompleted = isCompleted && !contractorAchievement.isCompleted;
-      contractorAchievement = updated;
+      isNewlyCompleted = isCompleted && !existingAchievement.is_completed;
+      contractorAchievement = [updated];
       
     } else {
       // Si no existe, lo creamos
-      const isCompleted = data.progress >= achievement.requiredCount;
+      const isCompleted = data.progress >= achievementData.required_count;
       
       const [created] = await db
-        .insert(contractorAchievements)
+        .insert(contractor_achievements)
         .values({
-          contractorId: data.contractorId,
-          achievementId: achievement.id,
+          contractor_id: data.contractorId,
+          achievement_id: achievementData.id,
           progress: data.progress,
-          isCompleted: isCompleted,
-          completedAt: isCompleted ? new Date() : null,
-          notified: false,
-          unlockedReward: false
+          is_completed: isCompleted,
+          earned_at: Date.now(),
+          notified: false
         })
         .returning();
       
       isNewlyCompleted = isCompleted;
-      contractorAchievement = created;
+      contractorAchievement = [created];
     }
     
     // Si el logro se completó, actualizar el XP del contratista
     if (isNewlyCompleted) {
       // Obtener la racha actual del contratista
-      const streak = await db.query.contractorStreaks.findFirst({
-        where: eq(contractorStreaks.contractorId, data.contractorId)
-      });
+      const streak = await db
+        .select()
+        .from(contractor_streaks)
+        .where(eq(contractor_streaks.contractor_id, data.contractorId))
+        .limit(1);
       
-      if (streak) {
+      if (streak.length > 0) {
+        const currentStreak = streak[0];
         // Actualizar XP
-        const newXp = streak.xp + achievement.points;
-        const levelUpThreshold = streak.nextLevelXp;
-        let newLevel = streak.level;
-        let newNextLevelXp = streak.nextLevelXp;
+        const newXp = currentStreak.xp + achievementData.points;
+        const levelUpThreshold = currentStreak.next_level_xp;
+        let newLevel = currentStreak.level;
+        let newNextLevelXp = currentStreak.next_level_xp;
         
         // Check if level increased
         if (newXp >= levelUpThreshold) {
@@ -245,35 +266,38 @@ export async function checkAndUpdateAchievement(data: AchievementCheckData) {
         }
         
         await db
-          .update(contractorStreaks)
+          .update(contractor_streaks)
           .set({
             xp: newXp,
             level: newLevel,
-            nextLevelXp: newNextLevelXp,
-            lastActivityDate: new Date(),
-            updatedAt: new Date()
+            next_level_xp: newNextLevelXp,
+            last_activity_date: Date.now()
           })
-          .where(eq(contractorStreaks.contractorId, data.contractorId));
+          .where(eq(contractor_streaks.contractor_id, data.contractorId));
       } else {
         // Crear registro de racha si no existe
         await db
-          .insert(contractorStreaks)
+          .insert(contractor_streaks)
           .values({
-            contractorId: data.contractorId,
-            currentStreak: 1,
-            longestStreak: 1,
-            lastActivityDate: new Date(),
+            contractor_id: data.contractorId,
+            current_streak: 0,
+            longest_streak: 0,
+            last_activity_date: Date.now(),
             level: 1,
-            xp: achievement.points,
-            nextLevelXp: 100
+            xp: achievementData.points,
+            next_level_xp: 100,
+            created_at: Date.now()
           });
       }
     }
     
-    return { contractorAchievement, isNewlyCompleted };
+    return { 
+      contractorAchievement: contractorAchievement[0], 
+      isNewlyCompleted 
+    };
   } catch (error) {
-    console.error("Error al verificar y actualizar logro:", error);
-    throw new Error("No se pudo verificar o actualizar el logro");
+    console.error("Error checking and updating achievement:", error);
+    throw new Error("Failed to check and update achievement");
   }
 }
 
@@ -282,144 +306,148 @@ export async function checkAndUpdateAchievement(data: AchievementCheckData) {
  */
 export async function updateDailyStreak(contractorId: number) {
   try {
-    // Obtener la racha actual
-    const streak = await db.query.contractorStreaks.findFirst({
-      where: eq(contractorStreaks.contractorId, contractorId)
-    });
-    
     const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
+    const formatDate = (date: Date) => {
+      return date.toISOString().split('T')[0];
+    };
     
-    if (streak) {
-      const lastActivity = new Date(streak.lastActivityDate);
+    const todayStr = formatDate(today);
+    
+    // Obtener la racha actual del contratista
+    const streak = await db
+      .select()
+      .from(contractor_streaks)
+      .where(eq(contractor_streaks.contractor_id, contractorId))
+      .limit(1);
+    
+    if (streak.length > 0) {
+      const currentStreak = streak[0];
+      const lastActivityDate = new Date(currentStreak.last_activity_date);
+      const lastActivityStr = formatDate(lastActivityDate);
       
-      // Formatear fechas para comparar solo día, mes y año
-      const formatDate = (date: Date) => {
-        return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-      };
-      
-      const formattedToday = formatDate(today);
-      const formattedYesterday = formatDate(yesterday);
-      const formattedLastActivity = formatDate(lastActivity);
-      
-      let newCurrentStreak = streak.currentStreak;
-      let newLongestStreak = streak.longestStreak;
-      
-      // Si la última actividad fue hoy, no hacemos nada
-      if (formattedLastActivity === formattedToday) {
-        return streak;
+      // Si ya se actualizó hoy, no hacer nada
+      if (lastActivityStr === todayStr) {
+        return currentStreak;
       }
       
-      // Si la última actividad fue ayer, incrementamos la racha
-      if (formattedLastActivity === formattedYesterday) {
+      // Verificar si es el día siguiente
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = formatDate(yesterday);
+      
+      let newCurrentStreak = currentStreak.current_streak;
+      let newLongestStreak = currentStreak.longest_streak;
+      
+      if (lastActivityStr === yesterdayStr) {
+        // Es el día siguiente, incrementar la racha
         newCurrentStreak += 1;
         if (newCurrentStreak > newLongestStreak) {
           newLongestStreak = newCurrentStreak;
         }
-      } else if (formattedLastActivity < formattedYesterday) {
-        // Si han pasado más de un día, reiniciamos la racha
+      } else {
+        // No es el día siguiente, resetear la racha
         newCurrentStreak = 1;
       }
       
       // Actualizar la racha
       const [updated] = await db
-        .update(contractorStreaks)
+        .update(contractor_streaks)
         .set({
-          currentStreak: newCurrentStreak,
-          longestStreak: newLongestStreak,
-          lastActivityDate: today,
-          updatedAt: new Date()
+          current_streak: newCurrentStreak,
+          longest_streak: newLongestStreak,
+          last_activity_date: Date.now()
         })
-        .where(eq(contractorStreaks.contractorId, contractorId))
+        .where(eq(contractor_streaks.contractor_id, contractorId))
         .returning();
-      
-      // Verificar logros de racha
-      if (newCurrentStreak >= 7) {
-        await checkAndUpdateAchievement({
-          contractorId,
-          category: 'system',
-          code: 'streak_week',
-          progress: 7
-        });
-      }
-      
-      if (newCurrentStreak >= 30) {
-        await checkAndUpdateAchievement({
-          contractorId,
-          category: 'system',
-          code: 'streak_month',
-          progress: 30
-        });
-      }
       
       return updated;
     } else {
-      // Crear registro de racha si no existe
+      // Crear nueva racha
       const [created] = await db
-        .insert(contractorStreaks)
+        .insert(contractor_streaks)
         .values({
-          contractorId,
-          currentStreak: 1,
-          longestStreak: 1,
-          lastActivityDate: today,
+          contractor_id: contractorId,
+          current_streak: 1,
+          longest_streak: 1,
+          last_activity_date: Date.now(),
           level: 1,
           xp: 0,
-          nextLevelXp: 100
+          next_level_xp: 100,
+          created_at: Date.now()
         })
         .returning();
       
       return created;
     }
   } catch (error) {
-    console.error("Error al actualizar racha diaria:", error);
-    throw new Error("No se pudo actualizar la racha diaria");
+    console.error("Error updating daily streak:", error);
+    throw new Error("Failed to update daily streak");
   }
 }
 
 /**
- * Obtiene las estadísticas de gamificación del contratista
+ * Obtiene las estadísticas del juego del contratista
  */
 export async function getContractorGameStats(contractorId: number) {
   try {
-    // Obtener la racha
-    const streak = await db.query.contractorStreaks.findFirst({
-      where: eq(contractorStreaks.contractorId, contractorId)
-    });
+    if (!db) {
+      console.warn("Database not available, returning default game stats");
+      return {
+        level: 1,
+        xp: 0,
+        nextLevelXp: 100,
+        currentStreak: 0,
+        longestStreak: 0,
+        completedAchievements: 0,
+        totalAchievements: 0,
+        completionPercentage: 0
+      };
+    }
     
-    // Contar logros completados
-    const achievements = await db.query.contractorAchievements.findMany({
-      where: and(
-        eq(contractorAchievements.contractorId, contractorId),
-        eq(contractorAchievements.isCompleted, true)
-      ),
-      with: {
-        achievement: true
-      }
-    });
+    // Obtener la racha del contratista
+    const streak = await db
+      .select()
+      .from(contractor_streaks)
+      .where(eq(contractor_streaks.contractor_id, contractorId))
+      .limit(1);
     
-    const completedCount = achievements.length;
+    // Obtener logros completados
+    const completedAchievements = await db
+      .select()
+      .from(contractor_achievements)
+      .where(and(
+        eq(contractor_achievements.contractor_id, contractorId),
+        eq(contractor_achievements.is_completed, true)
+      ));
     
-    // Calcular total de XP
-    const totalXp = achievements.reduce((sum, a) => sum + (a.achievement?.points || 0), 0);
+    // Obtener total de logros disponibles
+    const totalAchievements = await db.select().from(achievements);
     
-    // Contar logros por nivel
-    const bronzeCount = achievements.filter(a => a.achievement?.level === 'bronze').length;
-    const silverCount = achievements.filter(a => a.achievement?.level === 'silver').length;
-    const goldCount = achievements.filter(a => a.achievement?.level === 'gold').length;
-    
-    return {
-      streak: streak || null,
-      stats: {
-        completedAchievements: completedCount,
-        totalXp,
-        bronzeCount,
-        silverCount,
-        goldCount
-      }
+    const stats = {
+      level: streak.length > 0 ? streak[0].level : 1,
+      xp: streak.length > 0 ? streak[0].xp : 0,
+      nextLevelXp: streak.length > 0 ? streak[0].next_level_xp : 100,
+      currentStreak: streak.length > 0 ? streak[0].current_streak : 0,
+      longestStreak: streak.length > 0 ? streak[0].longest_streak : 0,
+      completedAchievements: completedAchievements.length,
+      totalAchievements: totalAchievements.length,
+      completionPercentage: totalAchievements.length > 0 
+        ? Math.round((completedAchievements.length / totalAchievements.length) * 100) 
+        : 0
     };
+    
+    return stats;
   } catch (error) {
-    console.error("Error al obtener estadísticas de gamificación:", error);
-    throw new Error("No se pudieron obtener las estadísticas de gamificación");
+    console.error("Error fetching contractor game stats:", error);
+    return {
+      level: 1,
+      xp: 0,
+      nextLevelXp: 100,
+      currentStreak: 0,
+      longestStreak: 0,
+      completedAchievements: 0,
+      totalAchievements: 0,
+      completionPercentage: 0
+    };
   }
 }

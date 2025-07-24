@@ -1,17 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRoute, Link } from "wouter";
-import { Loader2, ChevronLeft, FileText, Send, Printer, Check, DollarSign, Receipt, Ban } from "lucide-react";
-import { useInvoices } from "@/hooks/use-invoices";
-import { useToast } from "@/hooks/use-toast";
+import { Loader2, ChevronLeft, FileText, Send, Printer, Check, DollarSign, Receipt, Ban, RefreshCw } from "lucide-react";
+import { useInvoices } from '../hooks/use-invoices';
+import { useToast } from '../hooks/use-toast';
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 
 // UI Components
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '../components/ui/table';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,7 +21,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from '../components/ui/alert-dialog';
 import {
   Dialog,
   DialogContent,
@@ -30,12 +30,17 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from '../components/ui/dialog';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+
+// Professional Components
+import PaymentTracking from '../components/invoices/payment-tracking';
+import PaymentForm from '../components/invoices/payment-form';
+import PaymentSuccessNotification from '../components/invoices/payment-success-notification';
 
 // Helper function to format currency
 const formatCurrency = (amount: number | string) => {
@@ -46,7 +51,7 @@ const formatCurrency = (amount: number | string) => {
 // Schema for payment form
 const paymentSchema = z.object({
   amount: z.string().min(1, "Amount is required"),
-  paymentMethod: z.string().min(1, "El método de pago es requerido"),
+  paymentMethod: z.string().min(1, "Payment method is required"),
   paymentDate: z.string().optional(),
   notes: z.string().optional(),
 });
@@ -59,17 +64,37 @@ export default function InvoiceDetailPage() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [cancelNotes, setCancelNotes] = useState("");
+  const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
+  const [paymentSuccessData, setPaymentSuccessData] = useState<any>(null);
   
   const { toast } = useToast();
   const { 
     getInvoice, 
     registerPaymentMutation, 
     updateInvoiceStatusMutation,
-    cancelInvoiceMutation
+    cancelInvoiceMutation,
+    refundPaymentMutation,
+    refetchInvoices
   } = useInvoices();
-  const { data: invoice, isLoading, error } = getInvoice(invoiceId);
+  const { data: invoice, isLoading, error, refetch } = getInvoice(invoiceId);
 
-  // Form para registro de pago
+  // Force refresh when component mounts
+  useEffect(() => {
+    if (invoiceId) {
+      refetch();
+    }
+  }, [invoiceId, refetch]);
+
+  // Manual refresh function
+  const handleRefresh = () => {
+    refetch();
+    toast({
+      title: "Data refreshed",
+      description: "Invoice data has been refreshed.",
+    });
+  };
+
+  // Payment registration form
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
@@ -80,90 +105,140 @@ export default function InvoiceDetailPage() {
     },
   });
 
-  // Función para formatear fechas
+  // Function to format dates
   const formatDate = (dateString?: string | Date | null) => {
-    if (!dateString) return "No especificada";
-    return format(new Date(dateString), "d 'de' MMMM, yyyy", { locale: es });
+    if (!dateString) return "Not specified";
+    return format(new Date(dateString), "MMMM d, yyyy", { locale: enUS });
   };
 
-  // Obtener clase para badge según el estado de la factura
+  // Get class for badge according to invoice status
   const getStatusClass = (status: string) => {
     switch (status.toLowerCase()) {
       case "paid":
-      case "pagado":
         return "bg-green-100 text-green-800 border-green-200";
       case "pending":
-      case "pendiente":
         return "bg-blue-100 text-blue-800 border-blue-200";
       case "overdue":
-      case "vencido":
         return "bg-red-100 text-red-800 border-red-200";
       case "partially_paid":
-      case "parcialmente_pagado":
         return "bg-yellow-100 text-yellow-800 border-yellow-200";
       case "cancelled":
-      case "cancelado":
         return "bg-gray-100 text-gray-800 border-gray-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
-  // Texto legible para el estado
+  // Readable text for status
   const getStatusText = (status: string) => {
     switch (status.toLowerCase()) {
       case "paid":
-        return "Pagado";
+        return "Paid";
       case "pending":
-        return "Pendiente";
+        return "Pending";
       case "overdue":
-        return "Vencido";
+        return "Overdue";
       case "partially_paid":
-        return "Parcialmente pagado";
+        return "Partial Paid";
       case "cancelled":
-        return "Cancelado";
+        return "Cancelled";
       default:
-        return status;
+        return status.charAt(0).toUpperCase() + status.slice(1);
     }
   };
 
-  // Registrar un pago
-  const handlePaymentSubmit = (data: PaymentFormValues) => {
-    registerPaymentMutation.mutate(
-      {
+  // Register a payment using the new professional form
+  const handlePaymentSubmit = async (paymentData: any) => {
+    try {
+      const result = await registerPaymentMutation.mutateAsync({
         id: invoiceId,
         data: {
-          amount: data.amount,
-          paymentMethod: data.paymentMethod,
-          paymentDate: data.paymentDate || new Date().toISOString(),
-          notes: data.notes,
+          amount: paymentData.amount.toString(),
+          paymentMethod: paymentData.paymentMethod,
+          paymentDate: paymentData.paymentDate,
+          notes: paymentData.notes,
         },
-      },
-      {
-        onSuccess: () => {
-          setIsPaymentModalOpen(false);
-          form.reset();
-        },
+      });
+      setIsPaymentModalOpen(false);
+      // Fetch the latest invoice data after payment
+      const updatedInvoiceResult = await refetch();
+      const updatedInvoice = updatedInvoiceResult.data;
+      // Show payment success notification with project creation details
+      if (result) {
+        setPaymentSuccessData({
+          payment: {
+            amount: parseFloat(paymentData.amount),
+            method: paymentData.paymentMethod,
+            paymentDate: paymentData.paymentDate || new Date().toISOString(),
+          },
+          invoice: {
+            invoiceNumber: updatedInvoice?.invoiceNumber || `#${invoiceId}`,
+            total: Number(updatedInvoice?.total ?? 0),
+            amountPaid: Number(updatedInvoice?.amountPaid ?? 0),
+          },
+          projectUpdate: result.projectUpdate || {
+            updated: false,
+            message: ""
+          }
+        });
+        setShowPaymentSuccess(true);
       }
-    );
+      toast({
+        title: "Payment recorded",
+        description: "Payment has been successfully recorded.",
+      });
+    } catch (error) {
+      console.error('Payment submission error:', error);
+      toast({
+        title: "Payment failed",
+        description: "Failed to record payment. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  // Marcar como pagada
+  // Refund a payment
+  const handleRefundPayment = async (paymentId: number, reason: string) => {
+    try {
+      await refundPaymentMutation.mutateAsync({
+        invoiceId,
+        paymentId,
+        reason
+      });
+      
+      // Refresh the invoice data
+      await refetch();
+      
+      toast({
+        title: "Payment refunded",
+        description: "The payment has been refunded successfully.",
+      });
+    } catch (error) {
+      console.error('Refund error:', error);
+      toast({
+        title: "Refund failed",
+        description: "Failed to refund payment. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Mark as paid
   const handleMarkAsPaid = () => {
     updateInvoiceStatusMutation.mutate(
       { id: invoiceId, status: "paid" },
       {
         onSuccess: () => {
           toast({
-            title: "Estado actualizado",
-            description: "La factura ha sido marcada como pagada.",
+            title: "Status updated",
+            description: "The invoice has been marked as paid.",
           });
         },
       }
     );
   };
   
-  // Cancelar factura
+  // Cancel invoice
   const handleCancelInvoice = () => {
     cancelInvoiceMutation.mutate(
       { 
@@ -175,8 +250,8 @@ export default function InvoiceDetailPage() {
           setIsCancelModalOpen(false);
           setCancelNotes("");
           toast({
-            title: "Factura cancelada",
-            description: "La factura ha sido cancelada exitosamente.",
+            title: "Invoice cancelled",
+            description: "The invoice has been cancelled successfully.",
           });
         },
       }
@@ -230,31 +305,52 @@ export default function InvoiceDetailPage() {
     );
   }
 
-  // Calcular si está vencida
+  // Calculate if it's overdue
   const isDueDate = invoice.dueDate ? new Date(invoice.dueDate) < new Date() : false;
   const isPending = invoice.status === "pending";
   const isOverdue = isPending && isDueDate;
 
-  // Calcular monto pendiente
+  // Calculate pending amount
   const amountPaid = parseFloat(invoice.amountPaid || "0");
   const total = parseFloat(invoice.total || "0");
   const pendingAmount = total - amountPaid;
   const isPaidInFull = pendingAmount <= 0;
 
+  // --- REMOVE the summaryRows and summary section at the top ---
+  // --- NEW: Simple summary section ---
+  // const summaryRows = [
+  //   { label: "Total Amount", value: formatCurrency(total) },
+  //   { label: "Amount Paid", value: formatCurrency(amountPaid) },
+  //   { label: "Remaining Balance", value: formatCurrency(Math.max(pendingAmount, 0)) }
+  // ];
+
   return (
     <div className="container py-8">
+      {/* Debug Section - Remove this after fixing */}
+      <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <h3 className="font-semibold text-yellow-800 mb-2">Debug Info (Remove after fixing)</h3>
+        <div className="text-sm text-yellow-700 space-y-1">
+          <p><strong>Raw amountPaid:</strong> "{invoice.amountPaid}" (type: {typeof invoice.amountPaid})</p>
+          <p><strong>Raw total:</strong> "{invoice.total}" (type: {typeof invoice.total})</p>
+          <p><strong>Calculated amountPaid:</strong> {amountPaid}</p>
+          <p><strong>Calculated total:</strong> {total}</p>
+          <p><strong>Calculated pendingAmount:</strong> {pendingAmount}</p>
+          <p><strong>Invoice ID:</strong> {invoice.id}</p>
+        </div>
+      </div>
+
       <div className="mb-6">
         <Link href="/invoices">
           <Button variant="ghost" className="mb-4">
             <ChevronLeft className="h-4 w-4 mr-2" />
-            Volver a facturas
+            Back to invoices
           </Button>
         </Link>
         
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">
-              Factura {invoice.invoiceNumber || `#${invoice.id}`}
+              Invoice {invoice.invoiceNumber || `#${invoice.id}`}
             </h1>
             
             <div className="flex items-center gap-2 mt-1">
@@ -272,15 +368,15 @@ export default function InvoiceDetailPage() {
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => {
               toast({
-                title: "Funcionalidad en desarrollo",
-                description: "La funcionalidad de impresión será implementada próximamente.",
+                title: "Feature in development",
+                description: "Print functionality will be implemented soon.",
               });
             }}>
               <Printer className="h-4 w-4 mr-2" />
-              Imprimir
+              Print
             </Button>
             
-            {/* Botón de cancelar, solo visible si la factura no está cancelada ni pagada */}
+            {/* Cancel button, only visible if invoice is not cancelled or paid */}
             {invoice.status !== "cancelled" && invoice.status !== "paid" && (
               <Button 
                 variant="outline" 
@@ -288,7 +384,7 @@ export default function InvoiceDetailPage() {
                 onClick={() => setIsCancelModalOpen(true)}
               >
                 <Ban className="h-4 w-4 mr-2" />
-                Cancelar factura
+                Cancel invoice
               </Button>
             )}
             
@@ -298,9 +394,13 @@ export default function InvoiceDetailPage() {
                 onClick={() => setIsPaymentModalOpen(true)}
               >
                 <DollarSign className="h-4 w-4 mr-2" />
-                Registrar pago
+                Register payment
               </Button>
             )}
+            <Button variant="outline" onClick={handleRefresh} className="text-blue-600 hover:bg-blue-50">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
           </div>
         </div>
       </div>
@@ -308,7 +408,7 @@ export default function InvoiceDetailPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Información del cliente</CardTitle>
+            <CardTitle className="text-sm font-medium">Client Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <div>
@@ -320,7 +420,7 @@ export default function InvoiceDetailPage() {
               <div>
                 <p className="text-sm text-gray-600">{invoice.client?.address}</p>
                 <p className="text-sm text-gray-600">
-                  {invoice.client?.city}, {invoice.client?.state} {invoice.client?.zipCode}
+                  {invoice.client?.city}, {invoice.client?.state} {invoice.client?.zip}
                 </p>
               </div>
             )}
@@ -329,16 +429,16 @@ export default function InvoiceDetailPage() {
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Detalles del proyecto</CardTitle>
+            <CardTitle className="text-sm font-medium">Project Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <div>
-              <p className="font-medium">{invoice.project?.title || "No especificado"}</p>
+              <p className="font-medium">{invoice.project?.title || "Not specified"}</p>
               <p className="text-sm text-gray-600">{invoice.project?.description || ""}</p>
             </div>
             {invoice.project?.address && (
               <div>
-                <p className="text-sm text-gray-600 font-medium mt-2">Dirección del proyecto:</p>
+                <p className="text-sm text-gray-600 font-medium mt-2">Project address:</p>
                 <p className="text-sm text-gray-600">{invoice.project?.address}</p>
               </div>
             )}
@@ -347,16 +447,16 @@ export default function InvoiceDetailPage() {
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Fechas importantes</CardTitle>
+            <CardTitle className="text-sm font-medium">Important Dates</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Fecha de emisión:</span>
+              <span className="text-sm text-gray-600">Issue date:</span>
               <span className="text-sm">{formatDate(invoice.issueDate)}</span>
             </div>
             {invoice.dueDate && (
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Fecha de vencimiento:</span>
+                <span className="text-sm text-gray-600">Due date:</span>
                 <span className={`text-sm ${isOverdue ? "text-red-600 font-semibold" : ""}`}>
                   {formatDate(invoice.dueDate)}
                 </span>
@@ -368,9 +468,9 @@ export default function InvoiceDetailPage() {
       
       <Tabs defaultValue="items" className="mb-6">
         <TabsList>
-          <TabsTrigger value="items">Ítems de la factura</TabsTrigger>
-          <TabsTrigger value="payments">Pagos</TabsTrigger>
-          <TabsTrigger value="terms">Términos y condiciones</TabsTrigger>
+          <TabsTrigger value="items">Invoice Items</TabsTrigger>
+          <TabsTrigger value="payments">Payments</TabsTrigger>
+          <TabsTrigger value="terms">Terms and Conditions</TabsTrigger>
         </TabsList>
         
         <TabsContent value="items">
@@ -379,10 +479,10 @@ export default function InvoiceDetailPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[50%]">Descripción</TableHead>
-                    <TableHead>Cantidad</TableHead>
-                    <TableHead>Precio unitario</TableHead>
-                    <TableHead>Monto</TableHead>
+                    <TableHead className="w-[50%]">Description</TableHead>
+                    <TableHead>Quantity</TableHead>
+                    <TableHead>Unit Price</TableHead>
+                    <TableHead>Amount</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -401,7 +501,7 @@ export default function InvoiceDetailPage() {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center py-4 text-gray-500">
-                        No hay ítems en esta factura
+                        No items in this invoice
                       </TableCell>
                     </TableRow>
                   )}
@@ -413,13 +513,13 @@ export default function InvoiceDetailPage() {
                   </TableRow>
                   {Number(invoice.tax) > 0 && (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-right">Impuesto ({invoice.tax}%)</TableCell>
+                      <TableCell colSpan={3} className="text-right">Tax ({invoice.tax}%)</TableCell>
                       <TableCell>{formatCurrency((Number(invoice.subtotal) * Number(invoice.tax)) / 100)}</TableCell>
                     </TableRow>
                   )}
                   {Number(invoice.discount) > 0 && (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-right">Descuento ({invoice.discount}%)</TableCell>
+                      <TableCell colSpan={3} className="text-right">Discount ({invoice.discount}%)</TableCell>
                       <TableCell>-{formatCurrency((Number(invoice.subtotal) * Number(invoice.discount)) / 100)}</TableCell>
                     </TableRow>
                   )}
@@ -436,106 +536,16 @@ export default function InvoiceDetailPage() {
         <TabsContent value="payments">
           <Card>
             <CardContent className="py-4">
-              <div className="flex justify-between items-center mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold">Estado de materiales</h3>
-                  <p className="text-sm text-gray-600">Control de materiales provistos y pendientes</p>
-                </div>
-                <div className="space-x-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setIsPaymentModalOpen(true)}
-                    disabled={isPaidInFull}
-                  >
-                    <Check className="h-4 w-4 mr-2" />
-                    Registrar materiales
-                  </Button>
-                  {!isPaidInFull && invoice.status !== "completed" && (
-                    <Button 
-                      className="bg-green-600 hover:bg-green-700 text-white"
-                      onClick={handleMarkAsPaid}
-                    >
-                      <Check className="h-4 w-4 mr-2" />
-                      Marcar como completada
-                    </Button>
-                  )}
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <Card>
-                  <CardHeader className="py-4">
-                    <CardTitle className="text-sm">Total materiales</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-2xl font-bold">{formatCurrency(total)}</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="py-4">
-                    <CardTitle className="text-sm">Materiales provistos</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-2xl font-bold text-green-600">{formatCurrency(amountPaid)}</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="py-4">
-                    <CardTitle className="text-sm">Materiales pendientes</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className={`text-2xl font-bold ${pendingAmount > 0 ? "text-red-600" : "text-green-600"}`}>
-                      {formatCurrency(pendingAmount)}
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-              
-              {invoice.payments && invoice.payments.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Fecha</TableHead>
-                      <TableHead>Valor</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Detalles</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {invoice.payments.map((payment: any) => (
-                      <TableRow key={payment.id}>
-                        <TableCell>{formatDate(payment.paymentDate)}</TableCell>
-                        <TableCell>{formatCurrency(Number(payment.amount))}</TableCell>
-                        <TableCell>
-                          {payment.paymentMethod === "cash" && "Materiales básicos"}
-                          {payment.paymentMethod === "credit_card" && "Materiales especiales"}
-                          {payment.paymentMethod === "bank_transfer" && "Materiales de acabado"}
-                          {payment.paymentMethod === "check" && "Herramientas"}
-                          {payment.paymentMethod !== "cash" && 
-                           payment.paymentMethod !== "credit_card" && 
-                           payment.paymentMethod !== "bank_transfer" && 
-                           payment.paymentMethod !== "check" && payment.paymentMethod}
-                        </TableCell>
-                        <TableCell>{payment.notes || "-"}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="text-center py-8">
-                  <Receipt className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">No hay materiales registrados</h3>
-                  <p className="text-sm text-gray-500 mb-4">
-                    Aún no se han registrado materiales provistos para esta orden
-                  </p>
-                  {!isPaidInFull && (
-                    <Button onClick={() => setIsPaymentModalOpen(true)}>
-                      <Check className="h-4 w-4 mr-2" />
-                      Registrar materiales
-                    </Button>
-                  )}
-                </div>
-              )}
+              <PaymentTracking
+                total={Number(invoice.total) || 0}
+                amountPaid={Number(invoice.amountPaid) || 0}
+                payments={invoice.payments || []}
+                status={invoice.status}
+                dueDate={invoice.dueDate}
+                invoiceNumber={invoice.invoiceNumber}
+                onRefundPayment={(paymentId, reason) => handleRefundPayment(paymentId, reason)}
+                isRefunding={refundPaymentMutation.isPending}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -543,146 +553,107 @@ export default function InvoiceDetailPage() {
         <TabsContent value="terms">
           <Card>
             <CardContent className="py-4">
+              <h3 className="text-lg font-semibold mb-4">Terms and Conditions</h3>
               {invoice.terms ? (
-                <div className="prose max-w-none">
-                  <p>{invoice.terms}</p>
+                <div className="prose prose-sm max-w-none">
+                  <p className="whitespace-pre-wrap">{invoice.terms}</p>
                 </div>
               ) : (
-                <p className="text-gray-500 italic">No se han especificado instrucciones de trabajo para esta orden.</p>
+                <div className="text-center py-8 text-gray-500">
+                  <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>No terms and conditions specified</p>
+                  <p className="text-sm">Terms can be added when editing the invoice</p>
+                </div>
+              )}
+              
+              {invoice.notes && (
+                <div className="mt-6 pt-6 border-t">
+                  <h4 className="font-medium mb-2">Additional Notes</h4>
+                  <p className="text-sm text-gray-600 whitespace-pre-wrap">{invoice.notes}</p>
+                </div>
               )}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
-      
-      {/* Modal para registrar materiales */}
+
+      {/* Payment Registration Modal */}
       <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Registrar materiales</DialogTitle>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
+          <DialogHeader className="px-6 py-4 border-b">
+            <DialogTitle>Register Payment</DialogTitle>
             <DialogDescription>
-              Registre materiales provistos para la orden {invoice.invoiceNumber}. El valor de materiales pendientes es {formatCurrency(pendingAmount)}.
+              Record a payment received for this invoice
             </DialogDescription>
           </DialogHeader>
-          
-          <form onSubmit={form.handleSubmit(handlePaymentSubmit)}>
-            <div className="space-y-4 py-2">
-              <div className="space-y-2">
-                <Label htmlFor="amount">Valor</Label>
-                <Input
-                  id="amount"
-                  placeholder="0.00"
-                  type="number"
-                  step="0.01"
-                  defaultValue={pendingAmount.toString()}
-                  {...form.register("amount")}
-                />
-                {form.formState.errors.amount && (
-                  <p className="text-sm text-red-600">{form.formState.errors.amount.message}</p>
-                )}
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="paymentMethod">Tipo de material</Label>
-                <select
-                  id="paymentMethod"
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                  {...form.register("paymentMethod")}
-                >
-                  <option value="cash">Materiales básicos</option>
-                  <option value="credit_card">Materiales especiales</option>
-                  <option value="bank_transfer">Materiales de acabado</option>
-                  <option value="check">Herramientas</option>
-                </select>
-                {form.formState.errors.paymentMethod && (
-                  <p className="text-sm text-red-600">{form.formState.errors.paymentMethod.message}</p>
-                )}
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="paymentDate">Fecha de entrega</Label>
-                <Input
-                  id="paymentDate"
-                  type="date"
-                  {...form.register("paymentDate")}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="notes">Detalles</Label>
-                <Input
-                  id="notes"
-                  placeholder="Detalles adicionales sobre los materiales"
-                  {...form.register("notes")}
-                />
-              </div>
-            </div>
-            
-            <DialogFooter className="mt-6">
-              <Button type="button" variant="outline" onClick={() => setIsPaymentModalOpen(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit" className="bg-green-600 hover:bg-green-700">
-                {registerPaymentMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    Registrar materiales
-                  </>
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
+          <div className="px-6 py-4 pb-6">
+            <PaymentForm
+              invoice={{
+                id: invoice.id,
+                invoiceNumber: invoice.invoiceNumber,
+                total: invoice.total,
+                amountPaid: invoice.amountPaid,
+                dueDate: invoice.dueDate,
+                status: invoice.status
+              }}
+              onSubmit={handlePaymentSubmit}
+              onCancel={() => setIsPaymentModalOpen(false)}
+              isLoading={registerPaymentMutation.isPending}
+            />
+          </div>
         </DialogContent>
       </Dialog>
 
-      {/* Modal de cancelación */}
-      <Dialog open={isCancelModalOpen} onOpenChange={setIsCancelModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Cancelar factura</DialogTitle>
-            <DialogDescription>
-              ¿Estás seguro de que deseas cancelar esta factura? Esta acción no se puede deshacer.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Label htmlFor="cancel-notes" className="text-sm font-medium">
-              Motivo de cancelación (opcional)
-            </Label>
-            <textarea
-              id="cancel-notes"
-              className="w-full mt-2 p-3 border rounded-md text-sm"
-              placeholder="Explica el motivo de la cancelación..."
-              rows={3}
+      {/* Cancel Invoice Modal */}
+      <AlertDialog open={isCancelModalOpen} onOpenChange={setIsCancelModalOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Invoice</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel this invoice? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="my-4">
+            <Label htmlFor="cancelNotes">Cancellation Reason (Optional)</Label>
+            <Input
+              id="cancelNotes"
+              placeholder="Enter reason for cancellation"
               value={cancelNotes}
               onChange={(e) => setCancelNotes(e.target.value)}
             />
           </div>
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setIsCancelModalOpen(false)}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              variant="destructive"
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
               onClick={handleCancelInvoice}
+              className="bg-red-600 hover:bg-red-700"
               disabled={cancelInvoiceMutation.isPending}
             >
-              {cancelInvoiceMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Cancelando...
-                </>
-              ) : (
-                "Confirmar cancelación"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              {cancelInvoiceMutation.isPending ? "Cancelling..." : "Cancel Invoice"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Payment Success Notification */}
+      {showPaymentSuccess && paymentSuccessData && (
+        <PaymentSuccessNotification
+          payment={paymentSuccessData.payment}
+          invoice={paymentSuccessData.invoice}
+          projectUpdate={paymentSuccessData.projectUpdate}
+          onViewProject={() => {
+            if (paymentSuccessData.projectUpdate?.updated) {
+              // Navigate to projects page or specific project
+              window.location.href = '/projects';
+            }
+          }}
+          onViewInvoice={() => {
+            setShowPaymentSuccess(false);
+            refetch();
+          }}
+          onClose={() => setShowPaymentSuccess(false)}
+        />
+      )}
     </div>
   );
 }

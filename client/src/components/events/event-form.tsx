@@ -6,7 +6,7 @@ import { format, parseISO, addHours } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
-import { Button } from "@/components/ui/button";
+import { Button } from '../ui/button';
 import {
   Form,
   FormControl,
@@ -14,38 +14,59 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+} from '../ui/form';
+import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
+import { Label } from '../ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
+} from '../ui/select';
+import { Calendar } from '../ui/calendar';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useEvents, EventInput } from "@/hooks/use-events";
+} from '../ui/popover';
+import { CalendarIcon, User, Phone, Mail, MapPin } from "lucide-react";
+import { cn } from '../../lib/utils';
+import { TimePicker } from '../ui/time-picker';
+import { AddressInput } from '../ui/address-input';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { useEvents, EventInput } from '../../hooks/use-events';
+import { apiRequest } from '../../lib/queryClient';
+import { AlertCircle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../ui/alert-dialog';
 
-// Validation schema for the form
+// Validation schema for the form - complete for creating/editing events
 const formSchema = z.object({
-  title: z.string().min(3, "El título debe tener al menos 3 caracteres"),
+  title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   date: z.date(),
-  startTime: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Ingrese una hora válida (HH:MM)"),
-  endTime: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Ingrese una hora válida (HH:MM)"),
-  location: z.string().optional(),
-  type: z.enum(["meeting", "site-visit", "delivery", "estimate", "invoice", "other"]),
+  startTime: z.string().min(1, "Please select a start time"),
+  endTime: z.string().min(1, "Please select an end time"),
+  address: z.string().min(1, "Address is required"),
+  city: z.string().min(1, "City is required"),
+  state: z.string().min(1, "State is required"),
+  zip: z.string().min(1, "Zip code is required"),
+  type: z.enum(["estimate", "meeting", "site-visit", "delivery", "invoice", "other"]),
   status: z.enum(["pending", "confirmed", "completed", "cancelled"]),
   clientId: z.string().optional(),
   projectId: z.string().optional(),
+  agentId: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -73,99 +94,152 @@ export default function EventForm({
   
   const { getEvent, createEventMutation, updateEventMutation } = useEvents();
   
-  // Consultar el evento si se está editando uno existente
+  // Query the event if editing an existing one
   const { data: eventData, isLoading: isLoadingEvent } = useQuery({
     queryKey: ["/api/protected/events", eventId],
     queryFn: async () => {
       if (!eventId) return null;
-      const response = await fetch(`/api/protected/events/${eventId}`);
-      return response.json();
+      const response = await apiRequest("GET", `/api/protected/events/${eventId}`);
+      return await response.json();
     },
     enabled: !!eventId,
   });
   
-  // Consultar clientes
-  const { data: clients = [] } = useQuery({
+  // Query clients
+  const { data: clients = [] } = useQuery<any[]>({
     queryKey: ["/api/protected/clients"],
   });
 
-  // Consultar proyectos
-  const { data: projects = [] } = useQuery({
+  // Query projects
+  const { data: projects = [] } = useQuery<any[]>({
     queryKey: ["/api/protected/projects"],
   });
 
-  // Filtrar proyectos por cliente seleccionado
-  const getFilteredProjects = (clientId: string) => {
-    if (!clientId) return [];
-    return projects.filter((project: any) => project.clientId === Number(clientId));
+  // Query agents
+  const { data: agents = [] } = useQuery<any[]>({
+    queryKey: ["/api/protected/agents"],
+  });
+
+  // Agent colors from database
+  const getAgentColor = (agentId: number) => {
+    const agent = agents.find(a => a.id === agentId);
+    return agent?.colorCode || '#3B82F6';
   };
 
-  // Configurar el formulario
+  // Filter projects by selected client
+  const getFilteredProjects = (clientId: string) => {
+    if (!clientId) return [];
+    return (projects as any[]).filter((project: any) => project.clientId === Number(clientId));
+  };
+
+  // Configure the form
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
       description: "",
       date: new Date(),
-      startTime: format(new Date(), "HH:mm"),
-      endTime: format(addHours(new Date(), 1), "HH:mm"),
-      location: "",
-      type: defaultType as any,
+      startTime: format(new Date(), "h:mm a"),
+      endTime: format(addHours(new Date(), 1), "h:mm a"),
+      address: "",
+      city: "",
+      state: "",
+      zip: "",
+      type: (defaultType as "estimate" | "meeting" | "site-visit" | "delivery" | "invoice" | "other") || "estimate",
       status: "pending",
       clientId: defaultClientId || "",
       projectId: defaultProjectId || "",
+      agentId: "",
       notes: "",
     },
   });
 
-  // Actualizar valores del formulario cuando se carga un evento existente
+  // Update form values when an existing event is loaded
   useEffect(() => {
-    if (eventData && !isLoadingEvent) {
-      const startDate = parseISO(eventData.startTime);
-      const endDate = parseISO(eventData.endTime);
+    if (eventData && !isLoadingEvent && eventData.startTime && eventData.endTime) {
+      console.log("Loading event data for form:", eventData);
+      console.log("Available clients:", clients);
+      console.log("Available agents:", agents);
       
-      form.reset({
-        title: eventData.title,
+      // Convert timestamp numbers to Date objects
+      const startDate = new Date(eventData.startTime);
+      const endDate = new Date(eventData.endTime);
+      
+      const formValues = {
+        title: eventData.title || "",
         description: eventData.description || "",
         date: startDate,
-        startTime: format(startDate, "HH:mm"),
-        endTime: format(endDate, "HH:mm"),
-        location: eventData.location || "",
-        type: eventData.type,
-        status: eventData.status,
+        startTime: format(startDate, "h:mm a"),
+        endTime: format(endDate, "h:mm a"),
+        address: eventData.address || "",
+        city: eventData.city || "",
+        state: eventData.state || "",
+        zip: eventData.zip || "",
+        type: eventData.type || "estimate",
+        status: eventData.status || "pending",
         clientId: eventData.clientId ? String(eventData.clientId) : "",
         projectId: eventData.projectId ? String(eventData.projectId) : "",
+        agentId: eventData.agentId ? String(eventData.agentId) : "",
         notes: eventData.notes || "",
-      });
+      };
       
+      console.log("Setting form values:", formValues);
+      form.reset(formValues);
       setDate(startDate);
     }
-  }, [eventData, isLoadingEvent, form]);
+  }, [eventData, isLoadingEvent, form, clients, agents]);
 
-  // Observar cambios en el clientId para actualizar proyectos
+  // Watch changes in clientId to update projects
   const watchClientId = form.watch("clientId");
-  const filteredProjects = getFilteredProjects(watchClientId);
+  const filteredProjects = getFilteredProjects(watchClientId || "");
 
-  // Manejar envío del formulario
+  // Handle form submission
   const onSubmit = async (values: FormValues) => {
     const { date, startTime, endTime, ...rest } = values;
     
-    // Formatear fechas y horas
-    const [startHour, startMinute] = startTime.split(":").map(Number);
-    const [endHour, endMinute] = endTime.split(":").map(Number);
+    // Format dates and times - parse 12-hour format
+    const parseTime = (timeStr: string) => {
+      const parts = timeStr.split(/[:\s]/);
+      let hour = parseInt(parts[0] || "0");
+      const minute = parseInt(parts[1] || "0");
+      const period = parts[2]?.toUpperCase();
+      
+      if (period === 'PM' && hour !== 12) hour += 12;
+      if (period === 'AM' && hour === 12) hour = 0;
+      
+      return { hour, minute };
+    };
+    
+    const startParsed = parseTime(startTime || "10:00 AM");
+    const endParsed = parseTime(endTime || "11:00 AM");
     
     const startDate = new Date(date);
-    startDate.setHours(startHour, startMinute, 0);
+    startDate.setHours(startParsed.hour, startParsed.minute, 0);
     
     const endDate = new Date(date);
-    endDate.setHours(endHour, endMinute, 0);
+    endDate.setHours(endParsed.hour, endParsed.minute, 0);
     
     const eventData: EventInput = {
-      ...rest,
+      title: values.title,
+      description: values.description,
+      address: values.address,
+      city: values.city,
+      state: values.state,
+      zip: values.zip,
+      type: values.type as "estimate" | "meeting" | "site-visit" | "delivery" | "invoice" | "other",
+      status: values.status as "pending" | "confirmed" | "completed" | "cancelled",
+      notes: values.notes,
       startTime: startDate.toISOString(),
       endTime: endDate.toISOString(),
-      clientId: values.clientId ? Number(values.clientId) : undefined,
-      projectId: values.projectId ? Number(values.projectId) : undefined,
+      clientId: (values.clientId && values.clientId !== "none" && values.clientId !== "new_client") 
+        ? Number(values.clientId) 
+        : undefined,
+      projectId: (values.projectId && values.projectId !== "none") 
+        ? Number(values.projectId) 
+        : undefined,
+      agentId: (values.agentId && values.agentId !== "none") 
+        ? Number(values.agentId) 
+        : undefined,
     };
     
     if (eventId) {
@@ -184,18 +258,140 @@ export default function EventForm({
     }
   };
 
+  // Get the current event from the events array
+  const eventIdNum = eventId ? (typeof eventId === 'string' ? parseInt(eventId) : eventId) : 0;
+  const currentEvent = eventData && Array.isArray(eventData) 
+    ? eventData.find((event: any) => event.id === eventIdNum)
+    : null;
+
+  // Get the selected client's information for display
+  const selectedClient = currentEvent && currentEvent.clientId 
+    ? clients.find((client: any) => client.id === currentEvent.clientId)
+    : null;
+
+  // State for cancellation reason
+  const [cancellationReason, setCancellationReason] = useState("");
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+
+  // Handle cancel event with reason
+  const handleCancelEvent = async () => {
+    if (!eventId || !cancellationReason.trim()) return;
+
+    try {
+      // Update event status to cancelled
+      await updateEventMutation.mutateAsync({
+        id: eventId,
+        data: {
+          status: "cancelled",
+          notes: `Event cancelled. Reason: ${cancellationReason}`
+        }
+      });
+
+      // If event has a client, add cancellation note to client's cancellation history
+      if (eventData?.clientId) {
+        const cancellationEntry = `[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}] Event "${eventData.title}" cancelled. Reason: ${cancellationReason}`;
+        
+        // Get current client data to append to existing cancellation history
+        const clientRes = await apiRequest("GET", `/api/protected/clients/${eventData.clientId}`);
+        const client = await clientRes.json();
+        
+        const existingHistory = client.cancellationHistory || "";
+        const updatedHistory = existingHistory 
+          ? `${existingHistory}\n${cancellationEntry}`
+          : cancellationEntry;
+        
+        await apiRequest("PATCH", `/api/protected/clients/${eventData.clientId}`, {
+          cancellationHistory: updatedHistory
+        });
+      }
+
+      setShowCancelDialog(false);
+      if (onSuccess) onSuccess();
+    } catch (error) {
+      console.error("Error cancelling event:", error);
+    }
+  };
+
+  // Show loading while event data is being fetched
+  if (eventId && isLoadingEvent) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8 space-y-3">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <p className="text-sm text-gray-600">Loading event details...</p>
+      </div>
+    );
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        {/* Event Loading Confirmation - show when editing */}
+        {eventId && eventData && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+            <div className="flex items-center gap-2 text-green-800">
+              <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+              <span className="text-sm font-medium">Event details loaded successfully</span>
+            </div>
+          </div>
+        )}
+
+        {/* Client Information Display - only show when editing an existing event with a client */}
+        {eventId && selectedClient && (
+          <Card className="bg-blue-50 border-blue-200">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <User className="h-5 w-5 text-blue-600" />
+                Client Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-gray-600" />
+                    <span className="font-medium">
+                      {selectedClient.firstName} {selectedClient.lastName}
+                    </span>
+                  </div>
+                  {selectedClient.email && (
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-gray-600" />
+                      <span className="text-sm">{selectedClient.email}</span>
+                    </div>
+                  )}
+                  {selectedClient.phone && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-gray-600" />
+                      <span className="text-sm">{selectedClient.phone}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  {selectedClient.address && (
+                    <div className="flex items-start gap-2">
+                      <MapPin className="h-4 w-4 text-gray-600 mt-0.5" />
+                      <span className="text-sm">{selectedClient.address}</span>
+                    </div>
+                  )}
+                  {selectedClient.notes && (
+                    <div className="text-sm text-gray-600">
+                      <strong>Notes:</strong> {selectedClient.notes}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
         <FormField
           control={form.control}
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Título del evento</FormLabel>
+              <FormLabel>Event Title</FormLabel>
               <FormControl>
                 <Input 
-                  placeholder="e.g.: Visita para tomar medidas" 
+                  placeholder="e.g.: Site visit for measurements" 
                   {...field} 
                 />
               </FormControl>
@@ -209,10 +405,10 @@ export default function EventForm({
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Descripción</FormLabel>
+              <FormLabel>Description</FormLabel>
               <FormControl>
                 <Textarea 
-                  placeholder="Detalles sobre el evento" 
+                  placeholder="Event details" 
                   {...field} 
                   value={field.value || ""}
                 />
@@ -228,7 +424,7 @@ export default function EventForm({
             name="date"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Fecha</FormLabel>
+                <FormLabel>Date</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -242,7 +438,7 @@ export default function EventForm({
                         {field.value ? (
                           format(field.value, "PPP")
                         ) : (
-                          <span>Seleccione una fecha</span>
+                          <span>Select a date</span>
                         )}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                       </Button>
@@ -269,11 +465,12 @@ export default function EventForm({
             name="startTime"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Hora inicio</FormLabel>
+                <FormLabel>Start Time</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="time" 
-                    {...field} 
+                  <TimePicker
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="Select start time"
                   />
                 </FormControl>
                 <FormMessage />
@@ -286,11 +483,12 @@ export default function EventForm({
             name="endTime"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Hora fin</FormLabel>
+                <FormLabel>End Time</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="time" 
-                    {...field} 
+                  <TimePicker
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="Select end time"
                   />
                 </FormControl>
                 <FormMessage />
@@ -299,23 +497,83 @@ export default function EventForm({
           />
         </div>
         
-        <FormField
-          control={form.control}
-          name="location"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Ubicación</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="Dirección o lugar del evento" 
-                  {...field} 
-                  value={field.value || ""}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* Address Fields */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Address</h3>
+          <FormField
+            control={form.control}
+            name="address"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Street Address</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Enter street address"
+                    {...field}
+                    value={field.value || ""}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormField
+              control={form.control}
+              name="city"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>City</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="City"
+                      {...field}
+                      value={field.value || ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="state"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>State</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="State"
+                      {...field}
+                      value={field.value || ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="zip"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Zip Code</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Zip Code"
+                      {...field}
+                      value={field.value || ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
@@ -323,7 +581,7 @@ export default function EventForm({
             name="type"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Tipo de evento</FormLabel>
+                <FormLabel>Event Type</FormLabel>
                 <Select 
                   onValueChange={field.onChange} 
                   defaultValue={field.value}
@@ -331,16 +589,16 @@ export default function EventForm({
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccione un tipo" />
+                      <SelectValue placeholder="Select a type" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="meeting">Reunión</SelectItem>
-                    <SelectItem value="site-visit">Visita al sitio</SelectItem>
-                    <SelectItem value="delivery">Entrega de materiales</SelectItem>
-                    <SelectItem value="estimate">Estimado</SelectItem>
-                    <SelectItem value="invoice">Factura</SelectItem>
-                    <SelectItem value="other">Otro</SelectItem>
+                    <SelectItem value="meeting">Meeting</SelectItem>
+                    <SelectItem value="site-visit">Site Visit</SelectItem>
+                    <SelectItem value="delivery">Material Delivery</SelectItem>
+                    <SelectItem value="estimate">Estimate</SelectItem>
+                    <SelectItem value="invoice">Invoice</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -353,7 +611,7 @@ export default function EventForm({
             name="status"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Estado</FormLabel>
+                <FormLabel>Status</FormLabel>
                 <Select 
                   onValueChange={field.onChange} 
                   defaultValue={field.value}
@@ -361,14 +619,14 @@ export default function EventForm({
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccione un estado" />
+                      <SelectValue placeholder="Select a status" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="pending">Pendiente</SelectItem>
-                    <SelectItem value="confirmed">Confirmado</SelectItem>
-                    <SelectItem value="completed">Completado</SelectItem>
-                    <SelectItem value="cancelled">Cancelado</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -383,7 +641,7 @@ export default function EventForm({
             name="clientId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Cliente</FormLabel>
+                <FormLabel>Client</FormLabel>
                 <Select 
                   onValueChange={field.onChange} 
                   defaultValue={field.value}
@@ -391,12 +649,13 @@ export default function EventForm({
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccione un cliente" />
+                      <SelectValue placeholder="Select client or meeting type" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="none">Ninguno</SelectItem>
-                    {clients.map((client: any) => (
+                    <SelectItem value="none">No Client (Internal Meeting)</SelectItem>
+                    <SelectItem value="new_client">New/Potential Client</SelectItem>
+                    {(clients as any[]).map((client: any) => (
                       <SelectItem key={client.id} value={client.id.toString()}>
                         {client.firstName} {client.lastName}
                       </SelectItem>
@@ -404,6 +663,11 @@ export default function EventForm({
                   </SelectContent>
                 </Select>
                 <FormMessage />
+                {field.value === "new_client" && (
+                  <p className="text-sm text-blue-600 mt-1">
+                    For meetings with new potential clients. You can create their client record after the meeting.
+                  </p>
+                )}
               </FormItem>
             )}
           />
@@ -413,7 +677,7 @@ export default function EventForm({
             name="projectId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Proyecto</FormLabel>
+                <FormLabel>Project</FormLabel>
                 <Select 
                   onValueChange={field.onChange} 
                   defaultValue={field.value}
@@ -422,11 +686,11 @@ export default function EventForm({
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder={watchClientId ? "Seleccione un proyecto" : "Primero seleccione un cliente"} />
+                      <SelectValue placeholder={watchClientId ? "Select a project" : "First select a client"} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="none">Ninguno</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {filteredProjects.map((project: any) => (
                       <SelectItem key={project.id} value={project.id.toString()}>
                         {project.title}
@@ -440,15 +704,58 @@ export default function EventForm({
           />
         </div>
         
+        {/* Agent Assignment */}
+        <FormField
+          control={form.control}
+          name="agentId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Assign Agent</FormLabel>
+              <Select 
+                onValueChange={field.onChange} 
+                defaultValue={field.value}
+                value={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select an agent (optional)" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="none">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-gray-400 border border-white shadow-sm" />
+                      <span>No agent assigned</span>
+                    </div>
+                  </SelectItem>
+                  {agents.map((agent: any, index: number) => (
+                    <SelectItem key={agent.id} value={agent.id.toString()}>
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-3 h-3 rounded-full border border-white shadow-sm" 
+                          style={{ backgroundColor: getAgentColor(agent.id) }}
+                        />
+                        <span>{agent.firstName} {agent.lastName} - {agent.role}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        
         <FormField
           control={form.control}
           name="notes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Notas adicionales</FormLabel>
+              <FormLabel>Additional Notes</FormLabel>
               <FormControl>
                 <Textarea 
-                  placeholder="Notas adicionales sobre el evento" 
+                  placeholder="Additional notes about the event" 
                   {...field} 
                   value={field.value || ""}
                 />
@@ -458,19 +765,65 @@ export default function EventForm({
           )}
         />
         
-        <div className="flex justify-end gap-3 pt-2">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancelar
-          </Button>
-          <Button 
-            type="submit"
-            disabled={createEventMutation.isPending || updateEventMutation.isPending}
-          >
-            {(createEventMutation.isPending || updateEventMutation.isPending) && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        <div className="flex justify-between pt-2">
+          <div className="flex gap-3">
+            {eventId && currentEvent?.status !== "cancelled" && (
+              <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+                <AlertDialogTrigger asChild>
+                  <Button type="button" variant="destructive" size="sm">
+                    <AlertCircle className="mr-2 h-4 w-4" />
+                    Cancel Event
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Cancel Event</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Please provide a reason for cancelling this event. This information will be added to the client's profile for future reference.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <div className="py-4">
+                    <Label htmlFor="cancellation-reason">Cancellation Reason</Label>
+                    <Textarea
+                      id="cancellation-reason"
+                      placeholder="e.g., Client requested reschedule, weather conditions, emergency, etc."
+                      value={cancellationReason}
+                      onChange={(e) => setCancellationReason(e.target.value)}
+                      className="mt-2"
+                      rows={3}
+                    />
+                  </div>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setCancellationReason("")}>
+                      Keep Event
+                    </AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleCancelEvent} 
+                      className="bg-red-600 hover:bg-red-700"
+                      disabled={!cancellationReason.trim()}
+                    >
+                      Cancel Event
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
-            {eventId ? "Actualizar" : "Crear"} Evento
-          </Button>
+          </div>
+          
+          <div className="flex gap-3">
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Close
+            </Button>
+            <Button 
+              type="submit"
+              disabled={createEventMutation.isPending || updateEventMutation.isPending}
+            >
+              {(createEventMutation.isPending || updateEventMutation.isPending) && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              {eventId ? "Update" : "Create"} Event
+            </Button>
+          </div>
         </div>
       </form>
     </Form>

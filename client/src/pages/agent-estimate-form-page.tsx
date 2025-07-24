@@ -3,23 +3,29 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { queryClient } from '../lib/queryClient';
+import { useToast } from '../hooks/use-toast';
 import { Link } from "wouter";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, ArrowLeft } from "lucide-react";
-import FenceMeasurementTool from "@/components/measurement/fence-measurement-tool";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '../components/ui/card';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../components/ui/form';
+import { Input } from '../components/ui/input';
+import { Textarea } from '../components/ui/textarea';
+import { Button } from '../components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Badge } from '../components/ui/badge';
+import { Trash2, Plus, ArrowLeft, Calendar } from "lucide-react";
+import FenceMeasurementTool from '../components/measurement/fence-measurement-tool';
+import { Calendar as CalendarComponent } from '../components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
+import { format } from "date-fns";
+import { enUS } from "date-fns/locale";
 
 const formSchema = z.object({
   clientId: z.number(),
   estimateNumber: z.string().min(1, "Estimate number is required"),
+  title: z.string().optional(),
+  description: z.string().optional(),
   issueDate: z.date().optional(),
   expiryDate: z.date().optional(),
   status: z.string().default("draft"),
@@ -48,11 +54,13 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export default function VendorEstimateFormPage() {
+export default function AgentEstimateFormPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("client");
   const [availableServices, setAvailableServices] = useState<any[]>([]);
   const [selectedServices, setSelectedServices] = useState<any[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [clientsWithAppointments, setClientsWithAppointments] = useState<any[]>([]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -87,11 +95,79 @@ export default function VendorEstimateFormPage() {
     queryKey: ["/api/direct/services"],
   });
 
+  // Fetch events for appointments
+  const { data: events = [] } = useQuery({
+    queryKey: ["/api/protected/events"],
+  });
+
   useEffect(() => {
     if (services) {
       setAvailableServices(services);
     }
   }, [services]);
+
+  // Initialize appointments for today when page loads
+  useEffect(() => {
+    if (events && clients) {
+      const today = new Date();
+      updateSelectedDateAndClients(today);
+    }
+  }, [events, clients]);
+
+  // Function to filter clients with appointments on a specific date
+  const getClientsWithAppointmentsForDate = (date: Date) => {
+    if (!events.length || !clients.length) return [];
+    
+    const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59);
+    
+    const eventsForSelectedDate = events.filter((event: any) => {
+      const eventDate = new Date(event.startTime);
+      return eventDate >= dayStart && eventDate <= dayEnd;
+    });
+    
+    const clientIds = eventsForSelectedDate
+      .filter((event: any) => event.clientId)
+      .map((event: any) => event.clientId.toString());
+      
+    const uniqueClientIds = Array.from(new Set(clientIds));
+    
+    const clientsWithAppointments = clients.filter((client: any) => 
+      uniqueClientIds.includes(client.id.toString())
+    ).map((client: any) => {
+      const clientAppointments = eventsForSelectedDate.filter((event: any) => 
+        event.clientId && event.clientId.toString() === client.id.toString()
+      );
+      
+      return {
+        ...client,
+        appointments: clientAppointments
+      };
+    });
+    
+    return clientsWithAppointments;
+  };
+  
+  // Function to update the selected date and clients with appointments
+  const updateSelectedDateAndClients = (date: Date) => {
+    setSelectedDate(date);
+    const clientsForDate = getClientsWithAppointmentsForDate(date);
+    setClientsWithAppointments(clientsForDate);
+  };
+
+  // Function to handle client selection from appointment card
+  const handleSelectClientWithAppointment = (client: any) => {
+    form.setValue("clientId", client.id);
+    
+    toast({
+      title: "Client Selected",
+      description: `${client.firstName} ${client.lastName} has been selected for this estimate`,
+    });
+  };
+
+  // Get selected client details
+  const selectedClientId = form.watch("clientId");
+  const selectedClient = clients?.find((client: any) => client.id === selectedClientId);
 
   const createEstimateMutation = useMutation({
     mutationFn: async (data: FormValues) => {
@@ -362,9 +438,37 @@ DETAILED WORK SCOPE:
               ← Back to Estimates
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold">Create New Estimate</h1>
+          <div className="mb-6">
+            <h1 className="text-2xl font-semibold text-foreground tracking-tight">Create Agent Estimate</h1>
+            <p className="text-muted-foreground">Generate estimates for field agent appointments</p>
+          </div>
         </div>
       </div>
+
+      {/* Selected Client Status Bar */}
+      {selectedClient && (
+        <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+          <CardContent className="py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                <div>
+                  <span className="font-semibold text-green-800">
+                    Creating estimate for: {selectedClient.firstName} {selectedClient.lastName}
+                  </span>
+                  <div className="text-sm text-green-600">
+                    {selectedClient.email && `${selectedClient.email}`}
+                    {selectedClient.phone && ` • ${selectedClient.phone}`}
+                  </div>
+                </div>
+              </div>
+              <div className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+                Client Selected
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -378,6 +482,118 @@ DETAILED WORK SCOPE:
 
             {/* Client Tab */}
             <TabsContent value="client" className="space-y-6 pt-4">
+              {/* Appointments Section */}
+              <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+                <CardHeader>
+                  <CardTitle className="text-blue-800 flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    Today's Agent Estimate Appointments
+                  </CardTitle>
+                  <CardDescription className="text-blue-600">
+                    Quick access to clients with scheduled appointments
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-blue-700">Select Date:</span>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-48 justify-start text-left font-normal border-blue-300"
+                          >
+                            <Calendar className="mr-2 h-4 w-4" />
+                            {format(selectedDate, "PPP", { locale: enUS })}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <CalendarComponent
+                            mode="single"
+                            selected={selectedDate}
+                            onSelect={(date) => date && updateSelectedDateAndClients(date)}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+
+                  {clientsWithAppointments.length > 0 ? (
+                    <div className="mb-4">
+                      <h3 className="text-sm font-medium mb-2 text-primary">
+                        Clients with appointments for {format(selectedDate, "PPP", { locale: enUS })}:
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {clientsWithAppointments.map((client: any) => (
+                          <Card key={client.id} className="cursor-pointer hover:border-primary hover:shadow-md transition-all duration-200 border-blue-200"
+                            onClick={() => handleSelectClientWithAppointment(client)}
+                          >
+                            <CardContent className="p-4">
+                              <div className="flex flex-col gap-2">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className="text-blue-600 text-lg">📅</span>
+                                  <span className="font-semibold text-gray-900">{client.firstName} {client.lastName}</span>
+                                </div>
+                                
+                                {/* Show appointment details */}
+                                {client.appointments && client.appointments.length > 0 && (
+                                  <div className="mb-2 p-2 bg-blue-50 rounded border-l-4 border-blue-400">
+                                    {client.appointments.map((appointment: any, index: number) => (
+                                      <div key={index} className="text-xs text-blue-800">
+                                        <div className="font-medium">{appointment.title}</div>
+                                        <div>🕒 {format(new Date(appointment.startTime), "h:mm a")}</div>
+                                        {appointment.type && (
+                                          <div>📋 {appointment.type}</div>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                
+                                <div className="text-xs text-muted-foreground space-y-1">
+                                  {client.email && (
+                                    <div className="flex items-center gap-1">
+                                      <span>📧</span>
+                                      <span>{client.email}</span>
+                                    </div>
+                                  )}
+                                  {client.phone && (
+                                    <div className="flex items-center gap-1">
+                                      <span>📱</span>
+                                      <span>{client.phone}</span>
+                                    </div>
+                                  )}
+                                  {client.address && (
+                                    <div className="flex items-start gap-1">
+                                      <span>🏠</span>
+                                      <span className="line-clamp-2">
+                                        {client.address}
+                                        {client.city && `, ${client.city}`}
+                                        {client.state && `, ${client.state}`}
+                                        {client.zip && ` ${client.zip}`}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                <div className="mt-2 pt-2 border-t border-gray-200">
+                                  <span className="text-xs text-blue-600 font-medium">Click to select this client</span>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-blue-600 text-center py-4 bg-blue-50 rounded">
+                      No appointments scheduled for {format(selectedDate, "PPP", { locale: enUS })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader>
                   <CardTitle>Client Information</CardTitle>
@@ -390,9 +606,12 @@ DETAILED WORK SCOPE:
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Client</FormLabel>
-                        <Select onValueChange={(value) => field.onChange(parseInt(value))}>
+                        <Select 
+                          onValueChange={(value) => field.onChange(parseInt(value))}
+                          value={field.value ? field.value.toString() : ""}
+                        >
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="input-blue-border">
                               <SelectValue placeholder="Select a client" />
                             </SelectTrigger>
                           </FormControl>
@@ -416,7 +635,11 @@ DETAILED WORK SCOPE:
                       <FormItem>
                         <FormLabel>Estimate Title</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter estimate title" {...field} />
+                          <Input 
+                            className="input-blue-border"
+                            placeholder="Enter estimate title" 
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -430,7 +653,11 @@ DETAILED WORK SCOPE:
                       <FormItem>
                         <FormLabel>Description</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="Enter project description" {...field} />
+                          <Textarea 
+                            className="input-blue-border"
+                            placeholder="Enter project description" 
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -570,34 +797,145 @@ DETAILED WORK SCOPE:
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
                                   <label className="text-sm font-medium">Width (ft)</label>
-                                  <Input type="number" placeholder="Enter width" />
+                                  <Input 
+                                    type="number" 
+                                    className="input-blue-border"
+                                    placeholder="Enter width"
+                                    value={service.measurements?.width || ''}
+                                    onChange={(e) => {
+                                      const width = parseFloat(e.target.value) || 0;
+                                      const length = service.measurements?.length || 0;
+                                      const area = width * length;
+                                      
+                                      const updatedServices = [...selectedServices];
+                                      updatedServices[index] = {
+                                        ...updatedServices[index],
+                                        measurements: {
+                                          ...updatedServices[index].measurements,
+                                          width,
+                                          squareFeet: area,
+                                          quantity: area,
+                                        }
+                                      };
+                                      setSelectedServices(updatedServices);
+                                      form.setValue("selectedServices", updatedServices);
+                                    }}
+                                  />
                                 </div>
                                 <div>
                                   <label className="text-sm font-medium">Length (ft)</label>
-                                  <Input type="number" placeholder="Enter length" />
+                                  <Input 
+                                    type="number" 
+                                    className="input-blue-border"
+                                    placeholder="Enter length"
+                                    value={service.measurements?.length || ''}
+                                    onChange={(e) => {
+                                      const length = parseFloat(e.target.value) || 0;
+                                      const width = service.measurements?.width || 0;
+                                      const area = width * length;
+                                      
+                                      const updatedServices = [...selectedServices];
+                                      updatedServices[index] = {
+                                        ...updatedServices[index],
+                                        measurements: {
+                                          ...updatedServices[index].measurements,
+                                          length,
+                                          squareFeet: area,
+                                          quantity: area,
+                                        }
+                                      };
+                                      setSelectedServices(updatedServices);
+                                      form.setValue("selectedServices", updatedServices);
+                                    }}
+                                  />
                                 </div>
                               </div>
+                              {service.measurements?.squareFeet > 0 && (
+                                <p className="text-sm text-green-600 font-medium">
+                                  Total Area: {service.measurements.squareFeet} sq ft
+                                </p>
+                              )}
                             </div>
                           )}
 
                           {service.serviceType === "windows" && (
                             <div className="space-y-4">
                               <p className="text-sm text-muted-foreground">Number of Windows</p>
-                              <Input type="number" placeholder="Enter number of windows" />
+                              <Input 
+                                type="number" 
+                                className="input-blue-border"
+                                placeholder="Enter number of windows"
+                                value={service.measurements?.units || ''}
+                                onChange={(e) => {
+                                  const units = parseInt(e.target.value) || 0;
+                                  
+                                  const updatedServices = [...selectedServices];
+                                  updatedServices[index] = {
+                                    ...updatedServices[index],
+                                    measurements: {
+                                      ...updatedServices[index].measurements,
+                                      units,
+                                      quantity: units,
+                                    }
+                                  };
+                                  setSelectedServices(updatedServices);
+                                  form.setValue("selectedServices", updatedServices);
+                                }}
+                              />
                             </div>
                           )}
 
                           {service.serviceType === "gutters" && (
                             <div className="space-y-4">
                               <p className="text-sm text-muted-foreground">Linear Feet of Gutters</p>
-                              <Input type="number" placeholder="Enter linear feet" />
+                              <Input 
+                                type="number" 
+                                className="input-blue-border"
+                                placeholder="Enter linear feet"
+                                value={service.measurements?.linearFeet || ''}
+                                onChange={(e) => {
+                                  const linearFeet = parseFloat(e.target.value) || 0;
+                                  
+                                  const updatedServices = [...selectedServices];
+                                  updatedServices[index] = {
+                                    ...updatedServices[index],
+                                    measurements: {
+                                      ...updatedServices[index].measurements,
+                                      linearFeet,
+                                      quantity: linearFeet,
+                                    }
+                                  };
+                                  setSelectedServices(updatedServices);
+                                  form.setValue("selectedServices", updatedServices);
+                                }}
+                              />
                             </div>
                           )}
 
                           {service.serviceType === "roof" && (
                             <div className="space-y-4">
                               <p className="text-sm text-muted-foreground">Roof Area (sq ft)</p>
-                              <Input type="number" placeholder="Enter roof area" />
+                              <Input 
+                                type="number" 
+                                className="input-blue-border"
+                                placeholder="Enter roof area"
+                                value={service.measurements?.squareFeet || ''}
+                                onChange={(e) => {
+                                  const squareFeet = parseFloat(e.target.value) || 0;
+                                  
+                                  const updatedServices = [...selectedServices];
+                                  updatedServices[index] = {
+                                    ...updatedServices[index],
+                                    measurements: {
+                                      ...updatedServices[index].measurements,
+                                      squareFeet,
+                                      quantity: squareFeet,
+                                    }
+                                  };
+                                  setSelectedServices(updatedServices);
+                                  form.setValue("selectedServices", updatedServices);
+                                }}
+                              />
                             </div>
                           )}
 
@@ -607,13 +945,172 @@ DETAILED WORK SCOPE:
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
                                   <label className="text-sm font-medium">Height (ft)</label>
-                                  <Input type="number" placeholder="Enter height" />
+                                  <Input 
+                                    type="number" 
+                                    className="input-blue-border"
+                                    placeholder="Enter height"
+                                    value={service.measurements?.height || ''}
+                                    onChange={(e) => {
+                                      const height = parseFloat(e.target.value) || 0;
+                                      const perimeter = service.measurements?.perimeter || 0;
+                                      const area = height * perimeter;
+                                      
+                                      const updatedServices = [...selectedServices];
+                                      updatedServices[index] = {
+                                        ...updatedServices[index],
+                                        measurements: {
+                                          ...updatedServices[index].measurements,
+                                          height,
+                                          squareFeet: area,
+                                          quantity: area,
+                                        }
+                                      };
+                                      setSelectedServices(updatedServices);
+                                      form.setValue("selectedServices", updatedServices);
+                                    }}
+                                  />
                                 </div>
                                 <div>
                                   <label className="text-sm font-medium">Perimeter (ft)</label>
-                                  <Input type="number" placeholder="Enter perimeter" />
+                                  <Input 
+                                    type="number" 
+                                    className="input-blue-border"
+                                    placeholder="Enter perimeter"
+                                    value={service.measurements?.perimeter || ''}
+                                    onChange={(e) => {
+                                      const perimeter = parseFloat(e.target.value) || 0;
+                                      const height = service.measurements?.height || 0;
+                                      const area = height * perimeter;
+                                      
+                                      const updatedServices = [...selectedServices];
+                                      updatedServices[index] = {
+                                        ...updatedServices[index],
+                                        measurements: {
+                                          ...updatedServices[index].measurements,
+                                          perimeter,
+                                          squareFeet: area,
+                                          quantity: area,
+                                        }
+                                      };
+                                      setSelectedServices(updatedServices);
+                                      form.setValue("selectedServices", updatedServices);
+                                    }}
+                                  />
                                 </div>
                               </div>
+                              {service.measurements?.squareFeet > 0 && (
+                                <p className="text-sm text-green-600 font-medium">
+                                  Total Area: {service.measurements.squareFeet} sq ft
+                                </p>
+                              )}
+                            </div>
+                          )}
+
+                          {service.serviceType === "bathroom" && (
+                            <div className="space-y-4">
+                              <p className="text-sm text-muted-foreground">Bathroom Area (sq ft)</p>
+                              <Input 
+                                type="number" 
+                                className="input-blue-border"
+                                placeholder="Enter bathroom area"
+                                value={service.measurements?.squareFeet || ''}
+                                onChange={(e) => {
+                                  const squareFeet = parseFloat(e.target.value) || 0;
+                                  
+                                  const updatedServices = [...selectedServices];
+                                  updatedServices[index] = {
+                                    ...updatedServices[index],
+                                    measurements: {
+                                      ...updatedServices[index].measurements,
+                                      squareFeet,
+                                      quantity: squareFeet,
+                                    }
+                                  };
+                                  setSelectedServices(updatedServices);
+                                  form.setValue("selectedServices", updatedServices);
+                                }}
+                              />
+                            </div>
+                          )}
+
+                          {service.serviceType === "kitchen" && (
+                            <div className="space-y-4">
+                              <p className="text-sm text-muted-foreground">Kitchen Area (sq ft)</p>
+                              <Input 
+                                type="number" 
+                                className="input-blue-border"
+                                placeholder="Enter kitchen area"
+                                value={service.measurements?.squareFeet || ''}
+                                onChange={(e) => {
+                                  const squareFeet = parseFloat(e.target.value) || 0;
+                                  
+                                  const updatedServices = [...selectedServices];
+                                  updatedServices[index] = {
+                                    ...updatedServices[index],
+                                    measurements: {
+                                      ...updatedServices[index].measurements,
+                                      squareFeet,
+                                      quantity: squareFeet,
+                                    }
+                                  };
+                                  setSelectedServices(updatedServices);
+                                  form.setValue("selectedServices", updatedServices);
+                                }}
+                              />
+                            </div>
+                          )}
+
+                          {service.serviceType === "basement" && (
+                            <div className="space-y-4">
+                              <p className="text-sm text-muted-foreground">Basement Area (sq ft)</p>
+                              <Input 
+                                type="number" 
+                                className="input-blue-border"
+                                placeholder="Enter basement area"
+                                value={service.measurements?.squareFeet || ''}
+                                onChange={(e) => {
+                                  const squareFeet = parseFloat(e.target.value) || 0;
+                                  
+                                  const updatedServices = [...selectedServices];
+                                  updatedServices[index] = {
+                                    ...updatedServices[index],
+                                    measurements: {
+                                      ...updatedServices[index].measurements,
+                                      squareFeet,
+                                      quantity: squareFeet,
+                                    }
+                                  };
+                                  setSelectedServices(updatedServices);
+                                  form.setValue("selectedServices", updatedServices);
+                                }}
+                              />
+                            </div>
+                          )}
+
+                          {service.serviceType === "patio" && (
+                            <div className="space-y-4">
+                              <p className="text-sm text-muted-foreground">Patio Area (sq ft)</p>
+                              <Input 
+                                type="number" 
+                                className="input-blue-border"
+                                placeholder="Enter patio area"
+                                value={service.measurements?.squareFeet || ''}
+                                onChange={(e) => {
+                                  const squareFeet = parseFloat(e.target.value) || 0;
+                                  
+                                  const updatedServices = [...selectedServices];
+                                  updatedServices[index] = {
+                                    ...updatedServices[index],
+                                    measurements: {
+                                      ...updatedServices[index].measurements,
+                                      squareFeet,
+                                      quantity: squareFeet,
+                                    }
+                                  };
+                                  setSelectedServices(updatedServices);
+                                  form.setValue("selectedServices", updatedServices);
+                                }}
+                              />
                             </div>
                           )}
                         </div>
@@ -798,6 +1295,107 @@ DETAILED WORK SCOPE:
                                   <li>• Fasteners</li>
                                   <li>• Caulk</li>
                                   <li>• Paint/stain</li>
+                                </ul>
+                              </div>
+                            </div>
+                          )}
+
+                          {service.serviceType === "bathroom" && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="bg-gray-50 p-3 rounded">
+                                <h4 className="font-medium mb-2">Plumbing</h4>
+                                <ul className="text-sm space-y-1">
+                                  <li>• Pipes and fittings</li>
+                                  <li>• Faucets and fixtures</li>
+                                  <li>• Toilet and vanity</li>
+                                  <li>• Shower system</li>
+                                </ul>
+                              </div>
+                              <div className="bg-gray-50 p-3 rounded">
+                                <h4 className="font-medium mb-2">Finishes</h4>
+                                <ul className="text-sm space-y-1">
+                                  <li>• Tile and grout</li>
+                                  <li>• Paint and primer</li>
+                                  <li>• Caulk and sealants</li>
+                                  <li>• Hardware and accessories</li>
+                                </ul>
+                              </div>
+                            </div>
+                          )}
+
+                          {service.serviceType === "kitchen" && (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="bg-gray-50 p-3 rounded">
+                                <h4 className="font-medium mb-2">Cabinets</h4>
+                                <ul className="text-sm space-y-1">
+                                  <li>• Cabinet boxes</li>
+                                  <li>• Doors and drawers</li>
+                                  <li>• Hardware and hinges</li>
+                                  <li>• Crown molding</li>
+                                </ul>
+                              </div>
+                              <div className="bg-gray-50 p-3 rounded">
+                                <h4 className="font-medium mb-2">Countertops</h4>
+                                <ul className="text-sm space-y-1">
+                                  <li>• Countertop material</li>
+                                  <li>• Backsplash tile</li>
+                                  <li>• Sink and faucet</li>
+                                  <li>• Sealer and adhesive</li>
+                                </ul>
+                              </div>
+                              <div className="bg-gray-50 p-3 rounded">
+                                <h4 className="font-medium mb-2">Appliances</h4>
+                                <ul className="text-sm space-y-1">
+                                  <li>• Refrigerator</li>
+                                  <li>• Range/oven</li>
+                                  <li>• Dishwasher</li>
+                                  <li>• Microwave</li>
+                                </ul>
+                              </div>
+                            </div>
+                          )}
+
+                          {service.serviceType === "basement" && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="bg-gray-50 p-3 rounded">
+                                <h4 className="font-medium mb-2">Framing</h4>
+                                <ul className="text-sm space-y-1">
+                                  <li>• Studs and plates</li>
+                                  <li>• Insulation</li>
+                                  <li>• Vapor barrier</li>
+                                  <li>• Electrical boxes</li>
+                                </ul>
+                              </div>
+                              <div className="bg-gray-50 p-3 rounded">
+                                <h4 className="font-medium mb-2">Finishes</h4>
+                                <ul className="text-sm space-y-1">
+                                  <li>• Drywall and mud</li>
+                                  <li>• Paint and primer</li>
+                                  <li>• Flooring material</li>
+                                  <li>• Trim and baseboards</li>
+                                </ul>
+                              </div>
+                            </div>
+                          )}
+
+                          {service.serviceType === "patio" && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="bg-gray-50 p-3 rounded">
+                                <h4 className="font-medium mb-2">Foundation</h4>
+                                <ul className="text-sm space-y-1">
+                                  <li>• Concrete mix</li>
+                                  <li>• Rebar and wire mesh</li>
+                                  <li>• Gravel and sand</li>
+                                  <li>• Forms and stakes</li>
+                                </ul>
+                              </div>
+                              <div className="bg-gray-50 p-3 rounded">
+                                <h4 className="font-medium mb-2">Finishes</h4>
+                                <ul className="text-sm space-y-1">
+                                  <li>• Pavers or concrete</li>
+                                  <li>• Sealer and joint sand</li>
+                                  <li>• Edging material</li>
+                                  <li>• Drainage components</li>
                                 </ul>
                               </div>
                             </div>

@@ -3,8 +3,8 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from '../../lib/queryClient';
+import { useToast } from '../../hooks/use-toast';
 import { format, addDays } from "date-fns";
 import { 
   Calculator, 
@@ -19,9 +19,9 @@ import {
   DialogFooter, 
   DialogHeader, 
   DialogTitle 
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+} from '../ui/dialog';
+import { Button } from '../ui/button';
+import { Separator } from '../ui/separator';
 import { 
   Form, 
   FormControl, 
@@ -30,29 +30,29 @@ import {
   FormItem, 
   FormLabel, 
   FormMessage 
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+} from '../ui/form';
+import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '../ui/select';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+} from '../ui/popover';
+import { Calendar } from '../ui/calendar';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '../ui/card';
 import {
   Table,
   TableBody,
@@ -62,8 +62,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
+} from '../ui/table';
+import { Checkbox } from '../ui/checkbox';
 
 // Helper function to format currency
 const formatCurrency = (amount: number | string) => {
@@ -712,10 +712,10 @@ export default function InvoiceForm({ invoiceToEdit, isOpen, onClose, fromEstima
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="pending">Pendiente</SelectItem>
-                          <SelectItem value="paid">Pagada</SelectItem>
-                          <SelectItem value="overdue">Vencida</SelectItem>
-                          <SelectItem value="cancelled">Cancelada</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                                  <SelectItem value="paid">Paid</SelectItem>
+        <SelectItem value="overdue">Overdue</SelectItem>
+        <SelectItem value="cancelled">Cancelled</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

@@ -1,6 +1,6 @@
 import { Express } from 'express';
-import { db } from '@db';
-import { servicePricing } from '@shared/schema';
+import { db } from '../../db';
+import { servicePricing } from '../../shared/schema';
 import { and, eq } from 'drizzle-orm';
 
 export function registerDirectServiceRoutes(app: Express) {

@@ -2,483 +2,292 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer components {
-  /* Global responsive container */
-  .app-container {
-    @apply w-full min-h-screen mx-auto px-4 sm:px-6 lg:px-8;
-    max-width: 100%;
-  }
-  
-  /* Responsive page layout */
-  .page-layout {
-    @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8;
-  }
-  
-  /* Responsive card layout */
-  .responsive-card {
-    @apply w-full max-w-none sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto;
-  }
-  
-  /* Responsive grid */
-  .responsive-grid {
-    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6;
-  }
-  
-  /* Stats grid for dashboard */
-  .stats-grid {
-    @apply grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6;
-  }
-  
-  /* Form responsive layout */
-  .form-grid {
-    @apply grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6;
-  }
-  
-  /* Table responsive wrapper */
-  .table-responsive {
-    @apply overflow-x-auto;
-  }
-  
-  /* Mobile-friendly header */
-  .mobile-header {
-    @apply flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4;
-  }
-  
-  /* Responsive button group */
-  .button-group {
-    @apply flex flex-col sm:flex-row gap-2 sm:gap-3;
-  }
-  
-  /* Mobile-first button styling */
-  .responsive-button {
-    @apply w-full sm:w-auto px-4 py-2 text-sm sm:text-base;
-  }
-}
-
 @layer base {
   :root {
-    /* Paleta de colores de lujo - azules profundos, dorado y plata */
-    --background: 220 30% 98%;
-    --foreground: 224 71% 4%;
-    --card: 0 0% 100%;
-    --card-foreground: 224 71% 4%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71% 4%;
+    /* Remodra Brand Colors */
+    --remodra-gold: #D4AF37;
+    --remodra-gold-light: #F4E4BC;
+    --remodra-gold-dark: #B8860B;
+    --remodra-gold-gradient: linear-gradient(135deg, #D4AF37 0%, #F4E4BC 50%, #B8860B 100%);
     
-    /* Azul profundo como color primario */
-    --primary: 225 90% 30%;
-    --primary-foreground: 0 0% 100%;
+    /* Dark Luxury Backgrounds */
+    --remodra-dark: #1a1a1a;
+    --remodra-dark-light: #2d2d2d;
+    --remodra-dark-lighter: #404040;
+    --remodra-dark-gradient: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #404040 100%);
     
-    /* Dorado como color secundario */
-    --secondary: 43 74% 56%;
-    --secondary-foreground: 0 0% 100%;
+    /* Professional Text Colors */
+    --remodra-text-primary: #ffffff;
+    --remodra-text-secondary: #e5e5e5;
+    --remodra-text-muted: #a0a0a0;
+    --remodra-text-gold: #D4AF37;
     
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 14% 46%;
-    
-    /* Acentos plateados */
-    --accent: 228 6% 90%;
-    --accent-foreground: 225 25% 20%;
-    
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 225 90% 30%;
-    --radius: 0.75rem;
-  }
- 
-  .dark {
-    /* Fondo oscuro moderno */
-    --background: 224 71% 4%;
-    --foreground: 220 30% 98%;
-    
-    /* Tarjetas con azul profundo */
-    --card: 225 50% 8%;
-    --card-foreground: 210 40% 98%;
-    
-    /* Popovers con azul profundo */
-    --popover: 225 50% 8%;
-    --popover-foreground: 210 40% 98%;
-    
-    /* Azul brillante como primario */
-    --primary: 216 100% 60%;
-    --primary-foreground: 0 0% 100%;
-    
-    /* Dorado como secundario */
-    --secondary: 43 80% 56%;
-    --secondary-foreground: 0 0% 0%;
-    
-    /* Fondos atenuados */
-    --muted: 223 47% 14%;
-    --muted-foreground: 215 20% 75%;
-    
-    /* Acentos elegantes */
-    --accent: 216 34% 25%;
-    --accent-foreground: 210 40% 98%;
-    
-    /* Destructivo más sutil */
-    --destructive: 0 75% 50%;
-    --destructive-foreground: 210 40% 98%;
-    
-    /* Otros elementos de la interfaz */
-    --border: 223 47% 14%;
-    --input: 223 47% 14%;
-    --ring: 216 100% 60%;
-  }
-}
-
-@font-face {
-  font-family: 'Signature';
-  src: url('https://fonts.googleapis.com/css2?family=Parisienne&display=swap');
-  font-weight: normal;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'Handwriting';
-  src: url('https://fonts.googleapis.com/css2?family=Homemade+Apple&display=swap');
-  font-weight: normal;
-  font-style: normal;
-}
-
-/* Elementos de diseño lujosos y futuristas */
-@layer utilities {
-  /* Fondos con gradientes modernos */
-  .bg-luxury-gradient {
-    @apply bg-gradient-to-br from-blue-900 via-blue-800 to-blue-950;
-  }
-  
-  .bg-gold-gradient {
-    @apply bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600;
-  }
-  
-  .bg-silver-gradient {
-    @apply bg-gradient-to-r from-slate-300 via-slate-200 to-slate-400;
-  }
-  
-  .bg-dark-luxury {
-    @apply bg-gradient-to-b from-slate-900 via-blue-950 to-slate-900;
-  }
-  
-  /* Texto con degradados */
-  .text-gold-gradient {
-    @apply text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600;
-  }
-  
-  .text-blue-gradient {
-    @apply text-transparent bg-clip-text bg-gradient-to-r from-blue-700 via-blue-500 to-blue-800;
-  }
-  
-  /* Efectos de tarjeta de lujo */
-  .card-luxury {
-    @apply shadow-lg relative overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 transition-all duration-300;
-    background-color: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(10px);
-  }
-  
-  .card-luxury:hover {
-    @apply shadow-xl transform-gpu -translate-y-1;
-    border-color: hsl(var(--primary));
-  }
-  
-  .card-luxury::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    width: calc(100% + 4px);
-    height: calc(100% + 4px);
-    z-index: -1;
-    @apply bg-gradient-to-br from-primary/50 via-transparent to-secondary/50 rounded-xl;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-  
-  .card-luxury:hover::before {
-    opacity: 1;
-  }
-  
-  /* Animaciones sutiles */
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
-  }
-  
-  @keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-    100% { transform: translateY(0px); }
-  }
-  
-  .animate-pulse-slow {
-    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-  
-  /* Fondo futurista con patrón */
-  .bg-pattern-grid {
-    background-color: hsl(var(--background));
-    background-image: 
-      linear-gradient(to right, hsl(var(--primary) / 0.05) 1px, transparent 1px),
-      linear-gradient(to bottom, hsl(var(--primary) / 0.05) 1px, transparent 1px);
-    background-size: 40px 40px;
-  }
-  
-  /* Futurista borde de gradiente */
-  .border-gradient {
-    position: relative;
-    border-radius: var(--radius);
-  }
-  
-  .border-gradient::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    border-radius: calc(var(--radius) + 2px);
-    background: linear-gradient(45deg, hsl(var(--primary)), hsl(var(--secondary)));
-    z-index: -1;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-  
-  .border-gradient:hover::before {
-    opacity: 1;
-  }
-  
-  /* Superposición de vidrio (glass morphism) */
-  .glass-overlay {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: var(--radius);
-  }
-  
-  .dark .glass-overlay {
-    background: rgba(30, 30, 60, 0.25);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-  }
-}
-
-.font-handwriting {
-  font-family: 'Handwriting', 'Signature', cursive;
-}
-
-/* Premium styles */
-.glass-card {
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.premium-gradient {
-  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(234, 85%, 45%) 100%);
-}
-
-.premium-shadow {
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  transition: box-shadow 0.3s ease;
-}
-
-.premium-shadow:hover {
-  box-shadow: 0 15px 30px -8px rgba(0, 0, 0, 0.12), 0 10px 15px -5px rgba(0, 0, 0, 0.1);
-}
-
-.premium-header {
-  box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.15), 0 8px 10px -6px rgba(59, 130, 246, 0.1);
-}
-
-.premium-title {
-  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.15);
-}
-
-.premium-button {
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.premium-button-default:hover, 
-.premium-button-secondary:hover,
-.premium-button-success:hover {
-  transform: translateY(-2px);
-}
-
-.premium-button-default:active, 
-.premium-button-secondary:active,
-.premium-button-success:active {
-  transform: translateY(0);
-}
-
-/* Animation for shimmering effect */
-@keyframes shimmer {
-  0% {
-    background-position: -80vw 0;
-  }
-  100% {
-    background-position: 80vw 0;
-  }
-}
-
-.shimmer {
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(255, 255, 255, 0.2) 50%, 
-    transparent 100%
-  );
-  background-size: 50vw 100%;
-  animation: shimmer 2s infinite linear;
-}
-
-/* Improved card styles */
-.card {
-  transition: all 0.3s ease;
-}
-
-.card:hover {
-  box-shadow: 0 6px 15px -3px rgba(0, 0, 0, 0.1), 
-              0 4px 6px -4px rgba(0, 0, 0, 0.1);
-}
-
-/* Table styling enhancement */
-.item-table-container {
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-
-.item-table-container th {
-  font-weight: 600;
-}
-
-.signature-display {
-  transition: all 0.3s ease;
-}
-
-.signature-image {
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-  position: relative;
-}
-
-.signature-image:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transform: translateY(-1px);
-}
-
-@layer base {
-  :root {
-    --background: 0 0% 98%;
-    --foreground: 222.2 84% 4.9%;
-    
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    
-    --secondary: 172.2 76.9% 44.3%;
-    --secondary-foreground: 210 40% 98%;
-    
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --success: 142.1 76.2% 36.3%;
-    --success-foreground: 210 40% 98%;
-
-    --warning: 38 92.7% 50.6%;
-    --warning-foreground: 210 40% 98%;
-    
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    
-    --radius: 0.5rem;
-
-    --sidebar-background: 222.2 47.4% 11.2%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 221.2 83.2% 53.3%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 217.2 32.6% 17.5%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 216 34% 17%;
-    --sidebar-ring: 224.3 76.3% 48%;
-  }
- 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    
-    --secondary: 172.2 76.9% 44.3%;
-    --secondary-foreground: 210 40% 98%;
-    
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --success: 142.1 70.6% 45.3%;
-    --success-foreground: 144.9 80.4% 10%;
-
-    --warning: 48 96.5% 53.9%;
-    --warning-foreground: 38 92.7% 10%;
-    
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
+    /* Luxury Borders and Shadows */
+    --remodra-border: #404040;
+    --remodra-border-gold: #D4AF37;
+    --remodra-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    --remodra-shadow-gold: 0 10px 25px rgba(212, 175, 55, 0.2);
   }
 
+  /* Global Luxury Background */
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    background: var(--remodra-dark-gradient) !important;
+    color: var(--remodra-text-primary) !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
   }
 }
 
-.loading-spinner {
-  border: 3px solid rgba(203, 213, 225, 0.3);
-  border-radius: 50%;
-  border-top: 3px solid hsl(var(--primary));
-  width: 24px;
-  height: 24px;
-  animation: spin 1s linear infinite;
+@layer components {
+  /* Remodra Layout System - FIXED */
+  .remodra-layout {
+    @apply min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex;
+  }
+
+  .remodra-sidebar {
+    @apply fixed left-0 top-0 h-full w-64 bg-gradient-to-b from-slate-900 to-slate-800 border-r border-slate-600 z-40 hidden lg:block;
+  }
+
+  .remodra-main {
+    @apply flex-1 ml-0 lg:ml-64 min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col;
+  }
+
+  .remodra-main-mobile {
+    @apply flex-1 min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col;
+  }
+
+  .remodra-topnav {
+    @apply sticky top-0 z-30 bg-gradient-to-r from-slate-900 to-slate-800 border-b border-slate-600 backdrop-blur-sm;
+  }
+
+  /* Mobile Sidebar Overlay */
+  .remodra-mobile-overlay {
+    @apply fixed inset-0 z-50 bg-black/60 backdrop-blur-sm lg:hidden;
+  }
+
+  .remodra-mobile-sidebar {
+    @apply fixed left-0 top-0 h-full w-72 bg-gradient-to-b from-slate-900 to-slate-800 border-r border-slate-600 z-50 transform transition-transform duration-300 ease-in-out lg:hidden;
+  }
+
+  /* Remodra Branding */
+  .remodra-logo {
+    @apply inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-amber-400 to-yellow-600 rounded-lg shadow-lg;
+  }
+
+  .remodra-logo-text {
+    @apply text-2xl font-bold text-slate-900;
+  }
+
+  .remodra-title {
+    @apply text-4xl font-bold bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent;
+  }
+
+  .remodra-subtitle {
+    @apply text-lg text-slate-300;
+  }
+
+  /* Remodra Cards */
+  .remodra-card {
+    @apply bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-600 rounded-xl shadow-lg transition-all duration-300;
+  }
+
+  .remodra-card:hover {
+    @apply border-amber-500/50 shadow-xl transform -translate-y-1;
+  }
+
+  /* Remodra Buttons */
+  .remodra-button {
+    @apply bg-gradient-to-r from-amber-400 to-yellow-600 text-slate-900 font-semibold px-6 py-3 rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl hover:transform hover:-translate-y-1;
+  }
+
+  .remodra-button-outline {
+    @apply bg-transparent border-2 border-amber-400 text-amber-400 font-semibold px-6 py-3 rounded-lg transition-all duration-300 hover:bg-amber-400 hover:text-slate-900;
+  }
+
+  /* Remodra Stats Cards */
+  .remodra-stats-card {
+    @apply bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-600 rounded-xl p-6 shadow-lg transition-all duration-300;
+  }
+
+  .remodra-stats-card:hover {
+    @apply border-amber-500/50 shadow-xl transform -translate-y-1;
+  }
+
+  .remodra-stats-number {
+    @apply text-3xl font-bold text-amber-400 mb-2;
+  }
+
+  .remodra-stats-label {
+    @apply text-slate-300 font-medium;
+  }
+
+  .remodra-stats-accent {
+    @apply w-12 h-4 bg-gradient-to-r from-amber-400 to-yellow-600 rounded-full mt-4;
+  }
+
+  /* Remodra Navigation */
+  .remodra-nav-item {
+    @apply flex items-center space-x-3 px-4 py-3 text-slate-300 rounded-lg transition-all duration-300 hover:text-amber-400 hover:bg-slate-700/50;
+  }
+
+  .remodra-nav-item.active {
+    @apply bg-gradient-to-r from-amber-400 to-yellow-600 text-slate-900 font-semibold;
+  }
+
+  /* Remodra Forms */
+  .remodra-input {
+    @apply bg-slate-800 border border-slate-600 text-slate-200 rounded-lg px-4 py-3 transition-all duration-300 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20;
+  }
+
+  .remodra-input::placeholder {
+    @apply text-slate-400;
+  }
+
+  /* Remodra Badges */
+  .remodra-badge {
+    @apply bg-gradient-to-r from-amber-400 to-yellow-600 text-slate-900 font-semibold px-3 py-1 rounded-full text-sm;
+  }
+
+  .remodra-badge-outline {
+    @apply bg-transparent border border-amber-400 text-amber-400 font-semibold px-3 py-1 rounded-full text-sm;
+  }
+
+  /* Remodra Tables */
+  .remodra-table {
+    @apply w-full bg-slate-800 border border-slate-600 rounded-xl overflow-hidden;
+  }
+
+  .remodra-table th {
+    @apply bg-slate-900 text-amber-400 font-semibold px-6 py-4 text-left border-b border-slate-600;
+  }
+
+  .remodra-table td {
+    @apply bg-slate-800 text-slate-200 px-6 py-4 border-b border-slate-600;
+  }
+
+  .remodra-table tr:hover {
+    @apply bg-slate-700;
+  }
+
+  /* Remodra Loading States */
+  .remodra-loading {
+    @apply flex flex-col items-center justify-center p-8 text-slate-300;
+  }
+
+  .remodra-spinner {
+    @apply w-8 h-8 border-4 border-slate-600 border-t-amber-400 rounded-full animate-spin mb-4;
+  }
+
+  /* Remodra Empty States */
+  .remodra-empty {
+    @apply text-center py-12 text-slate-400;
+  }
+
+  .remodra-empty-icon {
+    @apply text-6xl mb-4;
+  }
+
+  .remodra-empty-title {
+    @apply text-xl font-semibold text-amber-400 mb-2;
+  }
+
+  .remodra-empty-description {
+    @apply text-slate-300;
+  }
+
+  /* Legacy compatibility classes */
+  .luxury-page {
+    @apply remodra-layout;
+  }
+
+  .luxury-title {
+    @apply remodra-title;
+  }
+
+  .luxury-subtitle {
+    @apply remodra-subtitle;
+  }
+
+  .luxury-button {
+    @apply remodra-button;
+  }
+
+  .luxury-button-outline {
+    @apply remodra-button-outline;
+  }
+
+  /* Remodra Responsive Design */
+  @media (max-width: 1024px) {
+    .remodra-main {
+      @apply ml-0;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .remodra-title {
+      @apply text-2xl;
+    }
+    
+    .remodra-stats-number {
+      @apply text-2xl;
+    }
+  }
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+/* Override conflicting styles */
+.text-gray-500,
+.text-gray-600,
+.text-gray-700,
+.text-muted-foreground {
+  @apply text-slate-300 !important;
 }
 
-.signature-pad {
-  border: 1px dashed hsl(var(--border));
-  border-radius: 0.375rem;
-  touch-action: none;
+.bg-white,
+.bg-gray-50,
+.bg-gray-100 {
+  @apply bg-slate-800 !important;
+}
+
+.border-gray-200,
+.border-gray-300 {
+  @apply border-slate-600 !important;
+}
+
+/* Fix dropdown visibility */
+[data-radix-popper-content-wrapper] {
+  @apply z-50 !important;
+}
+
+[data-radix-select-content] {
+  @apply bg-slate-800 border border-slate-600 text-slate-200 !important;
+}
+
+[data-radix-dropdown-menu-content] {
+  @apply bg-slate-800 border border-slate-600 text-slate-200 !important;
+}
+
+[data-radix-popover-content] {
+  @apply bg-slate-800 border border-slate-600 text-slate-200 !important;
+}
+
+/* Select dropdown items */
+[data-radix-select-item] {
+  @apply text-slate-200 hover:bg-slate-700 focus:bg-slate-700 !important;
+}
+
+[data-radix-dropdown-menu-item] {
+  @apply text-slate-200 hover:bg-slate-700 focus:bg-slate-700 !important;
+}
+
+/* Select trigger */
+[data-radix-select-trigger] {
+  @apply bg-slate-800 border border-slate-600 text-slate-200 !important;
+}
+
+/* Ensure dropdown content is visible */
+.bg-popover {
+  @apply bg-slate-800 !important;
+}
+
+.text-popover-foreground {
+  @apply text-slate-200 !important;
 }

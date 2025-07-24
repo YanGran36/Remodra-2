@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+// Removed Spanish locale import - using English only
 
 // Interface for template configuration
 export interface PdfTemplateConfig {
@@ -344,7 +344,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   // Only show header if enabled
   if (isTemplateFeatureEnabled("showHeader")) {
     // Logo
-    if (data.contractor.logo && isTemplateFeatureEnabled("logo")) {
+    if (data.contractor.logo) {
       try {
         pdf.addImage(data.contractor.logo, 'PNG', PAGE_MARGIN, currentY, 50, 20, undefined, 'FAST');
         currentY += 22;
@@ -448,17 +448,17 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   pdf.setFont(getFontFamily(), "bold");
   pdf.text("Status:", PAGE_WIDTH / 2, currentY);
   
-  // Status de traducción
+  // Status translation
   const statusText = getStatusText(data.status);
   
-  // Aplicar color según el estado
+  // Apply color based on status
   let statusColor = PRIMARY_COLOR;
   if (['approved', 'completed', 'paid', 'aprobado', 'completado', 'pagado'].includes(data.status.toLowerCase())) {
-    statusColor = "#10B981"; // Verde para estados positivos
+    statusColor = "#10B981"; // Green for positive states
   } else if (['rejected', 'overdue', 'cancelled', 'rechazado', 'vencido', 'cancelado'].includes(data.status.toLowerCase())) {
-    statusColor = "#EF4444"; // Rojo para estados negativos
+    statusColor = "#EF4444"; // Red for negative states
   } else if (['pending', 'in_progress', 'pendiente', 'en_progreso'].includes(data.status.toLowerCase())) {
-    statusColor = "#F59E0B"; // Ámbar para estados en progreso
+    statusColor = "#F59E0B"; // Amber for in-progress states
   }
   
   pdf.setTextColor(statusColor);
@@ -508,7 +508,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   }
   
   // Separation line
-  currentY = Math.max(currentY, 90); // Asegurar que hay suficiente espacio
+  currentY = Math.max(currentY, 90); // Ensure sufficient space
   pdf.setDrawColor(220, 220, 220);
   pdf.line(PAGE_MARGIN, currentY, PAGE_WIDTH - PAGE_MARGIN, currentY);
   
@@ -696,7 +696,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   // Only show header if enabled
   if (isTemplateFeatureEnabled("showHeader")) {
     // Logo
-    if (data.contractor.logo && isTemplateFeatureEnabled("logo")) {
+    if (data.contractor.logo) {
       try {
         pdf.addImage(data.contractor.logo, 'PNG', PAGE_MARGIN, currentY, 50, 20, undefined, 'FAST');
         currentY += 22;

@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { format } from "date-fns";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "../components/ui/button";
+import { Card, CardContent } from "../components/ui/card";
 import { Clock, User, Calendar, ArrowRightCircle, ArrowLeftCircle } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from '../lib/queryClient';
+import { useToast } from '../hooks/use-toast';
 
 export default function TimeClockSelectAction() {
   const [, navigate] = useLocation();
@@ -116,9 +116,9 @@ export default function TimeClockSelectAction() {
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 p-4">
-      <div className="mb-6">
-        <h1 className="text-4xl font-bold mb-2">Time Clock</h1>
-        <p className="text-slate-600 text-lg">Clock in and out to track employee working hours.</p>
+      <div className="text-center mb-8">
+        <h1 className="text-2xl font-semibold text-foreground tracking-tight mb-2">Time Clock</h1>
+        <p className="text-muted-foreground">Select your action for today</p>
       </div>
 
       <div className="bg-blue-50 p-4 rounded-lg mb-6 flex items-center justify-center">
@@ -128,9 +128,9 @@ export default function TimeClockSelectAction() {
 
       <Card className="w-full bg-slate-50 border border-slate-200 shadow-sm">
         <CardContent className="p-6">
-          <div className="flex items-center mb-4">
-            <User className="h-8 w-8 mr-3" />
-            <h2 className="text-3xl font-bold">{employeeName}</h2>
+          <div className="text-center mb-6">
+            <h2 className="text-xl font-semibold text-foreground">{employeeName}</h2>
+            <p className="text-muted-foreground">Select your action</p>
           </div>
           
           <p className="text-slate-600 text-lg mb-6">Select an action for this employee</p>

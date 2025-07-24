@@ -3,15 +3,15 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { queryClient } from '../lib/queryClient';
+import { useToast } from '../hooks/use-toast';
 import { Link } from "wouter";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '../components/ui/card';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../components/ui/form';
+import { Input } from '../components/ui/input';
+import { Textarea } from '../components/ui/textarea';
+import { Button } from '../components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 
 const formSchema = z.object({
   clientId: z.number(),
@@ -81,7 +81,10 @@ export default function VendorEstimateFormSimple() {
               ← Back to Estimates
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold">Create Simple Estimate</h1>
+          <div className="mb-6">
+            <h1 className="text-2xl font-semibold text-foreground tracking-tight">Create Simple Estimate</h1>
+            <p className="text-muted-foreground">Quick estimate creation for basic services</p>
+          </div>
         </div>
       </div>
 

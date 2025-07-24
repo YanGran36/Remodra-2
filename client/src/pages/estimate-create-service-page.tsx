@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation, useSearch } from "wouter";
+import { useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,13 +13,13 @@ import {
   CardTitle,
   CardDescription,
   CardFooter 
-} from "@/components/ui/card";
+} from '../components/ui/card';
 import { 
   Tabs, 
   TabsContent, 
   TabsList, 
   TabsTrigger 
-} from "@/components/ui/tabs";
+} from '../components/ui/tabs';
 import {
   Form,
   FormControl,
@@ -27,30 +27,30 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+} from '../components/ui/form';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Textarea } from '../components/ui/textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+} from '../components/ui/select';
+import { Separator } from '../components/ui/separator';
+import { Checkbox } from '../components/ui/checkbox';
+import { Calendar } from '../components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { format } from "date-fns";
 import { CalendarIcon, ArrowLeft, Save, Trash, Plus, Minus, Loader2 } from "lucide-react";
 
 // Custom components
-import { ServiceItemSelector } from "@/components/estimates/service-item-selector";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
-import { useClients } from "@/hooks/use-clients";
-import { useEstimates } from "@/hooks/use-estimates";
+import { ServiceItemSelector } from '../components/estimates/service-item-selector';
+import { useToast } from '../hooks/use-toast';
+import { useAuth } from '../hooks/use-auth';
+import { useClients } from '../hooks/use-clients';
+import { useEstimates } from '../hooks/use-estimates';
 
 // Service data and utilities
 import { 
@@ -61,7 +61,7 @@ import {
   getServiceLabel,
   getMaterial,
   getOption
-} from "@/lib/service-options";
+} from '../lib/service-options';
 
 // Definición del esquema de validación para el formulario
 const estimateFormSchema = z.object({
@@ -97,7 +97,7 @@ interface SelectedItem {
 
 export default function EstimateCreateServicePage() {
   const [location, setLocation] = useLocation();
-  const search = useSearch();
+  const search = typeof window !== 'undefined' ? window.location.search : '';
   const params = new URLSearchParams(search);
   const clientIdParam = params.get("clientId") ? Number(params.get("clientId")) : undefined;
   const projectIdParam = params.get("projectId") ? Number(params.get("projectId")) : undefined;
@@ -113,6 +113,8 @@ export default function EstimateCreateServicePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [totalAmount, setTotalAmount] = useState(0);
+  // Add error state
+  const [error, setError] = useState<string | null>(null);
 
   // Hooks para datos
   const clientsData = useClients();
@@ -298,6 +300,7 @@ export default function EstimateCreateServicePage() {
     }
     
     setIsSubmitting(true);
+    setError(null); // Clear previous errors
     
     try {
       // Crear el número de estimate si no existe
@@ -333,19 +336,24 @@ export default function EstimateCreateServicePage() {
       // Crear estimado
       await createEstimateMutation.mutateAsync(estimateData, {
         onSuccess: (newEstimate) => {
+          if (!newEstimate || !newEstimate.id) {
+            setError('Failed to create estimate. Please try again or contact support.');
+            setIsSubmitting(false);
+            return;
+          }
           toast({
             title: "Estimate Created",
             description: `Estimate ${newEstimate.estimateNumber} has been successfully created.`,
           });
-          
-          // Redirigir a la página de detalles del estimado
           setLocation(`/estimates/${newEstimate.id}`);
         },
         onError: (error) => {
-          console.error("Error creating estimate:", error);
+          console.error('Estimate creation error:', error);
+          setError(error.message || 'There was an error creating the estimate. Please try again.');
+          setIsSubmitting(false);
           toast({
             title: "Error Creating Estimate",
-            description: "There was an error creating the estimate. Please try again.",
+            description: error.message || 'There was an error creating the estimate. Please try again.',
             variant: "destructive",
           });
         }
@@ -578,7 +586,7 @@ export default function EstimateCreateServicePage() {
                                 </thead>
                                 <tbody>
                                   {selectedItems.map((item, index) => (
-                                    <tr key={`${item.id}-${item.type}-${index}`} className="border-t border-border">
+                                    <tr key={`${item.id}-${item.type}-${index}`} className="border-t border-gray-200 dark:border-gray-700">
                                       <td className="p-3">
                                         <div>
                                           <div className="font-medium">{item.name}</div>
@@ -930,6 +938,11 @@ export default function EstimateCreateServicePage() {
               </Card>
             </TabsContent>
           </Tabs>
+          {error && (
+            <div className="bg-red-100 text-red-800 border border-red-300 rounded p-4 mb-4 text-center font-bold">
+              {error}
+            </div>
+          )}
         </form>
       </Form>
     </div>

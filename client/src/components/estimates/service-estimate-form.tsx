@@ -6,23 +6,23 @@ import {
   CardTitle,
   CardDescription,
   CardFooter
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from '../ui/card';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 import { 
   Select, 
   SelectContent, 
   SelectItem, 
   SelectTrigger, 
   SelectValue 
-} from "@/components/ui/select";
+} from '../ui/select';
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@/components/ui/tabs";
+} from '../ui/tabs';
 import {
   Table,
   TableBody,
@@ -32,7 +32,7 @@ import {
   TableHeader,
   TableRow,
   TableFooter,
-} from "@/components/ui/table";
+} from '../ui/table';
 import { 
   Calculator, 
   ChevronDown,
@@ -44,11 +44,11 @@ import {
   X,
   Minus 
 } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from '../ui/textarea';
+import { Separator } from '../ui/separator';
+import { Checkbox } from '../ui/checkbox';
 import { FormProvider, useForm } from "react-hook-form";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from '../../hooks/use-toast';
 
 // Definir los materiales y opciones que ya existen en vendor-estimate-form-page.tsx
 import { 
@@ -57,10 +57,10 @@ import {
   SERVICE_TYPES,
   getMaterialWithConfiguredPrice,
   getServiceBasePrice
-} from "@/lib/service-options";
+} from '../../lib/service-options';
 
 // Importar nuestro hook de precios centralizado
-import { usePricing } from '@/hooks/use-pricing';
+import { usePricing } from '../../hooks/use-pricing';
 
 interface SelectedItem {
   id: string;

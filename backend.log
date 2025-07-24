@@ -1,0 +1,42 @@
+
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+Using memory session store for development
+[DIRECT-SERVICES] Registering direct services routes...
+[DIRECT-SERVICES] Registering PUT /api/services/update/:serviceType
+🚀 Server running on port 5005
+📊 Health check available at http://localhost:5005/health
+🔒 Environment: development
+💾 Database: configured
+[AUDIT] DATA_ACCESS: {"timestamp":"2025-07-03T03:26:51.338Z","eventType":"DATA_ACCESS","userId":2,"userEmail":"test@remodra.com","ipAddress":"::1","resourceType":"estimates","resourceId":4,"action":"GET","success":true}
+[AUDIT] DATA_ACCESS: {"timestamp":"2025-07-03T03:26:51.339Z","eventType":"DATA_ACCESS","userId":2,"userEmail":"test@remodra.com","ipAddress":"::1","resourceType":"estimates","resourceId":4,"action":"GET","success":true}
+updateEstimate -> API - Updating estimate ID: 4
+updateEstimate -> API - Data received: {
+  "status": "sent"
+}
+updateEstimate -> API - Data validated, proceeding to update
+updateEstimate -> Iniciando actualización de estimado: 4
+updateEstimate -> API - Estimate updated successfully
+[AUDIT] DATA_MODIFICATION: {"timestamp":"2025-07-03T03:27:03.435Z","eventType":"DATA_MODIFICATION","userId":2,"userEmail":"test@remodra.com","ipAddress":"::1","resourceType":"estimates","resourceId":4,"action":"PATCH","details":{"body":{"status":"sent"}},"success":true}
+[AUDIT] DATA_MODIFICATION: {"timestamp":"2025-07-03T03:27:03.435Z","eventType":"DATA_MODIFICATION","userId":2,"userEmail":"test@remodra.com","ipAddress":"::1","resourceType":"estimates","resourceId":4,"action":"PATCH","details":{"body":{"status":"sent"}},"success":true}
+updateEstimate -> API - Updating estimate ID: 4
+updateEstimate -> API - Data received: {
+  "status": "accepted"
+}
+updateEstimate -> API - Data validated, proceeding to update
+updateEstimate -> Iniciando actualización de estimado: 4
+updateEstimate -> API - Estimate updated successfully
+[AUDIT] DATA_MODIFICATION: {"timestamp":"2025-07-03T03:27:07.372Z","eventType":"DATA_MODIFICATION","userId":2,"userEmail":"test@remodra.com","ipAddress":"::1","resourceType":"estimates","resourceId":4,"action":"PATCH","details":{"body":{"status":"accepted"}},"success":true}
+[AUDIT] DATA_MODIFICATION: {"timestamp":"2025-07-03T03:27:07.372Z","eventType":"DATA_MODIFICATION","userId":2,"userEmail":"test@remodra.com","ipAddress":"::1","resourceType":"estimates","resourceId":4,"action":"PATCH","details":{"body":{"status":"accepted"}},"success":true}
+Error converting estimate to work order: TypeError: Cannot read properties of undefined (reading 'findMany')
+    at DatabaseStorage.getEstimateItems (/Users/yandeivisgranado/Downloads/Remodra 2/server/storage.ts:1019:41)
+    at async <anonymous> (/Users/yandeivisgranado/Downloads/Remodra 2/server/routes.ts:1013:31)
+[AUDIT] DATA_MODIFICATION: {"timestamp":"2025-07-03T03:27:13.143Z","eventType":"DATA_MODIFICATION","userId":2,"userEmail":"test@remodra.com","ipAddress":"::1","resourceType":"estimates","resourceId":3,"action":"POST","details":{"body":{}},"success":false}
+[AUDIT] DATA_MODIFICATION: {"timestamp":"2025-07-03T03:27:13.143Z","eventType":"DATA_MODIFICATION","userId":2,"userEmail":"test@remodra.com","ipAddress":"::1","resourceType":"estimates","resourceId":3,"action":"POST","details":{"body":{}},"success":false}
+Error converting estimate to work order: TypeError: Cannot read properties of undefined (reading 'findMany')
+    at DatabaseStorage.getEstimateItems (/Users/yandeivisgranado/Downloads/Remodra 2/server/storage.ts:1019:41)
+    at async <anonymous> (/Users/yandeivisgranado/Downloads/Remodra 2/server/routes.ts:1013:31)
+[AUDIT] DATA_MODIFICATION: {"timestamp":"2025-07-03T03:27:24.965Z","eventType":"DATA_MODIFICATION","userId":2,"userEmail":"test@remodra.com","ipAddress":"::1","resourceType":"estimates","resourceId":3,"action":"POST","details":{"body":{}},"success":false}
+[AUDIT] DATA_MODIFICATION: {"timestamp":"2025-07-03T03:27:24.966Z","eventType":"DATA_MODIFICATION","userId":2,"userEmail":"test@remodra.com","ipAddress":"::1","resourceType":"estimates","resourceId":3,"action":"POST","details":{"body":{}},"success":false}
+SIGTERM received, shutting down gracefully

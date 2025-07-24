@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+// Removed Spanish locale import - using English only
 
 // Interface for template configuration
 export interface PdfTemplateConfig {
@@ -49,7 +49,7 @@ interface ClientInfo {
   address?: string;
   city?: string;
   state?: string;
-  zipCode?: string;
+  zip?: string;
 }
 
 interface ContractorInfo {
@@ -61,7 +61,7 @@ interface ContractorInfo {
   address?: string;
   city?: string;
   state?: string;
-  zipCode?: string;
+  zip?: string;
   logo?: string;
 }
 
@@ -217,10 +217,7 @@ function getFontFamily(): string {
 }
 
 // Translate text based on current language setting
-function translate(textEs: string, textEn: string): string {
-  // Always return English text regardless of language setting
-  return textEn;
-}
+// Removed translate function - all text is now hardcoded in English
 
 // Check if a template feature is enabled (enabled by default if not specified)
 function isTemplateFeatureEnabled(featureName: keyof TemplateSettings): boolean {
@@ -338,7 +335,7 @@ function renderTableDataRow(pdf: jsPDF, item: Item, currentY: number): void {
   }
 }
 
-// Formateo de moneda
+// Currency formatting
 const formatCurrency = (amount: number | string) => {
   return new Intl.NumberFormat('en-US', { 
     style: 'currency', 
@@ -348,20 +345,16 @@ const formatCurrency = (amount: number | string) => {
   }).format(typeof amount === 'string' ? parseFloat(amount) : amount);
 };
 
-// Date formatting with language support
+// Date formatting - always use English
 const formatDate = (dateString?: string | Date | null) => {
-  if (!dateString) return translate("No especificado", "Not specified");
+  if (!dateString) return "Not specified";
   
   try {
     const date = new Date(dateString);
-    // Format date based on language preference
-    const spanishDate = format(date, "d 'de' MMMM, yyyy", { locale: es });
-    const englishDate = format(date, "MMMM d, yyyy");
-    
-    return translate(spanishDate, englishDate);
+    return format(date, "MMMM d, yyyy");
   } catch (error) {
     console.error("Error formatting date:", error);
-    return translate("Fecha inválida", "Invalid date");
+    return "Invalid date";
   }
 };
 
@@ -369,25 +362,32 @@ const formatDate = (dateString?: string | Date | null) => {
  * Gets the localized status text for PDFs
  */
 function getStatusText(status: string): string {
-  // Use paired Spanish/English values for each status
-  const statusMap: Record<string, [string, string]> = {
-    'draft': ['Borrador', 'Draft'],
-    'pending': ['Pendiente', 'Pending'],
-    'sent': ['Enviado', 'Sent'],
-    'accepted': ['Aceptado', 'Accepted'],
-    'rejected': ['Rechazado', 'Rejected'],
-    'converted': ['Converted to Invoice', 'Converted to Invoice'],
-    'paid': ['Pagado', 'Paid'],
-    'partially_paid': ['Parcialmente pagado', 'Partially Paid'],
-    'overdue': ['Vencido', 'Overdue'],
-    'cancelled': ['Cancelado', 'Cancelled']
+  // Always return English status text with proper capitalization
+  const statusMap: Record<string, string> = {
+    'draft': 'Draft',
+    'pending': 'Pending',
+    'sent': 'Sent',
+    'accepted': 'Accepted',
+    'rejected': 'Rejected',
+    'converted': 'Converted',
+    'paid': 'Paid',
+    'partially_paid': 'Partial Paid',
+    'overdue': 'Overdue',
+    'cancelled': 'Cancelled',
+    'in_progress': 'In Progress',
+    'completed': 'Completed',
+    'borrador': 'Draft',
+    'pendiente': 'Pending',
+    'enviado': 'Sent',
+    'aceptado': 'Accepted',
+    'rechazado': 'Rejected',
+    'pagado': 'Paid',
+    'parcialmente_pagado': 'Partial Paid',
+    'vencido': 'Overdue',
+    'cancelado': 'Cancelled'
   };
   
-  // Get the pair for the status or use status itself as fallback
-  const pair = statusMap[status.toLowerCase()] || [status, status];
-  
-  // Use our translate function to get the right language version
-  return translate(pair[0], pair[1]);
+  return statusMap[status.toLowerCase()] || status.charAt(0).toUpperCase() + status.slice(1);
 }
 
 /**
@@ -404,7 +404,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
     format: 'a4'
   });
   
-  // Configuración de fuentes
+  // Font configuration
   const fontFamily = templateSettings?.fontMain || "helvetica";
   pdf.setFont(fontFamily);
   
@@ -414,7 +414,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
     
     if (headerStyle === 'gradient') {
       // Gradient header
-      pdf.setFillColor(247, 250, 252); // Fondo gris claro
+      pdf.setFillColor(247, 250, 252); // Light gray background
       pdf.rect(0, 0, PAGE_WIDTH, 40, 'F');
     } else if (headerStyle === 'boxed') {
       // Boxed header
@@ -430,12 +430,12 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   pdf.setTextColor(PRIMARY_COLOR);
   pdf.setFontSize(22);
   pdf.setFont(fontFamily, "bold");
-  pdf.text(translate("ESTIMADO", "ESTIMATE"), PAGE_MARGIN, 15);
+  pdf.text("ESTIMATE", PAGE_MARGIN, 15);
   
   pdf.setFontSize(14);
   pdf.text(`#${data.estimateNumber}`, PAGE_MARGIN, 25);
   
-  // Si hay logo, agregarlo
+  // Add logo if available
   if (data.contractor.logo) {
     try {
       pdf.addImage(data.contractor.logo, 'PNG', PAGE_WIDTH - 60, 10, 40, 20);
@@ -455,7 +455,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
     pdf.text(data.contractor.address, PAGE_WIDTH - PAGE_MARGIN - 80, 20, { align: 'right' });
   }
   if (data.contractor.city && data.contractor.state) {
-    pdf.text(`${data.contractor.city}, ${data.contractor.state} ${data.contractor.zipCode || ''}`,
+    pdf.text(`${data.contractor.city}, ${data.contractor.state} ${data.contractor.zip || ''}`,
       PAGE_WIDTH - PAGE_MARGIN - 80, 25, { align: 'right' });
   }
   if (data.contractor.phone) {
@@ -503,7 +503,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
     currentY += 5;
     
     if (data.client.city && data.client.state) {
-      pdf.text(`${data.client.city}, ${data.client.state} ${data.client.zipCode || ''}`, PAGE_MARGIN, currentY);
+      pdf.text(`${data.client.city}, ${data.client.state} ${data.client.zip || ''}`, PAGE_MARGIN, currentY);
       currentY += 5;
     }
   }
@@ -552,7 +552,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   }
   
   // Separation line
-  currentY = Math.max(currentY, 90); // Asegurar que hay suficiente espacio
+  currentY = Math.max(currentY, 90); // Ensure sufficient space
   pdf.setDrawColor(220, 220, 220);
   pdf.line(PAGE_MARGIN, currentY, PAGE_WIDTH - PAGE_MARGIN, currentY);
   
@@ -830,7 +830,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     pdf.text(data.contractor.address, PAGE_WIDTH - PAGE_MARGIN - 80, 20, { align: 'right' });
   }
   if (data.contractor.city && data.contractor.state) {
-    pdf.text(`${data.contractor.city}, ${data.contractor.state} ${data.contractor.zipCode || ''}`,
+    pdf.text(`${data.contractor.city}, ${data.contractor.state} ${data.contractor.zip || ''}`,
       PAGE_WIDTH - PAGE_MARGIN - 80, 25, { align: 'right' });
   }
   if (data.contractor.phone) {
@@ -878,7 +878,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     currentY += 5;
     
     if (data.client.city && data.client.state) {
-      pdf.text(`${data.client.city}, ${data.client.state} ${data.client.zipCode || ''}`, PAGE_MARGIN, currentY);
+      pdf.text(`${data.client.city}, ${data.client.state} ${data.client.zip || ''}`, PAGE_MARGIN, currentY);
       currentY += 5;
     }
   }
@@ -887,7 +887,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   pdf.setFontSize(12);
   pdf.setFont(getFontFamily(), "bold");
   pdf.setTextColor(PRIMARY_COLOR);
-  pdf.text(translate("DETALLES DE LA FACTURA", "INVOICE DETAILS"), PAGE_WIDTH / 2, 55);
+  pdf.text("INVOICE DETAILS", PAGE_WIDTH / 2, 55);
   
   currentY = 63;
   pdf.setFont(getFontFamily(), "normal");
@@ -917,7 +917,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     currentY += 6;
   }
   
-  // Método de pago
+  // Payment method
   if (data.paymentMethod) {
     pdf.setFont("helvetica", "bold");
     pdf.text("Payment method:", PAGE_WIDTH / 2, currentY);
@@ -936,7 +936,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   }
   
   // Separation line
-  currentY = Math.max(currentY, 90); // Asegurar que hay suficiente espacio
+  currentY = Math.max(currentY, 90); // Ensure sufficient space
   pdf.setDrawColor(220, 220, 220);
   pdf.line(PAGE_MARGIN, currentY, PAGE_WIDTH - PAGE_MARGIN, currentY);
   
@@ -1093,7 +1093,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     pdf.setTextColor(39, 174, 96); // Green for payments
     pdf.text(formatCurrency(data.amountPaid), PAGE_WIDTH - PAGE_MARGIN, currentY + 5, { align: 'right' });
     
-    // Saldo pendiente
+    // Balance due
     currentY += 8;
     pdf.setFont("helvetica", "normal");
     pdf.setTextColor(60, 60, 60);
@@ -1123,7 +1123,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     pdf.setFontSize(11);
     pdf.setFont(getFontFamily(), "bold");
     pdf.setTextColor(PRIMARY_COLOR);
-    pdf.text(translate("FIRMA DEL CLIENTE", "CLIENT SIGNATURE"), PAGE_MARGIN, currentY);
+    pdf.text("CLIENT SIGNATURE", PAGE_MARGIN, currentY);
     
     currentY += 8;
     

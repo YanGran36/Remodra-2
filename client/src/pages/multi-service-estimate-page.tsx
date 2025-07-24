@@ -4,20 +4,20 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/hooks/use-auth";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
+import { apiRequest } from '../lib/queryClient';
+import { useAuth } from '../hooks/use-auth';
+import { useToast } from '../hooks/use-toast';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Input } from '../components/ui/input';
+import { Textarea } from '../components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../components/ui/form';
+import { Separator } from '../components/ui/separator';
+import { Badge } from '../components/ui/badge';
 import { Building2, Calculator, FileText, User, ArrowLeft, Plus, Trash2 } from "lucide-react";
-import FenceMeasurementTool from "@/components/measurement/fence-measurement-tool";
+import FenceMeasurementTool from '../components/measurement/fence-measurement-tool';
 
 interface SelectedService {
   serviceType: string;
@@ -235,8 +235,8 @@ export default function MultiServiceEstimatePage() {
           Back to Estimates
         </Button>
         <div>
-          <h1 className="text-3xl font-bold">Create Multi-Service Estimate</h1>
-          <p className="text-muted-foreground">Professional estimate with multiple services</p>
+          <h1 className="text-2xl font-semibold text-foreground tracking-tight">Create Multi-Service Estimate</h1>
+          <p className="text-muted-foreground">Office estimate with multiple services</p>
         </div>
       </div>
 
@@ -282,7 +282,7 @@ export default function MultiServiceEstimatePage() {
                         <FormLabel>Client</FormLabel>
                         <Select onValueChange={(value) => field.onChange(Number(value))}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="input-blue-border">
                               <SelectValue placeholder="Select a client" />
                             </SelectTrigger>
                           </FormControl>
@@ -306,7 +306,10 @@ export default function MultiServiceEstimatePage() {
                       <FormItem>
                         <FormLabel>Estimate Number</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input 
+                            className="input-blue-border"
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -320,7 +323,11 @@ export default function MultiServiceEstimatePage() {
                       <FormItem>
                         <FormLabel>Project Description (Optional)</FormLabel>
                         <FormControl>
-                          <Textarea {...field} placeholder="Brief description of the project..." />
+                          <Textarea 
+                            className="input-blue-border"
+                            {...field} 
+                            placeholder="Brief description of the project..." 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -541,6 +548,7 @@ export default function MultiServiceEstimatePage() {
                               quantity: parseFloat(e.target.value) || 0
                             })}
                             placeholder="0"
+                            className="input-blue-border"
                           />
                         </div>
                         <div>
@@ -555,6 +563,7 @@ export default function MultiServiceEstimatePage() {
                               squareFeet: parseFloat(e.target.value) || 0
                             })}
                             placeholder="0"
+                            className="input-blue-border"
                           />
                         </div>
                         <div>
@@ -569,6 +578,7 @@ export default function MultiServiceEstimatePage() {
                               linearFeet: parseFloat(e.target.value) || 0
                             })}
                             placeholder="0"
+                            className="input-blue-border"
                           />
                         </div>
                         <div>
@@ -583,6 +593,7 @@ export default function MultiServiceEstimatePage() {
                               units: parseInt(e.target.value) || 0
                             })}
                             placeholder="0"
+                            className="input-blue-border"
                           />
                         </div>
                       </div>
@@ -650,6 +661,7 @@ export default function MultiServiceEstimatePage() {
                             value={service.materialsCost}
                             onChange={(e) => updateServiceMaterials(index, parseFloat(e.target.value) || 0)}
                             placeholder="0.00"
+                            className="input-blue-border"
                           />
                         </div>
                       </div>
@@ -661,6 +673,7 @@ export default function MultiServiceEstimatePage() {
                           onChange={(e) => updateServiceNotes(index, e.target.value)}
                           placeholder="Notes specific to this service..."
                           rows={3}
+                          className="input-blue-border"
                         />
                       </div>
                       
@@ -783,7 +796,12 @@ export default function MultiServiceEstimatePage() {
                       <FormItem>
                         <FormLabel>General Estimate Notes</FormLabel>
                         <FormControl>
-                          <Textarea {...field} placeholder="Additional notes for this estimate..." rows={4} />
+                          <Textarea 
+                            className="input-blue-border"
+                            {...field} 
+                            placeholder="Additional notes for this estimate..." 
+                            rows={4} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

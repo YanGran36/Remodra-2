@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from '../../lib/utils';
 import React from "react";
 
 interface ArchitecturalCardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -27,7 +27,7 @@ export function ArchitecturalCard({
         // Variantes de diseño
         variant === "primary" && "border-primary/20 bg-white dark:bg-black dark:bg-opacity-20 dark:backdrop-blur-md",
         variant === "secondary" && "border-secondary/20 bg-secondary/5 dark:bg-black dark:bg-opacity-10 dark:backdrop-blur-md",
-        variant === "outline" && "border-border bg-card dark:bg-black dark:bg-opacity-5 dark:backdrop-blur-md",
+        variant === "outline" && "border-gray-200 dark:border-gray-700 bg-card dark:bg-black dark:bg-opacity-5 dark:backdrop-blur-md",
         
         // Efectos interactivos
         isHoverable && "hover:shadow-lg hover:-translate-y-1 hover:border-primary/50",

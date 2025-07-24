@@ -3,8 +3,8 @@ import {
   useAiCostAnalysis,
   AiAnalysisParams,
   AiAnalysisResult,
-} from "@/hooks/use-ai-cost-analysis";
-import { useToast } from "@/hooks/use-toast";
+} from '../../hooks/use-ai-cost-analysis';
+import { useToast } from '../../hooks/use-toast';
 import {
   Card,
   CardHeader,
@@ -12,22 +12,22 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+} from '../ui/card';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Textarea } from '../ui/textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from '../ui/select';
+import { Separator } from '../ui/separator';
+import { Progress } from '../ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { ScrollArea } from '../ui/scroll-area';
 import {
   AlertCircle,
   ArrowRight,
@@ -62,7 +62,10 @@ export default function CostAnalysisAssistant({
     materials: initialParams?.materials || [],
     laborHours: initialParams?.laborHours,
     propertySize: initialParams?.propertySize || {},
-    location: initialParams?.location || "",
+    address: initialParams?.address || "",
+    city: initialParams?.city || "",
+    state: initialParams?.state || "",
+    zip: initialParams?.zip || "",
     difficulty: initialParams?.difficulty || "medium",
     additionalInfo: initialParams?.additionalInfo || "",
   });
@@ -124,21 +127,21 @@ export default function CostAnalysisAssistant({
   // Perform the analysis
   const runAnalysis = async () => {
     try {
-      // Validar que se haya agregado al menos un material
+      // Validate that at least one material has been added
       if (params.materials.length === 0) {
         toast({
           title: "Error in cost analysis",
-          description: "Debe agregar al menos un material",
+          description: "Must add at least one material",
           variant: "destructive",
         });
         return;
       }
 
-      // Validar que se haya seleccionado un tipo de servicio
+      // Validate that a service type has been selected
       if (!params.serviceType) {
         toast({
           title: "Error in cost analysis",
-          description: "Must select un tipo de servicio",
+          description: "Must select a service type",
           variant: "destructive",
         });
         return;
@@ -150,17 +153,17 @@ export default function CostAnalysisAssistant({
         onAnalysisComplete(result);
       }
 
-      // Mostrar feedback positivo
+      // Show positive feedback
       toast({
-        title: "Análisis completado",
+        title: "Analysis completed",
         description: "Cost analysis has been successfully generated",
       });
     } catch (error) {
       console.error("Error in analysis:", error);
       toast({
-        title: "Error en el análisis de costos",
+        title: "Error in cost analysis",
         description:
-          "Ocurrió un error al procesar la solicitud. Intente nuevamente.",
+          "An error occurred while processing the request. Please try again.",
         variant: "destructive",
       });
     }
@@ -169,21 +172,21 @@ export default function CostAnalysisAssistant({
   // Generate job description
   const generateDescription = async () => {
     try {
-      // Validar que se haya agregado al menos un material
+      // Validate that at least one material has been added
       if (params.materials.length === 0) {
         toast({
           title: "Error generating description",
-          description: "Debe agregar al menos un material",
+          description: "Must add at least one material",
           variant: "destructive",
         });
         return;
       }
 
-      // Validar que se haya seleccionado un tipo de servicio
+      // Validate that a service type has been selected
       if (!params.serviceType) {
         toast({
           title: "Error generating description",
-          description: "Must select un tipo de servicio",
+          description: "Must select a service type",
           variant: "destructive",
         });
         return;
@@ -212,33 +215,33 @@ export default function CostAnalysisAssistant({
       // Go automatically to the description tab
       setActiveTab("description");
 
-      // Mostrar feedback positivo
+      // Show positive feedback
       toast({
-        title: "Descripción generada",
+        title: "Description generated",
         description: "Job description has been successfully created",
       });
     } catch (error) {
       console.error("Error generating description:", error);
       toast({
-        title: "Error al generar descripción",
+        title: "Error generating description",
         description:
-          "Ocurrió un error al procesar la solicitud. Intente nuevamente.",
+          "An error occurred while processing the request. Please try again.",
         variant: "destructive",
       });
     }
   };
 
-  // Formatear número como moneda
+  // Format number as currency
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("es-CO", {
+    return new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: "COP",
+      currency: "USD",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
   };
 
-  // Calcular el subtotal de materiales
+  // Calculate materials subtotal
   const materialSubtotal = params.materials.reduce(
     (sum, item) => sum + item.quantity * item.unitPrice,
     0,
@@ -250,7 +253,7 @@ export default function CostAnalysisAssistant({
         <CardTitle className="flex items-center text-lg md:text-xl">
           <PieChart className="w-6 h-6 mr-2 text-primary" />
           <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent font-bold">
-            Asistente de Análisis de Costos con IA
+            AI Cost Analysis Assistant
           </span>
         </CardTitle>
         <CardDescription className="text-base">
@@ -267,7 +270,7 @@ export default function CostAnalysisAssistant({
               className="flex items-center justify-center rounded-md data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary/80 data-[state=active]:to-secondary/80 data-[state=active]:text-white"
             >
               <ShoppingCart className="w-4 h-4 mr-2" />
-              Datos del Proyecto
+              Project Data
             </TabsTrigger>
             <TabsTrigger
               value="results"
@@ -275,7 +278,7 @@ export default function CostAnalysisAssistant({
               disabled={!analysisResult}
             >
               <PieChart className="w-4 h-4 mr-2" />
-              Resultados
+              Results
             </TabsTrigger>
             <TabsTrigger
               value="description"
@@ -283,7 +286,7 @@ export default function CostAnalysisAssistant({
               disabled={!jobDescription}
             >
               <FileText className="w-4 h-4 mr-2" />
-              Descripción
+              Description
             </TabsTrigger>
           </TabsList>
         </div>
@@ -291,9 +294,9 @@ export default function CostAnalysisAssistant({
         <TabsContent value="analysis" className="m-0">
           <CardContent className="space-y-4 p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Tipo de servicio */}
+              {/* Service type */}
               <div className="space-y-2">
-                <Label htmlFor="serviceType">Tipo de Servicio*</Label>
+                <Label htmlFor="serviceType">Service Type*</Label>
                 <Select
                   value={params.serviceType}
                   onValueChange={(value) =>
@@ -324,9 +327,9 @@ export default function CostAnalysisAssistant({
                 </Select>
               </div>
 
-              {/* Horas de trabajo estimadas */}
+              {/* Estimated labor hours */}
               <div className="space-y-2">
-                <Label htmlFor="laborHours">Horas de Trabajo Estimadas</Label>
+                <Label htmlFor="laborHours">Estimated Labor Hours</Label>
                 <Input
                   id="laborHours"
                   type="number"
@@ -345,9 +348,9 @@ export default function CostAnalysisAssistant({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Tamaño propiedad: pies cuadrados */}
+              {/* Property size: square feet */}
               <div className="space-y-2">
-                <Label htmlFor="squareFeet">Pies Cuadrados</Label>
+                <Label htmlFor="squareFeet">Square Feet</Label>
                 <Input
                   id="squareFeet"
                   type="number"
@@ -367,9 +370,9 @@ export default function CostAnalysisAssistant({
                 />
               </div>
 
-              {/* Tamaño propiedad: pies lineales */}
+              {/* Property size: linear feet */}
               <div className="space-y-2">
-                <Label htmlFor="linearFeet">Pies Lineales</Label>
+                <Label htmlFor="linearFeet">Linear Feet</Label>
                 <Input
                   id="linearFeet"
                   type="number"
@@ -389,9 +392,9 @@ export default function CostAnalysisAssistant({
                 />
               </div>
 
-              {/* Tamaño propiedad: unites */}
+              {/* Property size: units */}
               <div className="space-y-2">
-                <Label htmlFor="units">Unites</Label>
+                <Label htmlFor="units">Units</Label>
                 <Input
                   id="units"
                   type="number"
@@ -412,50 +415,99 @@ export default function CostAnalysisAssistant({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Ubicación */}
-              <div className="space-y-2">
-                <Label htmlFor="location">Ubicación</Label>
-                <Input
-                  id="location"
-                  placeholder="Ciudad o región"
-                  value={params.location || ""}
-                  onChange={(e) =>
-                    setParams((prev) => ({
-                      ...prev,
-                      location: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-
-              {/* Dificultad */}
-              <div className="space-y-2">
-                <Label htmlFor="difficulty">Dificultad del Trabajo</Label>
-                <Select
-                  value={params.difficulty || "medium"}
-                  onValueChange={(value: "easy" | "medium" | "complex") =>
-                    setParams((prev) => ({ ...prev, difficulty: value }))
-                  }
-                >
-                  <SelectTrigger id="difficulty">
-                    <SelectValue placeholder="Nivel de dificultad" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="easy">Fácil</SelectItem>
-                    <SelectItem value="medium">Medio</SelectItem>
-                    <SelectItem value="complex">Complejo</SelectItem>
-                  </SelectContent>
-                </Select>
+            {/* Address Fields */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium">Project Address</h4>
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="address">Street Address</Label>
+                  <Input
+                    id="address"
+                    placeholder="123 Main St"
+                    value={params.address || ""}
+                    onChange={(e) =>
+                      setParams((prev) => ({
+                        ...prev,
+                        address: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="city">City</Label>
+                    <Input
+                      id="city"
+                      placeholder="City"
+                      value={params.city || ""}
+                      onChange={(e) =>
+                        setParams((prev) => ({
+                          ...prev,
+                          city: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="state">State</Label>
+                    <Input
+                      id="state"
+                      placeholder="State"
+                      value={params.state || ""}
+                      onChange={(e) =>
+                        setParams((prev) => ({
+                          ...prev,
+                          state: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="zip">Zip Code</Label>
+                    <Input
+                      id="zip"
+                      placeholder="12345"
+                      value={params.zip || ""}
+                      onChange={(e) =>
+                        setParams((prev) => ({
+                          ...prev,
+                          zip: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Información adicional */}
             <div className="space-y-2">
-              <Label htmlFor="additionalInfo">Información Adicional</Label>
+              <Label htmlFor="difficulty">Work Difficulty</Label>
+              <Select
+                value={params.difficulty || "medium"}
+                onValueChange={(value: "easy" | "medium" | "complex") =>
+                  setParams((prev) => ({ ...prev, difficulty: value }))
+                }
+              >
+                <SelectTrigger id="difficulty">
+                  <SelectValue placeholder="Difficulty level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="easy">Easy</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="complex">Complex</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Additional information */}
+            <div className="space-y-2">
+              <Label htmlFor="additionalInfo">Additional Information</Label>
               <Textarea
                 id="additionalInfo"
-                placeholder="Detalles específicos del proyecto..."
+                placeholder="Specific project details..."
                 value={params.additionalInfo || ""}
                 onChange={(e) =>
                   setParams((prev) => ({
@@ -469,20 +521,20 @@ export default function CostAnalysisAssistant({
 
             <Separator className="my-4" />
 
-            {/* Sección de materiales */}
+            {/* Materials section */}
             <div>
               <h3 className="text-base font-medium mb-2 flex items-center">
                 <ShoppingCart className="w-4 h-4 mr-2" />
-                Materiales*
+                Materials*
               </h3>
 
-              {/* Lista de materiales agregados */}
+              {/* List of added materials */}
               {params.materials.length > 0 && (
                 <div className="border rounded-md p-3 mb-4 bg-muted/40">
                   <div className="text-sm font-medium mb-2 text-muted-foreground flex justify-between">
                     <span>Material</span>
-                    <span>Cantidad</span>
-                    <span>Precio</span>
+                    <span>Quantity</span>
+                    <span>Price</span>
                     <span>Total</span>
                     <span></span>
                   </div>
@@ -515,7 +567,7 @@ export default function CostAnalysisAssistant({
                       </div>
                     ))}
                     <div className="flex justify-between items-center border-t pt-2 mt-2">
-                      <span className="font-medium">Subtotal Materiales:</span>
+                      <span className="font-medium">Materials Subtotal:</span>
                       <span className="font-medium">
                         {formatCurrency(materialSubtotal)}
                       </span>
@@ -524,11 +576,11 @@ export default function CostAnalysisAssistant({
                 </div>
               )}
 
-              {/* Formulario para agregar materiales */}
+              {/* Form to add materials */}
               <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-2">
                 <div className="md:col-span-2">
                   <Input
-                    placeholder="Nombre del material"
+                    placeholder="Material name"
                     value={currentMaterial.name}
                     onChange={(e) =>
                       setCurrentMaterial((prev) => ({
@@ -542,7 +594,7 @@ export default function CostAnalysisAssistant({
                   <Input
                     type="number"
                     min="1"
-                    placeholder="Cantidad"
+                    placeholder="Quantity"
                     value={currentMaterial.quantity || ""}
                     onChange={(e) =>
                       setCurrentMaterial((prev) => ({
@@ -567,13 +619,13 @@ export default function CostAnalysisAssistant({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="unit">Unit</SelectItem>
-                      <SelectItem value="metro">Metro</SelectItem>
-                      <SelectItem value="m2">Metro²</SelectItem>
-                      <SelectItem value="pie">Pie</SelectItem>
-                      <SelectItem value="pie2">Pie²</SelectItem>
-                      <SelectItem value="galón">Galón</SelectItem>
-                      <SelectItem value="kg">Kilogramo</SelectItem>
-                      <SelectItem value="lb">Libra</SelectItem>
+                      <SelectItem value="meter">Meter</SelectItem>
+                      <SelectItem value="m2">Meter²</SelectItem>
+                      <SelectItem value="foot">Foot</SelectItem>
+                      <SelectItem value="ft2">Foot²</SelectItem>
+                      <SelectItem value="gallon">Gallon</SelectItem>
+                      <SelectItem value="kg">Kilogram</SelectItem>
+                      <SelectItem value="lb">Pound</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -581,7 +633,7 @@ export default function CostAnalysisAssistant({
                   <Input
                     type="number"
                     min="0"
-                    placeholder="Precio unitario"
+                    placeholder="Unit price"
                     value={currentMaterial.unitPrice || ""}
                     onChange={(e) =>
                       setCurrentMaterial((prev) => ({
@@ -605,7 +657,7 @@ export default function CostAnalysisAssistant({
                 className="w-full"
               >
                 <ShoppingCart className="w-4 h-4 mr-2" />
-                Agregar Material
+                Add Material
               </Button>
             </div>
 
@@ -629,12 +681,12 @@ export default function CostAnalysisAssistant({
               {isGeneratingDescription ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Generando...
+                  Generating...
                 </>
               ) : (
                 <>
                   <FileText className="w-4 h-4 mr-2" />
-                  Generar Descripción
+                  Generate Description
                 </>
               )}
             </Button>
@@ -650,12 +702,12 @@ export default function CostAnalysisAssistant({
               {isAnalyzing ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Analizando...
+                  Analyzing...
                 </>
               ) : (
                 <>
                   <PieChart className="w-4 h-4 mr-2" />
-                  Analizar Costos
+                  Analyze Costs
                 </>
               )}
             </Button>
@@ -666,12 +718,12 @@ export default function CostAnalysisAssistant({
           {analysisResult && (
             <CardContent className="p-6">
               <div className="space-y-6">
-                {/* Resumen general */}
+                {/* General summary */}
                 <div className="bg-gradient-to-r from-primary/10 to-secondary/10 p-6 rounded-lg border border-primary/20 shadow-sm">
                   <h3 className="text-xl font-bold flex items-center mb-3 text-primary">
                     <DollarSign className="w-6 h-6 mr-2 text-primary" />
                     <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                      Precio Recomendado:{" "}
+                      Recommended Price:{" "}
                       {formatCurrency(analysisResult.recommendedTotal)}
                     </span>
                   </h3>
@@ -679,16 +731,16 @@ export default function CostAnalysisAssistant({
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Desglose de costos */}
+                  {/* Cost breakdown */}
                   <div className="space-y-3">
                     <h3 className="text-base font-medium">
-                      Desglose de Costos
+                      Cost Breakdown
                     </h3>
 
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">
-                          Materiales:
+                          Materials:
                         </span>
                         <span className="font-medium">
                           {formatCurrency(
@@ -698,7 +750,7 @@ export default function CostAnalysisAssistant({
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">
-                          Mano de Obra:
+                          Labor:
                         </span>
                         <span className="font-medium">
                           {formatCurrency(analysisResult.breakdown.labor.total)}
@@ -706,7 +758,7 @@ export default function CostAnalysisAssistant({
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">
-                          Gastos Generales:
+                          Overhead:
                         </span>
                         <span className="font-medium">
                           {formatCurrency(
@@ -715,7 +767,7 @@ export default function CostAnalysisAssistant({
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Ganancia:</span>
+                        <span className="text-muted-foreground">Profit:</span>
                         <span className="font-medium">
                           {formatCurrency(
                             analysisResult.breakdown.profit.total,
@@ -731,24 +783,24 @@ export default function CostAnalysisAssistant({
                       </div>
                     </div>
 
-                    {/* Análisis competitivo si existe */}
+                    {/* Competitive analysis if exists */}
                     {analysisResult.breakdown.competitiveAnalysis && (
                       <div className="mt-4 pt-4 border-t">
                         <h4 className="text-sm font-semibold mb-2 flex items-center text-primary">
                           <BarChart3 className="w-4 h-4 mr-2" />
-                          Análisis Competitivo
+                          Competitive Analysis
                         </h4>
                         <div className="bg-gradient-to-r from-primary/5 to-secondary/5 p-4 rounded-md border border-muted">
                           <div className="flex justify-between mb-2 text-sm">
                             <span className="font-medium">
-                              Rango bajo:{" "}
+                              Low range:{" "}
                               {formatCurrency(
                                 analysisResult.breakdown.competitiveAnalysis
                                   .lowRange,
                               )}
                             </span>
                             <span className="font-medium">
-                              Rango alto:{" "}
+                              High range:{" "}
                               {formatCurrency(
                                 analysisResult.breakdown.competitiveAnalysis
                                   .highRange,
@@ -764,7 +816,7 @@ export default function CostAnalysisAssistant({
                               <div className="h-full bg-blue-400/20 flex-1" />
                             </div>
 
-                            {/* Marcador de precio recomendado */}
+                            {/* Recommended price marker */}
                             <div
                               className="absolute top-0 h-full w-4 bg-primary rounded-full shadow-md"
                               style={{
@@ -784,9 +836,9 @@ export default function CostAnalysisAssistant({
                           </div>
 
                           <div className="flex justify-between text-xs mb-2">
-                            <span>Muy Económico</span>
-                            <span>Económico</span>
-                            <span>Estándar</span>
+                            <span>Very Budget</span>
+                            <span>Budget</span>
+                            <span>Standard</span>
                             <span>Premium</span>
                           </div>
 
@@ -813,28 +865,28 @@ export default function CostAnalysisAssistant({
                     )}
                   </div>
 
-                  {/* Detalles adicionales */}
+                  {/* Additional details */}
                   <div className="space-y-4">
-                    {/* Detalles de la mano de obra */}
+                    {/* Labor details */}
                     <div className="border rounded-lg p-4 shadow-sm bg-card overflow-hidden">
                       <h4 className="text-sm font-medium mb-3 flex items-center text-primary">
                         <Wrench className="w-4 h-4 mr-2" />
-                        Mano de Obra
+                        Labor
                       </h4>
                       <div className="space-y-3 text-sm">
                         <div className="bg-muted/30 p-3 rounded-md flex justify-between items-center">
                           <div>
                             <span className="text-muted-foreground block">
-                              Horas estimadas:
+                              Estimated hours:
                             </span>
                             <span className="text-xl font-bold">
                               {analysisResult.breakdown.labor.estimatedHours}
                             </span>
-                            <span className="text-xs ml-1">horas</span>
+                            <span className="text-xs ml-1">hours</span>
                           </div>
                           <div className="text-right">
                             <span className="text-muted-foreground block">
-                              Tarifa por hora:
+                              Hourly rate:
                             </span>
                             <span className="text-xl font-bold">
                               {formatCurrency(
@@ -847,7 +899,7 @@ export default function CostAnalysisAssistant({
 
                         <div className="flex justify-between items-center bg-primary/5 p-3 rounded-md">
                           <span className="font-medium">
-                            Total Mano de Obra:
+                            Total Labor:
                           </span>
                           <span className="font-bold text-primary">
                             {formatCurrency(
@@ -866,12 +918,12 @@ export default function CostAnalysisAssistant({
                       </div>
                     </div>
 
-                    {/* Porcentajes de gastos generales y ganancias */}
+                    {/* Overhead and profit percentages */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="border rounded-lg p-4 shadow-sm bg-gradient-to-br from-transparent to-muted/10">
                         <h4 className="text-sm font-medium mb-2 flex items-center">
                           <PieChart className="w-4 h-4 mr-2 text-primary" />
-                          Gastos Generales
+                          Overhead
                         </h4>
                         <div className="flex items-center justify-between">
                           <div className="bg-primary/10 h-16 w-16 rounded-full flex items-center justify-center">
@@ -900,7 +952,7 @@ export default function CostAnalysisAssistant({
                       <div className="border rounded-lg p-4 shadow-sm bg-gradient-to-br from-transparent to-primary/5">
                         <h4 className="text-sm font-medium mb-2 flex items-center">
                           <ShoppingCart className="w-4 h-4 mr-2 text-primary" />
-                          Margen de Ganancia
+                          Profit Margin
                         </h4>
                         <div className="flex items-center justify-between">
                           <div className="bg-primary/20 h-16 w-16 rounded-full flex items-center justify-center">
@@ -929,13 +981,13 @@ export default function CostAnalysisAssistant({
                   </div>
                 </div>
 
-                {/* Recomendaciones y problemas potenciales */}
+                {/* Recommendations and potential issues */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                  {/* Recomendaciones */}
+                  {/* Recommendations */}
                   <div className="border rounded-lg p-5 shadow-sm bg-gradient-to-br from-transparent to-green-50/30">
                     <h3 className="text-base font-semibold flex items-center mb-4 text-primary">
                       <Lightbulb className="w-5 h-5 mr-2 text-amber-500" />
-                      Recomendaciones
+                      Recommendations
                     </h3>
                     <ul className="space-y-3">
                       {analysisResult.breakdown.recommendations.map(
@@ -954,11 +1006,11 @@ export default function CostAnalysisAssistant({
                     </ul>
                   </div>
 
-                  {/* Problemas potenciales */}
+                  {/* Potential issues */}
                   <div className="border rounded-lg p-5 shadow-sm bg-gradient-to-br from-transparent to-amber-50/30">
                     <h3 className="text-base font-semibold flex items-center mb-4 text-primary">
                       <Triangle className="w-5 h-5 mr-2 text-destructive" />
-                      Problemas Potenciales
+                      Potential Issues
                     </h3>
                     <ul className="space-y-3">
                       {analysisResult.breakdown.potentialIssues.map(
@@ -989,7 +1041,7 @@ export default function CostAnalysisAssistant({
                 <h3 className="text-xl font-bold mb-4 flex items-center text-primary">
                   <FileText className="w-6 h-6 mr-2 text-primary" />
                   <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                    Descripción del Trabajo
+                    Job Description
                   </span>
                 </h3>
                 <ScrollArea className="max-h-[400px] pr-4">
@@ -1001,8 +1053,8 @@ export default function CostAnalysisAssistant({
                   <div className="text-sm text-muted-foreground flex items-center">
                     <Lightbulb className="w-4 h-4 mr-2 text-amber-500" />
                     <span className="italic">
-                      Esta descripción fue generada por IA y puede ser
-                      personalizada
+                      This description was generated by AI and can be
+                      customized
                     </span>
                   </div>
                   <Button
@@ -1015,14 +1067,14 @@ export default function CostAnalysisAssistant({
                       }
                       navigator.clipboard.writeText(jobDescription);
                       toast({
-                        title: "Descripción copiada",
+                        title: "Description copied",
                         description:
-                          "La descripción ha sido copiada al portapapeles.",
+                          "The description has been copied to the clipboard.",
                       });
                     }}
                   >
                     <FileText className="w-4 h-4 mr-2" />
-                    Copiar al portapapeles
+                    Copy to clipboard
                   </Button>
                 </div>
               </div>
@@ -1033,12 +1085,12 @@ export default function CostAnalysisAssistant({
                 <div>
                   <FileText className="w-16 h-16 mx-auto text-muted mb-4 opacity-50" />
                   <h3 className="text-xl font-medium mb-3">
-                    Sin descripción generada
+                    No description generated
                   </h3>
                   <p className="text-muted-foreground max-w-md">
-                    Complete el análisis de costos en la pestaña "Datos del
-                    Proyecto" para generar automáticamente una descripción del
-                    trabajo profesional.
+                    Complete the cost analysis in the "Project Data"
+                    tab to automatically generate a professional job
+                    description.
                   </p>
                 </div>
               </div>

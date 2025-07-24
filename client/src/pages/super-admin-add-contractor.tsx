@@ -1,27 +1,27 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from '../components/ui/button';
 import { ArrowLeft } from "lucide-react";
 import { useLocation } from "wouter";
-import { NewContractorForm } from "@/components/super-admin/new-contractor-form";
-import { ArchitecturalContainer, ArchitecturalHeader } from "@/components/ui/architectural-card";
+import { NewContractorForm } from '../components/super-admin/new-contractor-form';
+import { ArchitecturalContainer, ArchitecturalHeader } from '../components/ui/architectural-card';
 
 export default function SuperAdminAddContractor() {
   const [, navigate] = useLocation();
   const [isSuccess, setIsSuccess] = useState(false);
   const [newContractor, setNewContractor] = useState<any>(null);
   
-  // Manejar el éxito del formulario
+  // Handle form success
   const handleFormSuccess = (data: any) => {
     setIsSuccess(true);
     setNewContractor(data);
   };
   
-  // Ver todos los contratistas
+  // View all contractors
   const handleViewAllContractors = () => {
     navigate("/super-admin");
   };
   
-  // Ver el detalle del contratista recién creado
+  // View the newly created contractor details
   const handleViewContractor = () => {
     if (newContractor?.id) {
       navigate(`/super-admin/contractors/${newContractor.id}`);
@@ -31,10 +31,10 @@ export default function SuperAdminAddContractor() {
   return (
     <ArchitecturalContainer>
       <ArchitecturalHeader 
-        title={isSuccess ? "Contratista Creado con Éxito" : "Añadir Nuevo Contratista"} 
+        title={isSuccess ? "Contractor Created Successfully" : "Add New Contractor"} 
         description={isSuccess 
-          ? `Se ha creado correctamente el contratista ${newContractor?.companyName}` 
-          : "Complete el formulario para configurar un nuevo contratista en la plataforma"
+          ? `The contractor ${newContractor?.companyName} has been created successfully` 
+          : "Complete the form to set up a new contractor on the platform"
         }
       >
         <div className="flex flex-wrap gap-4 mt-6">
@@ -43,7 +43,7 @@ export default function SuperAdminAddContractor() {
             onClick={handleViewAllContractors}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Volver al Panel
+            Back to Dashboard
           </Button>
         </div>
       </ArchitecturalHeader>
@@ -63,14 +63,14 @@ export default function SuperAdminAddContractor() {
               </div>
               
               <div className="border-t border-green-200 dark:border-green-800 pt-4 mt-4">
-                <h4 className="font-semibold mb-2">Detalles del Contratista:</h4>
+                <h4 className="font-semibold mb-2">Contractor Details:</h4>
                 <ul className="space-y-2">
                   <li className="flex items-start">
-                    <span className="font-medium w-40">Empresa:</span>
+                    <span className="font-medium w-40">Company:</span>
                     <span>{newContractor?.companyName}</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="font-medium w-40">Correo Electrónico:</span>
+                    <span className="font-medium w-40">Email:</span>
                     <span>{newContractor?.email}</span>
                   </li>
                   <li className="flex items-start">
@@ -78,7 +78,7 @@ export default function SuperAdminAddContractor() {
                     <span className="capitalize">{newContractor?.plan}</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="font-medium w-40">Usuario Principal:</span>
+                    <span className="font-medium w-40">Primary User:</span>
                     <span>{newContractor?.firstName} {newContractor?.lastName}</span>
                   </li>
                 </ul>
@@ -86,10 +86,10 @@ export default function SuperAdminAddContractor() {
               
               <div className="flex justify-end space-x-4 mt-6">
                 <Button variant="outline" onClick={handleViewAllContractors}>
-                  Ver Todos los Contratistas
+                  View All Contractors
                 </Button>
                 <Button onClick={() => setIsSuccess(false)}>
-                  Añadir Otro Contratista
+                  Add Another Contractor
                 </Button>
               </div>
             </div>

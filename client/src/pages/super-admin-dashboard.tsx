@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { 
   Card, 
   CardContent, 
@@ -6,16 +6,16 @@ import {
   CardHeader, 
   CardTitle, 
   CardFooter 
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+} from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
 import { 
   Tabs, 
   TabsContent, 
   TabsList, 
   TabsTrigger 
-} from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from '../components/ui/tabs';
+import { ScrollArea } from '../components/ui/scroll-area';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +23,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '../components/ui/dropdown-menu';
 import {
   Table,
   TableBody,
@@ -31,7 +31,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '../components/ui/table';
 import { 
   BarChart, 
   Users, 
@@ -58,7 +58,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Input } from "@/components/ui/input";
+import { Input } from '../components/ui/input';
 
 // Componente para el panel super admin (dueño del SaaS)
 export default function SuperAdminDashboard() {
@@ -737,7 +737,8 @@ export default function SuperAdminDashboard() {
             <p className="text-gray-500 mt-2">Ajustes generales, personalización y opciones avanzadas</p>
           </div>
         </TabsContent>
-      </Tabs>
+        </Tabs>
+      </div>
     </div>
   );
 }

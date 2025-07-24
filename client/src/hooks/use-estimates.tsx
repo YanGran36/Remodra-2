@@ -1,12 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from '../lib/queryClient';
+import { useToast } from './use-toast';
 
 export function useEstimates() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Obtener todos los estimados
+  // Get all estimates
   const {
     data: estimates,
     isLoading: isLoadingEstimates,
@@ -16,7 +16,7 @@ export function useEstimates() {
     queryKey: ["/api/protected/estimates"],
   });
 
-  // Obtener un estimado por ID
+  // Get an estimate by ID
   const getEstimate = (id: number) => {
     return useQuery({
       queryKey: ["/api/protected/estimates", id],
@@ -28,7 +28,7 @@ export function useEstimates() {
     });
   };
 
-  // Crear un nuevo estimado
+  // Create a new estimate
   const createEstimateMutation = useMutation({
     mutationFn: async (data: any) => {
       const res = await apiRequest("POST", "/api/protected/estimates", data);
@@ -38,21 +38,21 @@ export function useEstimates() {
       queryClient.invalidateQueries({ queryKey: ["/api/protected/estimates"] });
       queryClient.invalidateQueries({ queryKey: ["/api/protected/projects"] });
       toast({
-        title: "Estimado creado",
-        description: "El estimado ha sido creado correctamente.",
+        title: "Estimate created",
+        description: "The estimate has been created successfully.",
       });
       return data;
     },
     onError: (error: Error) => {
       toast({
-        title: "Error al crear estimado",
+        title: "Error creating estimate",
         description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  // Actualizar un estimado existente
+  // Update an existing estimate
   const updateEstimateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number, data: any }) => {
       const res = await apiRequest("PATCH", `/api/protected/estimates/${id}`, data);
@@ -62,21 +62,21 @@ export function useEstimates() {
       queryClient.invalidateQueries({ queryKey: ["/api/protected/estimates"] });
       queryClient.invalidateQueries({ queryKey: ["/api/protected/estimates", data.id] });
       toast({
-        title: "Estimado actualizado",
-        description: "El estimado ha sido actualizado correctamente.",
+        title: "Estimate updated",
+        description: "The estimate has been updated successfully.",
       });
       return data;
     },
     onError: (error: Error) => {
       toast({
-        title: "Error al actualizar estimado",
+        title: "Error updating estimate",
         description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  // Eliminar un estimado
+  // Delete an estimate
   const deleteEstimateMutation = useMutation({
     mutationFn: async (id: number) => {
       const res = await apiRequest("DELETE", `/api/protected/estimates/${id}`);
@@ -85,21 +85,21 @@ export function useEstimates() {
     onSuccess: (id) => {
       queryClient.invalidateQueries({ queryKey: ["/api/protected/estimates"] });
       toast({
-        title: "Estimado eliminado",
-        description: "El estimado ha sido eliminado correctamente.",
+        title: "Estimate deleted",
+        description: "The estimate has been deleted successfully.",
       });
       return id;
     },
     onError: (error: Error) => {
       toast({
-        title: "Error al eliminar estimado",
+        title: "Error deleting estimate",
         description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  // Cambiar el estado de un estimado
+  // Change the status of an estimate
   const updateEstimateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: number, status: string }) => {
       const res = await apiRequest("PATCH", `/api/protected/estimates/${id}`, { status });
@@ -110,7 +110,7 @@ export function useEstimates() {
       queryClient.invalidateQueries({ queryKey: ["/api/protected/estimates", data.id] });
       toast({
         title: "Estado actualizado",
-        description: "El estado del estimado ha sido actualizado correctamente.",
+        description: "The estimate status has been updated successfully.",
       });
       return data;
     },
@@ -123,7 +123,7 @@ export function useEstimates() {
     },
   });
 
-  // Convertir estimado a factura/orden de trabajo
+  // Convert estimate to invoice/work order
   const convertToInvoiceMutation = useMutation({
     mutationFn: async (estimateId: number) => {
       const res = await apiRequest("POST", `/api/protected/estimates/${estimateId}/convert-to-invoice`, {});
@@ -133,21 +133,21 @@ export function useEstimates() {
       queryClient.invalidateQueries({ queryKey: ["/api/protected/estimates"] });
       queryClient.invalidateQueries({ queryKey: ["/api/protected/invoices"] });
       toast({
-        title: "Orden de trabajo creada",
-        description: "El estimado ha sido convertido en una orden de trabajo exitosamente.",
+        title: "Work Order Created",
+        description: "The estimate has been successfully converted to a work order.",
       });
       return data;
     },
     onError: (error: Error) => {
       toast({
-        title: "Error al crear orden de trabajo",
+        title: "Error Creating Work Order",
         description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  // Obtener estimados por proyecto
+  // Get estimates by project
   const getEstimatesByProject = (projectId: number) => {
     return useQuery({
       queryKey: ["/api/protected/projects", projectId, "estimates"],

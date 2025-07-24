@@ -4,8 +4,8 @@ import { Badge } from './badge';
 import { Button } from './button';
 import { Progress } from './progress';
 import { X, Award, Trophy, Star, Gift, Calendar, Brain, Zap, Check } from 'lucide-react';
-import { Achievement, ContractorAchievement, AchievementReward } from '@shared/schema';
-import { cn } from '@/lib/utils';
+import { Achievement, ContractorAchievement, AchievementReward } from '../../../../shared/schema';
+import { cn } from '../../lib/utils';
 
 interface AchievementOverlayProps {
   achievement: Achievement;

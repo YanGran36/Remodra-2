@@ -23,31 +23,31 @@ const AdminSidebar = () => {
     },
     { 
       icon: Users, 
-      label: 'Clientes', 
+      label: 'Clients', 
       href: '/clients', 
       active: location === '/clients' 
     },
     { 
       icon: FileText, 
-      label: 'Estimados', 
+      label: 'Estimates', 
       href: '/estimates', 
       active: location === '/estimates' || location.startsWith('/vendor-service-estimate')
     },
     { 
       icon: DollarSign, 
-      label: 'Configuración de Precios', 
+      label: 'Pricing Setup', 
       href: '/pricing', 
       active: location === '/pricing' 
     },
     { 
       icon: Calendar, 
-      label: 'Calendario', 
+      label: 'Calendar', 
       href: '/calendar', 
       active: location === '/calendar' 
     },
     { 
       icon: Clock, 
-      label: 'Control de Tiempo', 
+      label: 'Time Control', 
       href: '/time-tracking', 
       active: location === '/time-tracking' 
     },

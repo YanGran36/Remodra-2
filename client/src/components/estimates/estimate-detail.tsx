@@ -2,9 +2,9 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { useToast } from "@/hooks/use-toast";
-import { useEstimates } from "@/hooks/use-estimates";
-import { formatCurrency } from "@/lib/utils";
+import { useToast } from '../../hooks/use-toast';
+import { useEstimates } from '../../hooks/use-estimates';
+import { formatCurrency } from '../../lib/utils';
 import { 
   Check, Edit, Loader2, FileText, Send, X, 
   Printer, Download, FilePlus, BanknoteIcon, AlertTriangle 
@@ -17,8 +17,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from '../ui/dialog';
+import { Button } from '../ui/button';
 import {
   Card,
   CardContent,
@@ -26,14 +26,14 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+} from '../ui/card';
+import { Badge } from '../ui/badge';
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@/components/ui/tabs";
+} from '../ui/tabs';
 import {
   Table,
   TableBody,
@@ -41,7 +41,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '../ui/table';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,7 +51,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from '../ui/alert-dialog';
 
 export interface EstimateDetailProps {
   estimateId: number;
@@ -211,13 +211,13 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
     convertToInvoiceMutation.mutate(
       estimateId,
       {
-        onSuccess: (invoice) => {
+        onSuccess: (data) => {
           setIsConfirmConvert(false);
           toast({
             title: "Work Order Created",
-            description: `Work order ${invoice.invoiceNumber} has been created from this estimate.`,
+            description: `Work order ${data.invoice?.invoiceNumber} has been created from this estimate. The estimate status has been updated to 'converted'.`,
           });
-          // Here we could redirect to the work order page
+          // Stay on estimate page, status will be updated
         }
       }
     );
@@ -319,7 +319,6 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
                       <Button
                         variant="outline"
                         onClick={() => {
-                          // Implement email functionality
                           toast({
                             title: "Feature in development",
                             description: "Email sending functionality will be implemented soon.",
@@ -335,7 +334,7 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
                         onClick={async () => {
                           try {
                             // Import the PDF generation function
-                            const { downloadEstimatePDF } = await import("@/lib/pdf-generator");
+                            const { downloadEstimatePDF } = await import("../../lib/pdf-generator");
                             
                             // Convert estimate data to the format expected by the PDF generator
                             const pdfEstimate = {
@@ -349,7 +348,7 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
                                 address: estimate.client?.address,
                                 city: estimate.client?.city,
                                 state: estimate.client?.state,
-                                zipCode: estimate.client?.zipCode
+                                zip: estimate.client?.zip
                               },
                               contractor: {
                                 businessName: "Your Business Name", // Use your actual business name
@@ -384,6 +383,17 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
                         <Printer className="h-4 w-4 mr-2" />
                         Generate PDF
                       </Button>
+
+                      {/* Open Portal Button */}
+                      {estimate.client?.id && (
+                        <Button
+                          variant="outline"
+                          onClick={() => window.open(`/client-portal/${estimate.client.id}`, '_blank')}
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          Open Portal
+                        </Button>
+                      )}
 
                       {estimate.status === "pending" && (
                         <>

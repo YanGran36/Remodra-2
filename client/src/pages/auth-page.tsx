@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from '../hooks/use-auth';
 import { Redirect } from "wouter";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Checkbox } from '../components/ui/checkbox';
+import { Card, CardContent } from '../components/ui/card';
 import { Loader2, BuildingIcon } from "lucide-react";
 
 type AuthScreenType = "login" | "signup";
@@ -23,11 +23,12 @@ const signupSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
   lastName: z.string().min(2, "Last name must be at least 2 characters"),
   companyName: z.string().min(2, "Company name must be at least 2 characters"),
+  username: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirmPassword: z.string().min(6, "Password must be at least 6 characters"),
-  terms: z.literal(true, {
-    errorMap: () => ({ message: "You must accept the terms and conditions" }),
+  terms: z.boolean().refine((val) => val === true, {
+    message: "You must accept the terms and conditions"
   }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
@@ -40,6 +41,10 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [authScreen, setAuthScreen] = useState<AuthScreenType>("login");
+
+  // Debug logging
+  console.log('AuthPage render - user:', user);
+  console.log('AuthPage render - loginMutation.isPending:', loginMutation.isPending);
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -56,6 +61,7 @@ export default function AuthPage() {
       firstName: "",
       lastName: "",
       companyName: "",
+      username: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -75,6 +81,7 @@ export default function AuthPage() {
       firstName: data.firstName,
       lastName: data.lastName,
       companyName: data.companyName,
+      username: data.username,
       email: data.email,
       password: data.password,
     });
@@ -82,8 +89,11 @@ export default function AuthPage() {
 
   // Redirect if already logged in
   if (user) {
+    console.log('Redirecting to dashboard - user found:', user.email);
     return <Redirect to="/" />;
   }
+
+  console.log('Rendering auth form - no user found');
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4 sm:px-6 lg:px-8">
@@ -93,12 +103,15 @@ export default function AuthPage() {
             <div>
               <div className="text-center mb-6">
                 <div className="flex justify-center">
-                  <div className="bg-primary rounded-full p-3">
-                    <BuildingIcon className="text-white h-6 w-6" />
+                  <div className="bg-primary rounded-full p-8">
+                    <img 
+                      src="/remodra-logo.png" 
+                      alt="Remodra Logo" 
+                      className="h-32 w-32 object-contain"
+                    />
                   </div>
                 </div>
-                <h2 className="mt-4 text-3xl font-bold text-gray-900">ContractorHub</h2>
-                <p className="mt-2 text-sm text-gray-600">Sign in to your account</p>
+                <p className="mt-2 text-sm text-gray-600">Your Construction Management SaaS</p>
               </div>
               
               <form className="space-y-6" onSubmit={loginForm.handleSubmit(handleLogin)}>
@@ -177,11 +190,14 @@ export default function AuthPage() {
             <div>
               <div className="text-center mb-6">
                 <div className="flex justify-center">
-                  <div className="bg-primary rounded-full p-3">
-                    <BuildingIcon className="text-white h-6 w-6" />
+                  <div className="bg-primary rounded-full p-8">
+                    <img 
+                      src="/remodra-logo.png" 
+                      alt="Remodra Logo" 
+                      className="h-32 w-32 object-contain"
+                    />
                   </div>
                 </div>
-                <h2 className="mt-4 text-3xl font-bold text-gray-900">ContractorHub</h2>
                 <p className="mt-2 text-sm text-gray-600">Create your contractor account</p>
               </div>
               
@@ -221,6 +237,18 @@ export default function AuthPage() {
                   />
                   {signupForm.formState.errors.companyName && (
                     <p className="text-sm text-destructive mt-1">{signupForm.formState.errors.companyName.message}</p>
+                  )}
+                </div>
+                
+                <div>
+                  <Label htmlFor="username">Username</Label>
+                  <Input 
+                    id="username" 
+                    {...signupForm.register("username")} 
+                    className="mt-1"
+                  />
+                  {signupForm.formState.errors.username && (
+                    <p className="text-sm text-destructive mt-1">{signupForm.formState.errors.username.message}</p>
                   )}
                 </div>
                 

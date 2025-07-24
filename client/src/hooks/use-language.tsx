@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { Language, Translation, translations, getTranslation } from "@/lib/i18n";
-import { useAuth } from "@/hooks/use-auth";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { Language, Translation, translations, getTranslation } from "../lib/i18n";
+import { useAuth } from "./use-auth";
+import { apiRequest } from "../lib/queryClient";
+import { useToast } from "./use-toast";
 
 // Define the context type
 type LanguageContextType = {

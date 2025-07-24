@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from '../lib/queryClient';
+import { useToast } from './use-toast';
 
 interface ProjectAnalysisRequest {
   title: string;

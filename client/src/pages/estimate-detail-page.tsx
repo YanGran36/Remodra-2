@@ -1,22 +1,25 @@
 import { useState, useEffect } from "react";
 import { useRoute, Link } from "wouter";
 import { Loader2, ChevronLeft, FileText, Send, Printer, Check, X, BanknoteIcon, Download } from "lucide-react";
-import { useEstimates } from "@/hooks/use-estimates";
-import { useAuth } from "@/hooks/use-auth";
-import { useToast } from "@/hooks/use-toast";
+import { useEstimates } from '../hooks/use-estimates';
+import { useAuth } from '../hooks/use-auth';
+import { useToast } from '../hooks/use-toast';
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useQueryClient } from "@tanstack/react-query";
-import { EstimateClientLink } from "@/components/estimates/estimate-client-link";
-import { downloadEstimatePDF } from "@/lib/pdf-generator";
+import { EstimateClientLink } from '../components/estimates/estimate-client-link';
+import { downloadEstimatePDF } from '../lib/pdf-generator';
+import Sidebar from '../components/layout/sidebar';
+import MobileSidebar from '../components/layout/mobile-sidebar';
+import TopNav from '../components/layout/top-nav';
 
 // UI Components
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Separator } from '../components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '../components/ui/table';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,7 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from '../components/ui/alert-dialog';
 
 // Helper function to format currency
 const formatCurrency = (amount: number | string) => {
@@ -50,7 +53,7 @@ export default function EstimateDetailPage() {
 
   // Función para formatear fechas
   const formatDate = (dateString?: string | Date | null) => {
-    if (!dateString) return "No especificada";
+    if (!dateString) return "No specified";
     return format(new Date(dateString), "d 'de' MMMM, yyyy", { locale: es });
   };
 
@@ -59,21 +62,21 @@ export default function EstimateDetailPage() {
     switch (status.toLowerCase()) {
       case "accepted":
       case "aceptado":
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-green-500 text-white";
       case "pending":
       case "pendiente":
-        return "bg-blue-100 text-blue-800 border-blue-200";
+        return "bg-blue-500 text-white";
       case "rejected":
       case "rechazado":
-        return "bg-red-100 text-red-800 border-red-200";
+        return "bg-red-500 text-white";
       case "sent":
       case "enviado":
-        return "bg-purple-100 text-purple-800 border-purple-200";
+        return "bg-purple-500 text-white";
       case "draft":
       case "borrador":
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-gray-400 text-white";
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-gray-200 text-gray-800";
     }
   };
 
@@ -81,15 +84,15 @@ export default function EstimateDetailPage() {
   const getStatusText = (status: string) => {
     switch (status.toLowerCase()) {
       case "accepted":
-        return "Aceptado";
+        return "Accepted";
       case "pending":
-        return "Pendiente";
+        return "Pending";
       case "rejected":
-        return "Rechazado";
+        return "Rejected";
       case "sent":
-        return "Enviado";
+        return "Sent";
       case "draft":
-        return "Borrador";
+        return "Draft";
       default:
         return status;
     }
@@ -136,13 +139,13 @@ export default function EstimateDetailPage() {
     convertToInvoiceMutation.mutate(
       estimateId,
       {
-        onSuccess: (invoice) => {
+        onSuccess: (data) => {
           setIsConfirmConvert(false);
           toast({
-            title: "Orden de trabajo creada",
-            description: `Se ha creado la orden de trabajo ${invoice.invoiceNumber} a partir del estimado.`,
+            title: "Work order created",
+            description: `Work order ${data.invoice?.invoiceNumber} has been created from the estimate. The estimate status has been updated to 'converted'.`,
           });
-          // Aquí podríamos redirigir a la página de la orden de trabajo
+          // Stay on estimate page, status will be updated
         }
       }
     );
@@ -163,15 +166,15 @@ export default function EstimateDetailPage() {
           <Link href="/estimates">
             <Button variant="ghost" className="mb-4">
               <ChevronLeft className="h-4 w-4 mr-2" />
-              Volver a estimados
+              Back to Estimates
             </Button>
           </Link>
           
           <h1 className="text-2xl font-bold">Error</h1>
           <p className="text-gray-600 mt-2">
             {error 
-              ? `Ocurrió un error: ${error.message}` 
-              : "No se pudo encontrar el estimado solicitado."
+              ? `An error occurred: ${error.message}` 
+              : "Could not find the requested estimate."
             }
           </p>
         </div>
@@ -180,19 +183,25 @@ export default function EstimateDetailPage() {
   }
 
   return (
-    <div className="container py-8">
+    <div className="remodra-layout">
+      <Sidebar />
+      <MobileSidebar />
+      <div className="remodra-main">
+        <TopNav />
+        <div className="remodra-content">
+          <div className="container py-8">
       <div className="mb-6">
         <Link href="/estimates">
           <Button variant="ghost" className="mb-4">
             <ChevronLeft className="h-4 w-4 mr-2" />
-            Volver a estimados
+            Back to Estimates
           </Button>
         </Link>
         
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">
-              Estimado {estimate.estimateNumber || `#${estimate.id}`}
+              Estimate {estimate.estimateNumber || `#${estimate.id}`}
             </h1>
             
             <div className="flex items-center gap-2 mt-1">
@@ -240,7 +249,7 @@ export default function EstimateDetailPage() {
                     address: estimate.client?.address || undefined,
                     city: estimate.client?.city || undefined,
                     state: estimate.client?.state || undefined,
-                    zipCode: estimate.client?.zipCode || undefined
+                    zip: estimate.client?.zip || undefined
                   },
                   contractor: {
                     businessName: user.companyName || `${user.firstName} ${user.lastName}`,
@@ -251,7 +260,7 @@ export default function EstimateDetailPage() {
                     address: user.address || undefined,
                     city: undefined, // No tenemos esta información en el modelo de usuario
                     state: undefined, // No tenemos esta información en el modelo de usuario
-                    zipCode: undefined // No tenemos esta información en el modelo de usuario
+                    zip: undefined // No tenemos esta información en el modelo de usuario
                   },
                   projectTitle: estimate.project?.title,
                   projectDescription: estimate.project?.description
@@ -274,19 +283,19 @@ export default function EstimateDetailPage() {
               }
             }}>
               <Download className="h-4 w-4 mr-2" />
-              Descargar PDF
+              Download PDF
             </Button>
             
             <Button variant="outline" onClick={() => {
               // Redirigir a la versión de impresión
               window.open(`/estimates/${estimate.id}/print`, '_blank');
               toast({
-                title: "Vista de impresión",
-                description: "Se ha abierto la vista de impresión del estimado."
+                title: "Print View",
+                description: "Print view of the estimate has been opened."
               });
             }}>
               <Printer className="h-4 w-4 mr-2" />
-              Imprimir
+              Print
             </Button>
             
             {estimate.status === "accepted" && (
@@ -310,8 +319,8 @@ export default function EstimateDetailPage() {
             clientEmail={estimate.client?.email}
             onSendEmail={() => {
               toast({
-                title: "Envío de correo",
-                description: "Esta funcionalidad será implementada próximamente.",
+                title: "Email Sending",
+                description: "This functionality will be implemented soon.",
               });
             }}
           />
@@ -319,7 +328,7 @@ export default function EstimateDetailPage() {
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Información del cliente</CardTitle>
+            <CardTitle className="text-sm font-medium">Client Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <div>
@@ -331,7 +340,7 @@ export default function EstimateDetailPage() {
               <div>
                 <p className="text-sm text-gray-600">{estimate.client?.address}</p>
                 <p className="text-sm text-gray-600">
-                  {estimate.client?.city}, {estimate.client?.state} {estimate.client?.zipCode}
+                  {estimate.client?.city}, {estimate.client?.state} {estimate.client?.zip}
                 </p>
               </div>
             )}
@@ -340,16 +349,16 @@ export default function EstimateDetailPage() {
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Detalles del proyecto</CardTitle>
+            <CardTitle className="text-sm font-medium">Project Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <div>
-              <p className="font-medium">{estimate.project?.title || "No especificado"}</p>
+              <p className="font-medium">{estimate.project?.title || "No specified"}</p>
               <p className="text-sm text-gray-600">{estimate.project?.description || ""}</p>
             </div>
             {estimate.project?.address && (
               <div>
-                <p className="text-sm text-gray-600 font-medium mt-2">Dirección del proyecto:</p>
+                <p className="text-sm text-gray-600 font-medium mt-2">Project Address:</p>
                 <p className="text-sm text-gray-600">{estimate.project?.address}</p>
               </div>
             )}
@@ -358,28 +367,28 @@ export default function EstimateDetailPage() {
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Fechas importantes</CardTitle>
+            <CardTitle className="text-sm font-medium">Important Dates</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Fecha de emisión:</span>
+              <span className="text-sm text-gray-600">Issue Date:</span>
               <span className="text-sm">{formatDate(estimate.issueDate)}</span>
             </div>
             {estimate.expiryDate && (
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Fecha de expiración:</span>
+                <span className="text-sm text-gray-600">Expiry Date:</span>
                 <span className="text-sm">{formatDate(estimate.expiryDate)}</span>
               </div>
             )}
             {estimate.project?.startDate && (
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Inicio estimado:</span>
+                <span className="text-sm text-gray-600">Estimated Start:</span>
                 <span className="text-sm">{formatDate(estimate.project.startDate)}</span>
               </div>
             )}
             {estimate.project?.endDate && (
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Finalización estimada:</span>
+                <span className="text-sm text-gray-600">Estimated End:</span>
                 <span className="text-sm">{formatDate(estimate.project.endDate)}</span>
               </div>
             )}
@@ -389,9 +398,9 @@ export default function EstimateDetailPage() {
       
       <Tabs defaultValue="items" className="mb-6">
         <TabsList>
-          <TabsTrigger value="items">Ítems del estimado</TabsTrigger>
-          <TabsTrigger value="terms">Términos y condiciones</TabsTrigger>
-          <TabsTrigger value="notes">Notas</TabsTrigger>
+          <TabsTrigger value="items">Estimate Items</TabsTrigger>
+          <TabsTrigger value="terms">Terms & Conditions</TabsTrigger>
+          <TabsTrigger value="notes">Notes</TabsTrigger>
         </TabsList>
         
         <TabsContent value="items">
@@ -400,10 +409,10 @@ export default function EstimateDetailPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[50%]">Descripción</TableHead>
-                    <TableHead>Cantidad</TableHead>
-                    <TableHead>Precio unitario</TableHead>
-                    <TableHead>Monto</TableHead>
+                    <TableHead className="w-[50%]">Description</TableHead>
+                    <TableHead>Quantity</TableHead>
+                    <TableHead>Unit Price</TableHead>
+                    <TableHead>Amount</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -422,7 +431,7 @@ export default function EstimateDetailPage() {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center py-4 text-gray-500">
-                        No hay ítems en este estimado
+                        No items in this estimate
                       </TableCell>
                     </TableRow>
                   )}
@@ -434,13 +443,13 @@ export default function EstimateDetailPage() {
                   </TableRow>
                   {Number(estimate.tax) > 0 && (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-right">Impuesto ({estimate.tax}%)</TableCell>
+                      <TableCell colSpan={3} className="text-right">Tax ({estimate.tax}%)</TableCell>
                       <TableCell>{formatCurrency((Number(estimate.subtotal) * Number(estimate.tax)) / 100)}</TableCell>
                     </TableRow>
                   )}
                   {Number(estimate.discount) > 0 && (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-right">Descuento ({estimate.discount}%)</TableCell>
+                      <TableCell colSpan={3} className="text-right">Discount ({estimate.discount}%)</TableCell>
                       <TableCell>-{formatCurrency((Number(estimate.subtotal) * Number(estimate.discount)) / 100)}</TableCell>
                     </TableRow>
                   )}
@@ -462,7 +471,7 @@ export default function EstimateDetailPage() {
                   <p>{estimate.terms}</p>
                 </div>
               ) : (
-                <p className="text-gray-500 italic">No se han especificado términos y condiciones para este estimado.</p>
+                <p className="text-gray-500 italic">No terms and conditions have been specified for this estimate.</p>
               )}
             </CardContent>
           </Card>
@@ -476,7 +485,7 @@ export default function EstimateDetailPage() {
                   <p>{estimate.notes}</p>
                 </div>
               ) : (
-                <p className="text-gray-500 italic">No hay notas adicionales para este estimado.</p>
+                <p className="text-gray-500 italic">No additional notes for this estimate.</p>
               )}
             </CardContent>
           </Card>
@@ -490,7 +499,7 @@ export default function EstimateDetailPage() {
             onClick={handleRejectEstimate}
           >
             <X className="h-4 w-4 mr-2" />
-            Rechazar
+            Reject
           </Button>
           
           <Button
@@ -498,7 +507,7 @@ export default function EstimateDetailPage() {
             onClick={handleAcceptEstimate}
           >
             <Check className="h-4 w-4 mr-2" />
-            Aceptar
+            Accept
           </Button>
         </div>
       )}
@@ -507,15 +516,15 @@ export default function EstimateDetailPage() {
       <AlertDialog open={isConfirmAccept} onOpenChange={setIsConfirmAccept}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Aceptar este estimado?</AlertDialogTitle>
+            <AlertDialogTitle>Accept this estimate?</AlertDialogTitle>
             <AlertDialogDescription>
-              Al aceptar este estimado, se notificará al cliente que su propuesta ha sido aprobada y se podrá proceder con el trabajo.
+              By accepting this estimate, the client will be notified that their proposal has been approved and work can proceed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmAcceptEstimate} className="bg-green-600 hover:bg-green-700">
-              Aceptar
+              Accept
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -524,15 +533,15 @@ export default function EstimateDetailPage() {
       <AlertDialog open={isConfirmReject} onOpenChange={setIsConfirmReject}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Rechazar este estimado?</AlertDialogTitle>
+            <AlertDialogTitle>Reject this estimate?</AlertDialogTitle>
             <AlertDialogDescription>
-              Al rechazar este estimado, se notificará al cliente que su propuesta no ha sido aceptada.
+              By rejecting this estimate, the client will be notified that their proposal has not been accepted.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmRejectEstimate} className="bg-destructive hover:bg-destructive/90">
-              Rechazar
+              Reject
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -543,17 +552,20 @@ export default function EstimateDetailPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Convert to Invoice?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción convertirá el estimado aceptado en una factura. Los ítems, precios y datos del cliente se transferirán automáticamente.
+              This action will convert the accepted estimate into an invoice. Items, prices, and client data will be automatically transferred.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmConvertToWorkOrder} className="bg-blue-600 hover:bg-blue-700">
-              Convertir
+              Convert
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

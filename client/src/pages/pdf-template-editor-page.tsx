@@ -1,6 +1,6 @@
 import React from 'react';
-import { useToast } from '@/hooks/use-toast';
-import SimplifiedPdfTemplateEditor from '@/components/pdf/simplified-pdf-template-editor';
+import { useToast } from '../hooks/use-toast';
+import SimplifiedPdfTemplateEditor from '../components/pdf/simplified-pdf-template-editor';
 import { useLocation } from 'wouter';
 import { Helmet } from 'react-helmet-async';
 

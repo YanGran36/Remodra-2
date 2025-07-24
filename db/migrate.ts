@@ -18,9 +18,9 @@ async function migrate() {
         notes TEXT,
         measurement_data JSONB,
         diagram_url TEXT,
-        measured_at TIMESTAMP NOT NULL DEFAULT NOW(),
-        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+        measured_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+        created_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+        updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
       )
     `);
     

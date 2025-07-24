@@ -1,24 +1,24 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
-import { apiRequest } from "@/lib/queryClient";
+import { useToast } from '../hooks/use-toast';
+import { useAuth } from '../hooks/use-auth';
+import { apiRequest } from '../lib/queryClient';
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { ArrowLeft, Calculator, FileText, Users, Wrench } from "lucide-react";
 
 // UI Components
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Separator } from "@/components/ui/separator";
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Textarea } from '../components/ui/textarea';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../components/ui/form';
+import { Separator } from '../components/ui/separator';
 
 const formSchema = z.object({
   clientId: z.coerce.number().min(1, "Please select a client"),
@@ -170,7 +170,7 @@ export default function VendorEstimateSimple() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">Create New Estimate</h1>
+            <h1 className="text-2xl font-semibold text-foreground tracking-tight">Create New Estimate</h1>
             <p className="text-muted-foreground">Generate a professional estimate for your client</p>
           </div>
         </div>
@@ -208,7 +208,7 @@ export default function VendorEstimateSimple() {
                             value={field.value ? field.value.toString() : ""}
                           >
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger className="input-blue-border">
                                 <SelectValue placeholder="Select a client" />
                               </SelectTrigger>
                             </FormControl>
@@ -234,6 +234,7 @@ export default function VendorEstimateSimple() {
                           <FormLabel>Estimate Title</FormLabel>
                           <FormControl>
                             <Input
+                              className="input-blue-border"
                               placeholder={generateEstimateNumber()}
                               {...field}
                               onFocus={() => {
@@ -262,7 +263,7 @@ export default function VendorEstimateSimple() {
                           </FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger className="input-blue-border">
                                 <SelectValue placeholder="Select service type" />
                               </SelectTrigger>
                             </FormControl>
@@ -291,6 +292,7 @@ export default function VendorEstimateSimple() {
                           </FormLabel>
                           <FormControl>
                             <Input
+                              className="input-blue-border"
                               type="number"
                               step="0.01"
                               placeholder="Enter quantity"
@@ -313,6 +315,7 @@ export default function VendorEstimateSimple() {
                         <FormLabel>Description</FormLabel>
                         <FormControl>
                           <Textarea
+                            className="input-blue-border"
                             placeholder="Describe the work to be performed..."
                             {...field}
                           />
@@ -331,6 +334,7 @@ export default function VendorEstimateSimple() {
                         <FormLabel>Additional Notes</FormLabel>
                         <FormControl>
                           <Textarea
+                            className="input-blue-border"
                             placeholder="Any additional notes or special instructions..."
                             {...field}
                           />

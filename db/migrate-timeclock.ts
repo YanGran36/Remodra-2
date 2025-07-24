@@ -1,61 +1,22 @@
 import { db } from "./index";
 import { sql } from "drizzle-orm";
 
-async function migrateTimeclockTable() {
-  console.log("Starting timeclock table migration...");
+export async function migrateTimeclock() {
+  try {
+    // Add job_type column to existing timeclock_entries table
+    await db.run(sql`ALTER TABLE timeclock_entries ADD COLUMN job_type TEXT`);
+    console.log("✅ job_type column added to timeclock_entries table successfully");
+  } catch (error) {
+    console.error("❌ Error adding job_type column to timeclock_entries table:", error);
+  }
 
   try {
-    // Check if columns clock_in_entry_id and hours_worked exist
-    const columnExists = await db.execute(sql`
-      SELECT EXISTS (
-        SELECT 1 
-        FROM information_schema.columns 
-        WHERE table_name='timeclock_entries' AND column_name='clock_in_entry_id'
-      );
-    `);
-    
-    // Create table if it doesn't exist
-    await db.execute(sql`
-      CREATE TABLE IF NOT EXISTS timeclock_entries (
-        id SERIAL PRIMARY KEY,
-        contractor_id INTEGER NOT NULL REFERENCES contractors(id),
-        employee_name TEXT NOT NULL,
-        type TEXT NOT NULL,
-        timestamp TIMESTAMP DEFAULT NOW() NOT NULL,
-        date DATE NOT NULL,
-        location TEXT,
-        notes TEXT,
-        created_at TIMESTAMP DEFAULT NOW() NOT NULL
-      );
-    `);
-    
-    // Add new columns if they don't exist
-    if (!columnExists.rows[0].exists) {
-      console.log("Adding new columns to timeclock_entries...");
-      
-      await db.execute(sql`
-        ALTER TABLE timeclock_entries 
-        ADD COLUMN IF NOT EXISTS clock_in_entry_id INTEGER REFERENCES timeclock_entries(id),
-        ADD COLUMN IF NOT EXISTS hours_worked DECIMAL(5,2);
-      `);
-      
-      console.log("✅ New columns added to timeclock_entries table");
-    }
-
-    console.log("✅ Timeclock_entries table migrated successfully");
+    // Add viewer_role column for access control
+    await db.run(sql`ALTER TABLE timeclock_entries ADD COLUMN viewer_role TEXT DEFAULT 'all'`);
+    console.log("✅ viewer_role column added to timeclock_entries table successfully");
   } catch (error) {
-    console.error("❌ Error migrating timeclock_entries table:", error);
-    throw error;
+    console.error("❌ Error adding viewer_role column to timeclock_entries table:", error);
   }
 }
 
-// Execute migration
-migrateTimeclockTable()
-  .then(() => {
-    console.log("✅ Timeclock migration completed");
-    process.exit(0);
-  })
-  .catch((error) => {
-    console.error("❌ Error during timeclock migration:", error);
-    process.exit(1);
-  });
+migrateTimeclock().catch(console.error);

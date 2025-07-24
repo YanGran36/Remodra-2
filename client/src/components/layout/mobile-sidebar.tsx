@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/use-auth";
-import { useLanguage } from "@/hooks/use-language";
+import { useAuth } from '../../hooks/use-auth';
+import { useLanguage } from '../../hooks/use-language';
 import { Link, useLocation } from "wouter";
 import { 
   BuildingIcon, 
@@ -25,8 +25,8 @@ import {
   Palette,
   Settings
 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Button } from '../ui/button';
 
 
 export default function MobileSidebar() {
@@ -55,7 +55,7 @@ export default function MobileSidebar() {
   const getLinkClass = (path: string) => {
     return `flex items-center px-4 py-3 mx-2 my-1 rounded-xl transition-all duration-300 ease-in-out group ${
       isActivePath(path) 
-        ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-400/30 shadow-lg backdrop-blur-sm" 
+        ? "bg-gradient-to-r from-amber-400/20 to-yellow-600/20 text-amber-400 border border-amber-400/30 shadow-lg backdrop-blur-sm" 
         : "text-slate-300 hover:bg-white/10 hover:text-white hover:shadow-md hover:scale-105 hover:translate-x-1"
     }`;
   };
@@ -98,12 +98,12 @@ export default function MobileSidebar() {
   return (
     <>
       {/* Mobile menu toggle button */}
-      <div className="fixed top-0 left-0 lg:hidden p-4 z-30">
+      <div className="fixed top-4 left-4 lg:hidden z-50">
         <Button
           id="mobile-sidebar-toggle"
           variant="ghost"
           size="icon"
-          className="bg-white/10 backdrop-blur-md border border-white/20 text-slate-700 hover:text-slate-900 hover:bg-white/20 focus:outline-none shadow-lg rounded-xl"
+          className="bg-slate-800/90 backdrop-blur-md border border-slate-600 text-slate-300 hover:text-amber-400 hover:bg-slate-700/90 focus:outline-none shadow-lg rounded-xl"
           onClick={toggleSidebar}
         >
           <MenuIcon className="h-6 w-6" />
@@ -112,7 +112,7 @@ export default function MobileSidebar() {
 
       {/* Sidebar overlay */}
       <div 
-        className={`fixed inset-0 z-20 bg-black/60 backdrop-blur-sm lg:hidden transition-opacity duration-300 ${
+        className={`remodra-mobile-overlay transition-opacity duration-300 ${
           isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         onClick={closeSidebar}
@@ -121,23 +121,23 @@ export default function MobileSidebar() {
       {/* Mobile sidebar */}
       <aside 
         id="mobile-sidebar"
-        className={`fixed left-0 top-0 bottom-0 w-72 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white z-30 transform transition-all duration-300 ease-in-out lg:hidden shadow-2xl ${
+        className={`remodra-mobile-sidebar ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="p-6 flex items-center justify-between border-b border-slate-700/50 bg-gradient-to-r from-blue-600/20 to-purple-600/20">
+        <div className="p-6 flex items-center justify-between border-b border-slate-600 bg-gradient-to-r from-slate-800/50 to-slate-900/50">
           <div className="flex items-center">
-            <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl p-3 mr-4 shadow-lg">
-              <BuildingIcon className="text-white h-6 w-6" />
-            </div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              ContractorHub
-            </h1>
+            <img 
+              src="/remodra-logo.png" 
+              alt="Remodra Logo" 
+              className="h-8 w-8 object-contain mr-4"
+            />
+            <span className="text-xl font-bold text-amber-400">Remodra</span>
           </div>
           <Button
             variant="ghost" 
             size="icon"
-            className="text-slate-400 hover:text-white hover:bg-white/10 rounded-lg"
+            className="text-slate-400 hover:text-amber-400 hover:bg-white/10 rounded-lg"
             onClick={closeSidebar}
           >
             <X className="h-6 w-6" />
@@ -174,10 +174,7 @@ export default function MobileSidebar() {
               <Drill className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
               <span className="font-medium">Materials</span>
             </Link>
-            <Link href="/pricing" className={getLinkClass("/pricing")}>
-              <BanknoteIcon className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
-              <span className="font-medium">Pricing Config</span>
-            </Link>
+
             <Link href="/timeclock" className={getLinkClass("/timeclock")}>
               <Clock className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
               <span className="font-medium">Time Clock</span>
@@ -195,6 +192,10 @@ export default function MobileSidebar() {
               <BotIcon className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
               <span className="font-medium">AI Assistant</span>
             </Link>
+            <Link href="/tools" className={getLinkClass("/tools")}>
+              <Palette className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
+              <span className="font-medium">Tools</span>
+            </Link>
             <Link href="/vendor-estimate-form-new" className={getLinkClass("/vendor-estimate-form-new")}>
               <ClipboardCheckIcon className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
               <span className="font-medium">Vendor Form</span>
@@ -206,24 +207,24 @@ export default function MobileSidebar() {
           </nav>
         </div>
         
-        <div className="mt-auto border-t border-slate-700/50 bg-gradient-to-r from-slate-800/50 to-slate-900/50 backdrop-blur-sm">
+        <div className="mt-auto border-t border-slate-600 bg-gradient-to-r from-slate-800/50 to-slate-900/50 backdrop-blur-sm">
           {/* User Info and Logout */}
           <div className="p-4">
             <div className="flex items-center">
-              <Avatar className="h-12 w-12 mr-3 ring-2 ring-blue-400/30 shadow-lg">
+              <Avatar className="h-12 w-12 mr-3 ring-2 ring-amber-400/30 shadow-lg">
                 <AvatarImage src="" alt={user?.firstName} />
-                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
+                <AvatarFallback className="bg-gradient-to-br from-amber-400 to-yellow-600 text-slate-900 font-bold">
                   {getInitials()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm text-white truncate">
+                <p className="font-semibold text-sm text-slate-200 truncate">
                   {user?.firstName} {user?.lastName}
                 </p>
                 <p className="text-xs text-slate-400 truncate">{user?.email}</p>
               </div>
               <button 
-                className="ml-2 p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all duration-200 hover:scale-110"
+                className="ml-2 p-2 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-white/10 transition-all duration-200 hover:scale-110"
                 onClick={handleLogout}
                 aria-label="Logout"
               >

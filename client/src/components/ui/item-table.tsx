@@ -6,8 +6,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Separator } from "@/components/ui/separator";
+} from './table';
+import { Separator } from './separator';
 import { Package2 } from "lucide-react";
 
 interface Item {
@@ -40,7 +40,7 @@ export function ItemTable({
   tax,
   discount,
   total,
-  emptyMessage = "No hay elementos para mostrar",
+  emptyMessage = "No items to display",
 }: ItemTableProps) {
   // Convert string values to numbers for calculations if needed
   const taxValue = typeof tax === 'string' ? parseFloat(tax) : tax;
@@ -90,14 +90,14 @@ export function ItemTable({
             {taxValue > 0 && (
               <TableRow className="border-t-0">
                 <TableCell colSpan={2} />
-                <TableCell className="text-right font-medium">Impuestos</TableCell>
+                <TableCell className="text-right font-medium">Tax</TableCell>
                 <TableCell className="text-right">{formatCurrency(taxValue)}</TableCell>
               </TableRow>
             )}
             {discountValue > 0 && (
               <TableRow className="border-t-0">
                 <TableCell colSpan={2} />
-                <TableCell className="text-right font-medium">Descuento</TableCell>
+                <TableCell className="text-right font-medium">Discount</TableCell>
                 <TableCell className="text-right text-red-600">-{formatCurrency(discountValue)}</TableCell>
               </TableRow>
             )}

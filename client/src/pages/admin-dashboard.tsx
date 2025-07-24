@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link } from "wouter";
 import { 
   Card, 
@@ -7,16 +7,16 @@ import {
   CardHeader, 
   CardTitle, 
   CardFooter 
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+} from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
 import { 
   Tabs, 
   TabsContent, 
   TabsList, 
   TabsTrigger 
-} from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from '../components/ui/tabs';
+import { ScrollArea } from '../components/ui/scroll-area';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,7 +24,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '../components/ui/dropdown-menu';
 import {
   Table,
   TableBody,
@@ -32,7 +32,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '../components/ui/table';
 import { 
   BarChart, 
   FileText, 
@@ -53,7 +53,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Input } from "@/components/ui/input";
+import { Input } from '../components/ui/input';
 
 // Componente principal del panel de administración para contratistas
 export default function AdminDashboard() {
@@ -121,7 +121,7 @@ export default function AdminDashboard() {
           percentage={12}
         />
         <SummaryCard 
-          title="Pagos Pendientes" 
+          title="Pending Payments" 
           value={`$${companyInfo.pendingPayments.toLocaleString()}`} 
           icon={<FileText className="h-6 w-6 text-primary" />}
           trend="down"
@@ -133,7 +133,7 @@ export default function AdminDashboard() {
           icon={<Activity className="h-6 w-6 text-primary" />}
         />
         <SummaryCard 
-          title="Presupuestos Pendientes" 
+          title="Pending Estimates" 
           value={companyInfo.pendingEstimates} 
           icon={<ClipboardList className="h-6 w-6 text-primary" />}
         />
@@ -207,7 +207,7 @@ export default function AdminDashboard() {
                   </div>
                   <div className="flex-1">
                     <div className="flex justify-between">
-                      <p className="font-medium">Presentación de presupuesto</p>
+                      <p className="font-medium">Estimate presentation</p>
                       <Badge variant="outline">{format(new Date(2023, 6, 25, 16, 0), "HH:mm", { locale: es })}</Badge>
                     </div>
                     <p className="text-sm text-gray-500">
@@ -253,9 +253,9 @@ export default function AdminDashboard() {
                     <FileText className="h-4 w-4" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-medium">Presupuesto aprobado</p>
+                    <p className="font-medium">Estimate approved</p>
                     <p className="text-sm text-gray-500">Ayer</p>
-                    <p className="text-sm mt-1">John Smith - Presupuesto #1001 por $5,840.00</p>
+                    <p className="text-sm mt-1">John Smith - Estimate #1001 for $5,840.00</p>
                   </div>
                 </div>
                 
@@ -481,7 +481,7 @@ export default function AdminDashboard() {
                 <TableCell>john@example.com</TableCell>
                 <TableCell>(555) 123-4567</TableCell>
                 <TableCell className="max-w-[200px] truncate">123 Main St, Anytown, CA 12345</TableCell>
-                <TableCell>2 Activos, 3 Completados</TableCell>
+                                            <TableCell>2 Active, 3 Completed</TableCell>
                 <TableCell>
                   <Badge className="bg-green-600">Activo</Badge>
                 </TableCell>
@@ -510,7 +510,7 @@ export default function AdminDashboard() {
                 <TableCell>mary@example.com</TableCell>
                 <TableCell>(555) 234-5678</TableCell>
                 <TableCell className="max-w-[200px] truncate">456 Oak Ave, Somewhere, NY 54321</TableCell>
-                <TableCell>1 Activo, 1 Completado</TableCell>
+                                            <TableCell>1 Active, 1 Completed</TableCell>
                 <TableCell>
                   <Badge className="bg-green-600">Activo</Badge>
                 </TableCell>
@@ -945,9 +945,9 @@ export default function AdminDashboard() {
 
   return (
     <div className="container mx-auto p-4 md:p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Panel de Administración</h1>
-        <p className="text-gray-500">Bienvenido a ContractorHub, {companyInfo.name}</p>
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-foreground tracking-tight">Panel de Administración</h1>
+        <p className="text-muted-foreground">Manage system administration and user access</p>
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">

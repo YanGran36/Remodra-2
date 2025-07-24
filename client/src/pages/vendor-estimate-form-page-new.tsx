@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
-import { useLanguage } from "@/hooks/use-language";
-import { useAiCostAnalysis, MaterialInput, AiAnalysisResult } from "@/hooks/use-ai-cost-analysis";
-import { apiRequest } from "@/lib/queryClient";
+import { useToast } from '../hooks/use-toast';
+import { useAuth } from '../hooks/use-auth';
+import { useLanguage } from '../hooks/use-language';
+import { useAiCostAnalysis, MaterialInput, AiAnalysisResult } from '../hooks/use-ai-cost-analysis';
+import { apiRequest } from '../lib/queryClient';
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { z } from "zod";
@@ -27,14 +27,14 @@ import {
 } from "lucide-react";
 
 // AI analysis component
-import AiAnalysisPanel from "@/components/ai/ai-analysis-panel";
+import AiAnalysisPanel from '../components/ai/ai-analysis-panel';
 
 // Digital Measurement Components
-import DigitalMeasurement from "@/components/measurement/digital-measurement";
-import LiDARScanner from "@/components/measurement/lidar-scanner";
+import DigitalMeasurement from '../components/measurement/digital-measurement';
+import LiDARScanner from '../components/measurement/lidar-scanner';
 
 // UI Components
-import PageHeader from "@/components/ui/page-header";
+import PageHeader from '../components/ui/page-header';
 import {
   Dialog,
   DialogContent,
@@ -43,8 +43,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+} from '../components/ui/dialog';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { 
   Form, 
   FormControl, 
@@ -53,24 +53,24 @@ import {
   FormItem, 
   FormLabel, 
   FormMessage 
-} from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
+} from '../components/ui/form';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Textarea } from '../components/ui/textarea';
+import { Separator } from '../components/ui/separator';
 import { 
   Select, 
   SelectContent, 
   SelectItem, 
   SelectTrigger, 
   SelectValue 
-} from "@/components/ui/select";
+} from '../components/ui/select';
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@/components/ui/tabs";
+} from '../components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -80,13 +80,13 @@ import {
   TableHeader,
   TableRow,
   TableFooter,
-} from "@/components/ui/table";
+} from '../components/ui/table';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+} from '../components/ui/popover';
+import { Calendar } from '../components/ui/calendar';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -97,14 +97,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from '../components/ui/alert-dialog';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
+} from '../components/ui/accordion';
+import { Badge } from '../components/ui/badge';
 
 // Import service types and data
 import { 
@@ -113,7 +113,7 @@ import {
   OPTIONS_BY_SERVICE,
   SERVICE_INFO,
   getServiceLabel
-} from "@/lib/service-options";
+} from '../lib/service-options';
 
 // Define the form validation schema
 // Note: The translations will be applied by useForm when rendering the form
@@ -234,24 +234,42 @@ export default function VendorEstimateFormPageNew() {
     const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     const dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59);
     
-    // Filter events for the selected date
+    // Filter events for the selected date - show all appointments, not just estimates
     const eventsForSelectedDate = events.filter((event: any) => {
       const eventDate = new Date(event.startTime);
       return eventDate >= dayStart && eventDate <= dayEnd;
     });
+    
+    console.log("Events for selected date:", eventsForSelectedDate);
     
     // Extract IDs of clients with appointments on that date
     const clientIds = eventsForSelectedDate
       .filter((event: any) => event.clientId)
       .map((event: any) => event.clientId.toString());
       
+    console.log("Client IDs with appointments:", clientIds);
+    
     // Remove duplicates
     const uniqueClientIds = Array.from(new Set(clientIds));
     
-    // Find clients corresponding to those IDs
-    return clients.filter((client: any) => 
+    // Find clients corresponding to those IDs and include appointment details
+    const clientsWithAppointments = clients.filter((client: any) => 
       uniqueClientIds.includes(client.id.toString())
-    );
+    ).map((client: any) => {
+      // Find the appointment details for this client
+      const clientAppointments = eventsForSelectedDate.filter((event: any) => 
+        event.clientId && event.clientId.toString() === client.id.toString()
+      );
+      
+      return {
+        ...client,
+        appointments: clientAppointments
+      };
+    });
+    
+    console.log("Clients with appointments:", clientsWithAppointments);
+    
+    return clientsWithAppointments;
   };
   
   // Function to update the selected date and clients with appointments
@@ -268,6 +286,33 @@ export default function VendorEstimateFormPageNew() {
         description: `Found ${clientsForDate.length} clients with scheduled appointments`,
       });
     }
+  };
+
+  // Function to handle client selection from appointment card
+  const handleSelectClientWithAppointment = (client: any) => {
+    // Set the client in the form
+    form.setValue("clientId", client.id.toString());
+    
+    // Find related events for this client
+    const clientEvents = events.filter((event: any) => 
+      event.clientId && event.clientId.toString() === client.id.toString()
+    );
+    
+    // If there's a related project, set it
+    if (clientEvents.length > 0) {
+      const eventWithProject = clientEvents.find((event: any) => event.projectId);
+      if (eventWithProject && eventWithProject.projectId) {
+        form.setValue("projectId", eventWithProject.projectId.toString());
+      }
+    }
+    
+    toast({
+      title: "Client Selected",
+      description: `${client.firstName} ${client.lastName} has been selected from their appointment`,
+    });
+    
+    // Automatically move to the materials tab
+    setActiveTab("materials");
   };
 
   // Process events and filter clients with appointments for today
@@ -385,82 +430,6 @@ export default function VendorEstimateFormPageNew() {
       });
     }
   }, [watchServiceType]);
-  
-  // Function to select a client with appointment and automatically fill in their data
-  const handleSelectClientWithAppointment = (client: any) => {
-    if (!client) return;
-    
-    // Set the client ID
-    form.setValue("clientId", client.id.toString());
-    
-    // Check if the client has projects and if any are selected
-    const clientProjects = projects.filter((project: any) => project.clientId === client.id);
-    if (clientProjects.length > 0) {
-      // If client has projects, show toast with that information
-      toast({
-        title: "Projects available",
-        description: `Client has ${clientProjects.length} available project(s)`,
-      });
-    }
-    
-    // Search for events (appointments) related to this client
-    const clientEvents = events.filter((event: any) => 
-      event.clientId && event.clientId === client.id
-    );
-    
-    if (clientEvents.length > 0) {
-      // Sort events by date (most recent first)
-      clientEvents.sort((a: any, b: any) => 
-        new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
-      );
-      
-      // Use the most recent event
-      const latestEvent = clientEvents[0];
-      
-      // If the event has an associated project, select it automatically
-      if (latestEvent.projectId) {
-        form.setValue("projectId", latestEvent.projectId.toString());
-        
-        // Search for project information
-        const relatedProject = projects.find((p: any) => p.id === latestEvent.projectId);
-        if (relatedProject) {
-          // If the project has information about the service type, select it automatically
-          if (relatedProject.serviceType) {
-            form.setValue("serviceType", relatedProject.serviceType);
-          }
-          
-          // If there are notes in the project, include them
-          if (relatedProject.description) {
-            form.setValue("notes", form.getValues("notes") 
-              ? `${form.getValues("notes")}\n\nFrom project: ${relatedProject.description}`
-              : `From project: ${relatedProject.description}`
-            );
-          }
-        }
-      }
-      
-      // If the event has location information, include it in additional notes
-      if (latestEvent.location) {
-        form.setValue("additionalInfo", form.getValues("additionalInfo") 
-          ? `${form.getValues("additionalInfo")}\n\nLocation from appointment: ${latestEvent.location}`
-          : `Location from appointment: ${latestEvent.location}`
-        );
-      }
-      
-      // If there is description in the event, include it in additional notes
-      if (latestEvent.description) {
-        form.setValue("additionalInfo", form.getValues("additionalInfo") 
-          ? `${form.getValues("additionalInfo")}\n\nDescription from appointment: ${latestEvent.description}`
-          : `Description from appointment: ${latestEvent.description}`
-        );
-      }
-    }
-    
-    toast({
-      title: "Client selected",
-      description: `${client.firstName} ${client.lastName}'s data loaded automatically`,
-    });
-  };
 
   // Function to handle form submission
   const onSubmit = (data: any) => {
@@ -486,6 +455,21 @@ export default function VendorEstimateFormPageNew() {
       return;
     }
 
+    // Calculate totals FIRST before preparing estimate data
+    const subtotal = selectedMaterials.reduce((sum, mat) => sum + (mat.quantity * mat.unitPrice), 0);
+    const taxRate = parseFloat(data.tax || "0");
+    const discountRate = parseFloat(data.discount || "0");
+    
+    // Calculate tax and discount amounts
+    const taxAmount = (subtotal * taxRate) / 100;
+    const discountAmount = (subtotal * discountRate) / 100;
+    const total = subtotal + taxAmount - discountAmount;
+    
+    console.log(`Calculated totals: Subtotal: $${subtotal}, Tax: ${taxRate}% ($${taxAmount}), Discount: ${discountRate}% ($${discountAmount}), Total: $${total}`);
+    
+    // Update the totalAmount state
+    setTotalAmount(total);
+
     // Prepare materials for the estimate
     const items = selectedMaterials.map(material => ({
       description: material.name,
@@ -494,12 +478,8 @@ export default function VendorEstimateFormPageNew() {
       amount: (material.quantity * material.unitPrice).toString(),
       notes: ""
     }));
-
-    // Calcular totales
-    const subtotal = selectedMaterials.reduce((sum, mat) => sum + (mat.quantity * mat.unitPrice), 0);
-    setTotalAmount(subtotal); // Update the totalAmount state
     
-    // Prepare estimate data
+    // Prepare estimate data with calculated totals
     const estimateData = {
       clientId: Number(data.clientId),
       projectId: data.projectId && data.projectId !== "none" ? Number(data.projectId) : null,
@@ -507,17 +487,17 @@ export default function VendorEstimateFormPageNew() {
       issueDate: new Date(),
       expiryDate: addDays(new Date(), 30),
       status: "draft",
-      subtotal: subtotal.toString(),
-      tax: "0",
-      discount: "0",
-      total: subtotal.toString(),
+      subtotal: subtotal.toFixed(2),
+      tax: taxRate.toFixed(2),
+      discount: discountRate.toFixed(2),
+      total: total.toFixed(2),
       terms: t("estimateTerms"),
       notes: data.notes || "",
       contractorSignature: user?.firstName + " " + user?.lastName,
       items
     };
     
-    console.log("Estimate data to create:", estimateData);
+    console.log("Estimate data to create with calculated totals:", estimateData);
     
     // Send request to create estimate
     createEstimateMutation.mutate(estimateData);
@@ -872,17 +852,20 @@ export default function VendorEstimateFormPageNew() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Date selector to filter clients with appointments */}
-                  <div className="mb-6 border rounded-lg p-4 bg-muted/30">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-medium">Filter clients by scheduled appointments</h3>
+                  {/* Today's Estimate Appointments Section */}
+                  <div className="mb-6 border rounded-lg p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-lg font-semibold text-blue-900">Today's Estimate Appointments</h3>
+                        <p className="text-sm text-blue-700">Select a client directly from their scheduled appointment</p>
+                      </div>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
                             size="sm"
                             type="button"
-                            className="ml-auto h-8 w-auto gap-1"
+                            className="ml-auto h-8 w-auto gap-1 border-blue-300 text-blue-700 hover:bg-blue-100"
                           >
                             <CalendarIcon className="h-3.5 w-3.5" />
                             <span>{format(selectedDate, "PPP", { locale: enUS })}</span>
@@ -919,27 +902,61 @@ export default function VendorEstimateFormPageNew() {
                       <h3 className="text-sm font-medium mb-2 text-primary">
                         Clients with appointments for {format(selectedDate, "PPP", { locale: enUS })}:
                       </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {clientsWithAppointments.map((client: any) => (
-                          <Card key={client.id} className="cursor-pointer hover:border-primary transition-colors duration-200"
+                          <Card key={client.id} className="cursor-pointer hover:border-primary hover:shadow-md transition-all duration-200 border-blue-200"
                             onClick={() => handleSelectClientWithAppointment(client)}
                           >
-                            <CardContent className="p-3">
-                              <div className="flex flex-col gap-1">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-primary text-lg">📅</span>
-                                  <span className="font-medium">{client.firstName} {client.lastName}</span>
+                            <CardContent className="p-4">
+                              <div className="flex flex-col gap-2">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className="text-blue-600 text-lg">📅</span>
+                                  <span className="font-semibold text-gray-900">{client.firstName} {client.lastName}</span>
                                 </div>
-                                <div className="text-xs text-muted-foreground overflow-hidden text-ellipsis">
+                                
+                                {/* Show appointment details */}
+                                {client.appointments && client.appointments.length > 0 && (
+                                  <div className="mb-2 p-2 bg-blue-50 rounded border-l-4 border-blue-400">
+                                    {client.appointments.map((appointment: any, index: number) => (
+                                      <div key={index} className="text-xs text-blue-800">
+                                        <div className="font-medium">{appointment.title}</div>
+                                        <div>🕒 {format(new Date(appointment.startTime), "h:mm a")}</div>
+                                        {appointment.type && (
+                                          <div>📋 {appointment.type}</div>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                
+                                <div className="text-xs text-muted-foreground space-y-1">
                                   {client.email && (
-                                    <div>📧 {client.email}</div>
+                                    <div className="flex items-center gap-1">
+                                      <span>📧</span>
+                                      <span>{client.email}</span>
+                                    </div>
                                   )}
                                   {client.phone && (
-                                    <div>📱 {client.phone}</div>
+                                    <div className="flex items-center gap-1">
+                                      <span>📱</span>
+                                      <span>{client.phone}</span>
+                                    </div>
                                   )}
                                   {client.address && (
-                                    <div>🏠 {client.address}</div>
+                                    <div className="flex items-start gap-1">
+                                      <span>🏠</span>
+                                      <span className="line-clamp-2">
+                                        {client.address}
+                                        {client.city && `, ${client.city}`}
+                                        {client.state && `, ${client.state}`}
+                                        {client.zip && ` ${client.zip}`}
+                                      </span>
+                                    </div>
                                   )}
+                                </div>
+                                
+                                <div className="mt-2 pt-2 border-t border-gray-200">
+                                  <span className="text-xs text-blue-600 font-medium">Click to select this client</span>
                                 </div>
                               </div>
                             </CardContent>

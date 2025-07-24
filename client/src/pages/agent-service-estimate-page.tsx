@@ -7,11 +7,11 @@ import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 
 // Hooks
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
-import { useClients } from "@/hooks/use-clients";
-import { useEstimates } from "@/hooks/use-estimates";
-import { useAiCostAnalysis, MaterialInput, AiAnalysisResult } from "@/hooks/use-ai-cost-analysis";
+import { useToast } from '../hooks/use-toast';
+import { useAuth } from '../hooks/use-auth';
+import { useClients } from '../hooks/use-clients';
+import { useEstimates } from '../hooks/use-estimates';
+import { useAiCostAnalysis, MaterialInput, AiAnalysisResult } from '../hooks/use-ai-cost-analysis';
 
 // Service data and utilities
 import { 
@@ -24,10 +24,10 @@ import {
   getOption,
   getMaterialWithConfiguredPrice,
   getServiceBasePrice
-} from "@/lib/service-options";
+} from '../lib/service-options';
 
 // Importar hook de precios centralizados
-import { usePricing } from '@/hooks/use-pricing';
+import { usePricing } from '../hooks/use-pricing';
 
 // Icons
 import { 
@@ -44,24 +44,28 @@ import {
   AlertTriangle
 } from "lucide-react";
 
+// Layout Components
+import Sidebar from '../components/layout/sidebar';
+import MobileSidebar from '../components/layout/mobile-sidebar';
+
 // UI Components
-import { ServiceItemSelector } from "@/components/estimates/service-item-selector";
-import AiAnalysisPanel from "@/components/ai/ai-analysis-panel";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+import { ServiceItemSelector } from '../components/estimates/service-item-selector';
+import AiAnalysisPanel from '../components/ai/ai-analysis-panel';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Textarea } from '../components/ui/textarea';
+import { Separator } from '../components/ui/separator';
+import { Badge } from '../components/ui/badge';
+import { Checkbox } from '../components/ui/checkbox';
+import { Label } from '../components/ui/label';
 import { 
   Select, 
   SelectContent, 
   SelectItem, 
   SelectTrigger, 
   SelectValue 
-} from "@/components/ui/select";
+} from '../components/ui/select';
 import {
   Form,
   FormControl,
@@ -69,13 +73,13 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from '../components/ui/form';
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@/components/ui/tabs";
+} from '../components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -85,13 +89,13 @@ import {
   TableHeader,
   TableRow,
   TableFooter,
-} from "@/components/ui/table";
+} from '../components/ui/table';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+} from '../components/ui/popover';
+import { Calendar } from '../components/ui/calendar';
 import { 
   Dialog, 
   DialogContent, 
@@ -99,12 +103,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger
-} from "@/components/ui/dialog";
+} from '../components/ui/dialog';
 
 // Digital Measurement Components
-import DigitalMeasurement from "@/components/measurement/digital-measurement";
-import AdvancedMeasurement from "@/components/measurement/advanced-measurement";
-import LiDARScanner from "@/components/measurement/lidar-scanner";
+import DigitalMeasurement from '../components/measurement/digital-measurement';
+import AdvancedMeasurement from '../components/measurement/advanced-measurement';
+import LiDARScanner from '../components/measurement/lidar-scanner';
 
 // Definición del esquema de validación para el formulario
 const estimateFormSchema = z.object({
@@ -162,7 +166,7 @@ export default function VendorServiceEstimatePage() {
   const [measurements, setMeasurements] = useState<any[]>([]);
   const [scanResults, setScanResults] = useState<any[]>([]);
   
-  // Para análisis de AI
+      // For AI analysis
   const [showAiAnalysis, setShowAiAnalysis] = useState(false);
   const [aiAnalysisResult, setAiAnalysisResult] = useState<AiAnalysisResult | null>(null);
   const { analyzeJobCost, isAnalyzing } = useAiCostAnalysis();
@@ -211,7 +215,7 @@ export default function VendorServiceEstimatePage() {
     });
   };
 
-  // Manejar adición de un material al estimado
+      // Handle adding a material to the estimate
   const addMaterial = (serviceType: string, materialId: string) => {
     // Intentar obtener el material con los precios configurados
     let material = null;
@@ -262,7 +266,7 @@ export default function VendorServiceEstimatePage() {
     recalculateTotal(updatedItems);
   };
 
-  // Manejar adición de una opción al estimado
+      // Handle adding an option to the estimate
   const addOption = (serviceType: string, optionId: string) => {
     // Intentar obtener la opción con los precios configurados
     let option = null;
@@ -348,7 +352,7 @@ export default function VendorServiceEstimatePage() {
     recalculateTotal(updatedItems);
   };
 
-  // Eliminar un ítem del estimado
+      // Remove an item from the estimate
   const removeItem = (index: number) => {
     const updatedItems = [...selectedItems];
     updatedItems.splice(index, 1);
@@ -407,7 +411,7 @@ const LABOR_RATES_BY_SERVICE: Record<string, { baseHours: number, hourlyRate: nu
   'general': { baseHours: 6, hourlyRate: 45 }
 };
 
-// Calcular el total del estimado en base al servicio y mediciones
+    // Calculate the total of the estimate based on service and measurements
 const recalculateTotal = (items: SelectedItem[]) => {
   // Variables para cálculos
   let materialsSubtotal = 0;
@@ -686,26 +690,34 @@ const recalculateTotal = (items: SelectedItem[]) => {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Vendor Estimate Form</h1>
-        <div className="flex space-x-2">
-          <Button 
-            variant="outline" 
-            onClick={() => setLocation('/')}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Home
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => setLocation('/estimates')}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Estimates
-          </Button>
-        </div>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Sidebar />
+      <MobileSidebar />
+      
+      <div className="lg:pl-72 relative z-10 min-h-screen">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl font-semibold text-foreground tracking-tight">Agent Estimate Form</h1>
+              <p className="text-muted-foreground">Create estimates for field agent services</p>
+            </div>
+            <div className="flex space-x-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setLocation('/')}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Home
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setLocation('/estimates')}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Estimates
+              </Button>
+            </div>
+          </div>
 
       <Form {...form}>
         <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
@@ -1160,7 +1172,7 @@ const recalculateTotal = (items: SelectedItem[]) => {
                                 </thead>
                                 <tbody>
                                   {selectedItems.map((item, index) => (
-                                    <tr key={`${item.id}-${item.type}-${index}`} className="border-t border-border">
+                                    <tr key={`${item.id}-${item.type}-${index}`} className="border-t border-gray-200 dark:border-gray-700">
                                       <td className="p-3">
                                         <div>
                                           <div className="font-medium">{item.name}</div>
@@ -1756,6 +1768,8 @@ const recalculateTotal = (items: SelectedItem[]) => {
           </Tabs>
         </form>
       </Form>
+        </div>
+      </div>
     </div>
   );
 }

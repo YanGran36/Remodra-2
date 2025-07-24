@@ -4,9 +4,9 @@ import {
   useMutation,
   useQueryClient
 } from "@tanstack/react-query";
-import { PriceConfiguration, PriceConfigurationInsert } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { PriceConfiguration, PriceConfigurationInsert } from "../../../shared/schema";
+import { apiRequest } from '../lib/queryClient';
+import { useToast } from './use-toast';
 
 export const usePriceConfigurations = () => {
   const { toast } = useToast();

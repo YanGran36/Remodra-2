@@ -3,8 +3,8 @@ import {
   useMutation,
   useQueryClient
 } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from '../lib/queryClient';
+import { useToast } from './use-toast';
 
 export interface Client {
   id: number;
@@ -17,6 +17,7 @@ export interface Client {
   state?: string | null;
   zip?: string | null;
   notes?: string | null;
+  cancellationHistory?: string | null;
   createdAt: Date;
 }
 
@@ -59,6 +60,10 @@ export const useClients = () => {
     error: clientsError
   } = useQuery<ClientWithProjects[]>({
     queryKey: ["/api/protected/clients"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/protected/clients");
+      return await response.json();
+    },
   });
 
   // Obtener un cliente específico
@@ -73,6 +78,20 @@ export const useClients = () => {
   const createClientMutation = useMutation({
     mutationFn: async (data: ClientInput) => {
       const response = await apiRequest("POST", "/api/protected/clients", data);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (response.status === 409) {
+          // Handle uniqueness validation error
+          const error = new Error(errorData.message);
+          (error as any).code = 'DUPLICATE_CLIENT';
+          (error as any).conflictType = errorData.conflictType;
+          (error as any).existingClient = errorData.existingClient;
+          throw error;
+        }
+        throw new Error(errorData.message || 'Failed to create client');
+      }
+      
       return await response.json();
     },
     onSuccess: () => {
@@ -82,12 +101,20 @@ export const useClients = () => {
         description: "El cliente ha sido creado exitosamente.",
       });
     },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: `No se pudo crear el cliente: ${error.message}`,
-        variant: "destructive"
-      });
+    onError: (error: any) => {
+      if (error.code === 'DUPLICATE_CLIENT') {
+        toast({
+          title: "Cliente Duplicado",
+          description: `Ya existe un cliente con este ${error.conflictType}. Por favor, revise los detalles.`,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: `No se pudo crear el cliente: ${error.message}`,
+          variant: "destructive"
+        });
+      }
     }
   });
 

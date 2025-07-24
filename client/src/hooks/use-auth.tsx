@@ -4,9 +4,9 @@ import {
   useMutation,
   UseMutationResult,
 } from "@tanstack/react-query";
-import { Contractor, ContractorInsert } from "@shared/schema";
+import { Contractor, ContractorInsert } from "../../../shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from './use-toast';
 
 type AuthContextType = {
   user: Contractor | null;
@@ -28,6 +28,7 @@ type RegisterData = {
   firstName: string;
   lastName: string;
   companyName: string;
+  username: string;
   email: string;
   password: string;
 };
@@ -58,45 +59,67 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
+      console.log('Attempting login with:', credentials.email);
       const res = await apiRequest("POST", "/api/login", credentials);
       return await res.json();
     },
-    onSuccess: (user: Contractor) => {
+    onSuccess: async (user: Contractor) => {
+      console.log('Login successful:', user.email);
       queryClient.setQueryData(["/api/user"], user);
+      // Force refetch to ensure the user data is immediately available
+      await refetch();
       toast({
         title: "Login successful",
         description: `Welcome back, ${user.firstName}!`,
       });
     },
     onError: (error: Error) => {
+      console.error('Login failed:', error);
       toast({
         title: "Login failed",
-        description: error.message,
+        description: error.message || "Please check your credentials and try again.",
         variant: "destructive",
       });
     },
   });
 
+  // Force refetch user data when login is successful
+  useEffect(() => {
+    if (loginMutation.isSuccess) {
+      refetch();
+    }
+  }, [loginMutation.isSuccess, refetch]);
+
   const registerMutation = useMutation({
     mutationFn: async (credentials: RegisterData) => {
+      console.log('Attempting registration with:', credentials.email);
       const res = await apiRequest("POST", "/api/register", credentials);
       return await res.json();
     },
     onSuccess: (user: Contractor) => {
+      console.log('Registration successful:', user.email);
       queryClient.setQueryData(["/api/user"], user);
       toast({
         title: "Registration successful",
-        description: `Welcome to ContractorHub, ${user.firstName}!`,
+        description: `Welcome to Remodra, ${user.firstName}!`,
       });
     },
     onError: (error: Error) => {
+      console.error('Registration failed:', error);
       toast({
         title: "Registration failed",
-        description: error.message,
+        description: error.message || "Please check your information and try again.",
         variant: "destructive",
       });
     },
   });
+
+  // Force refetch user data when registration is successful
+  useEffect(() => {
+    if (registerMutation.isSuccess) {
+      refetch();
+    }
+  }, [registerMutation.isSuccess, refetch]);
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
@@ -129,17 +152,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const currentUser = queryClient.getQueryData<Contractor | null>(["/api/user"]);
       
       if (currentUser) {
-        toast({
-          title: "Sesión restaurada",
-          description: "Se ha restablecido la conexión"
-        });
+        // Removed session restored toast notification
       } else {
-        // Si no hay usuario, puede que se necesite iniciar sesión de nuevo
-        toast({
-          title: "La sesión expiró",
-          description: "Por favor inicia sesión nuevamente",
-          variant: "destructive"
-        });
+        // Removed session expired toast notification
       }
     } catch (error) {
       console.error("Error al refrescar la sesión:", error);
@@ -151,12 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Monitorear si la sesión se pierde inesperadamente
   useEffect(() => {
     if (!isLoading && !user && localStorage.getItem('lastUserEmail')) {
-      // Si teníamos un usuario pero ahora no, mostrar alerta de sesión expirada
-      toast({
-        title: "Sesión expirada",
-        description: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
-        variant: "destructive"
-      });
+      // Removed session expiration toast notification
     }
   }, [isLoading, user, toast]);
 

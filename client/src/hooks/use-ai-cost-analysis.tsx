@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from '../lib/queryClient';
+import { useToast } from './use-toast';
 
 export interface MaterialInput {
   name: string;
@@ -19,7 +19,10 @@ export interface AiAnalysisParams {
     linearFeet?: number;
     units?: number;
   };
-  location?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
   difficulty?: "easy" | "medium" | "complex";
   additionalInfo?: string;
 }

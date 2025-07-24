@@ -1,18 +1,18 @@
 import { db } from ".";
 
 async function dropAchievementTables() {
-  console.log("Eliminando tablas del sistema de logros...");
+  console.log("Dropping achievement system tables...");
   
   try {
-    // Eliminar tablas en orden inverso para respetar las dependencias de clave foránea
+    // Drop tables in reverse order to respect foreign key dependencies
     await db.execute(`DROP TABLE IF EXISTS contractor_streaks CASCADE;`);
     await db.execute(`DROP TABLE IF EXISTS achievement_rewards CASCADE;`);
     await db.execute(`DROP TABLE IF EXISTS contractor_achievements CASCADE;`);
     await db.execute(`DROP TABLE IF EXISTS achievements CASCADE;`);
     
-    console.log("Tablas del sistema de logros eliminadas con éxito.");
+    console.log("Achievement system tables dropped successfully.");
   } catch (error) {
-    console.error("Error al eliminar las tablas:", error);
+    console.error("Error dropping tables:", error);
     throw error;
   }
 }
@@ -21,6 +21,6 @@ async function dropAchievementTables() {
 dropAchievementTables()
   .then(() => process.exit(0))
   .catch((error) => {
-    console.error("Eliminación fallida:", error);
+    console.error("Drop failed:", error);
     process.exit(1);
   });

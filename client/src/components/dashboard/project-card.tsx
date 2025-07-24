@@ -1,103 +1,140 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Progress } from "@/components/ui/progress";
-
-export interface TeamMember {
-  name: string;
-  avatar?: string;
-  initials?: string;
-}
+import { Card, CardContent } from '../ui/card';
+import { Button } from '../ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Progress } from '../ui/progress';
+import { Building, Calendar, DollarSign } from 'lucide-react';
 
 export interface ProjectCardProps {
+  id: number;
   title: string;
-  startDate: string;
-  status: "In Progress" | "On Schedule" | "Materials Pending" | "Completed" | "Delayed";
+  status: string;
   progress: number;
-  team: TeamMember[];
-  onViewDetails: () => void;
+  client: string;
+  startDate?: string;
+  endDate?: string;
+  budget?: number;
 }
 
 export default function ProjectCard({
+  id,
   title,
-  startDate,
   status,
   progress,
-  team,
-  onViewDetails
+  client,
+  startDate,
+  endDate,
+  budget
 }: ProjectCardProps) {
   const getStatusClass = () => {
     switch (status) {
-      case "In Progress":
-        return "bg-blue-100 text-blue-800";
-      case "Materials Pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "On Schedule":
-        return "bg-green-100 text-green-800";
-      case "Completed":
-        return "bg-success/15 text-success";
-      case "Delayed":
-        return "bg-destructive/15 text-destructive";
+      case "active":
+      case "in_progress":
+        return "bg-gradient-to-r from-blue-500 to-blue-600 text-white";
+      case "pending":
+        return "bg-gradient-to-r from-yellow-500 to-yellow-600 text-white";
+      case "completed":
+        return "bg-gradient-to-r from-green-500 to-green-600 text-white";
+      case "delayed":
+        return "bg-gradient-to-r from-red-500 to-red-600 text-white";
       default:
-        return "bg-blue-100 text-blue-800";
+        return "bg-gradient-to-r from-gray-500 to-gray-600 text-white";
+    }
+  };
+
+  const getStatusText = () => {
+    switch (status) {
+      case "active":
+      case "in_progress":
+        return "In Progress";
+      case "pending":
+        return "Pending";
+      case "completed":
+        return "Completed";
+      case "delayed":
+        return "Delayed";
+      default:
+        return status;
     }
   };
 
   const getProgressBarColor = () => {
     switch (status) {
-      case "In Progress":
-        return "bg-blue-600";
-      case "Materials Pending":
-        return "bg-yellow-500";
-      case "On Schedule":
-        return "bg-green-600";
-      case "Completed":
-        return "bg-success";
-      case "Delayed":
-        return "bg-destructive";
+      case "active":
+      case "in_progress":
+        return "bg-gradient-to-r from-blue-500 to-blue-600";
+      case "pending":
+        return "bg-gradient-to-r from-yellow-500 to-yellow-600";
+      case "completed":
+        return "bg-gradient-to-r from-green-500 to-green-600";
+      case "delayed":
+        return "bg-gradient-to-r from-red-500 to-red-600";
       default:
-        return "bg-blue-600";
+        return "bg-gradient-to-r from-gray-500 to-gray-600";
     }
   };
 
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'TBD';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  const formatBudget = (amount?: number) => {
+    if (!amount) return 'TBD';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
   return (
-    <Card className="border border-gray-100">
-      <CardContent className="p-5">
+    <Card className="card-home-builder hover:shadow-xl transition-all duration-300">
+      <CardContent className="p-6">
         <div className="flex justify-between items-start mb-4">
-          <div>
-            <h4 className="font-semibold text-gray-900">{title}</h4>
-            <p className="text-sm text-gray-600 mt-1">Started {startDate}</p>
+          <div className="flex-1">
+            <h4 className="font-bold text-lg text-gray-900 mb-1">{title}</h4>
+            <div className="flex items-center text-sm text-gray-600 mb-2">
+              <Building className="h-4 w-4 mr-1" />
+              <span>{client}</span>
+            </div>
+            <div className="flex items-center text-xs text-gray-500">
+              <Calendar className="h-3 w-3 mr-1" />
+              <span>Started {formatDate(startDate)}</span>
+            </div>
           </div>
-          <span className={`text-xs font-medium px-2.5 py-0.5 rounded ${getStatusClass()}`}>
-            {status}
+          <span className={`text-xs font-bold px-3 py-1 rounded-full shadow-sm ${getStatusClass()}`}>
+            {getStatusText()}
           </span>
         </div>
         
         <div className="mb-4">
-          <div className="flex justify-between mb-1 text-sm">
-            <span className="text-gray-700">Progress</span>
-            <span className="text-gray-900 font-medium">{progress}%</span>
+          <div className="flex justify-between mb-2 text-sm">
+            <span className="text-gray-700 font-medium">Progress</span>
+            <span className="text-gray-900 font-bold">{progress}%</span>
           </div>
-          <Progress value={progress} className="h-2.5 bg-gray-200" indicatorClassName={getProgressBarColor()} />
+          <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+            <div 
+              className={`h-full rounded-full transition-all duration-500 ${getProgressBarColor()}`}
+              style={{ width: `${progress}%` }}
+            />
+          </div>
         </div>
         
-        <div className="flex justify-between items-center">
-          <div className="flex -space-x-2">
-            {team.map((member, index) => (
-              <Avatar key={index} className="w-7 h-7 border-2 border-white">
-                <AvatarImage src={member.avatar} alt={member.name} />
-                <AvatarFallback className="text-xs bg-primary text-white">
-                  {member.initials}
-                </AvatarFallback>
-              </Avatar>
-            ))}
+        <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+          <div className="flex items-center text-sm text-gray-600">
+            <DollarSign className="h-4 w-4 mr-1" />
+            <span className="font-medium">{formatBudget(budget)}</span>
           </div>
           <Button 
-            variant="ghost" 
-            className="text-sm text-primary hover:text-primary/80 font-medium"
-            onClick={onViewDetails}
+            variant="outline" 
+            className="text-sm font-medium border-blue-500 text-blue-600 hover:bg-blue-50 hover:border-blue-600 transition-all duration-300"
           >
-            Details
+            View Details
           </Button>
         </div>
       </CardContent>

@@ -25,7 +25,10 @@ export interface JobCostAnalysisParams {
     linearFeet?: number;
     units?: number;
   };
-  location?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
   difficulty?: "easy" | "medium" | "complex";
   additionalInfo?: string;
 }
@@ -83,7 +86,7 @@ export async function analyzeJobCost(params: JobCostAnalysisParams): Promise<Job
       serviceType: params.serviceType,
       materialsCount: params.materials?.length || 0,
       hasLaborHours: !!params.laborHours,
-      hasLocation: !!params.location,
+      hasAddress: !!(params.address || params.city || params.state || params.zip),
       hasDifficulty: !!params.difficulty,
       hasAdditionalInfo: !!params.additionalInfo
     });
@@ -99,7 +102,7 @@ export async function analyzeJobCost(params: JobCostAnalysisParams): Promise<Job
     ${params.propertySize?.squareFeet ? `- Property size (square feet): ${params.propertySize.squareFeet}` : ''}
     ${params.propertySize?.linearFeet ? `- Property size (linear feet): ${params.propertySize.linearFeet}` : ''}
     ${params.propertySize?.units ? `- Units: ${params.propertySize.units}` : ''}
-    ${params.location ? `- Location: ${params.location}` : ''}
+    ${params.address || params.city || params.state || params.zip ? `- Project Address: ${[params.address, params.city, params.state, params.zip].filter(Boolean).join(', ')}` : ''}
     ${params.difficulty ? `- Job difficulty: ${params.difficulty}` : ''}
     ${params.additionalInfo ? `- Additional information: ${params.additionalInfo}` : ''}
 
@@ -219,7 +222,7 @@ export async function generateJobDescription(params: JobCostAnalysisParams): Pro
     console.log("Parameters received:", {
       serviceType: params.serviceType,
       materialsCount: params.materials?.length || 0,
-      hasLocation: !!params.location,
+      hasAddress: !!(params.address || params.city || params.state || params.zip),
       hasDifficulty: !!params.difficulty,
       hasAdditionalInfo: !!params.additionalInfo
     });
@@ -234,7 +237,7 @@ export async function generateJobDescription(params: JobCostAnalysisParams): Pro
     ${params.propertySize?.squareFeet ? `- Property size (square feet): ${params.propertySize.squareFeet}` : ''}
     ${params.propertySize?.linearFeet ? `- Property size (linear feet): ${params.propertySize.linearFeet}` : ''}
     ${params.propertySize?.units ? `- Units: ${params.propertySize.units}` : ''}
-    ${params.location ? `- Location: ${params.location}` : ''}
+    ${params.address || params.city || params.state || params.zip ? `- Project Address: ${[params.address, params.city, params.state, params.zip].filter(Boolean).join(', ')}` : ''}
     ${params.difficulty ? `- Job difficulty: ${params.difficulty}` : ''}
     ${params.additionalInfo ? `- Additional information: ${params.additionalInfo}` : ''}
 

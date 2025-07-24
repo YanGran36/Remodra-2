@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { toast } from "@/hooks/use-toast";
-import { queryClient, apiRequest } from "@/lib/queryClient";
+import { toast } from './use-toast';
+import { queryClient, apiRequest } from '../lib/queryClient';
 import { format, parseISO } from "date-fns";
 
 // Tipos para los eventos
@@ -9,13 +9,17 @@ export interface Event {
   contractorId: number;
   title: string;
   description?: string;
-  startTime: string;
-  endTime: string;
-  location?: string;
+  startTime: number;
+  endTime: number;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
   type: "meeting" | "site-visit" | "delivery" | "estimate" | "invoice" | "other";
   status: "pending" | "confirmed" | "completed" | "cancelled";
   clientId?: number;
   projectId?: number;
+  agentId?: number;
   notes?: string;
   client?: {
     id: number;
@@ -28,6 +32,11 @@ export interface Event {
     id: number;
     title: string;
   };
+  agent?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+  };
 }
 
 export interface EventInput {
@@ -35,11 +44,15 @@ export interface EventInput {
   description?: string;
   startTime: string;
   endTime: string;
-  location?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
   type: "meeting" | "site-visit" | "delivery" | "estimate" | "invoice" | "other";
   status: "pending" | "confirmed" | "completed" | "cancelled";
   clientId?: number;
   projectId?: number;
+  agentId?: number;
   notes?: string;
 }
 
@@ -48,6 +61,10 @@ export function useEvents() {
   const getEvents = () => {
     return useQuery<Event[]>({
       queryKey: ["/api/protected/events"],
+      staleTime: 30000, // 30 seconds
+      gcTime: 5 * 60 * 1000, // 5 minutes (renamed from cacheTime in v5)
+      refetchOnWindowFocus: false,
+      retry: 2,
     });
   };
 
@@ -67,53 +84,61 @@ export function useEvents() {
   const createEventMutation = useMutation({
     mutationFn: async (data: EventInput) => {
       try {
-        console.log("Enviando datos para crear evento:", JSON.stringify(data, null, 2));
-        const res = await apiRequest("POST", "/api/protected/events", data);
+        // Coerce startTime and endTime to timestamps, ensure title/type
+        const eventData = {
+          ...data,
+          startTime: typeof data.startTime === 'string' ? Date.parse(data.startTime) : data.startTime,
+          endTime: typeof data.endTime === 'string' ? Date.parse(data.endTime) : data.endTime,
+          title: data.title || (data.type ? `${data.type.charAt(0).toUpperCase() + data.type.slice(1)} Event` : 'Event'),
+          type: data.type || 'other',
+        };
+        console.log("Sending data to create event (patched):", JSON.stringify(eventData, null, 2));
+        const res = await apiRequest("POST", "/api/protected/events", eventData);
         if (!res.ok) {
           const error = await res.json();
-          console.error("Error al crear evento:", error);
+          console.error("Error creating event:", error);
           throw new Error(
             error.errors ? 
               JSON.stringify(error.errors, null, 2) : 
-              (error.message || "Error al crear el evento")
+              (error.message || "Error creating event")
           );
         }
         return await res.json();
       } catch (error: any) {
-        console.error("Excepción al crear evento:", error);
+        console.error("Exception creating event:", error);
         throw error;
       }
     },
     onSuccess: () => {
       toast({
-        title: "Evento creado",
-        description: "El evento ha sido creado exitosamente",
+        title: "Event created",
+        description: "The event has been created successfully",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/protected/events"] });
     },
     onError: (error) => {
       toast({
         title: "Error",
-        description: `No se pudo crear el evento: ${error.message}`,
+        description: `Could not create the event: ${error.message}`,
         variant: "destructive",
       });
     },
   });
 
-  // Actualizar un evento existente
+  // Update an existing event
   const updateEventMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<EventInput> }) => {
       const res = await apiRequest("PATCH", `/api/protected/events/${id}`, data);
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.message || "Error al actualizar el evento");
+        throw new Error(error.message || "Error updating the event");
       }
       return await res.json();
     },
     onSuccess: (_, variables) => {
       toast({
-        title: "Evento actualizado",
-        description: "El evento ha sido actualizado exitosamente",
+        title: "Event updated",
+        description: "The event has been updated successfully",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/protected/events"] });
       queryClient.invalidateQueries({ queryKey: ["/api/protected/events", variables.id] });
@@ -121,39 +146,76 @@ export function useEvents() {
     onError: (error) => {
       toast({
         title: "Error",
-        description: `No se pudo actualizar el evento: ${error.message}`,
+        description: `Could not update the event: ${error.message}`,
         variant: "destructive",
       });
     },
   });
 
-  // Eliminar un evento
+  // Delete an event
   const deleteEventMutation = useMutation({
     mutationFn: async (id: number) => {
       const res = await apiRequest("DELETE", `/api/protected/events/${id}`);
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.message || "Error al eliminar el evento");
+        throw new Error(error.message || "Error deleting the event");
       }
       return id;
     },
     onSuccess: () => {
       toast({
-        title: "Evento eliminado",
-        description: "El evento ha sido eliminado exitosamente",
+        title: "Event deleted",
+        description: "The event has been deleted successfully",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/protected/events"] });
     },
     onError: (error) => {
       toast({
         title: "Error",
-        description: `No se pudo eliminar el evento: ${error.message}`,
+        description: `Could not delete the event: ${error.message}`,
         variant: "destructive",
       });
     },
   });
 
-  // Buscar eventos para el día actual
+  // Cancel an event (set status to cancelled)
+  const cancelEventMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("PATCH", `/api/protected/events/${id}`, { status: "cancelled" });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Error cancelling the event");
+      }
+      return await res.json();
+    },
+    onSuccess: (updatedEvent, id) => {
+      toast({
+        title: "Event cancelled",
+        description: "The event has been cancelled successfully",
+      });
+      
+      // Remove the cancelled event from cache immediately
+      queryClient.setQueryData(["/api/protected/events"], (oldData: Event[]) => {
+        if (!oldData) return oldData;
+        return oldData.filter(event => event.id !== id);
+      });
+      
+      // Remove individual event cache
+      queryClient.removeQueries({ queryKey: ["/api/protected/events", id] });
+      
+      // Force refresh to ensure consistency
+      queryClient.invalidateQueries({ queryKey: ["/api/protected/events"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Could not cancel the event: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Search events for today
   const getTodayEvents = () => {
     const { data: events = [] } = getEvents();
     
@@ -162,14 +224,61 @@ export function useEvents() {
     const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
     
     return events.filter(event => {
-      const eventDate = parseISO(event.startTime);
+      const eventDate = new Date(event.startTime);
       return eventDate >= todayStart && eventDate <= todayEnd;
     });
   };
 
   // Formatear un evento para la visualización
   const formatEvent = (event: Event) => {
-    const startTime = parseISO(event.startTime);
+    // Validate startTime before creating Date object
+    if (!event.startTime || isNaN(event.startTime)) {
+      console.warn("Invalid startTime for event:", event.id, event.startTime);
+      return {
+        id: String(event.id),
+        title: event.title,
+        date: new Date(),
+        time: "Invalid time",
+        timeColor: "bg-red-100 text-red-800",
+        location: [event.address, event.city, event.state, event.zip].filter(Boolean).join(', ') || "Not specified",
+        type: event.type,
+        status: event.status,
+        contact: event.client ? {
+          name: `${event.client.firstName} ${event.client.lastName}`,
+          initials: `${event.client.firstName[0]}${event.client.lastName[0]}`,
+          id: event.client.id
+        } : undefined,
+        clientId: event.clientId,
+        projectId: event.projectId,
+        description: event.description
+      };
+    }
+    
+    const startTime = new Date(event.startTime);
+    
+    // Validate the Date object
+    if (isNaN(startTime.getTime())) {
+      console.warn("Invalid Date object created from startTime:", event.id, event.startTime);
+      return {
+        id: String(event.id),
+        title: event.title,
+        date: new Date(),
+        time: "Invalid time",
+        timeColor: "bg-red-100 text-red-800",
+        location: [event.address, event.city, event.state, event.zip].filter(Boolean).join(', ') || "Not specified",
+        type: event.type,
+        status: event.status,
+        contact: event.client ? {
+          name: `${event.client.firstName} ${event.client.lastName}`,
+          initials: `${event.client.firstName[0]}${event.client.lastName[0]}`,
+          id: event.client.id
+        } : undefined,
+        clientId: event.clientId,
+        projectId: event.projectId,
+        description: event.description
+      };
+    }
+    
     const formattedTime = format(startTime, "h:mm a");
     
     let timeColor = "bg-blue-100 text-blue-800";
@@ -199,7 +308,7 @@ export function useEvents() {
       date: startTime,
       time: formattedTime,
       timeColor,
-      location: event.location || "No especificado",
+      location: [event.address, event.city, event.state, event.zip].filter(Boolean).join(', ') || "Not specified",
       type: event.type,
       status: event.status,
       contact: event.client ? {
@@ -219,7 +328,11 @@ export function useEvents() {
     createEventMutation,
     updateEventMutation,
     deleteEventMutation,
+    cancelEventMutation,
     getTodayEvents,
-    formatEvent
+    formatEvent,
+    createEvent: createEventMutation.mutateAsync,
+    updateEvent: updateEventMutation.mutateAsync,
+    deleteEvent: deleteEventMutation.mutateAsync
   };
 }

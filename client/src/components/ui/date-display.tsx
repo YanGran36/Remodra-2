@@ -1,7 +1,7 @@
 import { format, formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { Clock, Calendar, AlertTriangle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from '../../lib/utils';
 
 interface DateDisplayProps {
   label: string;
@@ -23,12 +23,12 @@ export function DateDisplay({
   if (!date) return null;
   
   const formattedDate = typeof date === 'string' 
-    ? format(new Date(date), 'dd MMM yyyy', { locale: es })
-    : format(date, 'dd MMM yyyy', { locale: es });
+    ? format(new Date(date), 'dd MMM yyyy')
+    : format(date, 'dd MMM yyyy');
   
   const relativeTime = typeof date === 'string'
-    ? formatDistanceToNow(new Date(date), { addSuffix: true, locale: es })
-    : formatDistanceToNow(date, { addSuffix: true, locale: es });
+    ? formatDistanceToNow(new Date(date), { addSuffix: true })
+    : formatDistanceToNow(date, { addSuffix: true });
   
   return (
     <div className={cn("flex items-start space-x-3", className)}>

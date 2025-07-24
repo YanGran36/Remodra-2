@@ -1,5 +1,5 @@
-import { useLanguage } from "@/hooks/use-language";
-import { Button } from "@/components/ui/button";
+import { useLanguage } from '../hooks/use-language';
+import { Button } from "./ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,14 +7,13 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
   DropdownMenuSeparator
-} from "@/components/ui/dropdown-menu";
+} from './ui/dropdown-menu';
 import { Globe, Loader2, Check } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from './ui/badge';
 
-// Country flag codes for languages
+// English only - removed Spanish language support
 const languageFlags: Record<string, string> = {
-  en: "🇺🇸", // US flag for English
-  es: "🇪🇸", // Spain flag for Spanish
+  en: "🇺🇸", // US flag for English only
 };
 
 export function LanguageSwitcher({ variant = "ghost", showText = true, size = "sm" }: { 

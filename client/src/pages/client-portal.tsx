@@ -1,11 +1,12 @@
-import { useState } from "react";
-import { useParams } from "wouter";
+import React, { useState, useRef, useCallback, useEffect } from "react";
+import SimpleChat from '../components/SimpleChat';
+import { useParams, useLocation } from "wouter";
 import { 
   Tabs, 
   TabsContent, 
   TabsList, 
   TabsTrigger 
-} from "@/components/ui/tabs";
+} from '../components/ui/tabs';
 import { 
   Card, 
   CardContent, 
@@ -13,409 +14,841 @@ import {
   CardHeader, 
   CardTitle,
   CardFooter 
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+} from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import { 
   FileText, 
-  ClipboardCheck, 
+  Receipt, 
   Calendar, 
   MessageCircle,
   Clock,
-  DollarSign
+  DollarSign,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  CheckCircle,
+  AlertCircle,
+  Download,
+  Eye,
+  Send,
+  ArrowLeft,
+  Building,
+  Activity
 } from "lucide-react";
+import { fetchWithBaseUrl } from '../lib/queryClient';
 
-// Componente para la vista de portal del cliente
+// Error Boundary Component
+function ErrorBoundary({ children }: { children: React.ReactNode }) {
+  const [error, setError] = useState<Error | null>(null);
+  if (error) {
+    return <div style={{ color: 'red', padding: 32 }}>
+      <h2>Something went wrong in the Client Portal:</h2>
+      <pre>{error.message}</pre>
+      <pre>{error.stack}</pre>
+    </div>;
+  }
+  return <ErrorCatcher onError={setError}>{children}</ErrorCatcher>;
+}
+
+class ErrorCatcher extends React.Component<{ onError: (e: Error) => void; children: React.ReactNode }, {}> {
+  componentDidCatch(error: Error) {
+    this.props.onError(error);
+  }
+  render() {
+    return this.props.children;
+  }
+}
+
+// Client Portal Component
 export default function ClientPortal() {
   const { clientId } = useParams<{ clientId: string }>();
-  // Estado para almacenar datos del cliente
-  const [activeTab, setActiveTab] = useState("estimates");
-  // En una implementación real, estos datos vendrían de una API
+  const [, setLocation] = useLocation();
+  const [activeTab, setActiveTab] = useState("overview");
   
-  // Información del cliente de muestra
-  const clientInfo = {
-    id: Number(clientId),
-    name: "John Smith",
-    email: "john@example.com",
-    phone: "(555) 123-4567",
-    address: "123 Main St, Anytown, CA 12345"
+  // Real client information from database
+  const [clientInfo, setClientInfo] = useState<any>(null);
+  const [clientProjects, setClientProjects] = useState<any[]>([]);
+  const [clientEstimates, setClientEstimates] = useState<any[]>([]);
+  const [clientInvoices, setClientInvoices] = useState<any[]>([]);
+  const [clientAppointments, setClientAppointments] = useState<any[]>([]);
+  const [agentInfo, setAgentInfo] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchClientData = async () => {
+      try {
+        const response = await fetchWithBaseUrl(`/api/client-portal/${clientId}/data`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log('[Client Portal] Fetched data:', data);
+          setClientInfo(data.client);
+          setClientProjects(data.projects || []);
+          setClientEstimates(data.estimates || []);
+          setClientInvoices(data.invoices || []);
+          setClientAppointments(data.appointments || []);
+          setAgentInfo(data.agent);
+        } else {
+          console.error('[Client Portal] API error:', response.status, await response.text());
+        }
+      } catch (error) {
+        console.error('Error fetching client data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (clientId) {
+      fetchClientData();
+    }
+  }, [clientId]);
+
+  if (loading) {
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+        <p className="mt-2 text-gray-600">Loading...</p>
+      </div>
+    </div>;
+  }
+
+  if (!clientInfo) {
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <p className="text-gray-600">Client not found</p>
+      </div>
+    </div>;
+  }
+
+  // Use real data from database
+  const projects = clientProjects;
+  const estimates = clientEstimates;
+  const invoices = clientInvoices;
+  const appointments = clientAppointments;
+
+  const handleViewEstimate = (estimateId: string) => {
+    window.open(`/public/estimates/${estimateId}`, '_blank');
   };
 
-  // Componente de estimaciones
-  const EstimatesTab = () => (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold">Mis Presupuestos</h2>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Estimado pendiente */}
-        <Card>
+  const handleViewInvoice = (invoiceId: string) => {
+    window.open(`/public/invoices/${invoiceId}`, '_blank');
+  };
+
+  const handleApproveEstimate = (estimateId: string) => {
+    alert(`Estimate ${estimateId} approved! You will be redirected to contract signing.`);
+  };
+
+  const handlePayInvoice = (invoiceId: string) => {
+    alert(`Redirecting to payment portal for invoice ${invoiceId}`);
+  };
+
+  const handleRescheduleAppointment = (appointmentId: number) => {
+    alert(`Rescheduling appointment ${appointmentId}. A calendar will open.`);
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'approved':
+      case 'paid':
+      case 'completed':
+        return <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg border-0">{status}</Badge>;
+      case 'pending':
+      case 'scheduled':
+        return <Badge className="bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-lg border-0">{status}</Badge>;
+      case 'in progress':
+        return <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg border-0">{status}</Badge>;
+      default:
+        return <Badge className="bg-gradient-to-r from-gray-400 to-gray-500 text-white shadow-lg border-0">{status}</Badge>;
+    }
+  };
+
+  // Overview Tab Component
+  const OverviewTab = () => (
+    <div className="space-y-6">
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-lg hover:shadow-xl transition-all duration-200">
           <CardHeader className="pb-3">
-            <div className="flex justify-between">
-              <div>
-                <CardTitle>Presupuesto #1001</CardTitle>
-                <CardDescription>Emitido: {format(new Date(), "PP", { locale: es })}</CardDescription>
-              </div>
-              <Badge className="bg-amber-500 hover:bg-amber-600">Pendiente</Badge>
-            </div>
+            <CardTitle className="text-sm font-semibold text-blue-700 flex items-center gap-2">
+              <Building className="h-4 w-4" />
+              Active Projects
+            </CardTitle>
           </CardHeader>
-          <CardContent className="pb-3">
-            <p className="font-medium mb-1">Reparación de Techo</p>
-            <p className="text-gray-600 text-sm mb-3">Reparación y reemplazo de tejas en área de 200m²</p>
-            <p className="font-semibold text-lg">Total: $5,840.00</p>
+          <CardContent>
+            <div className="text-2xl font-semibold text-blue-600">
+              {projects.filter(p => p.status === "In Progress").length}
+            </div>
+            <p className="text-xs text-blue-500 mt-1">In progress</p>
           </CardContent>
-          <CardFooter className="flex justify-end gap-2 pt-0">
-            <Button variant="outline" size="sm">Ver Detalles</Button>
-            <Button size="sm">Aprobar</Button>
-          </CardFooter>
         </Card>
         
-        {/* Estimado aprobado */}
-        <Card>
+        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 shadow-lg hover:shadow-xl transition-all duration-200">
           <CardHeader className="pb-3">
-            <div className="flex justify-between">
-              <div>
-                <CardTitle>Presupuesto #982</CardTitle>
-                <CardDescription>Emitido: {format(new Date(2023, 3, 15), "PP", { locale: es })}</CardDescription>
-              </div>
-              <Badge className="bg-green-600 hover:bg-green-700">Aprobado</Badge>
-            </div>
+            <CardTitle className="text-sm font-semibold text-orange-700 flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Pending Estimates
+            </CardTitle>
           </CardHeader>
-          <CardContent className="pb-3">
-            <p className="font-medium mb-1">Instalación de Ventanas</p>
-            <p className="text-gray-600 text-sm mb-3">Instalación de 5 windows de doble panel</p>
-            <p className="font-semibold text-lg">Total: $3,250.00</p>
+          <CardContent>
+            <div className="text-2xl font-semibold text-orange-600">
+              {estimates.filter(e => e.status === "Pending").length}
+            </div>
+            <p className="text-xs text-orange-500 mt-1">Awaiting approval</p>
           </CardContent>
-          <CardFooter className="flex justify-end gap-2 pt-0">
-            <Button variant="outline" size="sm">Ver Detalles</Button>
-          </CardFooter>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200 shadow-lg hover:shadow-xl transition-all duration-200">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold text-red-700 flex items-center gap-2">
+              <Receipt className="h-4 w-4" />
+              Outstanding Invoices
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-semibold text-red-600">
+              {invoices.filter(i => i.status === "Pending").length}
+            </div>
+            <p className="text-xs text-red-500 mt-1">Requires payment</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-lg hover:shadow-xl transition-all duration-200">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold text-purple-700 flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Upcoming Appointments
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-semibold text-purple-600">
+              {appointments.filter(a => new Date(a.startTime) > new Date()).length}
+            </div>
+            <p className="text-xs text-purple-500 mt-1">Upcoming</p>
+          </CardContent>
         </Card>
       </div>
+
+      {/* Agent Contact Information */}
+      {agentInfo && (
+        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-emerald-100 to-emerald-200 rounded-t-lg">
+            <CardTitle className="text-emerald-800 flex items-center gap-2">
+              <User className="h-5 w-5 text-emerald-600" />
+              Your Assigned Agent
+            </CardTitle>
+            <CardDescription className="text-emerald-600">Contact your project coordinator</CardDescription>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-emerald-500 p-2 rounded-full">
+                  <User className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <p className="font-semibold text-emerald-900">{agentInfo.name}</p>
+                  <p className="text-sm text-emerald-600">{agentInfo.role}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="bg-emerald-500 p-2 rounded-full">
+                  <Mail className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <p className="font-medium text-emerald-900">Email</p>
+                  <p className="text-sm text-emerald-600">{agentInfo.email}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="bg-emerald-500 p-2 rounded-full">
+                  <Phone className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <p className="font-medium text-emerald-900">Phone</p>
+                  <p className="text-sm text-emerald-600">{agentInfo.phone}</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Recent Activity */}
+      <Card className="bg-gradient-to-br from-slate-50 to-gray-50 border-slate-200 shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-slate-100 to-gray-100 rounded-t-lg">
+          <CardTitle className="text-slate-800 flex items-center gap-2">
+            <Activity className="h-5 w-5 text-slate-600" />
+            Recent Activity
+          </CardTitle>
+          <CardDescription className="text-slate-600">Your latest project updates and communications</CardDescription>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            {projects.length === 0 && estimates.length === 0 && invoices.length === 0 ? (
+              <div className="text-center py-8">
+                <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">No recent activity</p>
+                <p className="text-sm text-gray-400">Activity will appear here when work begins</p>
+              </div>
+            ) : (
+              <>
+                {projects.map((project) => (
+                  <div key={project.id} className="flex items-start gap-4 p-4 rounded-lg bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200">
+                    <div className="bg-blue-500 p-2 rounded-full">
+                      <Activity className="h-4 w-4 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-blue-900">{project.title} updated</p>
+                      <p className="text-sm text-blue-700">{project.description}</p>
+                      <p className="text-xs text-blue-500 mt-1">{format(new Date(project.updatedAt || project.createdAt), "MMM dd, yyyy 'at' h:mm a")}</p>
+                    </div>
+                  </div>
+                ))}
+                {estimates.map((estimate) => (
+                  <div key={estimate.id} className="flex items-start gap-4 p-4 rounded-lg bg-gradient-to-r from-green-50 to-green-100 border border-green-200">
+                    <div className="bg-green-500 p-2 rounded-full">
+                      <Receipt className="h-4 w-4 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-green-900">Estimate {estimate.estimateNumber} created</p>
+                      <p className="text-sm text-green-700">{estimate.title}</p>
+                      <p className="text-xs text-green-500 mt-1">{format(new Date(estimate.createdAt), "MMM dd, yyyy 'at' h:mm a")}</p>
+                    </div>
+                  </div>
+                ))}
+                {invoices.map((invoice) => (
+                  <div key={invoice.id} className="flex items-start gap-4 p-4 rounded-lg bg-gradient-to-r from-purple-50 to-purple-100 border border-purple-200">
+                    <div className="bg-purple-500 p-2 rounded-full">
+                      <DollarSign className="h-4 w-4 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-purple-900">Invoice {invoice.invoiceNumber} generated</p>
+                      <p className="text-sm text-purple-700">${Number(invoice.total).toFixed(2)}</p>
+                      <p className="text-xs text-purple-500 mt-1">{format(new Date(invoice.createdAt), "MMM dd, yyyy 'at' h:mm a")}</p>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 
-  // Componente de facturas
-  const InvoicesTab = () => (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold">Mis Facturas</h2>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Factura pendiente */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex justify-between">
-              <div>
-                <CardTitle>Factura #INV-1235</CardTitle>
-                <CardDescription>Vence: {format(new Date(2023, 6, 30), "PP", { locale: es })}</CardDescription>
-              </div>
-              <Badge className="bg-amber-500 hover:bg-amber-600">Pendiente Firma</Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="pb-3">
-            <p className="font-medium mb-1">Instalación de Ventanas</p>
-            <p className="text-gray-600 text-sm mb-3">Primer pago por instalación</p>
-            <p className="font-semibold text-lg">Monto: $1,625.00</p>
-          </CardContent>
-          <CardFooter className="flex justify-end gap-2 pt-0">
-            <Button variant="outline" size="sm">Ver Detalles</Button>
-            <Button size="sm">Firmar Factura</Button>
-          </CardFooter>
-        </Card>
-        
-        {/* Factura pagada */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex justify-between">
-              <div>
-                <CardTitle>Factura #INV-1180</CardTitle>
-                <CardDescription>Pagada: {format(new Date(2023, 3, 20), "PP", { locale: es })}</CardDescription>
-              </div>
-              <Badge className="bg-green-600 hover:bg-green-700">Pagada</Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="pb-3">
-            <p className="font-medium mb-1">Reparación de Baño</p>
-            <p className="text-gray-600 text-sm mb-3">Servicios completos de plomería y cerámica</p>
-            <p className="font-semibold text-lg">Monto: $2,750.00</p>
-          </CardContent>
-          <CardFooter className="flex justify-end gap-2 pt-0">
-            <Button variant="outline" size="sm">Ver Detalles</Button>
-            <Button variant="outline" size="sm">Descargar PDF</Button>
-          </CardFooter>
-        </Card>
-      </div>
-    </div>
-  );
-
-  // Componente de proyectos
+  // Projects Tab Component
   const ProjectsTab = () => (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold">Mis Proyectos</h2>
+        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <Building className="h-6 w-6 text-blue-600" />
+          My Projects
+        </h2>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Proyecto en progreso */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex justify-between">
-              <div>
-                <CardTitle>Instalación de Ventanas</CardTitle>
-                <CardDescription>Iniciado: {format(new Date(2023, 3, 18), "PP", { locale: es })}</CardDescription>
+      <div className="grid grid-cols-1 gap-6">
+        {projects.length === 0 ? (
+          <Card className="bg-gradient-to-br from-white to-gray-50 border-gray-200">
+            <CardContent className="p-12 text-center">
+              <Building className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-600 mb-2">No Projects Yet</h3>
+              <p className="text-gray-500">Your projects will appear here once work begins.</p>
+            </CardContent>
+          </Card>
+        ) : projects.map((project) => (
+          <Card key={project.id} className="bg-gradient-to-br from-white to-gray-50 border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-t-lg">
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="card-title">{project.title}</CardTitle>
+                  <CardDescription className="text-gray-600 mt-1">{project.description}</CardDescription>
+                </div>
+                {getStatusBadge(project.status)}
               </div>
-              <Badge className="bg-blue-600 hover:bg-blue-700">En Progreso</Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="pb-3">
-            <div className="flex items-center gap-2 mb-2">
-              <Clock className="h-4 w-4 text-gray-500" />
-              <span className="text-sm text-gray-600">Fecha estimada de finalización: {format(new Date(2023, 7, 15), "PP", { locale: es })}</span>
-            </div>
-            <div className="flex items-center gap-2 mb-3">
-              <DollarSign className="h-4 w-4 text-gray-500" />
-              <span className="text-sm text-gray-600">Presupuesto: $3,250.00</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2.5 mb-1">
-              <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: '65%' }}></div>
-            </div>
-            <p className="text-right text-sm text-gray-600">65% Completado</p>
-          </CardContent>
-          <CardFooter className="flex justify-end gap-2 pt-0">
-            <Button variant="outline" size="sm">Ver Detalles</Button>
-          </CardFooter>
-        </Card>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <Clock className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <p className="text-xs text-blue-500 font-medium">Started</p>
+                    <p className="text-sm font-semibold text-blue-800">{format(project.startDate, "MMM dd, yyyy")}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                  <Calendar className="h-5 w-5 text-purple-600" />
+                  <div>
+                    <p className="text-xs text-purple-500 font-medium">Est. Completion</p>
+                    <p className="text-sm font-semibold text-purple-800">{format(project.estimatedEnd, "MMM dd, yyyy")}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                  <DollarSign className="h-5 w-5 text-green-600" />
+                  <div>
+                    <p className="text-xs text-green-500 font-medium">Budget</p>
+                    <p className="text-sm font-semibold text-green-800">${project.budget.toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm font-medium">
+                  <span className="text-gray-700">Project Progress</span>
+                  <span className="text-gray-900">{project.progress}% Complete</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3 shadow-inner">
+                  <div 
+                    className={`h-3 rounded-full shadow-sm ${
+                      project.status === 'Completed' 
+                        ? 'bg-gradient-to-r from-green-500 to-green-600' 
+                        : 'bg-gradient-to-r from-blue-500 to-blue-600'
+                    }`}
+                    style={{ width: `${project.progress}%` }}
+                  ></div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="bg-gray-50 rounded-b-lg">
+              <Button variant="outline" size="sm" className="shadow-sm hover:shadow-md transition-shadow">
+                <Eye className="h-4 w-4 mr-2" />
+                View Details
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+
+  // Estimates Tab Component
+  const EstimatesTab = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <FileText className="h-6 w-6 text-orange-600" />
+          My Estimates
+        </h2>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {estimates.length === 0 ? (
+          <div className="col-span-full">
+            <Card className="bg-gradient-to-br from-white to-orange-50 border-orange-200">
+              <CardContent className="p-12 text-center">
+                <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-600 mb-2">No Estimates Yet</h3>
+                <p className="text-gray-500">Your estimates will appear here when created.</p>
+              </CardContent>
+            </Card>
+          </div>
+        ) : estimates.map((estimate) => (
+          <Card key={estimate.id} className="bg-gradient-to-br from-white to-orange-50 border-orange-200 shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardHeader className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-t-lg">
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="text-lg text-orange-800">#{estimate.estimateNumber}</CardTitle>
+                  <CardDescription className="text-orange-600">Issued: {format(new Date(estimate.createdAt), "MMM dd, yyyy")}</CardDescription>
+                </div>
+                {getStatusBadge(estimate.status)}
+              </div>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <div>
+                  <p className="font-semibold text-gray-800 mb-1">{estimate.title}</p>
+                  <p className="text-gray-600 text-sm mb-3">{estimate.description || 'No description provided'}</p>
+                </div>
+                <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="h-5 w-5 text-green-600" />
+                    <span className="text-2xl font-bold text-green-800">${Number(estimate.total || 0).toLocaleString()}</span>
+                  </div>
+                  <p className="text-xs text-green-600 font-medium mt-1">Total Estimate</p>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-end gap-2 bg-gray-50 rounded-b-lg">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => handleViewEstimate(estimate.id)}
+                className="shadow-sm hover:shadow-md transition-shadow"
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                View Details
+              </Button>
+              {estimate.status === "Pending" && (
+                <Button 
+                  size="sm"
+                  onClick={() => handleApproveEstimate(estimate.id)}
+                  className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-sm hover:shadow-md transition-all"
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Approve
+                </Button>
+              )}
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+
+  // Invoices Tab Component
+  const InvoicesTab = () => {
+    const formatCurrency = (amount: number) => {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+      }).format(amount);
+    };
+
+    const getPaymentProgress = (invoice: any) => {
+      const total = Number(invoice.total) || 0;
+      const paid = Number(invoice.amountPaid) || 0;
+      return total > 0 ? (paid / total) * 100 : 0;
+    };
+
+    const getPaymentStatusColor = (invoice: any) => {
+      const progress = getPaymentProgress(invoice);
+      if (progress >= 100) return 'bg-green-500';
+      if (progress > 0) return 'bg-yellow-500';
+      return 'bg-gray-300';
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+            <Receipt className="h-6 w-6 text-red-600" />
+            My Invoices
+          </h2>
+          <div className="text-sm text-gray-600">
+            {invoices.length} invoice{invoices.length !== 1 ? 's' : ''} total
+          </div>
+        </div>
         
-        {/* Proyecto completado */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex justify-between">
-              <div>
-                <CardTitle>Reparación de Baño</CardTitle>
-                <CardDescription>Completado: {format(new Date(2023, 2, 28), "PP", { locale: es })}</CardDescription>
-              </div>
-              <Badge className="bg-green-600 hover:bg-green-700">Completado</Badge>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {invoices.length === 0 ? (
+            <div className="col-span-full">
+              <Card className="bg-gradient-to-br from-white to-red-50 border-red-200">
+                <CardContent className="p-12 text-center">
+                  <Receipt className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-600 mb-2">No Invoices Yet</h3>
+                  <p className="text-gray-500">Your invoices will appear here when generated.</p>
+                </CardContent>
+              </Card>
             </div>
-          </CardHeader>
-          <CardContent className="pb-3">
-            <div className="flex items-center gap-2 mb-2">
-              <Clock className="h-4 w-4 text-gray-500" />
-              <span className="text-sm text-gray-600">Duración: 14 días</span>
-            </div>
-            <div className="flex items-center gap-2 mb-3">
-              <DollarSign className="h-4 w-4 text-gray-500" />
-              <span className="text-sm text-gray-600">Costo final: $2,750.00</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2.5 mb-1">
-              <div className="bg-green-600 h-2.5 rounded-full" style={{ width: '100%' }}></div>
-            </div>
-            <p className="text-right text-sm text-gray-600">100% Completado</p>
-          </CardContent>
-          <CardFooter className="flex justify-end gap-2 pt-0">
-            <Button variant="outline" size="sm">Ver Detalles</Button>
-          </CardFooter>
-        </Card>
-      </div>
-    </div>
-  );
+          ) : invoices.map((invoice) => {
+            const total = Number(invoice.total) || 0;
+            const paid = Number(invoice.amountPaid) || 0;
+            const pending = total - paid;
+            const progress = getPaymentProgress(invoice);
+            const isOverdue = invoice.dueDate && new Date(invoice.dueDate) < new Date() && invoice.status !== 'paid';
+            
+            return (
+              <Card key={invoice.id} className="bg-gradient-to-br from-white to-red-50 border-red-200 shadow-lg hover:shadow-xl transition-all duration-300">
+                <CardHeader className="bg-gradient-to-r from-red-50 to-red-100 rounded-t-lg">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-lg text-red-800">#{invoice.invoiceNumber}</CardTitle>
+                      <CardDescription className="text-red-600">
+                        Due: {format(new Date(invoice.dueDate || invoice.createdAt), "MMM dd, yyyy")}
+                        {isOverdue && <span className="text-red-600 font-medium ml-2">• OVERDUE</span>}
+                      </CardDescription>
+                    </div>
+                    {getStatusBadge(invoice.status)}
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <p className="font-semibold text-gray-800">{invoice.title}</p>
+                    
+                    {/* Payment Progress */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Payment Progress</span>
+                        <span className="font-medium">{progress.toFixed(1)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className={`h-2 rounded-full transition-all duration-300 ${getPaymentStatusColor(invoice)}`}
+                          style={{ width: `${Math.min(progress, 100)}%` }}
+                        ></div>
+                      </div>
+                    </div>
 
-  // Componente de programación
+                    {/* Amount Breakdown */}
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="text-center p-3 bg-gray-50 rounded-lg">
+                        <p className="text-xs text-gray-600">Total</p>
+                        <p className="text-sm font-bold text-gray-900">{formatCurrency(total)}</p>
+                      </div>
+                      <div className="text-center p-3 bg-green-50 rounded-lg">
+                        <p className="text-xs text-green-600">Paid</p>
+                        <p className="text-sm font-bold text-green-700">{formatCurrency(paid)}</p>
+                      </div>
+                      <div className="text-center p-3 bg-red-50 rounded-lg">
+                        <p className="text-xs text-red-600">Due</p>
+                        <p className="text-sm font-bold text-red-700">{formatCurrency(pending)}</p>
+                      </div>
+                    </div>
+
+                    {/* Payment History Preview */}
+                    {invoice.payments && invoice.payments.length > 0 && (
+                      <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                        <p className="text-xs text-blue-600 font-medium mb-1">Recent Payments</p>
+                        <div className="space-y-1">
+                          {invoice.payments.slice(0, 2).map((payment: any, index: number) => (
+                            <div key={index} className="flex justify-between text-xs">
+                              <span className="text-blue-700">
+                                {payment.paymentMethod} • {format(new Date(payment.paymentDate), 'MMM dd')}
+                              </span>
+                              <span className="font-medium text-blue-800">
+                                {formatCurrency(Number(payment.amount))}
+                              </span>
+                            </div>
+                          ))}
+                          {invoice.payments.length > 2 && (
+                            <p className="text-xs text-blue-600">
+                              +{invoice.payments.length - 2} more payment{invoice.payments.length - 2 !== 1 ? 's' : ''}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-end gap-2 bg-gray-50 rounded-b-lg">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleViewInvoice(invoice.id)}
+                    className="shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    View Details
+                  </Button>
+                  {(invoice.status === "pending" || invoice.status === "partially_paid") && pending > 0 && (
+                    <Button 
+                      size="sm"
+                      onClick={() => handlePayInvoice(invoice.id)}
+                      className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm hover:shadow-md transition-all"
+                    >
+                      <DollarSign className="h-4 w-4 mr-2" />
+                      Pay ${formatCurrency(pending)}
+                    </Button>
+                  )}
+                  {invoice.status === "paid" && (
+                    <Button variant="outline" size="sm" className="shadow-sm hover:shadow-md transition-shadow">
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                  )}
+                </CardFooter>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // Schedule Tab Component
   const ScheduleTab = () => (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold">Mi Calendario</h2>
+        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <Calendar className="h-6 w-6 text-purple-600" />
+          My Schedule
+        </h2>
       </div>
       
-      <Card>
-        <CardHeader>
-          <CardTitle>Próximos Eventos</CardTitle>
-          <CardDescription>Citas y visitas programadas</CardDescription>
+      <Card className="bg-gradient-to-br from-white to-purple-50 border-purple-200 shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-t-lg">
+          <CardTitle className="text-purple-800 flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Upcoming Appointments
+          </CardTitle>
+          <CardDescription className="text-purple-600">Scheduled visits and consultations</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {/* Evento próximo */}
-            <div className="flex items-start gap-4 p-3 rounded-lg border">
-              <Calendar className="h-10 w-10 text-blue-600 mt-1" />
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-lg">Visita para medición - Ventanas</h4>
-                  <Badge>Pendiente</Badge>
-                </div>
-                <p className="text-sm text-gray-600 mt-1">
-                  <span className="font-medium">Fecha:</span> {format(new Date(2023, 6, 20, 10, 0), "PPpp", { locale: es })}
-                </p>
-                <p className="text-sm text-gray-600">
-                  <span className="font-medium">Dirección:</span> 123 Main St, Anytown, CA 12345
-                </p>
-                <p className="text-sm text-gray-600">
-                  <span className="font-medium">Notas:</span> Primera visita para tomar medidas de windows a reemplazar.
-                </p>
-                <div className="flex justify-end gap-2 mt-2">
-                  <Button variant="outline" size="sm">Reprogramar</Button>
-                  <Button variant="outline" size="sm">Cancelar</Button>
+        <CardContent className="p-6">
+          <div className="space-y-6">
+            {appointments.length === 0 ? (
+              <div className="text-center py-8">
+                <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">No upcoming appointments</p>
+                <p className="text-sm text-gray-400">Appointments will appear here when scheduled</p>
+              </div>
+            ) : appointments.map((appointment) => (
+              <div key={appointment.id} className="bg-gradient-to-r from-white to-gray-50 p-6 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
+                <div className="flex items-start gap-4">
+                  <div className="bg-purple-500 p-3 rounded-full">
+                    <Calendar className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-bold text-lg text-gray-800">{appointment.title}</h4>
+                      {getStatusBadge(appointment.status)}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                      <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                        <p className="text-xs text-blue-500 font-medium">Date & Time</p>
+                        <p className="font-semibold text-blue-800">{format(new Date(appointment.startTime), "EEEE, MMM dd, yyyy")}</p>
+                        <p className="text-sm text-blue-600">{format(new Date(appointment.startTime), "h:mm a")} - {format(new Date(appointment.endTime), "h:mm a")}</p>
+                      </div>
+                      <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                        <p className="text-xs text-green-500 font-medium">Type</p>
+                        <p className="font-semibold text-green-800">{appointment.type}</p>
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 mb-4">
+                      <p className="text-xs text-gray-500 font-medium">Location</p>
+                      <p className="text-sm text-gray-700">{appointment.address || clientInfo.address}, {appointment.city || clientInfo.city}, {appointment.state || clientInfo.state} {appointment.zip || clientInfo.zip}</p>
+                    </div>
+                    {appointment.description && (
+                      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 mb-4">
+                        <p className="text-xs text-gray-500 font-medium">Description</p>
+                        <p className="text-sm text-gray-700">{appointment.description}</p>
+                      </div>
+                    )}
+                    <div className="flex justify-end gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleRescheduleAppointment(appointment.id)}
+                        className="shadow-sm hover:shadow-md transition-shadow"
+                      >
+                        Reschedule
+                      </Button>
+                      <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 shadow-sm hover:shadow-md transition-all">
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-            
-            {/* Evento pasado */}
-            <div className="flex items-start gap-4 p-3 rounded-lg border bg-gray-50">
-              <Calendar className="h-10 w-10 text-gray-500 mt-1" />
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-lg">Consulta inicial - Reparación de Techo</h4>
-                  <Badge variant="outline">Completado</Badge>
-                </div>
-                <p className="text-sm text-gray-600 mt-1">
-                  <span className="font-medium">Fecha:</span> {format(new Date(2023, 6, 10, 14, 0), "PPpp", { locale: es })}
-                </p>
-                <p className="text-sm text-gray-600">
-                  <span className="font-medium">Dirección:</span> 123 Main St, Anytown, CA 12345
-                </p>
-                <p className="text-sm text-gray-600">
-                  <span className="font-medium">Notas:</span> Evaluación inicial de daños en el techo.
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
         </CardContent>
-        <CardFooter>
-          <Button variant="outline" className="w-full">Ver Calendario Completo</Button>
-        </CardFooter>
       </Card>
     </div>
   );
 
-  // Componente de comunicaciones
+  // Messages Tab Component
   const MessagesTab = () => (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold">Mensajes</h2>
-        <Button>Nuevo Mensaje</Button>
+        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <MessageCircle className="h-6 w-6 text-blue-600" />
+          AI Assistant
+        </h2>
+        <div className="text-sm text-gray-600">Ask me about your projects, estimates, and invoices</div>
       </div>
       
-      <Card>
-        <CardHeader>
-          <CardTitle>Bandeja de Entrada</CardTitle>
-          <CardDescription>Comunicaciones con el contratista</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {/* Mensaje no leído */}
-            <div className="flex items-start gap-4 p-3 rounded-lg border border-blue-200 bg-blue-50">
-              <MessageCircle className="h-10 w-10 text-blue-600 mt-1" />
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-lg">Actualización sobre su proyecto</h4>
-                  <Badge>Nuevo</Badge>
-                </div>
-                <p className="text-sm text-gray-600 mt-1">
-                  <span className="font-medium">De:</span> ABC Construction
-                </p>
-                <p className="text-sm text-gray-600">
-                  <span className="font-medium">Fecha:</span> {format(new Date(2023, 6, 18, 15, 30), "PPpp", { locale: es })}
-                </p>
-                <p className="text-sm text-gray-600 line-clamp-2 mt-1">
-                  Buenos días Sr. Smith, le escribo para informarle que hemos recibido los materiales para su proyecto de windows y...
-                </p>
-                <div className="flex justify-end mt-2">
-                  <Button size="sm">Leer Mensaje</Button>
-                </div>
-              </div>
-            </div>
-            
-            {/* Mensaje leído */}
-            <div className="flex items-start gap-4 p-3 rounded-lg border">
-              <MessageCircle className="h-10 w-10 text-gray-500 mt-1" />
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-lg">Re: Consulta sobre presupuesto</h4>
-                  <span className="text-xs text-gray-500">Leído</span>
-                </div>
-                <p className="text-sm text-gray-600 mt-1">
-                  <span className="font-medium">De:</span> ABC Construction
-                </p>
-                <p className="text-sm text-gray-600">
-                  <span className="font-medium">Fecha:</span> {format(new Date(2023, 6, 15, 11, 45), "PPpp", { locale: es })}
-                </p>
-                <p className="text-sm text-gray-600 line-clamp-2 mt-1">
-                  Estimado Sr. Smith, en respuesta a su consulta sobre el desglose del presupuesto, adjunto encontrará el detalle...
-                </p>
-                <div className="flex justify-end mt-2">
-                  <Button variant="outline" size="sm">Ver Mensaje</Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Button variant="outline" className="w-full">Ver Todos los Mensajes</Button>
-        </CardFooter>
-      </Card>
+      <SimpleChat clientId={clientId || '4'} />
     </div>
   );
 
   return (
-    <div className="container mx-auto p-4 md:p-6">
-      <Card className="mb-6">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-2xl">Portal del Cliente</CardTitle>
-          <CardDescription>
-            Bienvenido, {clientInfo.name}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-gray-500 mb-1">Email</p>
-              <p>{clientInfo.email}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 mb-1">Teléfono</p>
-              <p>{clientInfo.phone}</p>
-            </div>
-            <div className="md:col-span-2">
-              <p className="text-sm text-gray-500 mb-1">Dirección</p>
-              <p>{clientInfo.address}</p>
+    <ErrorBoundary>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white border-b">
+          <div className="container mx-auto px-4 py-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setLocation("/")}
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Client Portal</h1>
+                  <p className="text-gray-600">Welcome, {clientInfo.name}</p>
+                </div>
+              </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="estimates" className="flex gap-2">
-            <FileText className="h-4 w-4" />
-            <span className="hidden sm:inline">Presupuestos</span>
-          </TabsTrigger>
-          <TabsTrigger value="invoices" className="flex gap-2">
-            <DollarSign className="h-4 w-4" />
-            <span className="hidden sm:inline">Facturas</span>
-          </TabsTrigger>
-          <TabsTrigger value="projects" className="flex gap-2">
-            <ClipboardCheck className="h-4 w-4" />
-            <span className="hidden sm:inline">Proyectos</span>
-          </TabsTrigger>
-          <TabsTrigger value="schedule" className="flex gap-2">
-            <Calendar className="h-4 w-4" />
-            <span className="hidden sm:inline">Calendario</span>
-          </TabsTrigger>
-          <TabsTrigger value="messages" className="flex gap-2">
-            <MessageCircle className="h-4 w-4" />
-            <span className="hidden sm:inline">Mensajes</span>
-          </TabsTrigger>
-        </TabsList>
-        <div className="mt-6">
-          <TabsContent value="estimates"><EstimatesTab /></TabsContent>
-          <TabsContent value="invoices"><InvoicesTab /></TabsContent>
-          <TabsContent value="projects"><ProjectsTab /></TabsContent>
-          <TabsContent value="schedule"><ScheduleTab /></TabsContent>
-          <TabsContent value="messages"><MessagesTab /></TabsContent>
         </div>
-      </Tabs>
-    </div>
+
+        {/* Client Info Card */}
+        <div className="container mx-auto px-4 py-6">
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Client Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-gray-500" />
+                  <div>
+                    <p className="text-sm text-gray-500">Email</p>
+                    <p className="font-medium">{clientInfo.email}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-gray-500" />
+                  <div>
+                    <p className="text-sm text-gray-500">Phone</p>
+                    <p className="font-medium">{clientInfo.phone}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-gray-500" />
+                  <div>
+                    <p className="text-sm text-gray-500">Address</p>
+                    <p className="font-medium">{clientInfo.address}</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-6">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="projects">Projects</TabsTrigger>
+              <TabsTrigger value="estimates">Estimates</TabsTrigger>
+              <TabsTrigger value="invoices">Invoices</TabsTrigger>
+              <TabsTrigger value="schedule">Schedule</TabsTrigger>
+              <TabsTrigger value="messages">Messages</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="overview" className="mt-6">
+              <OverviewTab />
+            </TabsContent>
+            
+            <TabsContent value="projects" className="mt-6">
+              <ProjectsTab />
+            </TabsContent>
+            
+            <TabsContent value="estimates" className="mt-6">
+              <EstimatesTab />
+            </TabsContent>
+            
+            <TabsContent value="invoices" className="mt-6">
+              <InvoicesTab />
+            </TabsContent>
+            
+            <TabsContent value="schedule" className="mt-6">
+              <ScheduleTab />
+            </TabsContent>
+            
+            <TabsContent value="messages" className="mt-6">
+              <MessagesTab />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    </ErrorBoundary>
   );
 }

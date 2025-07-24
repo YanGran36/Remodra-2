@@ -1,7 +1,7 @@
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { useProjects, type ProjectWithClient } from "@/hooks/use-projects";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from '../components/ui/button';
+import { useProjects, type ProjectWithClient } from '../hooks/use-projects';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 
 export default function ProjectsDebugPage() {
   const { projects, isLoadingProjects } = useProjects();
@@ -13,16 +13,17 @@ export default function ProjectsDebugPage() {
 
   if (isLoadingProjects) {
     return (
-      <div className="container py-8">
-        <h1 className="text-3xl font-bold mb-6">Cargando proyectos...</h1>
+      <div className="text-center">
+        <h1 className="text-2xl font-semibold text-foreground tracking-tight mb-6">Cargando proyectos...</h1>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
       </div>
     );
   }
 
   return (
     <div className="container py-8">
-      <h1 className="text-3xl font-bold mb-6">Página de Diagnóstico de Proyectos</h1>
-      <p className="mb-6 text-red-500">Esta es una página de diagnóstico para probar la navegación.</p>
+      <h1 className="text-2xl font-semibold text-foreground tracking-tight mb-6">Página de Diagnóstico de Proyectos</h1>
+      <p className="text-muted-foreground mb-6">Esta página muestra información de diagnóstico sobre los proyectos.</p>
 
       <div className="grid gap-6">
         {projects && projects.length > 0 ? (

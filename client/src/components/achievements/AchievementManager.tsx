@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { AchievementOverlay } from '@/components/ui/achievement-overlay';
-import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { Achievement, ContractorAchievement, AchievementReward } from '@shared/schema';
+import { AchievementOverlay } from '../ui/achievement-overlay';
+import { apiRequest } from '../../lib/queryClient';
+import { useToast } from '../../hooks/use-toast';
+import { Achievement, ContractorAchievement, AchievementReward } from '../../../../shared/schema';
 
 /**
  * Componente que gestiona los logros desbloqueados y muestra overlays cuando se desbloquean nuevos logros

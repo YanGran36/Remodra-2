@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/hooks/use-auth';
-import { useToast } from '@/hooks/use-toast';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { useAuth } from '../hooks/use-auth';
+import { useToast } from '../hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
+import { Button } from '../components/ui/button';
 import { AlertTriangleIcon, RefreshCwIcon } from 'lucide-react';
 
 /**
@@ -38,9 +38,9 @@ export function SessionRecoveryAlert() {
     } catch (error) {
       console.error("Error en reconexión automática:", error);
       toast({
-        title: "Error de reconexión",
-        description: "No se pudo restablecer la sesión",
-        variant: "destructive"
+        title: "Reconnection failed",
+        description: "Please try logging in again.",
+        variant: "destructive",
       });
     }
   };
@@ -56,10 +56,10 @@ export function SessionRecoveryAlert() {
     <Alert className="fixed bottom-4 right-4 z-50 w-80 bg-white dark:bg-gray-800 shadow-lg border-amber-300 dark:border-amber-700">
       <AlertTriangleIcon className="h-5 w-5 text-amber-500" />
       <AlertTitle className="text-amber-700 dark:text-amber-400">
-        Sesión finalizada
+        Session Expired
       </AlertTitle>
       <AlertDescription className="text-sm">
-        <p className="mb-2">Tu sesión ha expirado o se ha perdido la conexión al servidor.</p>
+        <p className="mb-2">Your session has expired or the connection to the server was lost.</p>
         <div className="flex justify-between mt-2">
           <Button 
             variant="outline" 
@@ -67,7 +67,7 @@ export function SessionRecoveryAlert() {
             onClick={handleDismiss}
             className="text-sm"
           >
-            Ignorar
+            Dismiss
           </Button>
           <Button 
             variant="default" 
@@ -79,10 +79,10 @@ export function SessionRecoveryAlert() {
             {isSessionRecoveryActive ? (
               <>
                 <RefreshCwIcon className="h-4 w-4 mr-1 animate-spin" />
-                Reconectando...
+                Reconnecting...
               </>
             ) : (
-              <>Reconectar</>
+              <>Reconnect</>
             )}
           </Button>
         </div>

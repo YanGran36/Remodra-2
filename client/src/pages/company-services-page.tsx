@@ -1,7 +1,7 @@
 import React from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import ServicesConfig from "@/components/pdf/services-config";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import ServicesConfig from '../components/pdf/services-config';
 import { ArrowLeft } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -16,15 +16,15 @@ export default function CompanyServicesPage() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver a Configuración
           </Button>
-          <h1 className="text-2xl font-bold">Servicios de la Compañía</h1>
+          <h1 className="text-2xl font-bold">Company Services</h1>
         </div>
       </div>
 
       <Card className="shadow-md">
         <CardHeader>
-          <CardTitle>Administrar Servicios</CardTitle>
+          <CardTitle className="card-title">Manage Services</CardTitle>
           <CardDescription>
-            Configure los servicios que su compañía ofrece para incluirlos en estimaciones e invoices
+            Configure the services your company offers to include them in estimates and invoices
           </CardDescription>
         </CardHeader>
         <CardContent>

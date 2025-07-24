@@ -18,7 +18,7 @@ async function migrateAchievementTables() {
         required_count INTEGER NOT NULL DEFAULT 1,
         level TEXT NOT NULL DEFAULT 'bronze',
         badge_color TEXT NOT NULL DEFAULT '#CD7F32',
-        created_at TIMESTAMP DEFAULT NOW() NOT NULL
+        created_at INTEGER DEFAULT (strftime('%s','now')) NOT NULL
       );
     `);
     
@@ -33,8 +33,8 @@ async function migrateAchievementTables() {
         completed_at TIMESTAMP,
         notified BOOLEAN NOT NULL DEFAULT FALSE,
         unlocked_reward BOOLEAN NOT NULL DEFAULT FALSE,
-        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-        updated_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        created_at INTEGER DEFAULT (strftime('%s','now')) NOT NULL,
+        updated_at INTEGER DEFAULT (strftime('%s','now')) NOT NULL,
         UNIQUE(contractor_id, achievement_id)
       );
     `);
@@ -48,7 +48,7 @@ async function migrateAchievementTables() {
         description TEXT NOT NULL,
         value TEXT NOT NULL,
         duration INTEGER,
-        created_at TIMESTAMP DEFAULT NOW() NOT NULL
+        created_at INTEGER DEFAULT (strftime('%s','now')) NOT NULL
       );
     `);
     
@@ -63,7 +63,7 @@ async function migrateAchievementTables() {
         level INTEGER NOT NULL DEFAULT 1,
         xp INTEGER NOT NULL DEFAULT 0,
         next_level_xp INTEGER NOT NULL DEFAULT 100,
-        updated_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at INTEGER DEFAULT (strftime('%s','now')) NOT NULL,
         UNIQUE(contractor_id)
       );
     `);

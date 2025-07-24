@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { useToast } from '../hooks/use-toast';
+import { apiRequest } from '../lib/queryClient';
 
 export default function EstimateSimpleTest() {
   const { toast } = useToast();
@@ -57,15 +57,15 @@ export default function EstimateSimpleTest() {
       setResult(data);
       
       toast({
-        title: 'Estimado creado',
-        description: `Estimado #${data.estimateNumber} creado exitosamente`,
+        title: 'Estimate created',
+        description: `Estimate #${data.estimateNumber} created successfully`,
       });
     } catch (error: any) {
-      console.error('Error al crear estimado:', error);
+              console.error('Error creating estimate:', error);
       
       toast({
         title: 'Error',
-        description: error.message || 'Error al crear el estimado',
+                  description: error.message || 'Error creating the estimate',
         variant: 'destructive',
       });
       
@@ -77,7 +77,10 @@ export default function EstimateSimpleTest() {
 
   return (
     <div className="container py-8 max-w-xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Prueba Simple de Creación de Estimados</h1>
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-foreground tracking-tight">Simple Estimate Creation Test</h1>
+        <p className="text-muted-foreground">Test page for simple estimate creation</p>
+      </div>
       <p className="text-red-500 mb-6">Esta es una página de prueba para diagnóstico.</p>
       
       <Card>
@@ -113,7 +116,7 @@ export default function EstimateSimpleTest() {
             </div>
             
             <div>
-              <Label htmlFor="estimateNumber">Número de Estimado</Label>
+              <Label htmlFor="estimateNumber">Estimate Number</Label>
               <Input 
                 id="estimateNumber" 
                 name="estimateNumber" 
@@ -150,7 +153,7 @@ export default function EstimateSimpleTest() {
             </div>
             
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Creando...' : 'Crear Estimado de Prueba'}
+              {loading ? 'Creating...' : 'Create Test Estimate'}
             </Button>
           </form>
         </CardContent>

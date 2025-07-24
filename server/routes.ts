@@ -3,26 +3,30 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, hashPassword } from "./auth";
 import { z } from "zod";
-import { db } from "@db";
-import { eq, and } from "drizzle-orm";
+import { db } from "../db";
+import { eq, and, sql } from "drizzle-orm";
 // Importar middleware de autorización
 import { verifyResourceOwnership, verifyRelationship, preventCascadeOperations, EntityType } from "./middleware/authorization";
 import { 
-  clientInsertSchema, 
   projectInsertSchema, 
-  estimateInsertSchema, 
   estimateItemInsertSchema,
   invoiceInsertSchema,
-  invoiceItemInsertSchema,
-  eventInsertSchema,
   materialInsertSchema,
   followUpInsertSchema,
   propertyMeasurementInsertSchema,
   priceConfigurationInsertSchema,
   contractorCreateSchema,
   contractorInsertSchema,
-  servicePricing
-} from "@shared/schema";
+  servicePricing,
+  projects,
+  aiUsageLog,
+  contractors,
+  clients,
+  agents,
+  estimates,
+  invoices,
+  events
+} from "../shared/schema";
 
 import { analyzeProject, generateSharingContent, generateProfessionalJobDescription } from "./ai-service";
 import * as achievementService from "./services/achievement-service";
@@ -30,6 +34,27 @@ import { registerTimeclockRoutes } from "./routes/timeclock-routes";
 import { registerPricingRoutes } from "./routes/pricing";
 import { registerDirectServiceRoutes } from "./routes/direct-service";
 import { registerDirectServicesRoutes } from "./routes/direct-services";
+import subscriptionRoutes from "./routes/subscription";
+import * as sqliteSchema from "../shared/schema-sqlite";
+import * as mainSchema from "../shared/schema";
+
+// Use SQLite schemas in development
+const isLocalDev = process.env.NODE_ENV === 'development' && process.env.DATABASE_URL?.includes('sqlite');
+
+// Conditionally use the appropriate schema and tables
+const estimateInsertSchema = isLocalDev ? sqliteSchema.estimate_insert_schema : mainSchema.estimateInsertSchema;
+const eventInsertSchema = isLocalDev ? sqliteSchema.event_insert_schema : mainSchema.eventInsertSchema;
+const clientInsertSchema = isLocalDev ? sqliteSchema.client_insert_schema : mainSchema.clientInsertSchema;
+const agentInsertSchema = isLocalDev ? sqliteSchema.agent_insert_schema : mainSchema.agentInsertSchema;
+const invoiceItemInsertSchema = isLocalDev ? sqliteSchema.invoice_item_insert_schema : mainSchema.invoiceItemInsertSchema;
+
+// Use the appropriate table references based on environment
+const contractorsTable = isLocalDev ? sqliteSchema.contractors : contractors;
+const clientsTable = isLocalDev ? sqliteSchema.clients : clients;
+const agentsTable = isLocalDev ? sqliteSchema.agents : agents;
+const estimatesTable = isLocalDev ? sqliteSchema.estimates : estimates;
+const eventsTable = isLocalDev ? sqliteSchema.events : events;
+const estimateItemsTable = isLocalDev ? sqliteSchema.estimate_items : mainSchema.estimateItems;
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
@@ -40,6 +65,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register new direct services routes for pricing page
   registerDirectServicesRoutes(app);
+
+  // Register timeclock routes
+  registerTimeclockRoutes(app);
+
+  // Register subscription routes
+  app.use("/api/subscription", subscriptionRoutes);
 
   // Simple service price update endpoint
   app.post('/api/update-service-price', async (req: any, res) => {
@@ -71,7 +102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .set(updateData)
         .where(and(
           eq(servicePricing.serviceType, originalServiceType),
-          eq(servicePricing.contractorId, req.user.id)
+          isLocalDev ? eq(sqliteSchema.service_pricing.contractor_id, req.user.id) : eq(servicePricing.contractorId, req.user.id)
         ))
         .returning();
       
@@ -126,6 +157,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Export/Import routes (separate from client CRUD routes)
+  app.get("/api/protected/data/clients/export", async (req, res) => {
+    try {
+      const { exportClientsToJSON } = await import("./data-export");
+      const clientsData = await exportClientsToJSON(req.user!.id);
+      
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `clients_export_${timestamp}.json`;
+      
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.json(clientsData);
+    } catch (error) {
+      console.error("Error exporting clients:", error);
+      res.status(500).json({ message: "Failed to export clients" });
+    }
+  });
+
+  app.post("/api/protected/data/clients/import", async (req, res) => {
+    try {
+      const { importClientsFromJSON } = await import("./data-export");
+      const { clientsData } = req.body;
+      
+      if (!clientsData || !Array.isArray(clientsData)) {
+        return res.status(400).json({ message: "Invalid client data provided" });
+      }
+      
+      const result = await importClientsFromJSON(clientsData, req.user!.id);
+      res.json({ message: result });
+    } catch (error) {
+      console.error("Error importing clients:", error);
+      res.status(500).json({ message: "Failed to import clients" });
+    }
+  });
+
   app.get("/api/protected/clients/:id", 
     verifyResourceOwnership('client'),
     async (req, res) => {
@@ -142,21 +208,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   );
 
+  // Check client uniqueness before creation
+  app.post("/api/protected/clients/check-uniqueness", async (req, res) => {
+    try {
+      const { email, phone, address } = req.body;
+      
+      const uniquenessCheck = await storage.checkClientUniqueness(
+        req.user!.id,
+        email,
+        phone,
+        address
+      );
+
+      if (!uniquenessCheck.isUnique) {
+        return res.status(409).json({
+          isUnique: false,
+          conflictType: uniquenessCheck.conflictType,
+          existingClient: uniquenessCheck.existingClient,
+          message: `Client already exists with this ${uniquenessCheck.conflictType}`
+        });
+      }
+
+      res.json({ isUnique: true });
+    } catch (error) {
+      console.error("Error checking client uniqueness:", error);
+      res.status(500).json({ message: "Failed to check client uniqueness" });
+    }
+  });
+
+  // Find similar clients
+  app.post("/api/protected/clients/find-similar", async (req, res) => {
+    try {
+      const { email, phone, address } = req.body;
+      
+      const similarClients = await storage.findSimilarClients(
+        req.user!.id,
+        { email, phone, address }
+      );
+
+      res.json(similarClients);
+    } catch (error) {
+      console.error("Error finding similar clients:", error);
+      res.status(500).json({ message: "Failed to find similar clients" });
+    }
+  });
+
   app.post("/api/protected/clients", async (req, res) => {
     try {
-      const validatedData = clientInsertSchema.parse({
-        ...req.body,
-        contractorId: req.user!.id
-      });
+      console.log("Data received for client creation:", JSON.stringify(req.body, null, 2));
       
-      const client = await storage.createClient(validatedData);
-      res.status(201).json(client);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
-      }
+      const clientData = {
+        contractor_id: req.user!.id,
+        first_name: req.body.firstName,
+        last_name: req.body.lastName,
+        email: req.body.email || null,
+        phone: req.body.phone || null,
+        address: req.body.address || null,
+        city: req.body.city || null,
+        state: req.body.state || null,
+        zip: req.body.zip || null,
+        notes: req.body.notes || null,
+        cancellation_history: req.body.cancellationHistory || null,
+        created_at: Date.now()
+      };
+      
+      console.log("Processed client data:", JSON.stringify(clientData, null, 2));
+      
+      // Validate with the appropriate schema
+      const validatedData = clientInsertSchema.parse(clientData);
+      
+      // Use storage method which includes uniqueness validation
+      const newClient = await storage.createClient(validatedData);
+      
+      res.status(201).json(newClient);
+    } catch (error: any) {
       console.error("Error creating client:", error);
-      res.status(500).json({ message: "Failed to create client" });
+      
+      // Handle uniqueness validation errors
+      if (error.code === 'CLIENT_DUPLICATE') {
+        return res.status(409).json({ 
+          message: `Client already exists with this ${error.conflictType}`,
+          conflictType: error.conflictType,
+          existingClient: error.existingClient,
+          error: 'DUPLICATE_CLIENT'
+        });
+      }
+      
+      res.status(500).json({ message: "Failed to create client", error: error.message });
     }
   });
 
@@ -200,6 +338,427 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   );
 
+  // Client Messages routes
+  app.get("/api/protected/client-messages", async (req, res) => {
+    try {
+      const { clientId } = req.query;
+      const messages = await storage.getClientMessages(req.user!.id, clientId ? Number(clientId) : undefined);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching client messages:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  app.post("/api/protected/client-messages", async (req, res) => {
+    try {
+      const validatedData = clientMessageInsertSchema.parse({
+        ...req.body,
+        contractorId: req.user!.id
+      });
+      
+      const message = await storage.createClientMessage(validatedData);
+      
+      // Send email notification if requested
+      if (req.body.sendEmail) {
+        await storage.sendMessageEmail(message);
+      }
+      
+      res.status(201).json(message);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ errors: error.errors });
+      }
+      console.error("Error creating client message:", error);
+      res.status(500).json({ message: "Failed to create message" });
+    }
+  });
+
+  app.patch("/api/protected/client-messages/:id/read", async (req, res) => {
+    try {
+      const messageId = Number(req.params.id);
+      await storage.markMessageAsRead(messageId, req.user!.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking message as read:", error);
+      res.status(500).json({ message: "Failed to mark message as read" });
+    }
+  });
+
+  app.post("/api/protected/client-messages/:id/reply", async (req, res) => {
+    try {
+      const messageId = Number(req.params.id);
+      const validatedData = messageReplyInsertSchema.parse({
+        ...req.body,
+        messageId,
+        senderType: "contractor",
+        senderId: req.user!.id
+      });
+      
+      const reply = await storage.createMessageReply(validatedData);
+      res.status(201).json(reply);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ errors: error.errors });
+      }
+      console.error("Error creating message reply:", error);
+      res.status(500).json({ message: "Failed to create reply" });
+    }
+  });
+
+  // Client Portal Token routes
+  app.post("/api/protected/client-portal-token", async (req, res) => {
+    try {
+      const { clientId } = req.body;
+      const token = await storage.generateClientPortalToken(clientId, req.user!.id);
+      res.json(token);
+    } catch (error) {
+      console.error("Error generating portal token:", error);
+      res.status(500).json({ message: "Failed to generate portal token" });
+    }
+  });
+
+  // Public invoice endpoints for client access
+  app.get("/api/public/invoices/:id", async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid invoice ID" });
+      }
+
+      // Get invoice with client and contractor info
+      const invoice = await storage.getInvoiceById(id);
+      if (!invoice) {
+        return res.status(404).json({ error: "Invoice not found" });
+      }
+
+      // Get invoice items
+      const items = await storage.getInvoiceItemsById(id);
+      
+      // Get payments for this invoice
+      const payments = await storage.getPayments(id, invoice.contractor_id);
+
+      // Get client and contractor info
+      const client = await storage.getClientById(invoice.client_id, invoice.contractor_id);
+      const contractor = await storage.getContractor(invoice.contractor_id);
+
+      // Get project info if exists
+      let project = null;
+      if (invoice.project_id) {
+        project = await storage.getProjectById(invoice.project_id, invoice.contractor_id);
+      }
+
+      const response = {
+        ...invoice,
+        items: items || [],
+        payments: payments || [],
+        client: client || {},
+        contractor: contractor || {},
+        project: project || null
+      };
+
+      res.json(response);
+    } catch (error) {
+      console.error("Error fetching public invoice:", error);
+      res.status(500).json({ error: "Failed to fetch invoice" });
+    }
+  });
+
+  app.post("/api/public/invoices/:id/client-action", async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const { action, signatureData, notes } = req.body;
+
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid invoice ID" });
+      }
+
+      const invoice = await storage.getInvoiceById(id);
+      if (!invoice) {
+        return res.status(404).json({ error: "Invoice not found" });
+      }
+
+      switch (action) {
+        case 'sign':
+          if (!signatureData) {
+            return res.status(400).json({ error: "Signature data is required" });
+          }
+          
+          await storage.updateInvoiceById(id, {
+            client_signature: signatureData,
+            status: 'signed'
+          });
+          
+          res.json({ message: "Invoice signed successfully" });
+          break;
+
+        case 'approve':
+          await storage.updateInvoiceById(id, {
+            status: 'approved'
+          });
+          
+          res.json({ message: "Invoice approved successfully" });
+          break;
+
+        default:
+          res.status(400).json({ error: "Invalid action" });
+      }
+    } catch (error) {
+      console.error("Error processing client action:", error);
+      res.status(500).json({ error: "Failed to process action" });
+    }
+  });
+
+  // Get client data for client portal - MUST COME BEFORE THE TOKEN ROUTE
+  app.get("/api/client-portal/:clientId/data", async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      const id = parseInt(clientId);
+
+      // Define mapping functions first
+      const mapClient = c => c ? {
+        id: c.id,
+        firstName: c.firstName || c.first_name,
+        lastName: c.lastName || c.last_name,
+        email: c.email,
+        phone: c.phone,
+        address: c.address,
+        city: c.city,
+        state: c.state,
+        zip: c.zip
+      } : null;
+      const mapProject = p => p ? {
+        id: p.id,
+        title: p.title,
+        status: p.status,
+        contractorId: p.contractorId || p.contractor_id,
+        clientId: p.clientId || p.client_id,
+        description: p.description,
+        budget: p.budget,
+        startDate: p.startDate || p.start_date,
+        endDate: p.endDate || p.end_date,
+        notes: p.notes,
+        createdAt: p.createdAt || p.created_at
+      } : null;
+
+      let client;
+      try {
+        // Use the correct table reference based on environment
+        const clientsTableRef = isLocalDev ? sqliteSchema.clients : clientsTable;
+        client = await db.select().from(clientsTableRef).where(eq(clientsTableRef.id, id)).limit(1);
+        client = client[0]; // Get the first result
+      } catch (err) {
+        console.error("[Client Portal] Error fetching client by ID:", err);
+        return res.status(500).json({ error: "DB error fetching client" });
+      }
+      if (!client) {
+        console.log('[Client Portal] Client not found for id:', id);
+        return res.status(404).json({ error: "Client not found" });
+      }
+      const contractorId = client.contractor_id;
+
+      let allProjects = [], allEstimates = [], allInvoices = [], allEvents = [], contractor = null, primaryAgent = null;
+      try {
+        allProjects = await storage.getProjects(contractorId);
+      } catch (err) {
+        console.error("[Client Portal] Error fetching projects:", err);
+      }
+      try {
+        allEstimates = await storage.getEstimates(contractorId);
+      } catch (err) {
+        console.error("[Client Portal] Error fetching estimates:", err);
+      }
+      try {
+        allInvoices = await storage.getInvoices(contractorId);
+      } catch (err) {
+        console.error("[Client Portal] Error fetching invoices:", err);
+      }
+      try {
+        allEvents = await storage.getEvents(contractorId);
+      } catch (err) {
+        console.error("[Client Portal] Error fetching events:", err);
+      }
+      try {
+        contractor = await storage.getContractor(contractorId);
+        if (contractor && contractor.primaryAgentId) {
+          primaryAgent = await storage.getAgent(contractor.primaryAgentId, contractorId);
+        }
+      } catch (err) {
+        console.error("[Client Portal] Error fetching contractor/agent:", err);
+      }
+
+      const clientProjects = allProjects.filter(p => p.clientId === id);
+      // Map estimates to ensure consistent field names and filter by client
+      const mappedEstimates = allEstimates.map(e => ({
+        ...e,
+        clientId: e.clientId || e.client_id,
+        contractorId: e.contractorId || e.contractor_id,
+        projectId: e.projectId || e.project_id,
+        estimateNumber: e.estimateNumber || e.estimate_number,
+        issueDate: e.issueDate || e.issue_date,
+        expiryDate: e.expiryDate || e.expiry_date,
+        createdAt: e.createdAt || e.created_at,
+        client: mapClient(e.client),
+        project: mapProject(e.project),
+        // Add missing fields that the frontend expects
+        title: e.notes || `Estimate #${e.estimateNumber || e.estimate_number}`,
+        description: e.notes || ''
+      }));
+      const clientEstimates = mappedEstimates.filter(e => e.clientId === id);
+      // Map all invoices to camelCase first
+      const mappedInvoices = allInvoices.map(i => ({
+        ...i,
+        clientId: i.clientId || i.client_id,
+        contractorId: i.contractorId || i.contractor_id,
+        projectId: i.projectId || i.project_id,
+        estimateId: i.estimateId || i.estimate_id,
+        invoiceNumber: i.invoiceNumber || i.invoice_number,
+        issueDate: i.issueDate || i.issue_date,
+        dueDate: i.dueDate || i.due_date,
+        status: i.status,
+        subtotal: i.subtotal,
+        tax: i.tax,
+        discount: i.discount,
+        total: i.total,
+        amountPaid: i.amountPaid || i.amount_paid,
+        terms: i.terms,
+        notes: i.notes,
+        clientSignature: i.clientSignature || i.client_signature,
+        contractorSignature: i.contractorSignature || i.contractor_signature,
+        createdAt: i.createdAt || i.created_at,
+        client: mapClient(i.client),
+        project: mapProject(i.project),
+        // Add missing fields that the frontend expects
+        title: i.notes || `Invoice #${i.invoiceNumber || i.invoice_number}`
+      }));
+      // Now filter by clientId
+      const clientInvoices = mappedInvoices.filter(i => i.clientId === id);
+      // Get all events that are related to this client
+      const clientEvents = allEvents.filter(e => {
+        // Direct client match
+        if (e.clientId === id) return true;
+        
+        // Events related to client's estimates
+        if (e.estimateId && clientEstimates.some(est => est.id === e.estimateId)) return true;
+        
+        // Events related to client's projects
+        if (e.projectId && clientProjects.some(proj => proj.id === e.projectId)) return true;
+        
+        return false;
+      });
+
+      // Also include estimates with appointment dates as events
+      const estimatesWithAppointments = clientEstimates
+        .filter(est => est.appointmentDate || est.appointment_date)
+        .map(est => {
+          const appointmentDate = est.appointmentDate || est.appointment_date;
+          const duration = est.appointmentDuration || est.appointment_duration || 60;
+          const endTime = new Date(appointmentDate).getTime() + (duration * 60 * 1000);
+          
+          return {
+            id: `estimate-${est.id}`,
+            title: `Estimate Appointment - ${est.estimateNumber || est.estimate_number}`,
+            description: est.notes || `Appointment for estimate ${est.estimateNumber || est.estimate_number}`,
+            startTime: appointmentDate,
+            endTime: endTime,
+            address: est.client?.address || client.address,
+            city: est.client?.city || client.city,
+            state: est.client?.state || client.state,
+            zip: est.client?.zip || client.zip,
+            type: 'estimate',
+            status: est.status === 'accepted' ? 'confirmed' : 'pending',
+            clientId: est.clientId || est.client_id,
+            projectId: est.projectId || est.project_id,
+            agentId: est.agentId || est.agent_id,
+            notes: est.notes,
+            createdAt: est.createdAt || est.created_at,
+            isEstimateAppointment: true,
+            estimateId: est.id
+          };
+        });
+
+      // Combine regular events with estimate appointments
+      const allClientEvents = [...clientEvents, ...estimatesWithAppointments];
+
+
+
+      // Map client fields to camelCase
+      const mappedClient = {
+        id: client.id,
+        name: `${client.firstName || client.first_name} ${client.lastName || client.last_name}`,
+        firstName: client.firstName || client.first_name,
+        lastName: client.lastName || client.last_name,
+        email: client.email,
+        phone: client.phone,
+        address: client.address,
+        city: client.city,
+        state: client.state,
+        zip: client.zip,
+        joinDate: client.created_at
+      };
+
+      // Estimates are already mapped above
+
+      const response = {
+        client: mappedClient,
+        projects: clientProjects,
+        estimates: clientEstimates,
+        invoices: clientInvoices,
+        appointments: allClientEvents,
+        agent: primaryAgent ? {
+          name: `${primaryAgent.firstName} ${primaryAgent.lastName}`,
+          email: primaryAgent.email,
+          phone: primaryAgent.phone,
+          role: primaryAgent.role || 'Field Agent'
+        } : null
+      };
+      res.json(response);
+    } catch (error) {
+      console.error("[Client Portal] Uncaught error:", error);
+      res.status(500).json({ error: "Failed to fetch client data" });
+    }
+  });
+
+  // Public client portal routes (no authentication required) - MUST COME AFTER THE DATA ROUTE
+  app.get("/api/client-portal/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+      const portalData = await storage.getClientPortalData(token);
+      res.json(portalData);
+    } catch (error) {
+      console.error("Error accessing client portal:", error);
+      res.status(404).json({ message: "Invalid or expired portal access" });
+    }
+  });
+
+  app.post("/api/client-portal/:token/reply/:messageId", async (req, res) => {
+    try {
+      const { token, messageId } = req.params;
+      const { reply } = req.body;
+      
+      const clientData = await storage.validatePortalToken(token);
+      if (!clientData) {
+        return res.status(401).json({ message: "Invalid or expired token" });
+      }
+      
+      const validatedData = messageReplyInsertSchema.parse({
+        messageId: Number(messageId),
+        senderType: "client",
+        senderId: clientData.clientId,
+        reply
+      });
+      
+      const replyData = await storage.createMessageReply(validatedData);
+      res.status(201).json(replyData);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ errors: error.errors });
+      }
+      console.error("Error creating client reply:", error);
+      res.status(500).json({ message: "Failed to create reply" });
+    }
+  });
+
   // Projects routes
   app.get("/api/protected/projects", async (req, res) => {
     try {
@@ -232,7 +791,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Procesar las fechas del string ISO a objetos Date si están presentes
       const data = {
         ...req.body,
-        contractorId: req.user!.id,
+        contractor_id: req.user!.id,
         startDate: req.body.startDate ? new Date(req.body.startDate) : undefined,
         endDate: req.body.endDate ? new Date(req.body.endDate) : undefined
       };
@@ -277,8 +836,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   );
+
+  // PUT route for project updates (for compatibility with frontend)
+  app.put("/api/protected/projects/:id", 
+    verifyResourceOwnership('project'),
+    async (req, res) => {
+      try {
+        const projectId = Number(req.params.id);
+        
+        // Process ISO string dates to Date objects if present
+        const data = {
+          ...req.body,
+          startDate: req.body.startDate ? new Date(req.body.startDate) : undefined,
+          endDate: req.body.endDate ? new Date(req.body.endDate) : undefined,
+          lastAiUpdate: req.body.lastAiUpdate ? new Date(req.body.lastAiUpdate) : (req.body.aiGeneratedDescription ? new Date() : undefined)
+        };
+        
+        const validatedData = projectInsertSchema.partial().parse(data);
+        
+        const project = await storage.updateProject(projectId, req.user!.id, validatedData);
+        res.json(project);
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return res.status(400).json({ errors: error.errors });
+        }
+        console.error("Error updating project:", error);
+        res.status(500).json({ message: "Failed to update project" });
+      }
+    }
+  );
+
+  // Update project positions for drag-and-drop reordering
+  app.patch("/api/protected/projects/reorder", 
+    async (req, res) => {
+      try {
+        // Check authentication
+        if (!req.user || !req.user.id) {
+          return res.status(401).json({ message: "Not authenticated" });
+        }
+
+        console.log('Raw request body:', req.body);
+        const { projectUpdates } = req.body;
+        console.log('Extracted projectUpdates:', projectUpdates);
+        
+        if (!Array.isArray(projectUpdates)) {
+          return res.status(400).json({ message: "Invalid project updates format" });
+        }
+        
+        // Update all projects in a transaction
+        for (const update of projectUpdates) {
+          console.log('Updating project:', update);
+          
+          // Validate the update object
+          if (!update.id || !update.status || typeof update.position !== 'number') {
+            console.error('Invalid update object:', update);
+            return res.status(400).json({ 
+              message: "Invalid update object", 
+              details: update 
+            });
+          }
+          
+          await storage.updateProject(update.id, req.user.id, {
+            status: update.status,
+            position: update.position
+          });
+        }
+        
+        res.json({ success: true });
+      } catch (error) {
+        console.error("Error updating project positions:", error);
+        res.status(500).json({ message: "Failed to update project positions" });
+      }
+    }
+  );
   
-  // Cancelar proyecto
+  // Cancel project
   app.post("/api/protected/projects/:id/cancel", 
     verifyResourceOwnership('project'),
     async (req, res) => {
@@ -377,44 +1009,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/protected/estimates", async (req, res) => {
     try {
+      console.log("createEstimate -> Starting creation with data:", JSON.stringify(req.body, null, 2));
+      // Convert date strings to timestamps for SQLite compatibility
+      const now = Date.now();
       const estimateData = {
-        contractorId: req.user!.id,
-        clientId: req.body.clientId,
-        estimateNumber: req.body.estimateNumber,
-        issueDate: new Date(),
+        contractor_id: req.user!.id,
+        client_id: req.body.clientId || null, // Allow null client_id for internal estimates
+        estimate_number: req.body.estimateNumber,
+        issue_date: req.body.issueDate ? new Date(req.body.issueDate).getTime() : now,
         status: req.body.status || "draft",
         subtotal: req.body.subtotal,
         tax: req.body.tax || 0,
         discount: req.body.discount || 0,
         total: req.body.total,
         notes: req.body.notes || null,
-        terms: req.body.terms || null
+        terms: req.body.terms || null,
+        created_at: now
       };
       
-      const estimate = await storage.createEstimate(estimateData);
+      console.log("createEstimate -> Final data:", JSON.stringify(estimateData, null, 2));
       
-      // Create estimate items if selectedServices exist
-      if (req.body.selectedServices && req.body.selectedServices.length > 0) {
-        for (const service of req.body.selectedServices) {
-          const quantity = service.measurements?.linearFeet || service.measurements?.squareFeet || 1;
-          const unitPrice = parseFloat(service.laborRate) || 0;
-          const amount = service.laborCost || (quantity * unitPrice);
-          
-          await storage.createEstimateItem({
-            estimateId: estimate.id,
-            description: service.professionalDescription || service.name,
-            quantity: String(quantity),
-            unitPrice: String(unitPrice),
-            amount: String(amount),
-            notes: service.notes || null
-          });
-        }
+      // Validate with the appropriate schema
+      const validatedData = estimateInsertSchema.parse(estimateData);
+      
+      // Insert the estimate
+      const [newEstimate] = await db.insert(estimatesTable).values(validatedData).returning();
+      
+      // Insert estimate items if provided
+      if (req.body.items && req.body.items.length > 0) {
+        const estimateItems = req.body.items.map((item: any) => ({
+          estimate_id: newEstimate.id,
+          description: item.description,
+          quantity: item.quantity,
+          unit_price: item.unitPrice,
+          amount: item.amount,
+          notes: item.notes || null
+        }));
+        
+        await db.insert(estimateItemsTable).values(estimateItems);
       }
       
-      res.status(201).json(estimate);
-    } catch (error) {
+      res.status(201).json(newEstimate);
+    } catch (error: any) {
       console.error("Error creating estimate:", error);
-      res.status(500).json({ message: "Failed to create estimate" });
+      res.status(500).json({ message: "Failed to create estimate", error: error.message });
     }
   });
 
@@ -424,8 +1062,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const estimateId = Number(req.params.id);
         
-        console.log("updateEstimate -> API - Actualizando estimado ID:", estimateId);
-        console.log("updateEstimate -> API - Datos recibidos:", JSON.stringify(req.body, null, 2));
+        console.log("updateEstimate -> API - Updating estimate ID:", estimateId);
+        console.log("updateEstimate -> API - Data received:", JSON.stringify(req.body, null, 2));
         
         // Obtener el estimado actual para verificar su existencia
         const existingEstimate = await storage.getEstimate(estimateId, req.user!.id);
@@ -453,11 +1091,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const validatedData = estimateInsertSchema.partial().parse(dataWithDateObjects);
       
-      console.log("updateEstimate -> API - Datos validados, procediendo a actualizar");
+      console.log("updateEstimate -> API - Data validated, proceeding to update");
       
       const estimate = await storage.updateEstimate(estimateId, req.user!.id, validatedData);
       
-      console.log("updateEstimate -> API - Estimado actualizado exitosamente");
+      console.log("updateEstimate -> API - Estimate updated successfully");
       
       res.json(estimate);
     } catch (error) {
@@ -520,9 +1158,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Update estimate status to 'accepted'
         const updatedEstimate = await storage.updateEstimate(estimateId, req.user!.id, {
           status: 'accepted',
-          notes: req.body.notes 
-            ? `${existingEstimate.notes ? existingEstimate.notes + '\n\n' : ''}Accepted: ${req.body.notes}`
-            : `${existingEstimate.notes ? existingEstimate.notes + '\n\n' : ''}Estimate accepted`
+          acceptedDate: new Date(),
+          notes: `${existingEstimate.notes ? existingEstimate.notes + '\n\n' : ''}Estimate accepted by client`
         });
         
         res.json(updatedEstimate);
@@ -560,7 +1197,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Update estimate status to 'rejected'
         const updatedEstimate = await storage.updateEstimate(estimateId, req.user!.id, {
           status: 'rejected',
-          notes: `${existingEstimate.notes ? existingEstimate.notes + '\n\n' : ''}Rejected: ${req.body.notes}`
+          rejectionNotes: req.body.notes,
+          rejectedDate: new Date(),
+          notes: req.body.notes 
+            ? `${existingEstimate.notes ? existingEstimate.notes + '\n\n' : ''}Client rejected: ${req.body.notes}`
+            : `${existingEstimate.notes ? existingEstimate.notes + '\n\n' : ''}Estimate rejected by client`
         });
         
         res.json(updatedEstimate);
@@ -575,6 +1216,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     verifyResourceOwnership('estimate'),
     async (req, res) => {
       try {
+        if (!req.user || !req.user.id) {
+          console.error('ERROR: req.user or req.user.id is missing in /convert-to-invoice');
+          return res.status(401).json({ message: 'Unauthorized: User not authenticated or missing user ID.' });
+        }
         const estimateId = Number(req.params.id);
         
         // Obtener el estimado
@@ -600,55 +1245,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const random = Math.floor(Math.random() * 900) + 100; // Random 3-digit number
         const invoiceNumber = `OT-${year}${month}-${random}`;
         
+        // Debug logs before creating invoice and items
+        console.log('DEBUG estimate:', estimate);
+  
         // Create the invoice
         const invoiceData = {
-          contractorId: req.user!.id,
-          clientId: estimate.clientId,
-          projectId: estimate.projectId,
-          estimateId: estimate.id,
-          invoiceNumber,
-          issueDate: new Date(),
-          dueDate: new Date(new Date().setDate(new Date().getDate() + 15)), // Due in 15 days
+          contractor_id: req.user!.id,
+          client_id: estimate.client_id || estimate.clientId,
+          project_id: estimate.project_id || estimate.projectId,
+          estimate_id: estimate.id,
+          invoice_number: invoiceNumber,
+          issue_date: new Date().getTime(),
+          due_date: new Date(new Date().setDate(new Date().getDate() + 15)).getTime(), // Due in 15 days
           status: "pending",
           subtotal: estimate.subtotal,
           tax: estimate.tax,
           discount: estimate.discount,
           total: estimate.total,
-          amountPaid: "0",
+          amount_paid: "0",
           terms: estimate.terms,
           notes: estimate.notes,
-          contractorSignature: estimate.contractorSignature,
+          contractor_signature: estimate.contractor_signature,
+          created_at: new Date().getTime(),
         };
-      
-        const invoice = await storage.createInvoice(invoiceData);
         
-        // Create invoice items from estimate items
-        if (estimateItems && estimateItems.length > 0) {
+        let invoice;
+
+        try {
+          invoice = await storage.createInvoice(invoiceData);
+          console.log('DEBUG created invoice:', invoice);
+          console.log('DEBUG created invoice.id:', invoice?.id);
+        } catch (err) {
+          console.error('ERROR creating invoice:', err);
+          let errorMessage = 'Unknown error';
+          if (err instanceof Error) {
+            errorMessage = err.message;
+          }
+          return res.status(500).json({ message: 'Failed to create invoice', error: errorMessage });
+        }
+        console.log('DEBUG after invoice creation, invoice:', invoice);
+        if (!invoice || !invoice.id) {
+          console.error('*** ERROR: Invoice was not created or missing id:', invoice);
+          return res.status(500).json({ message: 'Failed to create invoice. Invoice object missing or id not set.' });
+        }
+        // Move estimate status update here, before creating invoice items
+        let statusUpdateError = null;
+        let updatedEstimate = null;
+        try {
+          await storage.updateEstimate(estimateId, req.user!.id, {
+            status: 'converted',
+            notes: `${estimate.notes ? estimate.notes + '\n\n' : ''}Converted to Invoice #${invoiceNumber}`
+          });
+          updatedEstimate = await storage.getEstimate(estimateId, req.user!.id);
+        } catch (err) {
+          statusUpdateError = err;
+          console.error('Warning: Estimate status update failed after invoice creation:', err);
+        }
+        console.log('DEBUG before creating invoice items, invoice.id:', invoice.id);
+        // Only create invoice items if invoice.id is valid
+        let invoiceItemsError = null;
+        if (estimateItems && estimateItems.length > 0 && invoice && invoice.id) {
           for (const item of estimateItems) {
-            await storage.createInvoiceItem({
-              invoiceId: invoice.id,
-              description: item.description,
-              quantity: item.quantity,
-              unitPrice: item.unitPrice,
-              amount: item.amount,
-              notes: item.notes
-            });
+            try {
+              console.log('DEBUG creating invoice item with invoice_id:', invoice.id, 'item:', item);
+              const validatedItem = {
+                invoice_id: invoice.id,
+                description: item.description,
+                quantity: String(item.quantity),
+                unit_price: String(item.unit_price ?? item.unitPrice),
+                amount: String(item.amount),
+                notes: item.notes
+              };
+              await storage.createInvoiceItem(validatedItem);
+            } catch (err) {
+              invoiceItemsError = err;
+              console.error('Error creating invoice item:', err);
+            }
           }
         }
-        
-        // Mark the estimate as converted
-        await storage.updateEstimate(estimateId, req.user!.id, {
-          status: 'converted',
-          notes: `${estimate.notes ? estimate.notes + '\n\n' : ''}Converted to Invoice #${invoiceNumber}`
-        });
-        
-        // Return the created invoice with items
+        // Return the created invoice with items, and the updated estimate
         const completeInvoice = await storage.getInvoice(invoice.id, req.user!.id);
-        res.status(201).json(completeInvoice);
+        if (statusUpdateError || invoiceItemsError) {
+          res.status(201).json({ invoice: completeInvoice, estimate: updatedEstimate, warning: 'Invoice created, but there were errors: ' + [statusUpdateError, invoiceItemsError].filter(Boolean).map(e => e?.message || e).join('; ') });
+        } else {
+          res.status(201).json({ invoice: completeInvoice, estimate: updatedEstimate });
+        }
         
       } catch (error) {
-        console.error("Error converting estimate to work order:", error);
-        res.status(500).json({ message: "Failed to convert estimate to work order" });
+        console.error("*** UNIQUE ERROR: Estimate-to-invoice conversion failed in /convert-to-invoice route! ***", error);
+        res.status(500).json({ message: "*** UNIQUE ERROR: Estimate-to-invoice conversion failed in /convert-to-invoice route! ***", error: error.message });
       }
     }
   );
@@ -745,7 +1430,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/protected/invoices", async (req, res) => {
     try {
       const invoices = await storage.getInvoices(req.user!.id);
-      res.json(invoices);
+      // Map client fields to camelCase for each invoice
+      const mappedInvoices = invoices.map(inv => ({
+        ...inv,
+        client: inv.client ? {
+          ...inv.client,
+          firstName: inv.client.first_name,
+          lastName: inv.client.last_name,
+          email: inv.client.email,
+          phone: inv.client.phone,
+          address: inv.client.address,
+          city: inv.client.city,
+          state: inv.client.state,
+          zip: inv.client.zip
+        } : null
+      }));
+      res.json(mappedInvoices);
     } catch (error) {
       console.error("Error fetching invoices:", error);
       res.status(500).json({ message: "Failed to fetch invoices" });
@@ -769,17 +1469,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/protected/invoices", async (req, res) => {
     try {
-      const validatedData = invoiceInsertSchema.parse({
-        ...req.body,
-        contractorId: req.user!.id
-      });
+      // Convert camelCase from frontend to snake_case for database
+      const snakeCaseData = {
+        contractor_id: req.user!.id,
+        client_id: req.body.clientId,
+        project_id: req.body.projectId,
+        estimate_id: req.body.estimateId,
+        invoice_number: req.body.invoiceNumber,
+        issue_date: req.body.issueDate ? new Date(req.body.issueDate).getTime() : Date.now(),
+        due_date: req.body.dueDate ? new Date(req.body.dueDate).getTime() : new Date(new Date().setDate(new Date().getDate() + 15)).getTime(),
+        status: req.body.status || "pending",
+        subtotal: req.body.subtotal,
+        tax: req.body.tax || 0,
+        discount: req.body.discount || 0,
+        total: req.body.total,
+        amount_paid: req.body.amountPaid || 0,
+        terms: req.body.terms,
+        notes: req.body.notes,
+        client_signature: req.body.clientSignature,
+        contractor_signature: req.body.contractorSignature,
+        created_at: Date.now()
+      };
       
-      const invoice = await storage.createInvoice(validatedData);
+      const invoice = await storage.createInvoice(snakeCaseData);
       res.status(201).json(invoice);
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
-      }
       console.error("Error creating invoice:", error);
       res.status(500).json({ message: "Failed to create invoice" });
     }
@@ -864,58 +1578,202 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
   });
   
-  // Record payment for an invoice
+  // Record payment for an invoice with automatic project status updates
   app.post("/api/protected/invoices/:id/payment", 
     verifyResourceOwnership('invoice', 'id'),
     async (req, res) => {
       try {
+        console.log('--- PAYMENT ENDPOINT HIT ---');
         const invoiceId = Number(req.params.id);
-        const { amount } = req.body;
+        const { amount, paymentMethod, notes } = req.body;
+        console.log('Payment request body:', req.body);
         
         if (!amount || isNaN(parseFloat(amount))) {
+          console.log('Invalid amount:', amount);
           return res.status(400).json({ message: "Valid payment amount is required" });
         }
         
-        // El middleware ya verificó que la factura existe y pertenece al contratista
+        // Get invoice with project information
         const invoice = await storage.getInvoice(invoiceId, req.user!.id);
+        console.log('Fetched invoice:', invoice);
         
         if (!invoice) {
+          console.log('Invoice not found:', invoiceId);
           return res.status(404).json({ message: "Invoice not found" });
         }
-      
-        const currentAmountPaid = parseFloat(invoice.amountPaid || "0");
+        
+        // Convert amounts to numbers for consistent calculations
         const paymentAmount = parseFloat(amount);
         const totalAmount = parseFloat(invoice.total);
+        const currentAmountPaid = parseFloat(invoice.amount_paid || '0');
+        
+        // Check if payment would exceed the total
+        if (currentAmountPaid + paymentAmount > totalAmount) {
+          console.log('Payment would exceed total:', { 
+            currentAmountPaid, 
+            paymentAmount, 
+            totalAmount, 
+            wouldBe: currentAmountPaid + paymentAmount 
+          });
+          return res.status(400).json({ 
+            message: "Payment amount exceeds the remaining balance",
+            currentAmountPaid,
+            paymentAmount,
+            totalAmount,
+            remainingBalance: totalAmount - currentAmountPaid
+          });
+        }
+      
+        // Record the payment in the payments table
+        const payment = await storage.createPayment({
+          invoiceId: invoiceId,
+          amount: paymentAmount,
+          method: paymentMethod || "cash",
+          paymentDate: req.body.paymentDate || new Date().toISOString(),
+          notes: notes || ""
+        });
+        console.log('Payment saved to DB:', payment);
+        
+        // Calculate new total paid
         const newAmountPaid = currentAmountPaid + paymentAmount;
-      
-      // Ensure payment doesn't exceed total
-      if (newAmountPaid > totalAmount) {
-        return res.status(400).json({ 
-          message: "Payment amount exceeds the remaining balance",
-          currentAmountPaid,
-          totalAmount,
-          remainingBalance: totalAmount - currentAmountPaid
-        });
-      }
-      
-      // Update the invoice with the new amount paid
-      const updatedInvoice = await storage.updateInvoice(invoiceId, req.user!.id, {
-        amountPaid: newAmountPaid.toString()
-      });
-      
-      // Update status to 'paid' if fully paid
-      if (newAmountPaid >= totalAmount) {
+        const paymentPercentage = (newAmountPaid / totalAmount) * 100;
+        
+        // Update the invoice with the new amount paid
+        let newInvoiceStatus = invoice.status;
+        if (newAmountPaid >= totalAmount) {
+          newInvoiceStatus = "paid";
+        } else if (newAmountPaid > 0) {
+          newInvoiceStatus = "partially_paid";
+        }
+        
         await storage.updateInvoice(invoiceId, req.user!.id, {
-          status: "paid"
+          amount_paid: newAmountPaid.toString(),
+          status: newInvoiceStatus
         });
+        
+        // BUSINESS LOGIC: Auto-update project status based on ANY payment received
+        let projectStatusUpdated = false;
+        let newProjectStatus = null;
+        let projectUpdateMessage = "";
+        if (newAmountPaid > 0) { // ANY payment triggers project logic
+          try {
+            if (invoice.projectId) {
+              // Update existing project
+              const currentProject = await storage.getProject(invoice.projectId, req.user!.id);
+              if (currentProject && currentProject.status === "pending") {
+                newProjectStatus = "In Progress";
+                await storage.updateProject(invoice.projectId, req.user!.id, {
+                  status: "in_progress"
+                });
+                projectStatusUpdated = true;
+                projectUpdateMessage = `Project automatically moved to In Progress status after receiving payment.`;
+              }
+            }
+            // Create new project when invoice has no existing project
+            if (!invoice.projectId) {
+              const client = await storage.getClient(invoice.clientId, req.user!.id);
+              if (client) {
+                let estimateDetails = null;
+                if (invoice.estimateId) {
+                  try {
+                    estimateDetails = await storage.getEstimate(invoice.estimateId, req.user!.id);
+                  } catch (estimateError) {
+                    console.log("Could not fetch estimate details:", estimateError);
+                  }
+                }
+                const isFullyPaid = newAmountPaid >= totalAmount;
+                const projectStatus = isFullyPaid ? "in_progress" : "in_progress";
+                const projectTitle = estimateDetails?.title 
+                  ? `${estimateDetails.title} - Invoice #${invoice.invoiceNumber}`
+                  : `Project for Invoice #${invoice.invoiceNumber}`;
+                const projectDescription = estimateDetails?.description 
+                  ? `${estimateDetails.description}\n\nAutomatically created from invoice #${invoice.invoiceNumber} after receiving payment of $${newAmountPaid.toFixed(2)}. ${isFullyPaid ? 'Invoice fully paid.' : `Remaining balance: $${(totalAmount - newAmountPaid).toFixed(2)}`}`
+                  : `Automatically created project from invoice #${invoice.invoiceNumber} after receiving payment of $${newAmountPaid.toFixed(2)}. ${isFullyPaid ? 'Invoice fully paid.' : `Remaining balance: $${(totalAmount - newAmountPaid).toFixed(2)}`}`;
+                try {
+                  const newProject = await storage.createSimpleProject({
+                    contractorId: req.user!.id,
+                    clientId: invoice.clientId,
+                    title: projectTitle,
+                    description: projectDescription,
+                    status: projectStatus,
+                    budget: Number(invoice.total),
+                    startDate: new Date(),
+                    notes: `Project created automatically when invoice payment was received.\n\nPayment Details:\n- Amount: $${parseFloat(amount).toFixed(2)}\n- Method: ${paymentMethod || 'cash'}\n- Total Paid: $${newAmountPaid.toFixed(2)}\n- Invoice Total: $${totalAmount.toFixed(2)}\n${notes ? `- Notes: ${notes}\n` : ''}\n${estimateDetails ? `- Based on Estimate: ${estimateDetails.title || 'N/A'}` : ''}`
+                  });
+                  await storage.updateInvoice(invoiceId, req.user!.id, {
+                    projectId: newProject.id
+                  });
+                  projectStatusUpdated = true;
+                  newProjectStatus = "In Progress";
+                  projectUpdateMessage = `New project created and automatically started (In Progress) after receiving payment. Project ID: ${newProject.id}`;
+                  console.log(`[AUTO PROJECT] Created project ${newProject.id} for invoice ${invoice.invoiceNumber} with status: ${projectStatus}`);
+                } catch (projectCreateError) {
+                  console.error("[AUTO PROJECT] Error creating project:", projectCreateError);
+                }
+              }
+            }
+          } catch (projectError) {
+            console.error("Error handling project creation/update:", projectError);
+            console.error("Project error details:", {
+              invoiceId: invoice.id,
+              clientId: invoice.clientId,
+              hasProject: !!invoice.projectId,
+              errorMessage: projectError instanceof Error ? projectError.message : projectError
+            });
+            // Don't fail the payment if project operation fails
+          }
+        }
+        
+        // Fetch the updated invoice with payments
+        const updatedInvoice = await storage.getInvoice(invoiceId, req.user!.id);
+        
+        res.json({ 
+          invoice: updatedInvoice,
+          payment: payment,
+          totals: {
+            currentAmountPaid: newAmountPaid,
+            totalAmount,
+            remainingBalance: totalAmount - newAmountPaid,
+            paymentPercentage: Math.round(paymentPercentage)
+          },
+          projectUpdate: {
+            updated: projectStatusUpdated,
+            newStatus: newProjectStatus,
+            message: projectUpdateMessage
+          },
+          message: projectStatusUpdated 
+            ? `Payment recorded successfully. ${projectUpdateMessage}`
+            : "Payment recorded successfully"
+        });
+      } catch (error) {
+        console.error("Error recording payment:", error);
+        res.status(500).json({ message: "SQL SYNTAX ERROR DETECTED - DEBUG", error: error.message });
       }
-      
-      res.json(updatedInvoice);
-    } catch (error) {
-      console.error("Error recording payment:", error);
-      res.status(500).json({ message: "Failed to record payment" });
     }
-  });
+  );
+
+  // Recalculate invoice balance from actual payments
+  app.post("/api/protected/invoices/:id/recalculate-balance", 
+    verifyResourceOwnership('invoice', 'id'),
+    async (req, res) => {
+      try {
+        const invoiceId = Number(req.params.id);
+        const result = await storage.recalculateInvoiceBalance(invoiceId, req.user!.id);
+        
+        // Fetch the updated invoice with payments
+        const updatedInvoice = await storage.getInvoice(invoiceId, req.user!.id);
+        
+        res.json({ 
+          invoice: updatedInvoice,
+          recalculated: result,
+          message: "Invoice balance recalculated successfully"
+        });
+      } catch (error) {
+        console.error("Error recalculating invoice balance:", error);
+        res.status(500).json({ message: "Failed to recalculate balance" });
+      }
+    }
+  );
 
   // Invoice Items routes
   app.get("/api/protected/invoices/:invoiceId/items", async (req, res) => {
@@ -1057,81 +1915,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       if (action === 'accept') {
-        // Para aceptar, convertimos el estimado a factura automáticamente
-        try {
-          console.log("Creando factura a partir de estimado aceptado:", estimateId);
-          
-          // Crear la factura con los mismos datos del estimado
-          const invoiceData = {
-            contractorId: estimate.contractorId,
-            clientId: estimate.clientId,
-            projectId: estimate.projectId,
-            estimateId: estimateId,
-            invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
-            status: 'pending',
-            issueDate: new Date(),
-            dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // 15 días para vencimiento
-            subtotal: String(estimate.subtotal),
-            tax: String(estimate.tax || 0),
-            discount: String(estimate.discount || 0),
-            total: String(estimate.total),
-            notes: `Factura generada automáticamente a partir del estimado #${estimate.estimateNumber}`,
-          };
-          
-          console.log("Datos de factura a crear:", invoiceData);
-          
-          // Crear la factura
-          const newInvoice = await storage.createInvoice(invoiceData);
-          console.log("Factura creada exitosamente:", newInvoice.id);
-          
-          // Copiar los items del estimado a la factura
-          if (estimate.items && estimate.items.length > 0) {
-            console.log(`Copiando ${estimate.items.length} items a la factura`);
-            for (const item of estimate.items) {
-              await storage.createInvoiceItem({
-                invoiceId: newInvoice.id,
-                description: item.description,
-                quantity: item.quantity,
-                unitPrice: item.unitPrice,
-                amount: item.amount
-              });
-            }
-          }
-          
-          // Actualizar el estimado a estado convertido
-          const updateData = {
-            status: 'converted',
-            convertedToInvoiceId: newInvoice.id,
-            notes: `${estimate.notes ? estimate.notes + '\n\n' : ''}Estimate accepted and converted to Invoice #${newInvoice.invoiceNumber}`
-          };
-          
-          // Actualizar el estimado
-          const updatedEstimate = await storage.updateEstimateById(estimateId, updateData);
-          
-          res.json({
-            success: true,
-            message: "Estimate has been accepted and converted to invoice successfully",
-            estimate: updatedEstimate,
-            invoice: newInvoice
-          });
-          
-        } catch (error) {
-          console.error("Error al convertir estimado a factura:", error);
-          // En caso de error al crear la factura, aceptamos el estimado pero no lo convertimos
-          const updateData = {
-            status: 'accepted',
-            notes: `${estimate.notes ? estimate.notes + '\n\n' : ''}Estimate accepted but failed to convert to invoice`
-          };
-          
-          const updatedEstimate = await storage.updateEstimateById(estimateId, updateData);
-          
-          res.json({
-            success: true,
-            message: "Estimate has been accepted, but failed to create invoice",
-            estimate: updatedEstimate,
-            error: error instanceof Error ? error.message : String(error)
-          });
-        }
+        // Simply accept the estimate without auto-creating invoice
+        const updateData = {
+          status: 'accepted',
+          acceptedDate: new Date(),
+          notes: `${estimate.notes ? estimate.notes + '\n\n' : ''}Estimate accepted by client`
+        };
+        
+        // Update the estimate
+        const updatedEstimate = await storage.updateEstimateById(estimateId, updateData);
+        
+        res.json({
+          success: true,
+          message: "Estimate has been accepted successfully",
+          estimate: updatedEstimate
+        });
       } else {
         // Para rechazar, actualizamos el estado a rechazado
         const updateData = {
@@ -1162,1178 +1960,540 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Events routes
+  // Agent Management Routes
+  app.get("/api/protected/agents", async (req, res) => {
+    try {
+      console.log("=== FETCHING AGENTS ===");
+      console.log("User ID:", req.user!.id);
+      
+      const contractorId = req.user!.id;
+      // Use agentsTable for all schema references
+      const agentsList = await db.select().from(agentsTable)
+        .where(eq(agentsTable.contractor_id, contractorId))
+        .orderBy(agentsTable.first_name);
+      
+      // Map snake_case to camelCase for each agent
+      const mapAgent = (a) => ({
+        id: a.id,
+        contractorId: a.contractor_id,
+        firstName: a.first_name,
+        lastName: a.last_name,
+        email: a.email,
+        phone: a.phone,
+        employeeId: a.employee_id,
+        role: a.role,
+        isActive: a.is_active,
+        specialties: a.specialties,
+        colorCode: a.color_code,
+        hourlyRate: a.hourly_rate,
+        commissionRate: a.commission_rate,
+        hireDate: a.hire_date,
+        notes: a.notes,
+        createdAt: a.created_at,
+        updatedAt: a.updated_at
+      });
+      res.json(agentsList.map(mapAgent));
+    } catch (error) {
+      console.error("Error fetching agents:", error);
+      res.status(500).json({ message: "Failed to fetch agents" });
+    }
+  });
+
+  // Update agent
+  app.put("/api/protected/agents/:id", async (req, res) => {
+    try {
+      const agentId = Number(req.params.id);
+      const contractorId = req.user!.id;
+      // Map camelCase to snake_case
+      const updateData = {
+        first_name: req.body.firstName,
+        last_name: req.body.lastName,
+        email: req.body.email,
+        phone: req.body.phone,
+        employee_id: req.body.employeeId,
+        role: req.body.role,
+        is_active: req.body.isActive,
+        specialties: Array.isArray(req.body.specialties) ? JSON.stringify(req.body.specialties) : req.body.specialties,
+        color_code: req.body.colorCode,
+        hourly_rate: req.body.hourlyRate,
+        commission_rate: req.body.commissionRate,
+        hire_date: req.body.hireDate,
+        notes: req.body.notes,
+        updated_at: Date.now()
+      };
+      const [updatedAgent] = await db.update(agentsTable)
+        .set(updateData)
+        .where(and(eq(agentsTable.id, agentId), eq(agentsTable.contractor_id, contractorId)))
+        .returning();
+      if (!updatedAgent) {
+        return res.status(404).json({ message: "Agent not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error updating agent:", error);
+      res.status(500).json({ message: "Failed to update agent" });
+    }
+  });
+
+  // Delete agent
+  app.delete("/api/protected/agents/:id", async (req, res) => {
+    try {
+      const agentId = Number(req.params.id);
+      const contractorId = req.user!.id;
+      const deleted = await db.delete(agentsTable)
+        .where(and(eq(agentsTable.id, agentId), eq(agentsTable.contractor_id, contractorId)));
+      if (deleted.changes === 0) {
+        return res.status(404).json({ message: "Agent not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting agent:", error);
+      res.status(500).json({ message: "Failed to delete agent" });
+    }
+  });
+
+  // Create agent
+  app.post("/api/protected/agents", async (req, res) => {
+    try {
+      const contractorId = req.user!.id;
+      // Map camelCase to snake_case
+      const agentData = {
+        contractor_id: contractorId,
+        first_name: req.body.firstName,
+        last_name: req.body.lastName,
+        email: req.body.email,
+        phone: req.body.phone,
+        employee_id: req.body.employeeId,
+        role: req.body.role,
+        is_active: req.body.isActive,
+        specialties: Array.isArray(req.body.specialties) ? JSON.stringify(req.body.specialties) : req.body.specialties,
+        color_code: req.body.colorCode,
+        hourly_rate: req.body.hourlyRate,
+        commission_rate: req.body.commissionRate,
+        hire_date: req.body.hireDate,
+        notes: req.body.notes,
+        created_at: Date.now(),
+        updated_at: Date.now()
+      };
+      const [newAgent] = await db.insert(agentsTable).values(agentData).returning();
+      if (!newAgent) {
+        return res.status(500).json({ message: "Failed to create agent" });
+      }
+      // Map snake_case to camelCase for response
+      const mapAgent = (a) => ({
+        id: a.id,
+        contractorId: a.contractor_id,
+        firstName: a.first_name,
+        lastName: a.last_name,
+        email: a.email,
+        phone: a.phone,
+        employeeId: a.employee_id,
+        role: a.role,
+        isActive: a.is_active,
+        specialties: a.specialties,
+        colorCode: a.color_code,
+        hourlyRate: a.hourly_rate,
+        commissionRate: a.commission_rate,
+        hireDate: a.hire_date,
+        notes: a.notes,
+        createdAt: a.created_at,
+        updatedAt: a.updated_at
+      });
+      res.status(201).json(mapAgent(newAgent));
+    } catch (error) {
+      console.error("Error creating agent:", error);
+      res.status(500).json({ message: "Failed to create agent" });
+    }
+  });
+
+  // Create event
+  app.post("/api/protected/events", async (req, res) => {
+    try {
+      const contractorId = req.user!.id;
+      console.log("[EVENT CREATE] Incoming data:", JSON.stringify(req.body, null, 2));
+      // Map and coerce fields
+      const eventType = req.body.eventType || req.body.type || "Event";
+      const title = req.body.title || eventType;
+      const startTime = req.body.startTime ? Number(req.body.startTime) : undefined;
+      const endTime = req.body.endTime ? Number(req.body.endTime) : undefined;
+      const projectId = req.body.projectId === null || req.body.projectId === undefined || req.body.projectId === '' ? undefined : Number(req.body.projectId);
+      const notes = req.body.notes === null ? '' : req.body.notes;
+      const address = req.body.address === null ? '' : req.body.address;
+      const city = req.body.city === null ? '' : req.body.city;
+      const state = req.body.state === null ? '' : req.body.state;
+      const zip = req.body.zip === null ? '' : req.body.zip;
+      // Required fields
+      if (!eventType) {
+        return res.status(400).json({ message: "Missing required field: eventType/type" });
+      }
+      const eventData = {
+        contractor_id: contractorId,
+        client_id: req.body.clientId === null || req.body.clientId === undefined || req.body.clientId === '' ? null : Number(req.body.clientId),
+        project_id: projectId,
+        agent_id: req.body.agentId || null,
+        event_type: eventType,
+        type: eventType,
+        title,
+        status: req.body.status,
+        address,
+        city,
+        state,
+        zip,
+        notes,
+        start_time: startTime,
+        end_time: endTime,
+        created_at: Date.now(),
+        updated_at: Date.now()
+      };
+      // Validate with schema
+      const validatedData = eventInsertSchema.parse(eventData);
+      // Insert event
+      const [newEvent] = await db.insert(eventsTable).values(validatedData).returning();
+      if (!newEvent) {
+        return res.status(500).json({ message: "Failed to create event" });
+      }
+      // Map snake_case to camelCase for response
+      const mapEvent = (e) => ({
+        id: e.id,
+        contractorId: e.contractor_id,
+        clientId: e.client_id,
+        projectId: e.project_id,
+        agentId: e.agent_id,
+        eventType: e.event_type,
+        type: e.type,
+        title: e.title,
+        status: e.status,
+        address: e.address,
+        city: e.city,
+        state: e.state,
+        zip: e.zip,
+        notes: e.notes,
+        startTime: e.start_time,
+        endTime: e.end_time,
+        createdAt: e.created_at,
+        updatedAt: e.updated_at
+      });
+      res.status(201).json(mapEvent(newEvent));
+    } catch (error) {
+      console.error("Error creating event:", error);
+      if (error.issues) {
+        return res.status(400).json({ message: "Validation error", issues: error.issues });
+      }
+      res.status(500).json({ message: "Failed to create event" });
+    }
+  });
+
+  // List all events for the current contractor
   app.get("/api/protected/events", async (req, res) => {
     try {
-      const events = await storage.getEvents(req.user!.id);
-      res.json(events);
+      const contractorId = req.user!.id;
+      // Fetch all events for this contractor
+      const events = await db.select().from(eventsTable).where(eq(eventsTable.contractor_id, contractorId));
+      // Optionally, join with clients and agents for richer info
+      // For now, just map fields
+      const mapEvent = (e) => ({
+        id: e.id,
+        contractorId: e.contractor_id,
+        clientId: e.client_id,
+        projectId: e.project_id,
+        agentId: e.agent_id,
+        eventType: e.event_type,
+        type: e.type,
+        title: e.title,
+        status: e.status,
+        address: e.address,
+        city: e.city,
+        state: e.state,
+        zip: e.zip,
+        notes: e.notes,
+        startTime: e.start_time,
+        endTime: e.end_time,
+        createdAt: e.created_at,
+        updatedAt: e.updated_at
+      });
+      res.json(events.map(mapEvent));
     } catch (error) {
       console.error("Error fetching events:", error);
       res.status(500).json({ message: "Failed to fetch events" });
     }
   });
 
-  app.get("/api/protected/events/:id", async (req, res) => {
+  // Agent daily schedule route (summary for all events and estimates)
+  app.get("/api/protected/agents/schedule", async (req, res) => {
     try {
-      const event = await storage.getEvent(Number(req.params.id), req.user!.id);
-      if (!event) {
-        return res.status(404).json({ message: "Event not found" });
-      }
-      res.json(event);
-    } catch (error) {
-      console.error("Error fetching event:", error);
-      res.status(500).json({ message: "Failed to fetch event" });
-    }
-  });
+      const contractorId = req.user!.id;
+      const date = req.query.date as string;
+      if (!date) return res.status(400).json({ message: "Missing date parameter" });
+      const dayStart = new Date(date + 'T00:00:00').getTime();
+      const dayEnd = new Date(date + 'T23:59:59').getTime();
 
-  app.post("/api/protected/events", async (req, res) => {
-    try {
-      console.log("Datos recibidos del cliente:", JSON.stringify(req.body, null, 2));
-      
-      // Preparar datos incluyendo el ID del contratista
-      const dataToValidate = {
-        ...req.body,
-        contractorId: req.user!.id,
-      };
-      
-      console.log("Datos preparados para validación:", JSON.stringify(dataToValidate, null, 2));
-      
-      // z.coerce.date() convierte automáticamente las strings a objetos Date
-      const validatedData = eventInsertSchema.parse(dataToValidate);
-      
-      console.log("Datos validados:", JSON.stringify({
-        ...validatedData,
-        startTime: validatedData.startTime instanceof Date ? validatedData.startTime.toISOString() : validatedData.startTime,
-        endTime: validatedData.endTime instanceof Date ? validatedData.endTime.toISOString() : validatedData.endTime
-      }, null, 2));
-      
-      const event = await storage.createEvent(validatedData);
-      res.status(201).json(event);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        console.error("Error de validación ZOD:", JSON.stringify(error.errors, null, 2));
-        return res.status(400).json({ errors: error.errors });
-      }
-      console.error("Error creating event:", error);
-      res.status(500).json({ message: "Failed to create event" });
-    }
-  });
+      // Get all active agents
+      const agentsList = await db.select().from(agentsTable)
+        .where(and(eq(agentsTable.contractor_id, contractorId), eq(agentsTable.is_active, true)));
 
-  app.patch("/api/protected/events/:id", async (req, res) => {
-    try {
-      const eventId = Number(req.params.id);
-      
-      // First check if event exists and belongs to contractor
-      const existingEvent = await storage.getEvent(eventId, req.user!.id);
-      if (!existingEvent) {
-        return res.status(404).json({ message: "Event not found" });
-      }
-      
-      // Usar el esquema parcial para validación
-      const validatedData = eventInsertSchema.partial().parse({
-        ...req.body,
-        // Asegurarse de que las fechas se conviertan correctamente si están presentes
-        startTime: req.body.startTime ? req.body.startTime : undefined,
-        endTime: req.body.endTime ? req.body.endTime : undefined
+      // Get all events for this contractor and date
+      const eventsList = await db.select().from(eventsTable)
+        .where(and(
+          eq(eventsTable.contractor_id, contractorId),
+          sql`${eventsTable.start_time} >= ${dayStart} AND ${eventsTable.start_time} <= ${dayEnd}`
+        ));
+
+      // Get all estimates for this contractor
+      const estimatesList = await db.select().from(estimatesTable)
+        .where(eq(estimatesTable.contractor_id, contractorId));
+
+      // For each estimate, check if it is scheduled for this date
+      const estimatesForDate = estimatesList.filter(est => {
+        if (!est.appointment_date) return false;
+        const appt = new Date(est.appointment_date).getTime();
+        return appt >= dayStart && appt <= dayEnd;
       });
-      
-      console.log("Datos validados para actualización:", JSON.stringify({
-        ...validatedData,
-        startTime: validatedData.startTime instanceof Date ? validatedData.startTime.toISOString() : validatedData.startTime,
-        endTime: validatedData.endTime instanceof Date ? validatedData.endTime.toISOString() : validatedData.endTime
-      }, null, 2));
-      
-      const event = await storage.updateEvent(eventId, req.user!.id, validatedData);
-      res.json(event);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        console.error("Error de validación ZOD:", JSON.stringify(error.errors, null, 2));
-        return res.status(400).json({ errors: error.errors });
-      }
-      console.error("Error updating event:", error);
-      res.status(500).json({ message: "Failed to update event" });
-    }
-  });
 
-  app.delete("/api/protected/events/:id", async (req, res) => {
-    try {
-      const eventId = Number(req.params.id);
-      const success = await storage.deleteEvent(eventId, req.user!.id);
-      
-      if (!success) {
-        return res.status(404).json({ message: "Event not found" });
-      }
-      
-      res.status(204).end();
-    } catch (error) {
-      console.error("Error deleting event:", error);
-      res.status(500).json({ message: "Failed to delete event" });
-    }
-  });
+      // Combine all events and estimates for the day
+      const allScheduled = [
+        ...eventsList.map(ev => ({
+          type: 'event',
+          id: ev.id,
+          agentId: ev.agent_id
+        })),
+        ...estimatesForDate.map(est => ({
+          type: 'estimate',
+          id: est.id,
+          agentId: est.agent_id
+        }))
+      ];
 
-  // Materials routes
-  app.get("/api/protected/materials", async (req, res) => {
-    try {
-      const materials = await storage.getMaterials(req.user!.id);
-      res.json(materials);
-    } catch (error) {
-      console.error("Error fetching materials:", error);
-      res.status(500).json({ message: "Failed to fetch materials" });
-    }
-  });
+      const totalScheduled = allScheduled.length;
+      const totalUnassigned = allScheduled.filter(item => !item.agentId).length;
 
-  app.get("/api/protected/materials/:id", 
-    verifyResourceOwnership('material', 'id'),
-    async (req, res) => {
-      try {
-        // El middleware ya verificó que el material existe y pertenece al contratista
-        const material = await storage.getMaterial(Number(req.params.id), req.user!.id);
-        if (!material) {
-          return res.status(404).json({ message: "Material not found" });
-        }
-        res.json(material);
-      } catch (error) {
-        console.error("Error fetching material:", error);
-        res.status(500).json({ message: "Failed to fetch material" });
-      }
-  });
-
-  app.post("/api/protected/materials", async (req, res) => {
-    try {
-      const validatedData = materialInsertSchema.parse({
-        ...req.body,
-        contractorId: req.user!.id
-      });
-      
-      const material = await storage.createMaterial(validatedData);
-      res.status(201).json(material);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
-      }
-      console.error("Error creating material:", error);
-      res.status(500).json({ message: "Failed to create material" });
-    }
-  });
-
-  app.patch("/api/protected/materials/:id", 
-    verifyResourceOwnership('material', 'id'),
-    async (req, res) => {
-      try {
-        const materialId = Number(req.params.id);
-        
-        // El middleware ya verificó que el material existe y pertenece al contratista
-        const existingMaterial = await storage.getMaterial(materialId, req.user!.id);
-        if (!existingMaterial) {
-          return res.status(404).json({ message: "Material not found" });
-        }
-        
-        const validatedData = materialInsertSchema.partial().parse(req.body);
-        
-        const material = await storage.updateMaterial(materialId, req.user!.id, validatedData);
-        res.json(material);
-      } catch (error) {
-        if (error instanceof z.ZodError) {
-          return res.status(400).json({ errors: error.errors });
-        }
-        console.error("Error updating material:", error);
-        res.status(500).json({ message: "Failed to update material" });
-      }
-  });
-
-  app.delete("/api/protected/materials/:id", 
-    verifyResourceOwnership('material', 'id'),
-    preventCascadeOperations('material'),
-    async (req, res) => {
-      try {
-        const materialId = Number(req.params.id);
-        const success = await storage.deleteMaterial(materialId, req.user!.id);
-        
-        if (!success) {
-          return res.status(404).json({ message: "Material not found" });
-        }
-        
-        res.status(204).end();
-      } catch (error) {
-        console.error("Error deleting material:", error);
-        res.status(500).json({ message: "Failed to delete material" });
-      }
-  });
-
-  // Attachments routes
-  app.get("/api/protected/attachments/:entityType/:entityId", 
-    (req, res, next) => {
-      // Verify that the entity type and ID are valid and belong to the contractor
-      const entityType = req.params.entityType;
-      const entityId = Number(req.params.entityId);
-      
-      if (!entityType || !entityId) {
-        return res.status(400).json({ message: "Entity type and ID are required" });
-      }
-      
-      // We use a dynamic middleware based on the entity type
-      return verifyResourceOwnership(entityType as EntityType, 'entityId')(req, res, next);
-    },
-    async (req, res) => {
-      try {
-        const entityType = req.params.entityType;
-        const entityId = Number(req.params.entityId);
-        
-        // The middleware already verified that the entity exists and belongs to the contractor
-        const attachments = await storage.getAttachments(req.user!.id, entityType, entityId);
-        res.json(attachments);
-      } catch (error) {
-        console.error("Error fetching attachments:", error);
-        res.status(500).json({ message: "Failed to fetch attachments" });
-      }
-  });
-
-  app.post("/api/protected/attachments", 
-    // We verify that the entity to which the file is attached belongs to the contractor
-    (req, res, next) => {
-      const { entityType, entityId } = req.body;
-      
-      if (!entityType || !entityId) {
-        return res.status(400).json({ message: "Entity type and ID are required" });
-      }
-      
-      // We use a dynamic middleware based on the entity type
-      return verifyResourceOwnership(entityType as EntityType, 'entityId')(req, res, next);
-    },
-    async (req, res) => {
-      try {
-        // The middleware already verified that the entity exists and belongs to the contractor
-        const validatedData = {
-          ...req.body,
-          contractorId: req.user!.id
+      // Group estimates by agent for detailed view (unchanged)
+      const schedule = agentsList.map(agent => {
+        const agentEvents = eventsList.filter(ev => ev.agent_id === agent.id);
+        const agentEstimates = estimatesForDate.filter(est => est.agent_id === agent.id);
+        const totalHours = agentEvents.reduce((sum, ev) => sum + ((ev.end_time - ev.start_time) / 3600000), 0);
+        return {
+          agent: {
+            id: agent.id,
+            firstName: agent.first_name,
+            lastName: agent.last_name,
+            email: agent.email,
+            phone: agent.phone,
+            role: agent.role,
+            colorCode: agent.color_code,
+            isActive: agent.is_active
+          },
+          events: agentEvents.map(ev => ({
+            id: ev.id,
+            title: ev.title,
+            startTime: ev.start_time,
+            endTime: ev.end_time,
+            type: ev.type,
+            status: ev.status,
+            clientId: ev.client_id,
+            notes: ev.notes,
+            address: ev.address
+          })),
+          estimates: agentEstimates.map(est => ({
+            id: est.id,
+            estimateNumber: est.estimate_number,
+            appointmentDate: est.appointment_date,
+            appointmentDuration: est.appointment_duration,
+            status: est.status,
+            clientId: est.client_id,
+            agentId: est.agent_id
+          })),
+          totalHours,
+          isAvailable: agentEvents.length === 0 && agentEstimates.length === 0
         };
-        
-        const attachment = await storage.createAttachment(validatedData);
-        res.status(201).json(attachment);
-      } catch (error) {
-        console.error("Error creating attachment:", error);
-        res.status(500).json({ message: "Failed to create attachment" });
-      }
-  });
-
-  app.delete("/api/protected/attachments/:id", 
-    verifyResourceOwnership('attachment', 'id'),
-    async (req, res) => {
-      try {
-        const attachmentId = Number(req.params.id);
-        // El middleware ya verificó que el adjunto existe y pertenece al contratista
-        const success = await storage.deleteAttachment(attachmentId, req.user!.id);
-        
-        if (!success) {
-          return res.status(404).json({ message: "Attachment not found" });
-        }
-        
-        res.status(204).end();
-      } catch (error) {
-        console.error("Error deleting attachment:", error);
-        res.status(500).json({ message: "Failed to delete attachment" });
-      }
-  });
-
-  // Follow-ups routes
-  app.get("/api/protected/follow-ups", async (req, res) => {
-    try {
-      const followUps = await storage.getFollowUps(req.user!.id);
-      res.json(followUps);
-    } catch (error) {
-      console.error("Error fetching follow-ups:", error);
-      res.status(500).json({ message: "Failed to fetch follow-ups" });
-    }
-  });
-
-  app.post("/api/protected/follow-ups", async (req, res) => {
-    try {
-      const validatedData = followUpInsertSchema.parse({
-        ...req.body,
-        contractorId: req.user!.id
       });
-      
-      const followUp = await storage.createFollowUp(validatedData);
-      res.status(201).json(followUp);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
-      }
-      console.error("Error creating follow-up:", error);
-      res.status(500).json({ message: "Failed to create follow-up" });
-    }
-  });
 
-  app.patch("/api/protected/follow-ups/:id", 
-    verifyResourceOwnership('follow-up'),
-    async (req, res) => {
-      try {
-        const followUpId = Number(req.params.id);
-        const validatedData = followUpInsertSchema.partial().parse(req.body);
-        
-        // El middleware ya verificó que el follow-up existe y pertenece al contratista
-        const followUp = await storage.updateFollowUp(followUpId, req.user!.id, validatedData);
-        
-        if (!followUp) {
-          return res.status(404).json({ message: "Follow-up not found" });
-        }
-        
-        res.json(followUp);
-      } catch (error) {
-        if (error instanceof z.ZodError) {
-          return res.status(400).json({ errors: error.errors });
-        }
-        console.error("Error updating follow-up:", error);
-        res.status(500).json({ message: "Failed to update follow-up" });
-      }
-  });
+      // Unassigned estimates for this date
+      const unassignedEstimates = estimatesForDate.filter(est => !est.agent_id).map(est => ({
+        id: est.id,
+        estimateNumber: est.estimate_number,
+        appointmentDate: est.appointment_date,
+        appointmentDuration: est.appointment_duration,
+        status: est.status,
+        clientId: est.client_id,
+        agentId: est.agent_id
+      }));
 
-  app.delete("/api/protected/follow-ups/:id", 
-    verifyResourceOwnership('follow-up'),
-    async (req, res) => {
-      try {
-        const followUpId = Number(req.params.id);
-        // El middleware ya verificó que el follow-up existe y pertenece al contratista
-        const success = await storage.deleteFollowUp(followUpId, req.user!.id);
-        
-        if (!success) {
-          return res.status(404).json({ message: "Follow-up not found" });
-        }
-        
-        res.status(204).end();
-      } catch (error) {
-        console.error("Error deleting follow-up:", error);
-        res.status(500).json({ message: "Failed to delete follow-up" });
-      }
-  });
-
-  // Property Measurements routes
-  app.get("/api/protected/property-measurements", async (req, res) => {
-    try {
-      const measurements = await storage.getPropertyMeasurements(req.user!.id);
-      res.json(measurements);
-    } catch (error) {
-      console.error("Error fetching property measurements:", error);
-      res.status(500).json({ message: "Failed to fetch property measurements" });
-    }
-  });
-
-  app.get("/api/protected/property-measurements/:id", 
-    verifyResourceOwnership('property-measurement'),
-    async (req, res) => {
-      try {
-        // El middleware ya verificó que la medición existe y pertenece al contratista
-        const measurement = await storage.getPropertyMeasurement(Number(req.params.id), req.user!.id);
-        if (!measurement) {
-          return res.status(404).json({ message: "Property measurement not found" });
-        }
-        res.json(measurement);
-      } catch (error) {
-        console.error("Error fetching property measurement:", error);
-        res.status(500).json({ message: "Failed to fetch property measurement" });
-      }
-  });
-
-  app.post("/api/protected/property-measurements", async (req, res) => {
-    try {
-      const validatedData = propertyMeasurementInsertSchema.parse({
-        ...req.body,
-        contractorId: req.user!.id,
-        measuredAt: new Date(),
-      });
-      
-      const measurement = await storage.createPropertyMeasurement(validatedData);
-      res.status(201).json(measurement);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
-      }
-      console.error("Error creating property measurement:", error);
-      res.status(500).json({ message: "Failed to create property measurement" });
-    }
-  });
-
-  app.patch("/api/protected/property-measurements/:id", 
-    verifyResourceOwnership('property-measurement'),
-    async (req, res) => {
-      try {
-        const measurementId = Number(req.params.id);
-        
-        // El middleware ya verificó que la medición existe y pertenece al contratista
-        // No necesitamos la siguiente verificación
-        // const existingMeasurement = await storage.getPropertyMeasurement(measurementId, req.user!.id);
-        // if (!existingMeasurement) {
-        //   return res.status(404).json({ message: "Property measurement not found" });
-        // }
-        
-        const validatedData = propertyMeasurementInsertSchema.partial().parse(req.body);
-        
-        const measurement = await storage.updatePropertyMeasurement(measurementId, req.user!.id, validatedData);
-        res.json(measurement);
-      } catch (error) {
-        if (error instanceof z.ZodError) {
-          return res.status(400).json({ errors: error.errors });
-        }
-        console.error("Error updating property measurement:", error);
-        res.status(500).json({ message: "Failed to update property measurement" });
-      }
-  });
-
-  app.delete("/api/protected/property-measurements/:id", 
-    verifyResourceOwnership('property-measurement'),
-    async (req, res) => {
-      try {
-        const measurementId = Number(req.params.id);
-        // El middleware ya verificó que la medición existe y pertenece al contratista
-        const success = await storage.deletePropertyMeasurement(measurementId, req.user!.id);
-        
-        if (!success) {
-          return res.status(404).json({ message: "Property measurement not found" });
-        }
-        
-        res.status(204).end();
-      } catch (error) {
-        console.error("Error deleting property measurement:", error);
-        res.status(500).json({ message: "Failed to delete property measurement" });
-      }
-  });
-
-  // AI routes for job cost analysis
-  app.post("/api/protected/ai/analyze-job-cost", async (req, res) => {
-    try {
-      const { analyzeJobCost } = await import("./openai-service");
-      const params = req.body;
-      
-      // Validación detallada
-      if (!params) {
-        return res.status(400).json({ 
-          error: "Datos faltantes", 
-          message: "No se recibieron datos para el análisis" 
-        });
-      }
-      
-      if (!params.serviceType) {
-        return res.status(400).json({ 
-          error: "Datos insuficientes", 
-          message: "Debe seleccionar un tipo de servicio" 
-        });
-      }
-      
-      if (!params.materials || !Array.isArray(params.materials) || params.materials.length === 0) {
-        return res.status(400).json({ 
-          error: "Datos insuficientes", 
-          message: "Debe agregar al menos un material al proyecto" 
-        });
-      }
-      
-      // Check if there are materials with invalid data
-      const invalidMaterials = params.materials.some(
-        (m: {name?: string; quantity?: number; unitPrice?: number}) => !m.name || typeof m.quantity !== 'number' || typeof m.unitPrice !== 'number'
-      );
-      
-      if (invalidMaterials) {
-        return res.status(400).json({ 
-          error: "Invalid data", 
-          message: "Algunos materiales tienen información incompleta o inválida" 
-        });
-      }
-      
-      console.log("Iniciando análisis de costos para:", params.serviceType);
-      const result = await analyzeJobCost(params);
-      console.log("Análisis completado con éxito");
-      res.json(result);
-    } catch (error) {
-      console.error("Error en el análisis de costos:", error);
-      res.status(500).json({ 
-        error: "Error al procesar el análisis de costos", 
-        message: (error as Error).message 
-      });
-    }
-  });
-  
-  // Route to generate job description with AI
-  app.post("/api/protected/ai/generate-job-description", async (req, res) => {
-    try {
-      const { generateJobDescription } = await import("./openai-service");
-      const params = req.body;
-      
-      // Validación detallada
-      if (!params) {
-        return res.status(400).json({ 
-          error: "Datos faltantes", 
-          message: "No se recibieron datos para la descripción" 
-        });
-      }
-      
-      if (!params.serviceType) {
-        return res.status(400).json({ 
-          error: "Datos insuficientes", 
-          message: "Debe seleccionar un tipo de servicio" 
-        });
-      }
-      
-      if (!params.materials || !Array.isArray(params.materials) || params.materials.length === 0) {
-        return res.status(400).json({ 
-          error: "Datos insuficientes", 
-          message: "Debe agregar al menos un material al proyecto" 
-        });
-      }
-      
-      // Check if there are materials with invalid data
-      const invalidMaterials = params.materials.some(
-        (m: {name?: string; quantity?: number; unitPrice?: number}) => !m.name || typeof m.quantity !== 'number' || typeof m.unitPrice !== 'number'
-      );
-      
-      if (invalidMaterials) {
-        return res.status(400).json({ 
-          error: "Invalid data", 
-          message: "Algunos materiales tienen información incompleta o inválida" 
-        });
-      }
-      
-      console.log("Generating description for:", params.serviceType);
-      const description = await generateJobDescription(params);
-      console.log("Description generated successfully");
-      res.json({ description });
-    } catch (error) {
-      console.error("Error generating description:", error);
-      res.status(500).json({ 
-        error: "Error generating job description", 
-        message: (error as Error).message 
-      });
-    }
-  });
-  
-  // Generate professional job description from appointment notes
-  app.post("/api/protected/ai/generate-professional-description", async (req, res) => {
-    try {
-      // Validate the incoming data
-      const params = req.body;
-      
-      if (!params) {
-        return res.status(400).json({ 
-          error: "Missing data", 
-          message: "No data received for description" 
-        });
-      }
-      
-      if (!params.appointmentNotes) {
-        return res.status(400).json({ 
-          error: "Insufficient data", 
-          message: "You must provide appointment notes" 
-        });
-      }
-      
-      console.log("Generating professional description from notes");
-      const result = await generateProfessionalJobDescription(params);
-      console.log("Professional description generated successfully");
-      res.json(result);
-    } catch (error) {
-      console.error("Error generating professional job description:", error);
-      res.status(500).json({ 
-        error: "Error generating professional job description", 
-        message: (error as Error).message 
-      });
-    }
-  });
-
-  // Price Configuration routes
-  app.get("/api/protected/price-configurations", async (req, res) => {
-    try {
-      const configurations = await storage.getPriceConfigurations(req.user!.id);
-      res.json(configurations);
-    } catch (error) {
-      console.error("Error al obtener configuraciones de precios:", error);
-      res.status(500).json({ message: "No se pudieron obtener las configuraciones de precios" });
-    }
-  });
-
-  // Rutas específicas primero
-  app.get("/api/protected/price-configurations/service/:serviceType/default", async (req, res) => {
-    try {
-      const serviceType = req.params.serviceType;
-      const configuration = await storage.getDefaultPriceConfiguration(req.user!.id, serviceType);
-      if (!configuration) {
-        return res.status(404).json({ message: "No hay configuración predeterminada para este servicio" });
-      }
-      res.json(configuration);
-    } catch (error) {
-      console.error("Error al obtener configuración de precios predeterminada:", error);
-      res.status(500).json({ message: "No se pudo obtener la configuración de precios predeterminada" });
-    }
-  });
-
-  app.get("/api/protected/price-configurations/service/:serviceType", async (req, res) => {
-    try {
-      const serviceType = req.params.serviceType;
-      const configurations = await storage.getPriceConfigurationsByService(req.user!.id, serviceType);
-      res.json(configurations);
-    } catch (error) {
-      console.error("Error al obtener configuraciones de precios por servicio:", error);
-      res.status(500).json({ message: "No se pudieron obtener las configuraciones de precios para este servicio" });
-    }
-  });
-
-  // Y después rutas por ID
-  app.get("/api/protected/price-configurations/:id([0-9]+)", async (req, res) => {
-    try {
-      const configuration = await storage.getPriceConfiguration(Number(req.params.id), req.user!.id);
-      if (!configuration) {
-        return res.status(404).json({ message: "Configuración de precios no encontrada" });
-      }
-      res.json(configuration);
-    } catch (error) {
-      console.error("Error al obtener configuración de precios:", error);
-      res.status(500).json({ message: "No se pudo obtener la configuración de precios" });
-    }
-  });
-
-  app.post("/api/protected/price-configurations", async (req, res) => {
-    try {
-      const validatedData = priceConfigurationInsertSchema.parse({
-        ...req.body,
-        contractorId: req.user!.id
-      });
-      
-      const configuration = await storage.createPriceConfiguration(validatedData);
-      res.status(201).json(configuration);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
-      }
-      console.error("Error al crear configuración de precios:", error);
-      res.status(500).json({ message: "No se pudo crear la configuración de precios" });
-    }
-  });
-
-  app.patch("/api/protected/price-configurations/:id", async (req, res) => {
-    try {
-      const configId = Number(req.params.id);
-      
-      // Primero verificar si la configuración existe y pertenece al contratista
-      const existingConfig = await storage.getPriceConfiguration(configId, req.user!.id);
-      if (!existingConfig) {
-        return res.status(404).json({ message: "Configuración de precios no encontrada" });
-      }
-      
-      const validatedData = priceConfigurationInsertSchema.partial().parse(req.body);
-      
-      const configuration = await storage.updatePriceConfiguration(configId, req.user!.id, validatedData);
-      res.json(configuration);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
-      }
-      console.error("Error al actualizar configuración de precios:", error);
-      res.status(500).json({ message: "No se pudo actualizar la configuración de precios" });
-    }
-  });
-
-  app.delete("/api/protected/price-configurations/:id", async (req, res) => {
-    try {
-      const configId = Number(req.params.id);
-      const success = await storage.deletePriceConfiguration(configId, req.user!.id);
-      
-      if (!success) {
-        return res.status(404).json({ message: "Configuración de precios no encontrada" });
-      }
-      
-      res.status(204).end();
-    } catch (error) {
-      console.error("Error al eliminar configuración de precios:", error);
-      res.status(500).json({ message: "No se pudo eliminar la configuración de precios" });
-    }
-  });
-
-  app.post("/api/protected/price-configurations/:id/set-default", async (req, res) => {
-    try {
-      const configId = Number(req.params.id);
-      
-      // Obtener la configuración para verificar que existe y determinar su tipo de servicio
-      const config = await storage.getPriceConfiguration(configId, req.user!.id);
-      if (!config) {
-        return res.status(404).json({ message: "Configuración de precios no encontrada" });
-      }
-      
-      // Establecer como predeterminada
-      const updatedConfig = await storage.setDefaultPriceConfiguration(configId, req.user!.id, config.serviceType);
-      res.json(updatedConfig);
-    } catch (error) {
-      console.error("Error al establecer configuración predeterminada:", error);
-      res.status(500).json({ message: "No se pudo establecer la configuración como predeterminada" });
-    }
-  });
-  
-  // Public routes for invoices
-  app.get("/api/public/invoices/:id", async (req, res) => {
-    try {
-      const invoiceId = Number(req.params.id);
-      
-      // Get invoice by ID
-      const invoice = await storage.getInvoiceById(invoiceId);
-      
-      if (!invoice) {
-        return res.status(404).json({ message: "Invoice not found" });
-      }
-      
-      // Get invoice items
-      const items = await storage.getInvoiceItemsById(invoiceId, undefined);
-      
-      // Get contractor info
-      const contractor = await storage.getContractor(invoice.contractorId);
-      // Get client info
-      const client = await storage.getClientById(invoice.clientId, invoice.contractorId);
-      
-      // Get project info if available
-      let project = null;
-      if (invoice.projectId) {
-        // Usamos el ID del contratista de la factura para garantizar que solo se acceda a proyectos propios
-        project = await storage.getProjectById(invoice.projectId, invoice.contractorId);
-      }
-      
-      // Return combined data
       res.json({
-        ...invoice,
-        items,
-        contractor,
-        client,
-        project
+        date,
+        schedule,
+        totalEstimates: estimatesForDate.length,
+        unassignedEstimates,
+        totalScheduled,
+        totalUnassigned,
+        activeAgents: agentsList.length
       });
-      
     } catch (error) {
-      console.error("Error fetching public invoice:", error);
-      res.status(500).json({ 
-        message: "Failed to fetch invoice", 
-        error: error instanceof Error ? error.message : String(error)
-      });
-    }
-  });
-  
-  // Public endpoint for clients to sign invoices
-  app.post("/api/public/invoices/:id/client-action", async (req, res) => {
-    try {
-      const invoiceId = Number(req.params.id);
-      const { action, signature, notes } = req.body;
-      
-      if (!action) {
-        return res.status(400).json({ message: "Action is required" });
-      }
-      
-      // Get invoice by ID (public endpoint)
-      const invoice = await storage.getInvoiceById(invoiceId);
-      
-      if (!invoice) {
-        return res.status(404).json({ message: "Invoice not found" });
-      }
-      
-      // For now we only support 'sign' action
-      if (action !== 'sign') {
-        return res.status(400).json({ message: "Invalid action. Only 'sign' is supported." });
-      }
-      
-      // Validate signature is provided
-      if (!signature) {
-        return res.status(400).json({ message: "Signature is required for signing" });
-      }
-      
-      // Make sure invoice is in a valid state for signing
-      if (invoice.status !== 'pending') {
-        return res.status(400).json({ 
-          message: `Cannot sign invoice in "${invoice.status}" status. Invoice must be in "pending" status.` 
-        });
-      }
-      
-      // Update invoice with signature and change status to 'signed'
-      const updatedInvoice = await storage.updateInvoiceById(invoiceId, {
-        status: 'signed',
-        clientSignature: signature,
-        notes: notes ? 
-          (invoice.notes ? `${invoice.notes}\n\n${notes}` : notes) : 
-          invoice.notes
-      });
-      
-      res.json({
-        success: true,
-        message: "Invoice has been signed successfully",
-        invoice: updatedInvoice
-      });
-      
-    } catch (error) {
-      console.error("Error processing invoice action:", error);
-      res.status(500).json({ 
-        message: "Error processing invoice action", 
-        error: error instanceof Error ? error.message : String(error)
-      });
+      console.error("Error fetching agent schedule:", error);
+      res.status(500).json({ message: "Failed to fetch agent schedule" });
     }
   });
 
-  // Ruta para crear nuevos contratistas (solo accesible para super admin)
-  app.post("/api/super-admin/contractors", async (req, res) => {
-    // Temporalmente, comentamos la verificación de autenticación para pruebas
-    /*
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-    
-    // Verificar que el usuario es super admin
-    if (req.user.role !== "super_admin") {
-      return res.status(403).json({ message: "Acceso denegado. Se requieren privilegios de super admin." });
-    }
-    */
-    
+  // Test endpoint for project creation
+  app.post("/api/protected/test/create-project", async (req, res) => {
     try {
-      console.log("Recibiendo solicitud para crear contratista:", JSON.stringify(req.body, null, 2));
-      
-      // Validar los datos enviados
-      const validData = contractorCreateSchema.parse(req.body);
-      console.log("Datos validados correctamente");
-      
-      // Buscar si ya existe un contratista con el mismo correo
-      const existingEmail = await storage.getContractorByEmail(validData.email);
-      if (existingEmail) {
-        console.log("Correo duplicado:", validData.email);
-        return res.status(400).json({ message: "Ya existe un contratista con este correo electrónico" });
-      }
-      
-      // Crear el contratista con contraseña hasheada
-      const hashedPassword = await hashPassword(validData.password);
-      console.log("Contraseña hasheada correctamente");
-      
-      // Datos para crear el contratista
-      const contractorData = {
-        companyName: validData.companyName,
-        email: validData.email,
-        phone: validData.phone || null,
-        website: validData.website || null,
-        address: validData.address || null,
-        city: validData.city || null,
-        state: validData.state || null,
-        zip: validData.zipCode || null, // Ajustamos el nombre a 'zip' según el esquema
-        country: validData.country || "USA",
-        firstName: validData.firstName,
-        lastName: validData.lastName,
-        username: validData.username,
-        password: hashedPassword,
-        role: "contractor", // Rol por defecto
-        plan: validData.plan || "professional",
-        language: "en", // Añadimos el campo obligatorio
-        settings: JSON.stringify({
-          serviceTypes: Array.isArray(validData.serviceTypes) && validData.serviceTypes.length > 0 
-            ? validData.serviceTypes 
-            : ["deck"],
-          allowClientPortal: typeof validData.allowClientPortal === 'boolean' 
-            ? validData.allowClientPortal 
-            : true,
-          useEstimateTemplates: typeof validData.useEstimateTemplates === 'boolean' 
-            ? validData.useEstimateTemplates 
-            : true,
-          enabledAIAssistant: typeof validData.enabledAIAssistant === 'boolean' 
-            ? validData.enabledAIAssistant 
-            : true,
-          primaryColor: validData.primaryColor || "#1E40AF",
-          logoUrl: validData.logoUrl || null,
-          companyDescription: validData.companyDescription || null
-        })
-      };
-      
-      console.log("Intentando guardar contratista con datos:", {
-        ...contractorData,
-        password: "[REDACTED]" // No mostramos la contraseña en los logs
-      });
-      
-      // Guardar el contratista en la base de datos
-      const newContractor = await storage.createContractor(contractorData);
-      console.log("Contratista guardado con ID:", newContractor.id);
-      
-      // Retornar el contratista creado (pero omitimos datos sensibles)
-      res.status(201).json({
-        id: newContractor.id,
-        email: newContractor.email,
-        username: newContractor.username,
-        companyName: newContractor.companyName,
-        firstName: newContractor.firstName,
-        lastName: newContractor.lastName,
-        message: "Contratista creado exitosamente"
-      });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        console.error("Error de validación:", JSON.stringify(error.errors, null, 2));
-        return res.status(400).json({ 
-          message: "Invalid data", 
-          errors: error.errors,
-          details: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
-        });
-      }
-      
-      console.error("Error creating contractor:", error);
-      res.status(500).json({ 
-        message: "Error al crear el contratista",
-        details: error instanceof Error ? error.message : "Error desconocido"
-      });
-    }
-  });
-
-  // Create HTTP server
-  // Endpoints de IA
-  app.post("/api/ai/analyze-project", async (req, res) => {
-    try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-      
-      if (!process.env.OPENAI_API_KEY) {
-        return res.status(500).json({ message: "API key de OpenAI no configurada" });
-      }
+      console.log('--- TEST PROJECT CREATION ENDPOINT HIT ---');
+      console.log('Request body:', req.body);
       
       const projectData = req.body;
-      const analysis = await analyzeProject(projectData);
       
-      res.json(analysis);
-    } catch (error) {
-      console.error("Error analyzing project with AI:", error);
-      res.status(500).json({ 
-        message: `Error al analizar el proyecto con IA: ${error instanceof Error ? error.message : 'Error desconocido'}` 
-      });
-    }
-  });
-  
-  app.post("/api/ai/sharing-content/:projectId", async (req, res) => {
-    try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-      
-      if (!process.env.OPENAI_API_KEY) {
-        return res.status(500).json({ message: "API key de OpenAI no configurada" });
-      }
-      
-      const projectId = parseInt(req.params.projectId);
-      const settings = req.body.settings;
-      
-      // Obtener el proyecto completo
-      const project = await storage.getProject(projectId, req.user!.id);
-      
-      if (!project) {
-        return res.status(404).json({ message: "Proyecto no encontrado" });
-      }
-      
-      const sharingContent = await generateSharingContent(project, settings);
-      
-      res.json(sharingContent);
-    } catch (error) {
-      console.error("Error generating sharing content:", error);
-      res.status(500).json({ 
-        message: `Error al generar contenido para compartir: ${error instanceof Error ? error.message : 'Error desconocido'}` 
-      });
-    }
-  });
-
-  // Eliminadas todas las rutas relacionadas con Google Sheets
-
-  // Rutas para el sistema de logros (gamificación)
-  app.get("/api/achievements", async (req, res) => {
-    try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-
-      const achievements = await achievementService.getAllAchievements();
-      res.json(achievements);
-    } catch (error) {
-      console.error("Error al obtener logros:", error);
-      res.status(500).json({
-        message: "Error al obtener logros",
-        details: error instanceof Error ? error.message : "Error desconocido"
-      });
-    }
-  });
-
-  app.get("/api/contractor/achievements", async (req, res) => {
-    try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-
-      const contractorId = req.user?.id;
-      if (!contractorId) {
-        return res.status(400).json({ message: "ID de contratista no proporcionado" });
-      }
-
-      const achievements = await achievementService.getContractorAchievements(contractorId);
-      res.json(achievements);
-    } catch (error) {
-      console.error("Error al obtener logros del contratista:", error);
-      res.status(500).json({
-        message: "Error al obtener logros del contratista",
-        details: error instanceof Error ? error.message : "Error desconocido"
-      });
-    }
-  });
-
-  app.get("/api/contractor/achievements/unread", async (req, res) => {
-    try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-
-      const contractorId = req.user?.id;
-      if (!contractorId) {
-        return res.status(400).json({ message: "ID de contratista no proporcionado" });
-      }
-
-      const unreadAchievements = await achievementService.getUnreadAchievements(contractorId);
-      res.json(unreadAchievements);
-    } catch (error) {
-      console.error("Error al obtener logros no leídos:", error);
-      res.status(500).json({
-        message: "Error al obtener logros no leídos",
-        details: error instanceof Error ? error.message : "Error desconocido"
-      });
-    }
-  });
-
-  app.post("/api/contractor/achievements/:achievementId/mark-read", async (req, res) => {
-    try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-
-      const contractorId = req.user?.id;
-      const achievementId = Number(req.params.achievementId);
-      
-      if (!contractorId) {
-        return res.status(400).json({ message: "ID de contratista no proporcionado" });
-      }
-
-      if (!achievementId) {
-        return res.status(400).json({ message: "ID de logro no válido" });
-      }
-
-      const updated = await achievementService.markAchievementAsNotified(contractorId, achievementId);
-      res.json(updated);
-    } catch (error) {
-      console.error("Error al marcar logro como leído:", error);
-      res.status(500).json({
-        message: "Error al marcar logro como leído",
-        details: error instanceof Error ? error.message : "Error desconocido"
-      });
-    }
-  });
-
-  app.post("/api/contractor/achievements/:achievementId/unlock-reward", async (req, res) => {
-    try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-
-      const contractorId = req.user?.id;
-      const achievementId = Number(req.params.achievementId);
-      
-      if (!contractorId) {
-        return res.status(400).json({ message: "ID de contratista no proporcionado" });
-      }
-
-      if (!achievementId) {
-        return res.status(400).json({ message: "ID de logro no válido" });
-      }
-
-      const result = await achievementService.unlockReward(contractorId, achievementId);
-      res.json(result);
-    } catch (error) {
-      console.error("Error al desbloquear recompensa:", error);
-      res.status(500).json({
-        message: "Error al desbloquear recompensa",
-        details: error instanceof Error ? error.message : "Error desconocido"
-      });
-    }
-  });
-
-  app.get("/api/contractor/stats", async (req, res) => {
-    try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-
-      const contractorId = req.user?.id;
-      if (!contractorId) {
-        return res.status(400).json({ message: "ID de contratista no proporcionado" });
-      }
-
-      const stats = await achievementService.getContractorGameStats(contractorId);
-      res.json(stats);
-    } catch (error) {
-      console.error("Error al obtener estadísticas del contratista:", error);
-      res.status(500).json({
-        message: "Error al obtener estadísticas del contratista",
-        details: error instanceof Error ? error.message : "Error desconocido"
-      });
-    }
-  });
-
-  app.post("/api/contractor/streak/update", async (req, res) => {
-    try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-
-      const contractorId = req.user?.id;
-      if (!contractorId) {
-        return res.status(400).json({ message: "ID de contratista no proporcionado" });
-      }
-
-      const streak = await achievementService.updateDailyStreak(contractorId);
-      res.json(streak);
-    } catch (error) {
-      console.error("Error al actualizar racha diaria:", error);
-      res.status(500).json({
-        message: "Error al actualizar racha diaria",
-        details: error instanceof Error ? error.message : "Error desconocido"
-      });
-    }
-  });
-
-  // Ruta para verificar y actualizar un logro 
-  // (Llamada internamente por el sistema cuando ocurren acciones relevantes)
-  app.post("/api/contractor/achievements/check", async (req, res) => {
-    try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-
-      const contractorId = req.user?.id;
-      if (!contractorId) {
-        return res.status(400).json({ message: "ID de contratista no proporcionado" });
-      }
-
-      const { code, category, progress } = req.body;
-      
-      if (!code || !category || progress === undefined) {
+      // Validate required fields
+      if (!projectData.contractorId || !projectData.clientId || !projectData.title) {
         return res.status(400).json({ 
-          message: "Datos incompletos. Se requiere code, category y progress" 
+          message: "Missing required fields: contractorId, clientId, title" 
+        });
+      }
+      
+      // Create project using storage method
+      const newProject = await storage.createSimpleProject({
+        contractorId: projectData.contractorId,
+        clientId: projectData.clientId,
+        title: projectData.title,
+        description: projectData.description,
+        status: projectData.status || 'in_progress',
+        budget: projectData.budget,
+        startDate: projectData.startDate ? new Date(projectData.startDate) : new Date(),
+        notes: projectData.notes
+      });
+      
+      console.log('Project created successfully:', newProject);
+      
+      res.status(201).json(newProject);
+    } catch (error) {
+      console.error("Error in test project creation:", error);
+      res.status(500).json({ 
+        message: "Failed to create test project",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // Reverse/Refund a payment
+  app.post("/api/protected/invoices/:id/reverse-payment", 
+    verifyResourceOwnership('invoice', 'id'),
+    async (req, res) => {
+      try {
+        const invoiceId = Number(req.params.id);
+        const { paymentId, reason } = req.body;
+        
+        if (!paymentId) {
+          return res.status(400).json({ message: "Payment ID is required" });
+        }
+        
+        // Get the invoice to verify ownership and current state
+        const invoice = await storage.getInvoice(invoiceId, req.user!.id);
+        if (!invoice) {
+          return res.status(404).json({ message: "Invoice not found" });
+        }
+        
+        // Get the specific payment to reverse
+        const payment = await storage.getPayment(paymentId, req.user!.id);
+        if (!payment) {
+          return res.status(404).json({ message: "Payment not found" });
+        }
+        
+        // Verify the payment belongs to this invoice
+        if (payment.invoiceId !== invoiceId) {
+          return res.status(400).json({ message: "Payment does not belong to this invoice" });
+        }
+        
+        // Check if payment is already reversed
+        if (payment.status === 'reversed') {
+          return res.status(400).json({ message: "Payment has already been reversed" });
+        }
+        
+        // Calculate new amounts
+        const paymentAmount = parseFloat(payment.amount);
+        const currentAmountPaid = parseFloat(invoice.amount_paid || '0');
+        const newAmountPaid = Math.max(0, currentAmountPaid - paymentAmount);
+        const totalAmount = parseFloat(invoice.total);
+        
+        // Determine new invoice status
+        let newStatus = invoice.status;
+        if (newAmountPaid >= totalAmount) {
+          newStatus = "paid";
+        } else if (newAmountPaid > 0) {
+          newStatus = "partially_paid";
+        } else {
+          newStatus = "pending";
+        }
+        
+        // Reverse the payment (mark as reversed, don't delete)
+        await storage.reversePayment(paymentId, req.user!.id, {
+          reason: reason || "Payment reversed by contractor",
+          reversedBy: req.user!.id,
+          reversedAt: Date.now()
+        });
+        
+        // Update the invoice with new amount paid
+        await storage.updateInvoice(invoiceId, req.user!.id, {
+          amount_paid: newAmountPaid.toString(),
+          status: newStatus
+        });
+        
+        // Get updated invoice with payments
+        const updatedInvoice = await storage.getInvoice(invoiceId, req.user!.id);
+        
+        res.json({
+          success: true,
+          message: `Payment of $${paymentAmount.toFixed(2)} has been reversed successfully`,
+          invoice: updatedInvoice,
+          reversal: {
+            paymentId,
+            amount: paymentAmount,
+            reason: reason || "Payment reversed by contractor",
+            previousAmountPaid: currentAmountPaid,
+            newAmountPaid,
+            remainingBalance: totalAmount - newAmountPaid
+          }
+        });
+        
+      } catch (error) {
+        console.error("Error reversing payment:", error);
+        res.status(500).json({ message: "Failed to reverse payment", error: error.message });
+      }
+    }
+  );
+
+  // AI Job Description Generation
+  app.post("/api/ai/generate-job-description", async (req, res) => {
+    try {
+      const { serviceType, appointmentNotes, measurements, clientName } = req.body;
+      
+      if (!serviceType || !appointmentNotes) {
+        return res.status(400).json({ 
+          message: "Service type and appointment notes are required" 
         });
       }
 
-      const result = await achievementService.checkAndUpdateAchievement({
-        contractorId,
-        code,
-        category,
-        progress
-      });
+      // Prepare property details from measurements
+      const propertyDetails = {
+        squareFeet: measurements?.length && measurements?.width ? 
+          measurements.length * measurements.width : undefined,
+        linearFeet: measurements?.length || undefined,
+        units: measurements?.count || undefined
+      };
 
+      const jobDescriptionData = {
+        serviceType,
+        appointmentNotes,
+        propertyDetails,
+        clientName
+      };
+
+      const result = await generateProfessionalJobDescription(jobDescriptionData);
+      
       res.json(result);
     } catch (error) {
-      console.error("Error al verificar logro:", error);
-      res.status(500).json({
-        message: "Error al verificar logro",
-        details: error instanceof Error ? error.message : "Error desconocido"
+      console.error("Error generating job description:", error);
+      res.status(500).json({ 
+        message: "Failed to generate job description",
+        error: error instanceof Error ? error.message : String(error)
       });
     }
   });
-
-  // Registrar las rutas del timeclock
-  registerTimeclockRoutes(app);
-
-  const httpServer = createServer(app);
-
-  return httpServer;
 }

@@ -1,6 +1,6 @@
 import { Express } from 'express';
 import { db } from '../../db';
-import { servicePricing, materialPricing } from '@shared/schema';
+import { servicePricing, materialPricing } from '../../shared/schema';
 import { eq, and } from 'drizzle-orm';
 
 /**
@@ -24,7 +24,7 @@ export function registerPricingRoutes(app: Express) {
   app.get('/api/pricing/services', verifyContractorOwnership, async (req: any, res) => {
     try {
       // Use the direct services API that's already working
-      const response = await fetch(`http://localhost:5000/api/direct/services`, {
+      const response = await fetch(`http://localhost:5005/api/direct/services`, {
         headers: {
           'Cookie': req.headers.cookie || ''
         }

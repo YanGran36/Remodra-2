@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 import { Clipboard, Link, Check, Mail } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from '../../hooks/use-toast';
 
 interface EstimateClientLinkProps {
   estimateId: number;
@@ -30,15 +30,15 @@ export function EstimateClientLink({
       await navigator.clipboard.writeText(publicUrl);
       setCopied(true);
       toast({
-        title: "Éxito",
-        description: "El enlace ha sido copiado al portapapeles",
+        title: "Success",
+        description: "Link has been copied to clipboard",
       });
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error("Error copying link:", error);
       toast({
         title: "Error",
-        description: "No se pudo copiar el enlace al portapapeles",
+        description: "Could not copy link to clipboard",
         variant: "destructive",
       });
     }
@@ -49,16 +49,16 @@ export function EstimateClientLink({
       <CardHeader className="pb-4 bg-blue-100">
         <CardTitle className="text-xl flex items-center gap-2 text-blue-700">
           <Link className="h-6 w-6 text-blue-600" />
-          Enlace para cliente
+          Client Link
         </CardTitle>
         <CardDescription className="text-blue-700 font-medium">
-          Comparte este enlace con tu cliente para que puedan revisar y aprobar este estimado
+          Share this link with your client so they can review and approve this estimate
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-6 pt-4">
         <div className="grid w-full items-center gap-4">
           <div className="flex flex-col space-y-2">
-            <Label htmlFor="clientLink" className="text-blue-700 font-medium text-lg">Enlace del estimado:</Label>
+            <Label htmlFor="clientLink" className="text-blue-700 font-medium text-lg">Estimate Link:</Label>
             <div className="flex space-x-2">
               <Input
                 id="clientLink"
@@ -74,12 +74,12 @@ export function EstimateClientLink({
                 {copied ? (
                   <>
                     <Check className="h-5 w-5" />
-                    Copiado
+                    Copied
                   </>
                 ) : (
                   <>
                     <Clipboard className="h-5 w-5" />
-                    Copiar
+                    Copy
                   </>
                 )}
               </Button>
@@ -96,7 +96,7 @@ export function EstimateClientLink({
             onClick={onSendEmail}
           >
             <Mail className="h-4 w-4" />
-            Enviar al cliente
+            Send to Client
           </Button>
           <div className="text-sm text-blue-700">
             <span>{clientEmail}</span>

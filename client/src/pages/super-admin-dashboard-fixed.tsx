@@ -6,16 +6,16 @@ import {
   CardHeader, 
   CardTitle, 
   CardFooter 
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+} from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
 import { 
   Tabs, 
   TabsContent, 
   TabsList, 
   TabsTrigger 
-} from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from '../components/ui/tabs';
+import { ScrollArea } from '../components/ui/scroll-area';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +23,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '../components/ui/dropdown-menu';
 import {
   Table,
   TableBody,
@@ -31,7 +31,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '../components/ui/table';
 import { 
   BarChart, 
   Users, 
@@ -48,6 +48,7 @@ import {
   Filter,
   Download,
   UserPlus,
+  Shield,
   Mail,
   UserCheck,
   Clock,
@@ -58,13 +59,13 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Input } from "@/components/ui/input";
+import { Input } from '../components/ui/input';
 
-// Componente para el panel super admin (dueño del SaaS)
+// Component for super admin panel (SaaS owner)
 export default function SuperAdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   
-  // Estadísticas simuladas para el panel
+  // Simulated statistics for the dashboard
   const platformStats = {
     totalContractors: 56,
     activeContractors: 48,
@@ -79,7 +80,7 @@ export default function SuperAdminDashboard() {
       id: 1, 
       type: 'new_contractor', 
       contractor: 'Garcia Construction LLC', 
-      time: '2 horas', 
+      time: '2 hours ago', 
       plan: 'Professional',
       data: { email: 'contact@garciaconstruction.com' }
     },
@@ -87,7 +88,7 @@ export default function SuperAdminDashboard() {
       id: 2, 
       type: 'payment_success', 
       contractor: 'Smith Home Improvement', 
-      time: '5 horas', 
+      time: '5 hours ago', 
       plan: 'Premium',
       data: { amount: 49.99, invoiceId: 'INV-1289' }
     },
@@ -95,7 +96,7 @@ export default function SuperAdminDashboard() {
       id: 3, 
       type: 'plan_upgraded', 
       contractor: 'Renovations Pro', 
-      time: '12 horas', 
+      time: '12 hours ago', 
       plan: 'Professional',
       data: { oldPlan: 'Basic', newPlan: 'Professional' }
     },
@@ -103,21 +104,21 @@ export default function SuperAdminDashboard() {
       id: 4, 
       type: 'support_request', 
       contractor: 'Elite Roofing', 
-      time: 'Ayer', 
+      time: 'Yesterday', 
       plan: 'Professional',
-      data: { ticketId: 'T-4582', subject: 'Problema con facturación' }
+      data: { ticketId: 'T-4582', subject: 'Billing issue' }
     },
     { 
       id: 5, 
       type: 'account_cancelled', 
       contractor: 'Budget Handyman', 
-      time: 'Ayer', 
+      time: 'Yesterday', 
       plan: 'Basic',
-      data: { reason: 'Cambio a otro sistema' }
+      data: { reason: 'Switched to another system' }
     }
   ];
   
-  // Componente para la tarjeta de resumen con estilo de lujo
+  // Summary card component with luxury styling
   const SummaryCard = ({ title, value, icon, trend, percentage }: { 
     title: string; 
     value: string | number; 
@@ -125,12 +126,12 @@ export default function SuperAdminDashboard() {
     trend?: 'up' | 'down'; 
     percentage?: number;
   }) => (
-    <Card className="card-luxury border-gradient overflow-hidden">
+    <Card className="bg-gradient-to-br from-slate-800 to-slate-700 backdrop-blur-sm border-2 border-amber-500 shadow-lg hover:shadow-2xl hover:border-amber-400 transition-all duration-300 overflow-hidden">
       <CardContent className="p-6">
         <div className="flex justify-between items-start">
           <div>
-            <p className="text-sm font-medium text-gray-500">{title}</p>
-            <h3 className="text-2xl font-bold mt-2">{value}</h3>
+            <p className="text-sm font-medium text-amber-400">{title}</p>
+            <h3 className="text-2xl font-bold mt-2 text-white">{value}</h3>
             
             {trend && percentage && (
               <div className="flex items-center gap-1 mt-2">
@@ -145,11 +146,11 @@ export default function SuperAdminDashboard() {
                     <span className="text-xs font-medium">{percentage}%</span>
                   </div>
                 )}
-                <span className="text-xs text-gray-500">vs mes anterior</span>
+                <span className="text-xs text-gray-400">vs previous month</span>
               </div>
             )}
           </div>
-          <div className="rounded-lg p-2 bg-primary/10">
+          <div className="rounded-lg p-2 bg-gradient-to-br from-amber-100 to-orange-100 border border-amber-200">
             {icon}
           </div>
         </div>
@@ -552,130 +553,165 @@ export default function SuperAdminDashboard() {
     </div>
   );
 
-  // Componente para la gestión de suscripciones
+  // Subscription management component
   const SubscriptionsTab = () => (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <h2 className="text-2xl font-semibold text-blue-gradient">Planes y Suscripciones</h2>
+        <h2 className="text-2xl font-semibold text-yellow-500">Remodra Subscription Plans</h2>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="border-gradient">
+          <Button variant="outline" size="sm" className="border-yellow-600 text-gray-300 hover:bg-slate-600">
             <Filter className="mr-2 h-4 w-4" />
-            Filtrar
+            Filter
           </Button>
-          <Button>
+          <Button className="bg-gradient-to-r from-yellow-500 to-yellow-700 text-yellow-900 hover:from-yellow-400 hover:to-yellow-600">
             <Plus className="mr-2 h-4 w-4" />
-            Nuevo Plan
+            New Plan
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="card-luxury animate-float">
-          <CardHeader>
-            <CardTitle>Plan Básico</CardTitle>
-            <CardDescription>Para contratistas individuales o que recién comienzan</CardDescription>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Basic Plan */}
+        <Card className="bg-gradient-to-br from-slate-800 to-slate-700 border-blue-500 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+          <CardHeader className="border-b border-slate-600">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
+              <CardTitle className="text-white text-xl">Basic Plan</CardTitle>
+            </div>
+            <CardDescription className="text-gray-300">For individual contractors just starting out</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold mb-6">$24.99 <span className="text-base font-normal text-gray-500">/mes</span></div>
+          <CardContent className="pt-6">
+            <div className="text-4xl font-bold mb-6 text-blue-400">
+              $29<span className="text-lg font-normal text-gray-400">/month</span>
+            </div>
             <ul className="space-y-3 mb-6">
               <li className="flex items-center">
-                <CheckCircle2 className="h-5 w-5 text-green-500 mr-2" />
-                <span>Hasta 10 clientes</span>
+                <CheckCircle2 className="h-5 w-5 text-green-500 mr-3" />
+                <span className="text-white">Up to 10 clients</span>
               </li>
               <li className="flex items-center">
-                <CheckCircle2 className="h-5 w-5 text-green-500 mr-2" />
-                <span>Estimaciones y facturas ilimitadas</span>
+                <CheckCircle2 className="h-5 w-5 text-green-500 mr-3" />
+                <span className="text-white">Unlimited estimates & invoices</span>
               </li>
               <li className="flex items-center">
-                <CheckCircle2 className="h-5 w-5 text-green-500 mr-2" />
-                <span>Portal de cliente</span>
+                <CheckCircle2 className="h-5 w-5 text-green-500 mr-3" />
+                <span className="text-white">Client portal access</span>
               </li>
               <li className="flex items-center">
-                <XCircle className="h-5 w-5 text-gray-400 mr-2" />
-                <span className="text-gray-500">Análisis de costos con IA</span>
+                <XCircle className="h-5 w-5 text-gray-500 mr-3" />
+                <span className="text-gray-400">AI cost analysis</span>
               </li>
               <li className="flex items-center">
-                <XCircle className="h-5 w-5 text-gray-400 mr-2" />
-                <span className="text-gray-500">Integración con Stripe</span>
+                <XCircle className="h-5 w-5 text-gray-500 mr-3" />
+                <span className="text-gray-400">Time clock</span>
+              </li>
+              <li className="flex items-center">
+                <XCircle className="h-5 w-5 text-gray-500 mr-3" />
+                <span className="text-gray-400">Stripe payments</span>
               </li>
             </ul>
           </CardContent>
-          <CardFooter className="flex justify-between border-t pt-4">
-            <div className="text-sm text-gray-500">18 contratistas activos</div>
-            <Button variant="outline" size="sm" className="border-gradient">Editar</Button>
+          <CardFooter className="border-t border-slate-600 pt-4">
+            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 font-medium transition-colors">
+              Start with Basic
+            </Button>
           </CardFooter>
         </Card>
         
-        <Card className="border-primary bg-primary/5 animate-float" style={{animationDelay: "0.4s"}}>
-          <CardHeader>
-            <Badge className="bg-secondary mb-2 self-start text-black">Popular</Badge>
-            <CardTitle>Plan Profesional</CardTitle>
-            <CardDescription>Para contratistas con volumen medio de clientes</CardDescription>
+        {/* Pro Plan - Most Popular */}
+        <Card className="bg-gradient-to-br from-slate-800 to-slate-700 border-yellow-500 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 relative ring-2 ring-yellow-400/50">
+          <CardHeader className="border-b border-slate-600 relative">
+            <Badge className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-yellow-900 mb-3 self-start font-bold px-3 py-1">
+              Most Popular
+            </Badge>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-4 h-4 bg-yellow-500 rounded-full"></div>
+              <CardTitle className="text-white text-xl">Pro Plan</CardTitle>
+            </div>
+            <CardDescription className="text-gray-300">For growing teams and contractors</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold mb-6">$49.99 <span className="text-base font-normal text-gray-500">/mes</span></div>
+          <CardContent className="pt-6">
+            <div className="text-4xl font-bold mb-6 text-yellow-400">
+              $59<span className="text-lg font-normal text-gray-400">/month</span>
+            </div>
             <ul className="space-y-3 mb-6">
               <li className="flex items-center">
-                <CheckCircle2 className="h-5 w-5 text-green-500 mr-2" />
-                <span>Hasta 50 clientes</span>
+                <CheckCircle2 className="h-5 w-5 text-green-500 mr-3" />
+                <span className="text-white">Up to 50 clients</span>
               </li>
               <li className="flex items-center">
-                <CheckCircle2 className="h-5 w-5 text-green-500 mr-2" />
-                <span>Estimaciones y facturas ilimitadas</span>
+                <CheckCircle2 className="h-5 w-5 text-green-500 mr-3" />
+                <span className="text-white">Unlimited estimates & invoices</span>
               </li>
               <li className="flex items-center">
-                <CheckCircle2 className="h-5 w-5 text-green-500 mr-2" />
-                <span>Portal de cliente personalizable</span>
+                <CheckCircle2 className="h-5 w-5 text-green-500 mr-3" />
+                <span className="text-white">Custom client portal</span>
               </li>
               <li className="flex items-center">
-                <CheckCircle2 className="h-5 w-5 text-green-500 mr-2" />
-                <span>Análisis de costos con IA (10/mes)</span>
+                <CheckCircle2 className="h-5 w-5 text-green-500 mr-3" />
+                <span className="text-white">AI-generated estimates (10/month)</span>
               </li>
               <li className="flex items-center">
-                <XCircle className="h-5 w-5 text-gray-400 mr-2" />
-                <span className="text-gray-500">Integración con Stripe</span>
+                <CheckCircle2 className="h-5 w-5 text-green-500 mr-3" />
+                <span className="text-white">Time clock</span>
+              </li>
+              <li className="flex items-center">
+                <XCircle className="h-5 w-5 text-gray-500 mr-3" />
+                <span className="text-gray-400">Stripe payments</span>
               </li>
             </ul>
           </CardContent>
-          <CardFooter className="flex justify-between border-t pt-4">
-            <div className="text-sm text-gray-500">26 contratistas activos</div>
-            <Button variant="outline" size="sm" className="border-gradient">Editar</Button>
+          <CardFooter className="border-t border-slate-600 pt-4">
+            <Button className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-yellow-900 font-bold rounded-lg py-2 transition-all">
+              Start with Pro
+            </Button>
           </CardFooter>
         </Card>
         
-        <Card className="card-luxury animate-float" style={{animationDelay: "0.8s"}}>
-          <CardHeader>
-            <CardTitle>Plan Premium</CardTitle>
-            <CardDescription>Para negocios establecidos con gran volumen de clientes</CardDescription>
+        {/* Business Plan */}
+        <Card className="bg-gradient-to-br from-slate-800 to-slate-700 border-green-500 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+          <CardHeader className="border-b border-slate-600">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+              <CardTitle className="text-white text-xl">Business Plan</CardTitle>
+            </div>
+            <CardDescription className="text-gray-300">For established remodeling companies</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold mb-6">$99.99 <span className="text-base font-normal text-gray-500">/mes</span></div>
+          <CardContent className="pt-6">
+            <div className="text-4xl font-bold mb-6 text-green-400">
+              $99<span className="text-lg font-normal text-gray-400">/month</span>
+            </div>
             <ul className="space-y-3 mb-6">
               <li className="flex items-center">
-                <CheckCircle2 className="h-5 w-5 text-green-500 mr-2" />
-                <span>Clientes ilimitados</span>
+                <CheckCircle2 className="h-5 w-5 text-green-500 mr-3" />
+                <span className="text-white">Unlimited clients</span>
               </li>
               <li className="flex items-center">
-                <CheckCircle2 className="h-5 w-5 text-green-500 mr-2" />
-                <span>Estimaciones y facturas ilimitadas</span>
+                <CheckCircle2 className="h-5 w-5 text-green-500 mr-3" />
+                <span className="text-white">Unlimited estimates & invoices</span>
               </li>
               <li className="flex items-center">
-                <CheckCircle2 className="h-5 w-5 text-green-500 mr-2" />
-                <span>Portal de cliente con marca personalizada</span>
+                <CheckCircle2 className="h-5 w-5 text-green-500 mr-3" />
+                <span className="text-white">Fully branded client portal</span>
               </li>
               <li className="flex items-center">
-                <CheckCircle2 className="h-5 w-5 text-green-500 mr-2" />
-                <span>Análisis de costos con IA ilimitado</span>
+                <CheckCircle2 className="h-5 w-5 text-green-500 mr-3" />
+                <span className="text-white">Unlimited AI cost analysis</span>
               </li>
               <li className="flex items-center">
-                <CheckCircle2 className="h-5 w-5 text-green-500 mr-2" />
-                <span>Integración con Stripe</span>
+                <CheckCircle2 className="h-5 w-5 text-green-500 mr-3" />
+                <span className="text-white">Time clock</span>
+              </li>
+              <li className="flex items-center">
+                <CheckCircle2 className="h-5 w-5 text-green-500 mr-3" />
+                <span className="text-white">Stripe integration</span>
               </li>
             </ul>
           </CardContent>
-          <CardFooter className="flex justify-between border-t pt-4">
-            <div className="text-sm text-gray-500">12 contratistas activos</div>
-            <Button variant="outline" size="sm" className="border-gradient">Editar</Button>
+          <CardFooter className="border-t border-slate-600 pt-4">
+            <Button className="w-full bg-green-600 hover:bg-green-700 text-white rounded-lg py-2 font-medium transition-colors">
+              Start with Business
+            </Button>
           </CardFooter>
         </Card>
       </div>
@@ -683,40 +719,61 @@ export default function SuperAdminDashboard() {
   );
 
   return (
-    <div className="bg-pattern-grid min-h-screen pb-12">
-      <div className="bg-luxury-gradient py-12 mb-8 shadow-lg relative">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full filter blur-3xl"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-secondary/10 rounded-full filter blur-3xl"></div>
-        </div>
-        <div className="container mx-auto px-4 md:px-6 relative z-10">
-          <h1 className="text-4xl md:text-5xl font-bold mb-3 text-white animate-float">Panel de Super Administrador</h1>
-          <p className="text-white/70 text-lg max-w-3xl">Bienvenido al panel de gestión de ContractorHub. Administra contratistas, suscripciones y datos de toda la plataforma.</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900 pb-12">
+      {/* Header with Remodra Branding */}
+      <div className="bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800 shadow-xl border-b-4 border-yellow-600">
+        <div className="container mx-auto px-6 py-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              {/* Remodra Logo Image */}
+              <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-2xl ring-4 ring-yellow-500/50 border-2 border-yellow-600 bg-slate-900">
+                <img 
+                  src="/remodra-logo.png" 
+                  alt="Remodra Logo" 
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <div>
+                <h1 className="text-5xl font-bold text-white tracking-wide" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  Remodra
+                </h1>
+                <p className="text-yellow-200 text-lg font-medium">Super Admin Dashboard</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="bg-gradient-to-br from-yellow-500 to-yellow-700 p-3 rounded-xl shadow-lg border-2 border-yellow-400">
+                <Shield className="h-6 w-6 text-yellow-900" />
+              </div>
+              <div className="bg-gradient-to-r from-yellow-500 via-yellow-600 to-yellow-700 text-yellow-900 hover:from-yellow-400 hover:via-yellow-500 hover:to-yellow-600 text-lg px-6 py-3 rounded-lg font-bold shadow-xl border-2 border-yellow-400 transition-all duration-300">
+                Super Admin
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       
       <div className="container mx-auto p-4 md:px-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3 md:grid-cols-5 h-auto md:h-12 p-1 glass-overlay shadow-lg">
-            <TabsTrigger value="overview" className="flex items-center gap-2 transition-all duration-300 hover:bg-primary/10">
+          <TabsList className="grid w-full grid-cols-3 md:grid-cols-5 h-auto md:h-12 p-1 bg-gradient-to-r from-slate-700 via-slate-800 to-slate-700 backdrop-blur-sm border-2 border-yellow-600 shadow-xl">
+            <TabsTrigger value="overview" className="flex items-center gap-2 text-gray-300 transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-yellow-700 data-[state=active]:text-yellow-900 data-[state=active]:shadow-lg hover:bg-slate-600 hover:text-white">
               <BarChart className="h-4 w-4" />
-              <span className="hidden md:inline">Resumen</span>
+              <span className="hidden md:inline">Overview</span>
             </TabsTrigger>
-            <TabsTrigger value="contractors" className="flex items-center gap-2 transition-all duration-300 hover:bg-primary/10">
+            <TabsTrigger value="contractors" className="flex items-center gap-2 text-gray-300 transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-yellow-700 data-[state=active]:text-yellow-900 data-[state=active]:shadow-lg hover:bg-slate-600 hover:text-white">
               <Users className="h-4 w-4" />
-              <span className="hidden md:inline">Contratistas</span>
+              <span className="hidden md:inline">Contractors</span>
             </TabsTrigger>
-            <TabsTrigger value="subscriptions" className="flex items-center gap-2 transition-all duration-300 hover:bg-primary/10">
+            <TabsTrigger value="subscriptions" className="flex items-center gap-2 text-gray-300 transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-yellow-700 data-[state=active]:text-yellow-900 data-[state=active]:shadow-lg hover:bg-slate-600 hover:text-white">
               <CreditCard className="h-4 w-4" />
-              <span className="hidden md:inline">Suscripciones</span>
+              <span className="hidden md:inline">Subscriptions</span>
             </TabsTrigger>
-            <TabsTrigger value="reporting" className="flex items-center gap-2 transition-all duration-300 hover:bg-primary/10">
+            <TabsTrigger value="reporting" className="flex items-center gap-2 text-gray-300 transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-yellow-700 data-[state=active]:text-yellow-900 data-[state=active]:shadow-lg hover:bg-slate-600 hover:text-white">
               <BarChart className="h-4 w-4" />
-              <span className="hidden md:inline">Reportes</span>
+              <span className="hidden md:inline">Reports</span>
             </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2 transition-all duration-300 hover:bg-primary/10">
+            <TabsTrigger value="settings" className="flex items-center gap-2 text-gray-300 transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-yellow-700 data-[state=active]:text-yellow-900 data-[state=active]:shadow-lg hover:bg-slate-600 hover:text-white">
               <Settings className="h-4 w-4" />
-              <span className="hidden md:inline">Configuración</span>
+              <span className="hidden md:inline">Settings</span>
             </TabsTrigger>
           </TabsList>
           <TabsContent value="overview">

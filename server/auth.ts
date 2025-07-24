@@ -5,7 +5,7 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { Contractor } from "@shared/schema";
+import { Contractor } from "../shared/schema";
 
 declare global {
   namespace Express {
@@ -32,16 +32,18 @@ export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "contractor-hub-secret",
     // Configuración mejorada para manejo de sesiones
-    resave: true, // Guardar la sesión en cada solicitud, incluso si no hay cambios
-    saveUninitialized: true, // Guardar sesiones no inicializadas
-    rolling: true, // Reiniciar el tiempo de expiración en cada respuesta
+    resave: false, // Only save if session was modified
+    saveUninitialized: false, // Don't save uninitialized sessions
+    rolling: true, // Extend session on each request
     store: storage.sessionStore,
     cookie: {
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 días para mayor persistencia
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      httpOnly: true, // Previene acceso mediante JavaScript en cliente
-    }
+      httpOnly: true,
+      path: "/", // Ensure cookie is available across all paths
+    },
+    name: "connect.sid" // Explicit session cookie name
   };
 
   app.set("trust proxy", 1);
@@ -82,7 +84,7 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      const { firstName, lastName, companyName, email, password } = req.body;
+      const { firstName, lastName, companyName, username, email, password } = req.body;
 
       const existingUser = await storage.getContractorByEmail(email);
       if (existingUser) {
@@ -90,16 +92,29 @@ export function setupAuth(app: Express) {
       }
 
       const hashedPassword = await hashPassword(password);
+      const now = Date.now(); // Use Unix timestamp for SQLite
       
+      // Map camelCase to snake_case for SQLite
       const user = await storage.createContractor({
-        firstName,
-        lastName,
-        companyName,
+        first_name: firstName,
+        last_name: lastName,
+        company_name: companyName,
+        username,
         email,
         password: hashedPassword,
+        language: "en",
+        role: "contractor",
+        plan: "basic",
+        subscription_status: "active",
+        current_client_count: 0,
+        ai_usage_this_month: 0,
+        ai_usage_reset_date: now,
+        settings: "{}",
+        created_at: now,
+        updated_at: now
       });
 
-      req.login(user, (err) => {
+      req.login(user, (err: Error | null) => {
         if (err) return next(err);
         res.status(201).json(user);
       });
@@ -109,14 +124,21 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err, user, info) => {
+    passport.authenticate("local", async (err: Error | null, user: Express.User | false, info: { message?: string } | undefined) => {
       if (err) {
         return next(err);
       }
       if (!user) {
         return res.status(401).json({ message: info?.message || "Invalid credentials" });
       }
-      req.login(user, (err) => {
+      // Subscription enforcement
+      if (user.subscriptionStatus !== 'active') {
+        return res.status(403).json({ message: "Your subscription is not active. Please update your payment or contact support." });
+      }
+      if (user.planEndDate && Date.now() > Number(user.planEndDate)) {
+        return res.status(403).json({ message: "Your subscription has expired. Please renew to continue." });
+      }
+      req.login(user, (err: Error | null) => {
         if (err) {
           return next(err);
         }

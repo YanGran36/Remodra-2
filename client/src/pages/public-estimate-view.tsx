@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Textarea } from "../components/ui/textarea";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
+import { Badge } from "../components/ui/badge";
+import { Separator } from "../components/ui/separator";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from "../components/ui/dialog";
 import { AlertCircle, CheckCircle, XCircle, Send, Loader2, Undo, Check, Pencil, Edit3, ClipboardCheck } from "lucide-react";
 import { format } from "date-fns";
 
@@ -611,7 +611,7 @@ export default function PublicEstimateView() {
                     {estimate.status === 'sent' && 'Enviado'}
                     {estimate.status === 'accepted' && 'Aceptado'}
                     {estimate.status === 'rejected' && 'Rechazado'}
-                    {estimate.status === 'converted' && 'Convertido'}
+                    {estimate.status === 'converted' && 'Converted'}
                   </Badge>
                 </p>
               </div>

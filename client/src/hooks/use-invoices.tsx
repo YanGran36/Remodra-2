@@ -1,6 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from '../lib/queryClient';
+import { useToast } from './use-toast';
+
+// Helper to map backend invoice fields to frontend camelCase
+function mapInvoiceFields(invoice: any) {
+  if (!invoice) return invoice;
+  return {
+    ...invoice,
+    amountPaid: invoice.amount_paid,
+    total: invoice.total,
+    // Add more mappings as needed
+  };
+}
 
 export function useInvoices() {
   const queryClient = useQueryClient();
@@ -8,13 +19,19 @@ export function useInvoices() {
 
   // Obtener todas las facturas
   const {
-    data: invoices,
+    data: invoicesRaw,
     isLoading: isLoadingInvoices,
     error: invoicesError,
     refetch: refetchInvoices
   } = useQuery({
     queryKey: ["/api/protected/invoices"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/protected/invoices");
+      const data = await res.json();
+      return Array.isArray(data) ? data.map(mapInvoiceFields) : [];
+    }
   });
+  const invoices = invoicesRaw;
 
   // Obtener una factura por ID
   const getInvoice = (id: number) => {
@@ -22,7 +39,8 @@ export function useInvoices() {
       queryKey: ["/api/protected/invoices", id],
       queryFn: async () => {
         const res = await apiRequest("GET", `/api/protected/invoices/${id}`);
-        return await res.json();
+        const data = await res.json();
+        return mapInvoiceFields(data);
       },
       enabled: !!id,
     });
@@ -157,14 +175,41 @@ export function useInvoices() {
       queryClient.invalidateQueries({ queryKey: ["/api/protected/invoices"] });
       queryClient.invalidateQueries({ queryKey: ["/api/protected/invoices", data.id] });
       toast({
-        title: "Pago registrado",
-        description: "El pago ha sido registrado correctamente.",
+        title: "Payment recorded",
+        description: "The payment has been recorded successfully.",
       });
       return data;
     },
     onError: (error: Error) => {
       toast({
         title: "Error al registrar pago",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Refund/Reverse a payment
+  const refundPaymentMutation = useMutation({
+    mutationFn: async ({ invoiceId, paymentId, reason }: { invoiceId: number, paymentId: number, reason: string }) => {
+      const res = await apiRequest("POST", `/api/protected/invoices/${invoiceId}/reverse-payment`, {
+        paymentId,
+        reason
+      });
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/protected/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/protected/invoices", data.invoice?.id] });
+      toast({
+        title: "Payment refunded",
+        description: "The payment has been refunded successfully.",
+      });
+      return data;
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error refunding payment",
         description: error.message,
         variant: "destructive",
       });
@@ -195,6 +240,7 @@ export function useInvoices() {
     updateInvoiceStatusMutation,
     cancelInvoiceMutation,
     registerPaymentMutation,
+    refundPaymentMutation,
     getInvoicesByProject,
   };
 }

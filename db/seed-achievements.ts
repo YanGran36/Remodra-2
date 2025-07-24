@@ -1,6 +1,6 @@
 import { db } from '.';
 import { achievementSeedData, rewardSeedData } from './achievement-seeds';
-import { achievements, achievementRewards, contractors, contractorAchievements } from '@shared/schema';
+import { achievements, achievementRewards, contractors, contractorAchievements } from '../shared/schema';
 import { eq } from 'drizzle-orm';
 
 async function seedAchievements() {

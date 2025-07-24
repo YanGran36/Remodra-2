@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { useLocation, useSearch } from "wouter";
 import { Loader2 } from "lucide-react";
-import EstimateForm from "@/components/estimates/estimate-form";
-import { useProjects } from "@/hooks/use-projects";
-import { useClients } from "@/hooks/use-clients";
+import EstimateForm from '../components/estimates/estimate-form';
+import { useProjects } from '../hooks/use-projects';
+import { useClients } from '../hooks/use-clients';
+import Sidebar from '../components/layout/sidebar';
+import MobileSidebar from '../components/layout/mobile-sidebar';
+import TopNav from '../components/layout/top-nav';
 
 export default function EstimateCreatePage() {
   const [, setLocation] = useLocation();
@@ -53,76 +56,76 @@ export default function EstimateCreatePage() {
 
   // Manejar la creación exitosa del estimado
   const handleSuccess = (estimate: any) => {
-    console.log("Estimado creado exitosamente:", estimate);
-    // Redirigir a la página de detalle del estimado
+    if (!estimate || !estimate.id) {
+      setError('Failed to create estimate. Please try again or contact support.');
+      setIsLoading(false);
+      return;
+    }
     window.location.href = `/estimates/${estimate.id}`;
   };
 
   // Cancelar y volver a la página anterior
   const handleCancel = () => {
-    console.log("Cancelando la creación del estimado");
+    setIsLoading(false);
     window.history.back();
   };
+
+  // Add error state
+  const [error, setError] = useState<string | null>(null);
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        {error && <div className="text-red-600 ml-4">{error}</div>}
       </div>
     );
   }
 
   return (
-    <div className="container py-8">
-      <div className="flex items-center mb-8 gap-3">
-        <a href="/projects" className="text-sm text-blue-500 hover:underline">
-          Proyectos
-        </a>
-        <span className="text-gray-400">/</span>
-        {project && (
-          <>
-            <a href={`/projects?id=${project.id}`} className="text-sm text-blue-500 hover:underline">
-              {project.title}
-            </a>
-            <span className="text-gray-400">/</span>
-          </>
-        )}
-        <span className="text-sm">Nuevo estimado</span>
+    <div className="remodra-layout">
+      <Sidebar />
+      <MobileSidebar />
+      <div className="remodra-main">
+        <TopNav />
+        <div className="remodra-content">
+          <div className="container py-8">
+            {project && (
+              <div className="mb-6">
+                <h1 className="text-2xl font-semibold text-foreground tracking-tight mb-2">New estimate for project: {project.title}</h1>
+                {client && (
+                  <p className="text-muted-foreground">
+                    Cliente: {client.firstName} {client.lastName}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {!project && client && (
+              <div className="mb-6">
+                <h1 className="text-2xl font-semibold text-foreground tracking-tight mb-2">New estimate</h1>
+                <p className="text-muted-foreground">
+                  Cliente: {client.firstName} {client.lastName}
+                </p>
+              </div>
+            )}
+
+            {!project && !client && (
+              <div className="mb-6">
+                <h1 className="text-2xl font-semibold text-foreground tracking-tight">New estimate</h1>
+                <p className="text-muted-foreground mt-1">Create a new estimate. Select a client and project first.</p>
+              </div>
+            )}
+
+            <EstimateForm
+              projectId={projectId}
+              clientId={client?.id}
+              onSuccess={handleSuccess}
+              onCancel={handleCancel}
+            />
+          </div>
+        </div>
       </div>
-
-      {project && (
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Nuevo estimado para proyecto: {project.title}</h1>
-          {client && (
-            <p className="text-gray-600">
-              Cliente: {client.firstName} {client.lastName}
-            </p>
-          )}
-        </div>
-      )}
-
-      {!project && client && (
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Nuevo estimado</h1>
-          <p className="text-gray-600">
-            Cliente: {client.firstName} {client.lastName}
-          </p>
-        </div>
-      )}
-
-      {!project && !client && (
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">Nuevo estimado</h1>
-          <p className="text-gray-600 mt-2">Cree un nuevo estimado. Seleccione un cliente y proyecto primero.</p>
-        </div>
-      )}
-
-      <EstimateForm
-        projectId={projectId}
-        clientId={client?.id}
-        onSuccess={handleSuccess}
-        onCancel={handleCancel}
-      />
     </div>
   );
 }

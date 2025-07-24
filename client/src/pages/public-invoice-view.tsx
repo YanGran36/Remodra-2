@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "wouter";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from '../hooks/use-toast';
 import { 
   Card, 
   CardContent,
@@ -8,9 +8,9 @@ import {
   CardHeader,
   CardTitle,
   CardDescription 
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+} from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
 import { 
   Table,
   TableBody,
@@ -19,7 +19,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '../components/ui/table';
 import { 
   Dialog,
   DialogContent,
@@ -29,8 +29,8 @@ import {
   DialogTrigger,
   DialogFooter,
   DialogClose
-} from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
+} from '../components/ui/dialog';
+import { Separator } from '../components/ui/separator';
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { 
@@ -45,7 +45,7 @@ import {
   FileText,
   MapPin
 } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest } from '../lib/queryClient';
 
 // Componente para el pad de firma
 const SignaturePad = ({ onSave, onCancel }: { onSave: (signatureData: string) => void, onCancel: () => void }) => {
@@ -150,7 +150,7 @@ const SignaturePad = ({ onSave, onCancel }: { onSave: (signatureData: string) =>
   
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-gray-500">Dibuje su firma a continuación:</p>
+              <p className="text-sm text-gray-500">Draw your signature below:</p>
       <div className="border rounded-lg p-1 bg-white">
         <canvas
           ref={canvasRef}
@@ -244,11 +244,11 @@ export default function PublicInvoiceView() {
       const response = await apiRequest("POST", `/api/public/invoices/${id}/client-action`, {
         action: "sign",
         signature: signatureData,
-        notes: "Firmado por el cliente a través del portal"
+        notes: "Signed by client through portal"
       });
       
       if (!response.ok) {
-        throw new Error("Error al guardar la firma");
+        throw new Error("Error saving signature");
       }
       
       // Obtener los datos actualizados de la factura
@@ -272,14 +272,14 @@ export default function PublicInvoiceView() {
       }
       
       toast({
-        title: "Factura firmada correctamente",
-        description: "Gracias por su firma.",
+        title: "Invoice signed successfully",
+        description: "Thank you for your signature.",
       });
       
     } catch (error: any) {
       console.error("Error al firmar la factura:", error);
       toast({
-        title: "Error al firmar la factura",
+        title: "Error signing invoice",
         description: error.message || "Por favor, inténtelo de nuevo.",
         variant: "destructive",
       });
@@ -373,18 +373,18 @@ export default function PublicInvoiceView() {
                   {invoice.contractorName || "ContractorHub"}
                 </span>
               </div>
-              <CardTitle className="text-2xl md:text-3xl font-bold">
+              <CardTitle className="text-xl md:text-2xl font-semibold">
                 Factura #{invoice.invoiceNumber || invoice.id}
               </CardTitle>
             </div>
             <div className="flex flex-col items-start md:items-end mt-4 md:mt-0">
               <StatusBadge status={invoice.status} />
               <p className="text-sm text-gray-500 mt-2">
-                Fecha de emisión: {format(new Date(invoice.createdAt), "PP", { locale: es })}
+                Issue Date: {format(new Date(invoice.createdAt), "PP", { locale: es })}
               </p>
               {invoice.dueDate && (
                 <p className="text-sm text-gray-500">
-                  Fecha de vencimiento: {format(new Date(invoice.dueDate), "PP", { locale: es })}
+                  Due Date: {format(new Date(invoice.dueDate), "PP", { locale: es })}
                 </p>
               )}
             </div>
@@ -395,7 +395,7 @@ export default function PublicInvoiceView() {
           {/* Información de cliente y contratista */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <h3 className="font-semibold text-gray-700">Facturar a:</h3>
+              <h3 className="font-semibold text-gray-700">Bill To:</h3>
               <p className="font-medium">{client.firstName} {client.lastName}</p>
               <div className="text-sm text-gray-600 space-y-1">
                 <div className="flex items-center gap-1">
@@ -414,16 +414,16 @@ export default function PublicInvoiceView() {
             </div>
             
             <div className="space-y-2">
-              <h3 className="font-semibold text-gray-700">Contratista:</h3>
+              <h3 className="font-semibold text-gray-700">Contractor:</h3>
               <p className="font-medium">{invoice.contractorName || "ContractorHub"}</p>
               <div className="text-sm text-gray-600 space-y-1">
                 <div className="flex items-center gap-1">
                   <MapPin className="h-4 w-4 text-gray-400" />
-                  <span>{invoice.contractorAddress || "Dirección del contratista"}</span>
+                  <span>{invoice.contractorAddress || "Contractor Address"}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Mail className="h-4 w-4 text-gray-400" />
-                  <span>{invoice.contractorEmail || "email@contratista.com"}</span>
+                  <span>{invoice.contractorEmail || "contractor@email.com"}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Phone className="h-4 w-4 text-gray-400" />
@@ -438,7 +438,7 @@ export default function PublicInvoiceView() {
             <div className="bg-gray-50 p-4 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
                 <FileText className="h-4 w-4 text-gray-500" />
-                <h3 className="font-semibold">Detalles del Proyecto:</h3>
+                <h3 className="font-semibold">Project Details:</h3>
               </div>
               <p className="font-medium">{project.title}</p>
               <p className="text-sm text-gray-600 mt-1">{project.description}</p>
@@ -447,13 +447,13 @@ export default function PublicInvoiceView() {
           
           {/* Tabla de conceptos */}
           <div>
-            <h3 className="font-semibold text-gray-700 mb-3">Detalles:</h3>
+            <h3 className="font-semibold text-gray-700 mb-3">Details:</h3>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[50%]">Descripción</TableHead>
-                  <TableHead className="text-right">Cantidad</TableHead>
-                  <TableHead className="text-right">Precio unitario</TableHead>
+                  <TableHead className="w-[50%]">Description</TableHead>
+                  <TableHead className="text-right">Quantity</TableHead>
+                  <TableHead className="text-right">Unit Price</TableHead>
                   <TableHead className="text-right">Total</TableHead>
                 </TableRow>
               </TableHeader>
@@ -484,7 +484,7 @@ export default function PublicInvoiceView() {
               </div>
               {taxRate > 0 && (
                 <div className="flex justify-between py-2">
-                  <span className="text-gray-600">Impuestos ({taxRate}%):</span>
+                  <span className="text-gray-600">Tax ({taxRate}%):</span>
                   <span className="font-medium">${taxAmount.toFixed(2)}</span>
                 </div>
               )}
@@ -498,23 +498,23 @@ export default function PublicInvoiceView() {
           
           {/* Términos y condiciones */}
           <div className="text-sm text-gray-600 border-t pt-4">
-            <h3 className="font-semibold text-gray-700 mb-2">Términos y condiciones:</h3>
-            <p>{invoice.terms || "El pago debe realizarse dentro del plazo establecido. Por favor, incluya el número de factura en su pago."}</p>
+            <h3 className="font-semibold text-gray-700 mb-2">Terms and Conditions:</h3>
+            <p>{invoice.terms || "Payment must be made within the established period. Please include the invoice number in your payment."}</p>
           </div>
           
           {/* Firma */}
           {invoice.status === 'signed' && invoice.signature && (
             <div className="border rounded-lg p-4 space-y-2">
-              <h3 className="font-semibold text-gray-700">Firmado por el cliente:</h3>
+              <h3 className="font-semibold text-gray-700">Signed by client:</h3>
               <div className="p-2 bg-white border rounded-lg">
                 <img 
                   src={invoice.signature} 
-                  alt="Firma del cliente" 
+                  alt="Client signature" 
                   className="max-h-24 mx-auto" 
                 />
               </div>
               <p className="text-sm text-gray-500 text-center">
-                Firmado el {format(new Date(invoice.signedAt), "PPpp", { locale: es })}
+                Signed on {format(new Date(invoice.signedAt), "PPpp")}
               </p>
             </div>
           )}
@@ -524,7 +524,7 @@ export default function PublicInvoiceView() {
           <div className="flex flex-col sm:flex-row gap-3">
             <Button variant="outline" onClick={handleDownloadInvoice}>
               <Download className="mr-2 h-4 w-4" />
-              Descargar PDF
+              Download PDF
             </Button>
           </div>
           
@@ -534,14 +534,14 @@ export default function PublicInvoiceView() {
                 <DialogTrigger asChild>
                   <Button>
                     <FileSignature className="mr-2 h-4 w-4" />
-                    Firmar Factura
+                    Sign Invoice
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[600px]">
                   <DialogHeader>
-                    <DialogTitle>Firmar Factura</DialogTitle>
+                    <DialogTitle>Sign Invoice</DialogTitle>
                     <DialogDescription>
-                      Al firmar esta factura, usted confirma haber recibido los bienes o servicios descritos.
+                      By signing this invoice, you confirm that you have received the goods or services described.
                     </DialogDescription>
                   </DialogHeader>
                   
@@ -563,17 +563,17 @@ export default function PublicInvoiceView() {
 function StatusBadge({ status }: { status: string }) {
   switch (status) {
     case 'draft':
-      return <Badge variant="outline">Borrador</Badge>;
+      return <Badge variant="outline">Draft</Badge>;
     case 'pending':
-      return <Badge className="bg-amber-500">Pendiente de firma</Badge>;
+      return <Badge className="bg-amber-500">Pending signature</Badge>;
     case 'signed':
-      return <Badge className="bg-blue-600">Firmada</Badge>;
+      return <Badge className="bg-blue-600">Signed</Badge>;
     case 'paid':
-      return <Badge className="bg-green-600">Pagada</Badge>;
+      return <Badge className="bg-green-600">Paid</Badge>;
     case 'overdue':
-      return <Badge variant="destructive">Vencida</Badge>;
+      return <Badge variant="destructive">Overdue</Badge>;
     case 'cancelled':
-      return <Badge variant="outline" className="text-red-600 border-red-300">Cancelada</Badge>;
+      return <Badge variant="outline" className="text-red-600 border-red-300">Cancelled</Badge>;
     default:
       return <Badge variant="outline">{status}</Badge>;
   }

@@ -3,11 +3,11 @@ import {
   useMutation,
   useQueryClient
 } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { Project } from "@/hooks/use-clients";
-import { ProjectInput } from "@/components/projects/project-form";
-import { ProjectInsert } from "@shared/schema";
+import { apiRequest } from '../lib/queryClient';
+import { useToast } from './use-toast';
+import { Project } from 'use-clients';
+import { ProjectInput } from '../components/projects/project-form';
+import { ProjectInsert } from "../../../shared/schema";
 
 export interface ProjectDetail extends Project {
   description: string;

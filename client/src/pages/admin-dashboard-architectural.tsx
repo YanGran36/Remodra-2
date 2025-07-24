@@ -6,16 +6,16 @@ import {
   CardHeader, 
   CardTitle, 
   CardFooter 
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+} from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
 import { 
   Tabs, 
   TabsContent, 
   TabsList, 
   TabsTrigger 
-} from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from '../components/ui/tabs';
+import { ScrollArea } from '../components/ui/scroll-area';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +23,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '../components/ui/dropdown-menu';
 import {
   Table,
   TableBody,
@@ -31,7 +31,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '../components/ui/table';
 import { 
   BarChart, 
   Users, 
@@ -59,15 +59,15 @@ import {
   Clock
 } from "lucide-react";
 import { format } from "date-fns";
-import { Input } from "@/components/ui/input";
-import { useAuth } from "@/hooks/use-auth";
+import { Input } from '../components/ui/input';
+import { useAuth } from '../hooks/use-auth';
 import { 
   ArchitecturalCard, 
   ArchitecturalContainer, 
   ArchitecturalHeader,
   ArchitecturalGrid,
   ArchitecturalStat
-} from "@/components/ui/architectural-card";
+} from '../components/ui/architectural-card';
 
 export default function AdminDashboardArchitectural() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -285,7 +285,7 @@ export default function AdminDashboardArchitectural() {
           <CardContent className="px-6">
             <div className="space-y-4">
               {dashboardData.upcomingAppointments.map((appointment) => (
-                <div key={appointment.id} className="flex flex-col sm:flex-row sm:items-start justify-between border-b border-border pb-3 last:border-0 last:pb-0">
+                <div key={appointment.id} className="flex flex-col sm:flex-row sm:items-start justify-between border-b border-gray-200 dark:border-gray-700 pb-3 last:border-0 last:pb-0">
                   <div className="mb-2 sm:mb-0">
                     <p className="font-medium">{appointment.client}</p>
                     <p className="text-sm text-muted-foreground flex items-center mt-1">
@@ -559,7 +559,7 @@ export default function AdminDashboardArchitectural() {
       
       <div className="container mx-auto p-4 md:p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto md:h-12 p-1 glass-overlay shadow-lg border border-border/30">
+          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto md:h-12 p-1 glass-overlay shadow-lg border border-gray-200/30 dark:border-gray-700/30">
             <TabsTrigger value="overview" className="flex items-center gap-2 transition-all duration-300 hover:bg-primary/10">
               <BarChart className="h-4 w-4" />
               <span className="hidden md:inline">Resumen</span>

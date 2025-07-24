@@ -1,8 +1,8 @@
-// Translations for the application
-import { enSettingsTranslations, esSettingsTranslations } from './settings-translations';
+// English-only translations for the application
+import { enSettingsTranslations } from './settings-translations';
 
-// Define types for languages and translations
-export type Language = 'en' | 'es' | 'fr' | 'pt';
+// Define types for languages and translations - English only
+export type Language = 'en';
 
 export type Translation = {
   [key: string]: string | Translation;
@@ -12,8 +12,8 @@ export type TranslationsByLanguage = {
   [key in Language]: Translation;
 };
 
-// Define translations for common components
-export const translations: Partial<TranslationsByLanguage> = {
+// Define translations for common components - English only
+export const translations: TranslationsByLanguage = {
   en: {
     ...enSettingsTranslations,
     common: {
@@ -161,404 +161,6 @@ export const translations: Partial<TranslationsByLanguage> = {
       loading: 'Thinking...',
       placeholder: 'How can I help you today?',
     },
-  },
-  es: {
-    ...esSettingsTranslations,
-    common: {
-      save: 'Guardar',
-      cancel: 'Cancelar',
-      edit: 'Editar',
-      delete: 'Eliminar',
-      create: 'Crear',
-      search: 'Buscar',
-      filter: 'Filtrar',
-      add: 'Agregar',
-      remove: 'Eliminar',
-      back: 'Volver',
-      next: 'Siguiente',
-      previous: 'Anterior',
-      loading: 'Cargando...',
-      noData: 'No hay datos disponibles',
-      confirm: 'Confirmar',
-      yes: 'Sí',
-      no: 'No',
-    },
-    estimateTerms: '1. Este estimado es válido por 30 días a partir de la fecha de emisión.\n2. Se requiere un pago del 50% para iniciar el trabajo.\n3. El balance restante se pagará al completar el trabajo.\n4. Cualquier modificación al alcance del trabajo puede resultar en costos adicionales.',
-    invoicePaymentTerms: 'Pago a 15 días',
-    navigation: {
-      dashboard: 'Panel Principal',
-      clients: 'Clientes',
-      projects: 'Proyectos',
-      estimates: 'Estimados',
-      invoices: 'Facturas',
-      calendar: 'Calendario',
-      settings: 'Configuración',
-      materials: 'Materiales',
-      measurements: 'Mediciones',
-      aiAssistant: 'Asistente IA',
-      vendorForm: 'Formulario Vendedor',
-      logout: 'Cerrar Sesión',
-    },
-    dashboard: {
-      welcomeBack: 'Bienvenido de nuevo',
-      todayActivity: 'Aquí está lo que está sucediendo hoy',
-      upcomingJobs: 'Trabajos Próximos',
-      pendingInvoices: 'Facturas Pendientes',
-      pendingEstimates: 'Estimados Pendientes',
-      thisWeek: 'Esta semana',
-      nextWeek: 'Próxima semana',
-      dueThisWeek: 'Vence esta semana',
-      overdue: 'Vencidos',
-      sent: 'Enviados',
-      draft: 'Borradores',
-      todaySchedule: 'Agenda de Hoy',
-      viewCalendar: 'Ver Calendario',
-      activeProjects: 'Proyectos Activos',
-      viewAllProjects: 'Ver Todos los Proyectos',
-      recentActivity: 'Actividad Reciente',
-    },
-    auth: {
-      login: 'Iniciar Sesión',
-      register: 'Registrarse',
-      email: 'Correo Electrónico',
-      password: 'Contraseña',
-      forgotPassword: 'Olvidé mi Contraseña',
-      confirmPassword: 'Confirmar Contraseña',
-      firstName: 'Nombre',
-      lastName: 'Apellido',
-      companyName: 'Nombre de Empresa',
-      agreeTos: 'Acepto los términos y condiciones',
-      alreadyHaveAccount: '¿Ya tienes una cuenta?',
-      dontHaveAccount: '¿No tienes una cuenta?',
-    },
-    clients: {
-      title: 'Clientes',
-      addClient: 'Agregar Cliente',
-      editClient: 'Editar Cliente',
-      deleteClient: 'Eliminar Cliente',
-      clientDetails: 'Detalles del Cliente',
-      firstName: 'Nombre',
-      lastName: 'Apellido',
-      email: 'Correo Electrónico',
-      phone: 'Teléfono',
-      address: 'Dirección',
-      city: 'Ciudad',
-      state: 'Estado/Provincia',
-      zipCode: 'Código Postal',
-      notes: 'Notas',
-    },
-    projects: {
-      title: 'Proyectos',
-      addProject: 'Agregar Proyecto',
-      editProject: 'Editar Proyecto',
-      deleteProject: 'Eliminar Proyecto',
-      projectDetails: 'Detalles del Proyecto',
-      projectName: 'Nombre del Proyecto',
-      client: 'Cliente',
-      startDate: 'Fecha de Inicio',
-      endDate: 'Fecha de Finalización',
-      status: 'Estado',
-      description: 'Descripción',
-      budget: 'Presupuesto',
-      statusOptions: {
-        planning: 'Planificación',
-        inProgress: 'En Progreso',
-        onHold: 'En Espera',
-        completed: 'Completado',
-        cancelled: 'Cancelado',
-      },
-    },
-    estimates: {
-      title: 'Estimados',
-      addEstimate: 'Crear Estimado',
-      editEstimate: 'Editar Estimado',
-      deleteEstimate: 'Eliminar Estimado',
-      estimateDetails: 'Detalles del Estimado',
-      estimateNumber: 'Número de Estimado',
-      client: 'Cliente',
-      project: 'Proyecto',
-      issueDate: 'Fecha de Emisión',
-      expiryDate: 'Fecha de Expiración',
-      status: 'Estado',
-      items: 'Artículos',
-      subtotal: 'Subtotal',
-      tax: 'Impuesto',
-      discount: 'Descuento',
-      total: 'Total',
-      notes: 'Notas',
-      terms: 'Términos y Condiciones',
-      addItem: 'Agregar Artículo',
-      itemDescription: 'Descripción',
-      quantity: 'Cantidad',
-      unitPrice: 'Precio Unitario',
-      amount: 'Importe',
-      statusOptions: {
-        draft: 'Borrador',
-        sent: 'Enviado',
-        accepted: 'Aceptado',
-        rejected: 'Rechazado',
-        expired: 'Expirado',
-      },
-    },
-    invoices: {
-      title: 'Facturas',
-      addInvoice: 'Crear Factura',
-      editInvoice: 'Editar Factura',
-      deleteInvoice: 'Eliminar Factura',
-      invoiceDetails: 'Detalles de la Factura',
-      invoiceNumber: 'Número de Factura',
-      client: 'Cliente',
-      project: 'Proyecto',
-      issueDate: 'Fecha de Emisión',
-      dueDate: 'Fecha de Vencimiento',
-      status: 'Estado',
-      items: 'Artículos',
-      subtotal: 'Subtotal',
-      tax: 'Impuesto',
-      discount: 'Descuento',
-      total: 'Total',
-      amountPaid: 'Importe Pagado',
-      balance: 'Saldo Pendiente',
-      notes: 'Notas',
-      terms: 'Términos y Condiciones',
-      addItem: 'Agregar Artículo',
-      itemDescription: 'Descripción',
-      quantity: 'Cantidad',
-      unitPrice: 'Precio Unitario',
-      amount: 'Importe',
-      statusOptions: {
-        pending: 'Pendiente',
-        paid: 'Pagada',
-        overdue: 'Vencida',
-        cancelled: 'Cancelada',
-      },
-    },
-    calendar: {
-      title: 'Calendario',
-      addEvent: 'Agregar Evento',
-      editEvent: 'Editar Evento',
-      deleteEvent: 'Eliminar Evento',
-      eventDetails: 'Detalles del Evento',
-      eventTitle: 'Título',
-      client: 'Cliente',
-      project: 'Proyecto',
-      startDate: 'Fecha de Inicio',
-      endDate: 'Fecha de Finalización',
-      allDay: 'Todo el Día',
-      description: 'Descripción',
-      location: 'Ubicación',
-      today: 'Hoy',
-      month: 'Mes',
-      week: 'Semana',
-      day: 'Día',
-    },
-    materials: {
-      title: 'Materiales',
-      addMaterial: 'Agregar Material',
-      editMaterial: 'Editar Material',
-      deleteMaterial: 'Eliminar Material',
-      materialDetails: 'Detalles del Material',
-      name: 'Nombre',
-      description: 'Descripción',
-      category: 'Categoría',
-      unitCost: 'Costo Unitario',
-      unit: 'Unidad',
-      vendor: 'Proveedor',
-      inventory: 'Inventario',
-      reorderLevel: 'Nivel de Reorden',
-    },
-    measurements: {
-      title: 'Mediciones de Propiedad',
-      addMeasurement: 'Agregar Medición',
-      editMeasurement: 'Editar Medición',
-      deleteMeasurement: 'Eliminar Medición',
-      measurementDetails: 'Detalles de la Medición',
-      itemTitle: 'Título',
-      client: 'Cliente',
-      project: 'Proyecto',
-      propertyType: 'Tipo de Propiedad',
-      date: 'Fecha',
-      notes: 'Notas',
-      measurements: 'Mediciones',
-      total: 'Total',
-      digitalMeasurement: 'Medición Digital',
-      lidarScanner: 'Escáner LiDAR',
-      propertyTypes: {
-        roof: 'Techo',
-        fence: 'Cerca',
-        deck: 'Deck',
-        siding: 'Revestimiento',
-        windows: 'Ventanas',
-        gutters: 'Canalones',
-      },
-    },
-    settings: {
-      title: 'Configuración',
-      profile: 'Perfil',
-      company: 'Empresa',
-      billing: 'Facturación',
-      preferences: 'Preferencias',
-      notifications: 'Notificaciones',
-      security: 'Seguridad',
-      language: 'Idioma',
-      theme: 'Tema',
-      firstName: 'Nombre',
-      lastName: 'Apellido',
-      email: 'Correo Electrónico',
-      phone: 'Teléfono',
-      password: 'Contraseña',
-      companyName: 'Nombre de Empresa',
-      taxId: 'Identificación Fiscal',
-      address: 'Dirección',
-      website: 'Sitio Web',
-      logo: 'Logo',
-      saveChanges: 'Guardar Cambios',
-    },
-    aiAssistant: {
-      title: 'Asistente IA',
-      askQuestion: 'Hacer una pregunta',
-      suggestions: 'Sugerencias',
-      history: 'Historial',
-      clearHistory: 'Limpiar Historial',
-      loading: 'Pensando...',
-      placeholder: '¿En qué puedo ayudarte hoy?',
-    },
-  },
-  fr: {
-    common: {
-      save: 'Enregistrer',
-      cancel: 'Annuler',
-      edit: 'Modifier',
-      delete: 'Supprimer',
-      create: 'Créer',
-      search: 'Rechercher',
-      filter: 'Filtrer',
-      add: 'Ajouter',
-      remove: 'Supprimer',
-      back: 'Retour',
-      next: 'Suivant',
-      previous: 'Précédent',
-      loading: 'Chargement...',
-      noData: 'Aucune donnée disponible',
-      confirm: 'Confirmer',
-      yes: 'Oui',
-      no: 'Non',
-    },
-    navigation: {
-      dashboard: 'Dashboard',
-      clients: 'Clients',
-      projects: 'Projects',
-      estimates: 'Estimates',
-      invoices: 'Invoices',
-      calendar: 'Calendar',
-      settings: 'Settings',
-      materials: 'Materials',
-      measurements: 'Measurements',
-      aiAssistant: 'AI Assistant',
-      vendorForm: 'Vendor Form',
-      logout: 'Logout',
-    },
-    dashboard: {
-      welcomeBack: 'Welcome back',
-      todayActivity: 'Here\'s what\'s happening today',
-      upcomingJobs: 'Upcoming Jobs',
-      pendingInvoices: 'Pending Invoices',
-      pendingEstimates: 'Pending Estimates',
-      thisWeek: 'This week',
-      nextWeek: 'Next week',
-      dueThisWeek: 'Due this week',
-      overdue: 'Overdue',
-      sent: 'Sent',
-      draft: 'Draft',
-      todaySchedule: 'Today\'s Schedule',
-      viewCalendar: 'View Calendar',
-      activeProjects: 'Active Projects',
-      viewAllProjects: 'View All Projects',
-      recentActivity: 'Recent Activity',
-    },
-    auth: {
-      login: 'Login',
-      register: 'Register',
-      email: 'Email',
-      password: 'Password',
-      forgotPassword: 'Forgot Password',
-      confirmPassword: 'Confirm Password',
-      firstName: 'First Name',
-      lastName: 'Last Name',
-      companyName: 'Company Name',
-      agreeTos: 'I agree to the terms and conditions',
-      alreadyHaveAccount: 'Already have an account?',
-      dontHaveAccount: 'Don\'t have an account?',
-    },
-    clients: {
-      title: 'Clients',
-      addClient: 'Add Client',
-      editClient: 'Edit Client',
-      deleteClient: 'Delete Client',
-      clientDetails: 'Client Details',
-      firstName: 'First Name',
-      lastName: 'Last Name',
-      email: 'Email',
-      phone: 'Phone',
-      address: 'Address',
-      city: 'City',
-      state: 'State',
-      zipCode: 'Zip Code',
-      notes: 'Notes',
-    },
-    projects: {
-      title: 'Projects',
-      addProject: 'Add Project',
-      editProject: 'Edit Project',
-      deleteProject: 'Delete Project',
-      projectDetails: 'Project Details',
-      projectName: 'Project Name',
-      client: 'Client',
-      startDate: 'Start Date',
-      endDate: 'End Date',
-      status: 'Status',
-      description: 'Description',
-      budget: 'Budget',
-      statusOptions: {
-        planning: 'Planning',
-        inProgress: 'In Progress',
-        onHold: 'On Hold',
-        completed: 'Completed',
-        cancelled: 'Cancelled',
-      },
-    },
-    estimates: {
-      title: 'Estimates',
-      addEstimate: 'Create Estimate',
-      editEstimate: 'Edit Estimate',
-      deleteEstimate: 'Delete Estimate',
-      estimateDetails: 'Estimate Details',
-      estimateNumber: 'Estimate Number',
-      client: 'Client',
-      project: 'Project',
-      issueDate: 'Issue Date',
-      expiryDate: 'Expiry Date',
-      status: 'Status',
-      items: 'Items',
-      subtotal: 'Subtotal',
-      tax: 'Tax',
-      discount: 'Discount',
-      total: 'Total',
-      notes: 'Notes',
-      terms: 'Terms and Conditions',
-      addItem: 'Add Item',
-      itemDescription: 'Description',
-      quantity: 'Quantity',
-      unitPrice: 'Unit Price',
-      amount: 'Amount',
-      statusOptions: {
-        draft: 'Draft',
-        sent: 'Sent',
-        accepted: 'Accepted',
-        rejected: 'Rejected',
-        expired: 'Expired',
-      },
-    },
     invoices: {
       title: 'Invoices',
       addInvoice: 'Create Invoice',
@@ -577,7 +179,7 @@ export const translations: Partial<TranslationsByLanguage> = {
       discount: 'Discount',
       total: 'Total',
       amountPaid: 'Amount Paid',
-      balance: 'Balance',
+      balance: 'Balance Due',
       notes: 'Notes',
       terms: 'Terms and Conditions',
       addItem: 'Add Item',
@@ -641,7 +243,7 @@ export const translations: Partial<TranslationsByLanguage> = {
       measurements: 'Measurements',
       total: 'Total',
       digitalMeasurement: 'Digital Measurement',
-      lidarScanner: 'LIDAR Scanner',
+      lidarScanner: 'LiDAR Scanner',
       propertyTypes: {
         roof: 'Roof',
         fence: 'Fence',
@@ -673,67 +275,22 @@ export const translations: Partial<TranslationsByLanguage> = {
       logo: 'Logo',
       saveChanges: 'Save Changes',
     },
-    aiAssistant: {
-      title: 'AI Assistant',
-      askQuestion: 'Ask a Question',
-      suggestions: 'Suggestions',
-      history: 'History',
-      clearHistory: 'Clear History',
-      loading: 'Thinking...',
-      placeholder: 'How can I help you today?',
-    },
   },
 };
 
-// Update translations to include French and Portuguese additional content
-// Note: The main structure is already present in the translations object above
-
-// Helper function to get nested translations from a path (e.g., "common.save")
-// Keep track of missing translations to avoid repeated console logs
-const missingTranslations = new Set<string>();
-
-export function getTranslation(obj: Translation, path: string, lang: Language = 'en'): string {
-  const parts = path.split('.');
-  let result: any = obj;
+// Helper function to get nested translation values
+export function getTranslation(translations: Translation, key: string, language: Language): string {
+  const keys = key.split('.');
+  let current: any = translations;
   
-  for (const part of parts) {
-    if (result[part] === undefined) {
-      // If translation not found, return the key and log it to help identify missing translations
-      const missingKey = `${lang}:${path}`;
-      if (!missingTranslations.has(missingKey)) {
-        console.warn(`Translation missing: ${missingKey}`);
-        missingTranslations.add(missingKey);
-        
-        // Add to local storage for debugging
-        try {
-          const missingKeys = JSON.parse(localStorage.getItem('missingTranslations') || '[]');
-          if (!missingKeys.includes(missingKey)) {
-            missingKeys.push(missingKey);
-            localStorage.setItem('missingTranslations', JSON.stringify(missingKeys));
-          }
-        } catch (e) {
-          // Ignore storage errors
-        }
-      }
-      return path;
+  for (const k of keys) {
+    if (current && typeof current === 'object' && k in current) {
+      current = current[k];
+    } else {
+      // Return the key if translation is not found
+      return key;
     }
-    result = result[part];
   }
   
-  return typeof result === 'string' ? result : path;
-}
-
-// Function to get missing translations for development
-export function getMissingTranslations(): string[] {
-  try {
-    return JSON.parse(localStorage.getItem('missingTranslations') || '[]');
-  } catch (e) {
-    return [];
-  }
-}
-
-// Function to clear missing translations tracking
-export function clearMissingTranslations(): void {
-  missingTranslations.clear();
-  localStorage.removeItem('missingTranslations');
+  return typeof current === 'string' ? current : key;
 }

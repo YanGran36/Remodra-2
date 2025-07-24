@@ -1,7 +1,7 @@
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { FormItem, FormLabel } from "@/components/ui/form";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Checkbox } from '../ui/checkbox';
+import { FormItem, FormLabel } from '../ui/form';
 import { PdfTemplateConfig } from './pdf-template-settings';
 
 interface PdfColumnsConfigProps {

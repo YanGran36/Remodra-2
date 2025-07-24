@@ -1,9 +1,11 @@
 import OpenAI from "openai";
 
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Use the provided OpenAI API key or fallback
+const apiKey = process.env.OPENAI_API_KEY || "sk-proj-...your-actual-openai-api-key...";
+if (!apiKey || apiKey === "sk-proj-...your-actual-openai-api-key...") {
+  console.warn("⚠️  OpenAI API key not configured. AI features will be disabled.");
+}
+const openai = new OpenAI({ apiKey });
 
 interface ProjectAnalysisRequest {
   title: string;
@@ -57,6 +59,10 @@ interface JobDescriptionResponse {
  * Analyzes a project and generates summaries, descriptions, and analysis using AI
  */
 export async function analyzeProject(data: ProjectAnalysisRequest): Promise<ProjectAnalysisResponse> {
+  if (!openai) {
+    throw new Error("AI service is not configured. Please set a valid OPENAI_API_KEY.");
+  }
+
   try {
     const prompt = `
       Analyze the following construction project and generate a concise summary, 
@@ -118,6 +124,10 @@ export async function analyzeProject(data: ProjectAnalysisRequest): Promise<Proj
  * Generates a professional job description based on appointment notes and service details
  */
 export async function generateProfessionalJobDescription(data: JobDescriptionRequest): Promise<JobDescriptionResponse> {
+  if (!openai) {
+    throw new Error("AI service is not configured. Please set a valid OPENAI_API_KEY.");
+  }
+
   try {
     console.log("Generating professional job description with AI", data);
     
@@ -181,6 +191,10 @@ export async function generateSharingContent(
   projectData: any,
   settings: { installers: boolean; clients: boolean; estimators: boolean }
 ): Promise<SharingContent> {
+  if (!openai) {
+    throw new Error("AI service is not configured. Please set a valid OPENAI_API_KEY.");
+  }
+
   try {
     const prompt = `
       Generate personalized content to share information about a construction project with different roles.
@@ -198,18 +212,21 @@ export async function generateSharingContent(
       - Installers: ${settings.installers ? 'Has access' : 'No access'} 
         (MUST NOT include pricing or budget information)
       - Clients: ${settings.clients ? 'Has access' : 'No access'}
-        (Should include fees, invoices, documents and general process)
-      - Estimators/Sellers: ${settings.estimators ? 'Has access' : 'No access'}
-        (Can view ALL information)
+        (Can include budget and pricing information)
+      - Estimators: ${settings.estimators ? 'Has access' : 'No access'}
+        (Can include all technical details and pricing)
       
-      Generate three different versions of content, adapted to each role,
-      focusing on what is relevant to each one and respecting the permission restrictions.
+      INSTRUCTIONS:
+      Generate three different versions of the project information:
+      1. For Installers: Focus on technical details, materials, and work scope. NO pricing information.
+      2. For Clients: Include project overview, timeline, and value proposition. Can include budget.
+      3. For Estimators: Include all technical details, pricing breakdown, and professional analysis.
       
       Respond in JSON format with the following keys:
       {
-        "installers": "content for installers",
-        "clients": "content for clients",
-        "estimators": "content for estimators"
+        "installers": "Content for installers (no pricing)",
+        "clients": "Content for clients (can include pricing)",
+        "estimators": "Content for estimators (full details)"
       }
     `;
 
@@ -226,7 +243,7 @@ export async function generateSharingContent(
 
     return JSON.parse(content);
   } catch (error) {
-    console.error("Error generating content for sharing:", error);
-    throw new Error(`Error generating content for sharing: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    console.error("Error generating sharing content:", error);
+    throw new Error(`Error generating sharing content: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { 
   User, 
   Phone, 
@@ -10,23 +10,31 @@ import {
   FileText, 
   BanknoteIcon
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent } from '../components/ui/card';
+import { Button } from '../components/ui/button';
 import { 
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import Sidebar from "@/components/layout/sidebar";
-import MobileSidebar from "@/components/layout/mobile-sidebar";
-import PageHeader from "@/components/shared/page-header";
-import SearchInput from "@/components/shared/search-input";
+} from '../components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
+import { Badge } from '../components/ui/badge';
+import { Input } from '../components/ui/input';
+import Sidebar from '../components/layout/sidebar';
+import MobileSidebar from '../components/layout/mobile-sidebar';
+import PageHeader from '../components/shared/page-header';
+
+import ClientForm from '../components/clients/client-form';
+import ClientDetail from '../components/clients/client-detail';
+import { useClients, ClientWithProjects, ClientInput } from '../hooks/use-clients';
+import { useLocation } from "wouter";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest, fetchWithBaseUrl } from '../lib/queryClient';
+import { useToast } from '../hooks/use-toast';
+import TopNav from '../components/layout/top-nav';
 
 // Client interface
 interface Client {
@@ -51,131 +59,129 @@ interface Client {
 
 export default function ClientsPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [selectedClient, setSelectedClient] = useState<ClientWithProjects | null>(null);
   const [isClientDetailOpen, setIsClientDetailOpen] = useState(false);
+  const [isClientFormOpen, setIsClientFormOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [, setLocation] = useLocation();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Sample clients data - in a real app, this would come from an API call
-  const clients: Client[] = [
-    {
-      id: "1",
-      firstName: "Sarah",
-      lastName: "Johnson",
-      email: "sarah.johnson@example.com",
-      phone: "(555) 123-4567",
-      address: "1234 Oak Street",
-      city: "Springfield",
-      state: "IL",
-      zip: "62701",
-      clientSince: "April, 2022",
-      projects: [
-        {
-          title: "Kitchen Remodel",
-          status: "In Progress",
-          value: "$12,450"
-        },
-        {
-          title: "Backyard Patio",
-          status: "Completed",
-          value: "$2,050"
-        }
-      ],
-      notes: "Client prefers communication via text message rather than calls. Interested in discussing a bathroom remodel next year. Has referred two other clients.",
-      totalRevenue: "$14,500"
-    },
-    {
-      id: "2",
-      firstName: "Mark",
-      lastName: "Taylor",
-      email: "mtaylor@example.com",
-      phone: "(555) 456-7890",
-      address: "567 Maple Drive",
-      city: "Springfield",
-      state: "IL",
-      zip: "62704",
-      clientSince: "May, 2023",
-      projects: [
-        {
-          title: "Bathroom Renovation",
-          status: "In Progress",
-          value: "$8,750"
-        }
-      ],
-      notes: "First-time homeowner, very detail-oriented. Prefers email communication and evening appointments after 6pm.",
-      totalRevenue: "$8,750"
-    },
-    {
-      id: "3",
-      firstName: "James",
-      lastName: "Davis",
-      email: "james.davis@example.com",
-      phone: "(555) 789-0123",
-      address: "789 Pine Road",
-      city: "Springfield",
-      state: "IL",
-      zip: "62702",
-      clientSince: "January, 2023",
-      projects: [
-        {
-          title: "Deck Construction",
-          status: "In Progress",
-          value: "$6,800"
-        },
-        {
-          title: "Fence Installation",
-          status: "Completed",
-          value: "$3,200"
-        }
-      ],
-      notes: "Repeat customer, prefers quality materials even at higher cost. Has two large dogs that need to be secured during site visits.",
-      totalRevenue: "$10,000"
-    }
-  ];
+  const {
+    clients,
+    isLoadingClients,
+    createClient,
+    updateClient,
+    deleteClient,
+    isCreating,
+    isUpdating,
+    isDeleting
+  } = useClients();
 
   // Filter clients based on search query
   const filteredClients = clients.filter(client => {
     const fullName = `${client.firstName} ${client.lastName}`.toLowerCase();
-    return fullName.includes(searchQuery.toLowerCase()) ||
-           client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-           client.phone.includes(searchQuery);
+    const searchQueryLower = searchQuery.toLowerCase();
+    
+    return fullName.includes(searchQueryLower) ||
+      (client.email && client.email.toLowerCase().includes(searchQueryLower)) ||
+      (client.phone && client.phone.includes(searchQuery));
   });
 
-  // Open client detail modal
-  const openClientDetail = (client: Client) => {
+  // Abrir diálogo para crear un nuevo cliente
+  const handleAddClient = () => {
+    setSelectedClient(null);
+    setIsEditMode(false);
+    setIsClientFormOpen(true);
+  };
+
+  // Abrir diálogo para editar un cliente existente
+  const handleEditClient = () => {
+    if (!selectedClient) return;
+    setIsEditMode(true);
+    setIsClientDetailOpen(false);
+    setIsClientFormOpen(true);
+  };
+
+  // Abrir diálogo para ver detalles de un cliente
+  const handleViewClientDetails = (client: ClientWithProjects) => {
     setSelectedClient(client);
     setIsClientDetailOpen(true);
   };
 
+  // Manejar la creación o edición de un cliente
+  const handleClientFormSubmit = (data: ClientInput) => {
+    if (isEditMode && selectedClient) {
+      updateClient({
+        id: selectedClient.id,
+        data
+      });
+    } else {
+      createClient(data);
+    }
+    setIsClientFormOpen(false);
+  };
+
+  // Manejar la eliminación de un cliente
+  const handleDeleteClient = () => {
+    if (!selectedClient) return;
+    deleteClient(selectedClient.id);
+    setIsClientDetailOpen(false);
+  };
+
+  // Handle creating a new estimate for a client
+  const handleNewEstimate = (client?: ClientWithProjects) => {
+    const targetClient = client || selectedClient;
+    if (!targetClient) return;
+    
+    setIsClientDetailOpen(false);
+    setLocation(`/estimates/create?clientId=${targetClient.id}`);
+  };
+
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="remodra-layout">
       <Sidebar />
       <MobileSidebar />
-      
-      <main className="flex-1 overflow-y-auto bg-gray-50">
-        <div className="p-6">
+      <div className="remodra-main">
+        <TopNav />
+        <div className="remodra-content">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-6">
           <PageHeader 
             title="Clients" 
-            description="Manage your client database"
-            actions={
-              <Button className="flex items-center">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Client
-              </Button>
-            }
-          />
+            subtitle="Manage your client database"
+          >
+            <Button className="flex items-center" onClick={handleAddClient}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Client
+            </Button>
+          </PageHeader>
 
           <Card className="mb-6">
             <CardContent className="p-4">
               <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
-                <SearchInput 
-                  placeholder="Search clients by name, email, or phone..." 
-                  onSearch={setSearchQuery}
-                  className="w-full sm:w-80"
-                />
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => {
+                    // Export functionality
+                    const csvContent = "data:text/csv;charset=utf-8," + 
+                      "Name,Email,Phone,Address,City,State,Zip,Client Since,Total Revenue\n" +
+                      clients.map(c => 
+                        `"${c.firstName} ${c.lastName}","${c.email || ''}","${c.phone || ''}","${c.address || ''}","${c.city || ''}","${c.state || ''}","${c.zip || ''}","${c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'Unknown'}","${c.projects?.reduce((sum, p) => sum + (Number(p.budget) || 0), 0).toLocaleString() || '0'}"`
+                      ).join("\n");
+                    const encodedUri = encodeURI(csvContent);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", "clients.csv");
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }}>
                     Export
                   </Button>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => {
+                    // Import functionality - for now just show an alert
+                    alert('Import functionality coming soon! You can manually add clients for now.');
+                  }}>
                     Import
                   </Button>
                 </div>
@@ -195,33 +201,35 @@ export default function ClientsPage() {
                           </Avatar>
                           <div>
                             <h3 className="font-medium">{client.firstName} {client.lastName}</h3>
-                            <p className="text-sm text-gray-500">Client since {client.clientSince}</p>
+                            <p className="text-sm text-gray-500">
+                              Client since {client.createdAt ? new Date(client.createdAt).toLocaleDateString() : 'Unknown'}
+                            </p>
                           </div>
                         </div>
 
                         <div className="mt-3 space-y-1.5">
                           <div className="flex items-center text-sm">
                             <Phone className="h-3.5 w-3.5 text-gray-500 mr-2" />
-                            <span>{client.phone}</span>
+                            <span>{client.phone || 'No phone'}</span>
                           </div>
                           <div className="flex items-center text-sm">
                             <Mail className="h-3.5 w-3.5 text-gray-500 mr-2" />
-                            <span className="truncate">{client.email}</span>
+                            <span className="truncate">{client.email || 'No email'}</span>
                           </div>
                           <div className="flex items-center text-sm">
                             <MapPin className="h-3.5 w-3.5 text-gray-500 mr-2" />
-                            <span className="truncate">{client.address}, {client.city}</span>
+                            <span className="truncate">{client.address || 'No address'}, {client.city || ''}</span>
                           </div>
                         </div>
 
                         <div className="mt-3">
                           <div className="text-sm font-medium">Projects</div>
                           <div className="flex flex-wrap gap-2 mt-1">
-                            {client.projects.map((project, index) => (
+                            {client.projects?.map((project, index) => (
                               <Badge key={index} variant="outline" className="font-normal">
                                 {project.title}
                               </Badge>
-                            ))}
+                            )) || <span className="text-gray-400 text-sm">No projects</span>}
                           </div>
                         </div>
                       </div>
@@ -230,7 +238,7 @@ export default function ClientsPage() {
                         <Button 
                           variant="ghost" 
                           className="flex-1 rounded-none text-xs text-gray-500 h-10"
-                          onClick={() => openClientDetail(client)}
+                          onClick={() => handleViewClientDetails(client)}
                         >
                           View Details
                         </Button>
@@ -238,6 +246,7 @@ export default function ClientsPage() {
                         <Button 
                           variant="ghost" 
                           className="flex-1 rounded-none text-xs text-gray-500 h-10"
+                          onClick={() => handleNewEstimate(client)}
                         >
                           <FileText className="h-3.5 w-3.5 mr-1" />
                           New Estimate
@@ -260,7 +269,8 @@ export default function ClientsPage() {
             </CardContent>
           </Card>
         </div>
-      </main>
+      </div>
+    </div>
 
       {/* Client Detail Dialog */}
       <Dialog open={isClientDetailOpen} onOpenChange={setIsClientDetailOpen}>
@@ -311,7 +321,7 @@ export default function ClientsPage() {
                         </p>
                         <p className="flex items-center">
                           <User className="text-gray-400 mr-2 h-4 w-4" />
-                          <span>Client since: {selectedClient.clientSince}</span>
+                          <span>Client since: {selectedClient.createdAt ? new Date(selectedClient.createdAt).toLocaleDateString() : 'Unknown'}</span>
                         </p>
                       </div>
                     </div>
@@ -337,7 +347,7 @@ export default function ClientsPage() {
                         </p>
                         <p className="flex items-center justify-between">
                           <span className="text-gray-600">Total Revenue</span>
-                          <span className="font-medium">{selectedClient.totalRevenue}</span>
+                          <span className="font-medium">${selectedClient.projects?.reduce((sum, p) => sum + (Number(p.budget) || 0), 0).toLocaleString() || '0'}</span>
                         </p>
                       </div>
                     </div>
@@ -347,25 +357,17 @@ export default function ClientsPage() {
                 <TabsContent value="projects">
                   <h5 className="font-medium text-gray-900 mb-2">Projects</h5>
                   <div className="divide-y divide-gray-100 border border-gray-200 rounded-md">
-                    {selectedClient.projects.map((project, index) => (
-                      <div key={index} className="p-3 flex justify-between items-center">
-                        <div>
-                          <h6 className="font-medium">{project.title}</h6>
-                          <p className="text-sm text-gray-600">
-                            {project.status === "In Progress" && "In Progress"}
-                            {project.status === "Completed" && "Completed"}
-                            {project.status === "On Hold" && "On Hold"}
-                          </p>
+                    {selectedClient.projects?.map((project, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <span className="text-sm">{project.title}</span>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {project.status}
+                          </Badge>
+                          <span className="text-sm font-medium">${project.budget?.toLocaleString() || '0'}</span>
                         </div>
-                        <Badge className={
-                          project.status === "In Progress" ? "bg-blue-100 text-blue-800 hover:bg-blue-100" :
-                          project.status === "Completed" ? "bg-green-100 text-green-800 hover:bg-green-100" :
-                          "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
-                        }>
-                          {project.value}
-                        </Badge>
                       </div>
-                    ))}
+                    )) || <p className="text-gray-400 text-sm">No projects found</p>}
                   </div>
                 </TabsContent>
                 
@@ -378,11 +380,11 @@ export default function ClientsPage() {
               </Tabs>
               
               <div className="flex space-x-3 mt-6">
-                <Button className="flex items-center">
+                <Button className="flex items-center" onClick={handleEditClient}>
                   <Edit className="h-4 w-4 mr-2" />
                   Edit Client
                 </Button>
-                <Button variant="outline" className="flex items-center">
+                <Button variant="outline" className="flex items-center" onClick={() => handleNewEstimate()}>
                   <FileText className="h-4 w-4 mr-2" />
                   New Estimate
                 </Button>
@@ -393,6 +395,35 @@ export default function ClientsPage() {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Client Form Dialog */}
+      <Dialog open={isClientFormOpen} onOpenChange={setIsClientFormOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {isEditMode ? "Edit Client" : "Add New Client"}
+            </DialogTitle>
+          </DialogHeader>
+          <ClientForm 
+            client={isEditMode && selectedClient ? {
+              id: selectedClient.id,
+              firstName: selectedClient.firstName,
+              lastName: selectedClient.lastName,
+              email: selectedClient.email,
+              phone: selectedClient.phone,
+              address: selectedClient.address,
+              city: selectedClient.city,
+              state: selectedClient.state,
+              zip: selectedClient.zip,
+              notes: selectedClient.notes,
+              createdAt: selectedClient.createdAt
+            } : undefined}
+            onSubmit={handleClientFormSubmit}
+            isSubmitting={isEditMode ? isUpdating : isCreating}
+            onCancel={() => setIsClientFormOpen(false)}
+          />
         </DialogContent>
       </Dialog>
     </div>

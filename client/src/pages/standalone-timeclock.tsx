@@ -10,11 +10,11 @@ import {
   CardFooter, 
   CardHeader, 
   CardTitle 
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   ArrowRightCircle, 
   ArrowLeftCircle,
@@ -27,9 +27,9 @@ import {
   ArrowUpCircle,
   Calendar as CalendarIcon
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { cn } from "@/lib/utils";
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
 
 // Validation schema for the form
 const timeclockFormSchema = z.object({
@@ -41,10 +41,10 @@ type TimeclockFormType = z.infer<typeof timeclockFormSchema>;
 export default function StandaloneTimeclockPage() {
   const [activeTab, setActiveTab] = useState("clock");
   const [clockMode, setClockMode] = useState("in");
-  const [recentEntries, setRecentEntries] = useState([]);
-  const [reportData, setReportData] = useState({});
-  const [expandedEmployee, setExpandedEmployee] = useState(null);
-  const [expandedDate, setExpandedDate] = useState(null);
+  const [recentEntries, setRecentEntries] = useState<any[]>([]);
+  const [reportData, setReportData] = useState<Record<string, any>>({});
+  const [expandedEmployee, setExpandedEmployee] = useState<string | null>(null);
+  const [expandedDate, setExpandedDate] = useState<string | null>(null);
   const [position, setPosition] = useState<GeolocationPosition | null>(null);
   const [selectedEmployeeName, setSelectedEmployeeName] = useState("");
   const [step, setStep] = useState("select-employee"); // "select-employee" or "select-action"
@@ -90,7 +90,7 @@ export default function StandaloneTimeclockPage() {
     }
   };
 
-  const toggleEmployee = (employeeName) => {
+  const toggleEmployee = (employeeName: string) => {
     if (expandedEmployee === employeeName) {
       setExpandedEmployee(null);
     } else {
@@ -98,7 +98,7 @@ export default function StandaloneTimeclockPage() {
     }
   };
 
-  const toggleDate = (date) => {
+  const toggleDate = (date: string) => {
     if (expandedDate === date) {
       setExpandedDate(null);
     } else {
@@ -158,7 +158,7 @@ export default function StandaloneTimeclockPage() {
   // Handle clock in/out
   const onClockInOut = async () => {
     try {
-      // Verificar que tenemos ubicación disponible
+      // Verify that we have location available
       if (!position || !position.coords) {
         toast({
           title: "Location Required",
@@ -181,7 +181,7 @@ export default function StandaloneTimeclockPage() {
           locationText = data.display_name;
         }
       } catch (error: unknown) {
-        // Si falla el geocoding inverso, usamos las coordenadas que ya tenemos
+        // If reverse geocoding fails, use the coordinates we already have
         console.error("Error with reverse geocoding:", error);
       }
 
@@ -219,7 +219,7 @@ export default function StandaloneTimeclockPage() {
     }
   };
 
-  const handleTabChange = (value) => {
+  const handleTabChange = (value: string) => {
     setActiveTab(value);
   };
 
@@ -294,7 +294,7 @@ export default function StandaloneTimeclockPage() {
                                           <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                                           <Input 
                                             placeholder="Enter employee name" 
-                                            className="pl-9" 
+                                            className="pl-9 input-blue-border" 
                                             {...field} 
                                           />
                                         </div>

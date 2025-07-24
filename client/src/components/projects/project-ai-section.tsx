@@ -3,11 +3,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from '../../lib/queryClient';
+import { useToast } from '../../hooks/use-toast';
 import { format } from "date-fns";
-import { useOpenAI } from "@/hooks/use-openai";
-import { ProjectWithClient } from "@/hooks/use-projects";
+import { useOpenAI } from '../../hooks/use-openai';
+import { ProjectWithClient } from '../../hooks/use-projects';
 
 import {
   Form,
@@ -17,22 +17,22 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
+} from '../ui/form';
+import { Button } from '../ui/button';
+import { Textarea } from '../ui/textarea';
+import { Switch } from '../ui/switch';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '../ui/card';
 import {
   Alert,
   AlertDescription,
   AlertTitle,
-} from "@/components/ui/alert";
+} from '../ui/alert';
 import {
   Table,
   TableBody,
@@ -40,7 +40,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '../ui/table';
 import { Loader2, Brain, Clock, Shield, FileWarning, HardHat, User, BarChart3 } from "lucide-react";
 
 // Schema for AI section form

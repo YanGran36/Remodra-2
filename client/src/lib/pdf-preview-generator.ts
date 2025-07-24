@@ -1,6 +1,5 @@
 import jsPDF from 'jspdf';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import type { PdfTemplateConfig } from './pdf-generator';
 
 // Types for PDF data

@@ -1,24 +1,24 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/hooks/use-auth";
-import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from '../lib/queryClient';
+import { useAuth } from '../hooks/use-auth';
+import { useToast } from '../hooks/use-toast';
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Ruler, Scan, Upload, Plus, Trash2, FileImage, Camera, Download } from "lucide-react";
 
 // Componentes de Medición Digital
-import DigitalMeasurement from "@/components/measurement/digital-measurement";
-import LiDARScanner from "@/components/measurement/lidar-scanner";
+import DigitalMeasurement from '../components/measurement/digital-measurement';
+import LiDARScanner from '../components/measurement/lidar-scanner';
 
 // UI Components
-import PageHeader from "@/components/ui/page-header";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
+import PageHeader from '../components/ui/page-header';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Textarea } from '../components/ui/textarea';
+import { Separator } from '../components/ui/separator';
 import {
   Dialog,
   DialogContent,
@@ -27,13 +27,13 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from '../components/ui/dialog';
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@/components/ui/tabs";
+} from '../components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -42,14 +42,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '../components/ui/table';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '../components/ui/select';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,7 +60,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from '../components/ui/alert-dialog';
 
 // Definir los tipos de servicio disponibles (mismos que en vendor-estimate-form)
 const SERVICE_TYPES = [

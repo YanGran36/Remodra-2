@@ -2,9 +2,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { ProjectWithClient } from "@/hooks/use-projects";
+import { apiRequest } from '../../lib/queryClient';
+import { useToast } from '../../hooks/use-toast';
+import { ProjectWithClient } from '../../hooks/use-projects';
 
 import {
   Form,
@@ -14,10 +14,10 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
+} from '../ui/form';
+import { Button } from '../ui/button';
+import { Textarea } from '../ui/textarea';
+import { Input } from '../ui/input';
 import { Loader2, Plus, Trash2 } from "lucide-react";
 
 // Tipo para materiales necesarios

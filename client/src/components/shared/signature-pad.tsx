@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from '../ui/button';
 
 interface SignaturePadProps {
   onChange: (signatureData: string | null) => void;

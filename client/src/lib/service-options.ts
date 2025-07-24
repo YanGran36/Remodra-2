@@ -1,5 +1,5 @@
 // Importamos los tipos primero
-import { ServicePrice, MaterialPrice } from '@/hooks/use-pricing';
+import { ServicePrice, MaterialPrice } from '../hooks/use-pricing';
 
 // Define available service types
 export const SERVICE_TYPES = [];

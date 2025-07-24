@@ -1,10 +1,10 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from '../ui/card';
+import { Button } from '../ui/button';
+import { Avatar, AvatarFallback } from '../ui/avatar';
+import { Badge } from '../ui/badge';
 import { Phone, Mail, MapPin } from "lucide-react";
-import { ClientWithProjects } from "@/hooks/use-clients";
-import { formatDate } from "@/lib/utils";
+import { ClientWithProjects } from '../../hooks/use-clients';
+import { formatDate } from '../../lib/utils';
 
 type ClientCardProps = {
   client: ClientWithProjects;
@@ -35,7 +35,7 @@ export default function ClientCard({
             </Avatar>
             <div>
               <h3 className="font-medium">{client.firstName} {client.lastName}</h3>
-              <p className="text-sm text-gray-500">Cliente desde {clientSince}</p>
+              <p className="text-sm text-gray-500">Client since {clientSince}</p>
             </div>
           </div>
 
@@ -58,6 +58,8 @@ export default function ClientCard({
                 <span className="truncate">
                   {client.address}
                   {client.city && `, ${client.city}`}
+                  {client.state && `, ${client.state}`}
+                  {client.zip && ` ${client.zip}`}
                 </span>
               </div>
             )}
@@ -65,7 +67,7 @@ export default function ClientCard({
 
           {client.projects && Array.isArray(client.projects) && client.projects.length > 0 && (
             <div className="mt-3">
-              <div className="text-sm font-medium">Proyectos</div>
+              <div className="text-sm font-medium">Projects</div>
               <div className="flex flex-wrap gap-2 mt-1">
                 {client.projects.slice(0, 3).map((project) => (
                   <Badge key={project.id} variant="outline" className="font-normal">
@@ -74,7 +76,7 @@ export default function ClientCard({
                 ))}
                 {client.projects.length > 3 && (
                   <Badge variant="outline" className="font-normal">
-                    +{client.projects.length - 3} más
+                    +{client.projects.length - 3} more
                   </Badge>
                 )}
               </div>
@@ -88,7 +90,7 @@ export default function ClientCard({
             className="flex-1 rounded-none text-xs text-gray-500 h-10"
             onClick={() => onViewDetails(client)}
           >
-            Ver detalles
+            View Details
           </Button>
           <div className="w-px bg-gray-100" />
           <Button 
@@ -96,7 +98,7 @@ export default function ClientCard({
             className="flex-1 rounded-none text-xs text-gray-500 h-10"
             onClick={() => onNewEstimate(client)}
           >
-            Nuevo presupuesto
+            New Estimate
           </Button>
         </div>
       </CardContent>

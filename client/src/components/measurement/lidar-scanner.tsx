@@ -1,13 +1,13 @@
 import React, { useRef, useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
-import { Progress } from "@/components/ui/progress";
+import { Button } from '../ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../ui/card';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Slider } from '../ui/slider';
+import { Progress } from '../ui/progress';
 import { RotateCw, Camera, Download, Save, Layers, Settings, Smartphone, Trash2, Scan } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useMobile } from "@/hooks/use-mobile";
+import { useToast } from '../../hooks/use-toast';
+import { useMobile } from '../../hooks/use-mobile';
 
 interface ScanSettings {
   resolution: number; // 1-100

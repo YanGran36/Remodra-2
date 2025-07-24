@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from './use-auth';
-import { queryClient } from '@/lib/queryClient';
+import { queryClient } from '../lib/queryClient';
 
 // Este hook detecta cuándo la sesión se ha perdido y 
 // maneja el proceso de reconexión o redirección según sea necesario

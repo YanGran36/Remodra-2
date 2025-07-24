@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Label } from '../ui/label';
+import { Switch } from '../ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Input } from '../ui/input';
+import { Button } from '../ui/button';
+import { Separator } from '../ui/separator';
+import { ScrollArea } from '../ui/scroll-area';
 import { ColorPicker } from "../ui/color-picker";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from '../../hooks/use-toast';
 import { Check, Save, Image, FileText, Layout, Palette, Type, Info } from "lucide-react";
 
 export interface PdfTemplateConfig {

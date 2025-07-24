@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useLocation, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { useToast } from '../hooks/use-toast';
+import { apiRequest } from '../lib/queryClient';
 import { format, differenceInDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { 
@@ -21,23 +21,23 @@ import {
   FileSpreadsheet,
 } from "lucide-react";
 
-import { PremiumHeader } from "@/components/ui/premium-header";
-import { PremiumButton } from "@/components/ui/premium-button";
-import { StatusBadge, getEstimateStatusBadge } from "@/components/ui/status-badge";
-import { ItemTable } from "@/components/ui/item-table";
-import { InfoCard } from "@/components/ui/info-card";
-import { DateDisplay } from "@/components/ui/date-display";
-import { SignatureDisplay } from "@/components/ui/signature-display";
-import { StatCard } from "@/components/ui/stat-card";
+import { PremiumHeader } from '../components/ui/premium-header';
+import { PremiumButton } from '../components/ui/premium-button';
+import { StatusBadge, getEstimateStatusBadge } from '../components/ui/status-badge';
+import { ItemTable } from '../components/ui/item-table';
+import { InfoCard } from '../components/ui/info-card';
+import { DateDisplay } from '../components/ui/date-display';
+import { SignatureDisplay } from '../components/ui/signature-display';
+import { StatCard } from '../components/ui/stat-card';
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Separator } from '../components/ui/separator';
+import { Avatar, AvatarFallback } from '../components/ui/avatar';
 
 // Import form component for editing
-import EstimateForm from "@/components/estimates/estimate-form";
+import EstimateForm from '../components/estimates/estimate-form';
 
 // Helper function to format currency
 const formatCurrency = (amount: number | string) => {
@@ -115,10 +115,9 @@ export default function PremiumEstimatePage() {
       queryClient.invalidateQueries({ queryKey: ["/api/protected/invoices"] });
       toast({
         title: "¡Orden de trabajo creada!",
-        description: "El estimado ha sido convertido en una orden de trabajo exitosamente.",
+        description: "El estimado ha sido convertido en una orden de trabajo exitosamente. El estado del estimado ha sido actualizado a 'converted'.",
       });
-      // Navigate to invoice page
-      setLocation(`/invoices/${data.id}`);
+      // Stay on estimate page, status will be updated
     },
     onError: (error: Error) => {
       setIsConvertingToInvoice(false);

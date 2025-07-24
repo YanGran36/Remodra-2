@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { useToast } from "@/hooks/use-toast";
-import { useEstimates } from "@/hooks/use-estimates";
+import { useToast } from '../hooks/use-toast';
+import { useEstimates } from '../hooks/use-estimates';
 import { 
   ArrowLeft, 
   Plus, 
@@ -12,26 +12,26 @@ import {
   User,
   Building2,
   DollarSign,
-  Ruler
+  Ruler,
+  Sparkles,
+  Loader2
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Textarea } from '../components/ui/textarea';
 import { 
   Select, 
   SelectContent, 
   SelectItem, 
   SelectTrigger, 
   SelectValue 
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import Sidebar from "@/components/layout/sidebar";
-import MobileSidebar from "@/components/layout/mobile-sidebar";
-import FenceMeasurementTool from "@/components/measurement/fence-measurement-tool";
+} from '../components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Badge } from '../components/ui/badge';
+import { Separator } from '../components/ui/separator';
+import { apiRequest } from '../lib/queryClient';
 
 interface ServiceItem {
   id: string;
@@ -61,9 +61,13 @@ export default function ProfessionalEstimatePage() {
   const { toast } = useToast();
   const { createEstimateMutation } = useEstimates();
 
+  // Get clientId from URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const clientIdFromUrl = urlParams.get('clientId');
+
   // Form state
   const [estimateData, setEstimateData] = useState<EstimateData>({
-    clientId: null,
+    clientId: clientIdFromUrl ? parseInt(clientIdFromUrl) : null,
     projectId: null,
     services: [],
     subtotal: 0,
@@ -87,11 +91,13 @@ export default function ProfessionalEstimatePage() {
       height: 0,
       pitch: 0,
       count: 1
-    }
+    },
+    appointmentNotes: ""
   });
 
   const [activeTab, setActiveTab] = useState("client");
   const [showFenceTool, setShowFenceTool] = useState(false);
+  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
 
   // Fetch data
   const { data: clients = [] } = useQuery<any[]>({
@@ -104,23 +110,51 @@ export default function ProfessionalEstimatePage() {
 
   const { data: availableServices = [] } = useQuery<any[]>({
     queryKey: ["/api/direct/services"],
+  }); // AI Description Generation Mutation
+  const generateDescriptionMutation = useMutation({
+    mutationFn: async (data: {
+      serviceType: string;
+      appointmentNotes: string;
+      measurements: any;
+      clientName?: string;
+    }) => {
+      const response = await apiRequest('/api/ai/generate-job-description', data);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setCurrentService(prev => ({
+        ...prev,
+        description: data.professionalDescription
+      }));
+      toast({
+        title: "Description Generated",
+        description: "AI has created a professional description for your service.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Generation Failed",
+        description: error.message || "Failed to generate description. Please try again.",
+        variant: "destructive",
+      });
+    }
   });
 
   // Professional service types with industry standards
   const serviceTypes = [
-    { value: "fence", label: "Fence", unit: "linear ft", type: "linear" },
+    { value: "fence", label: "Fence Installation", unit: "linear ft", type: "linear" },
     { value: "roof", label: "Roofing", unit: "squares", type: "roofing" },
     { value: "siding", label: "Siding", unit: "sq ft", type: "area" },
-    { value: "deck", label: "Deck", unit: "sq ft", type: "area" },
+    { value: "deck", label: "Deck Construction", unit: "sq ft", type: "area" },
     { value: "gutters", label: "Gutters & Downspouts", unit: "linear ft", type: "linear" },
-    { value: "windows", label: "Windows", unit: "each", type: "count" },
-    { value: "flooring", label: "Flooring", unit: "sq ft", type: "area" },
-    { value: "painting", label: "Painting", unit: "sq ft", type: "area" },
-    { value: "electrical", label: "Electrical", unit: "each", type: "count" },
-    { value: "plumbing", label: "Plumbing", unit: "each", type: "count" },
-    { value: "concrete", label: "Concrete", unit: "sq ft", type: "area" },
+    { value: "windows", label: "Window Installation", unit: "each", type: "count" },
+    { value: "flooring", label: "Flooring Installation", unit: "sq ft", type: "area" },
+    { value: "painting", label: "Painting Services", unit: "sq ft", type: "area" },
+    { value: "electrical", label: "Electrical Work", unit: "each", type: "count" },
+    { value: "plumbing", label: "Plumbing Services", unit: "each", type: "count" },
+    { value: "concrete", label: "Concrete Work", unit: "sq ft", type: "area" },
     { value: "landscaping", label: "Landscaping", unit: "sq ft", type: "area" },
-    { value: "hvac", label: "HVAC", unit: "each", type: "count" },
+    { value: "hvac", label: "HVAC Services", unit: "each", type: "count" },
     { value: "other", label: "Other Services", unit: "each", type: "count" }
   ];
 
@@ -137,6 +171,19 @@ export default function ProfessionalEstimatePage() {
       total
     }));
   }, [estimateData.services, estimateData.tax, estimateData.discount]);
+
+  // Show toast when client is pre-selected from URL
+  useEffect(() => {
+    if (clientIdFromUrl && clients.length > 0) {
+      const selectedClient = clients.find((client: any) => client.id.toString() === clientIdFromUrl);
+      if (selectedClient) {
+        toast({
+          title: "Client Selected",
+          description: `Creating estimate for ${selectedClient.firstName} ${selectedClient.lastName}`,
+        });
+      }
+    }
+  }, [clientIdFromUrl, clients, toast]);
 
   const handleServiceTypeChange = (serviceType: string) => {
     const selectedType = serviceTypes.find(type => type.value === serviceType);
@@ -198,18 +245,42 @@ export default function ProfessionalEstimatePage() {
     }
   };
 
-  const addService = () => {
-    if (!currentService.serviceType || !currentService.serviceName) {
+  const generateAIDescription = async () => {
+    if (!currentService.serviceType || !currentService.appointmentNotes.trim()) {
       toast({
         title: "Missing Information",
-        description: "Please select a service type and provide a name.",
+        description: "Please select a service type and add appointment notes before generating description.",
         variant: "destructive",
       });
       return;
     }
 
-    const total = currentService.quantity * currentService.unitPrice;
+    setIsGeneratingDescription(true);
     
+    const selectedClient = clients.find((client: any) => client.id === estimateData.clientId);
+    
+    try {
+      await generateDescriptionMutation.mutateAsync({
+        serviceType: currentService.serviceType,
+        appointmentNotes: currentService.appointmentNotes,
+        measurements: currentService.measurements,
+        clientName: selectedClient ? `${selectedClient.firstName} ${selectedClient.lastName}` : undefined
+      });
+    } finally {
+      setIsGeneratingDescription(false);
+    }
+  };
+
+  const addService = () => {
+    if (!currentService.serviceType || !currentService.description.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a service type and ensure description is generated before adding service.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const newService: ServiceItem = {
       id: Date.now().toString(),
       serviceType: currentService.serviceType,
@@ -218,7 +289,7 @@ export default function ProfessionalEstimatePage() {
       quantity: currentService.quantity,
       unit: currentService.unit,
       unitPrice: currentService.unitPrice,
-      total
+      total: currentService.quantity * currentService.unitPrice
     };
 
     setEstimateData(prev => ({
@@ -226,7 +297,7 @@ export default function ProfessionalEstimatePage() {
       services: [...prev.services, newService]
     }));
 
-    // Reset form
+    // Reset current service
     setCurrentService({
       serviceType: "",
       serviceName: "",
@@ -240,8 +311,10 @@ export default function ProfessionalEstimatePage() {
         height: 0,
         pitch: 0,
         count: 1
-      }
+      },
+      appointmentNotes: ""
     });
+
     setShowFenceTool(false);
   };
 
@@ -262,48 +335,44 @@ export default function ProfessionalEstimatePage() {
   };
 
   const saveEstimate = async () => {
-    if (!estimateData.clientId) {
+    if (!estimateData.clientId || estimateData.services.length === 0) {
       toast({
-        title: "Missing Client",
-        description: "Please select a client for this estimate.",
+        title: "Missing Information",
+        description: "Please select a client and add at least one service.",
         variant: "destructive",
       });
       return;
     }
 
-    if (estimateData.services.length === 0) {
-      toast({
-        title: "No Services",
-        description: "Please add at least one service to the estimate.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    const estimateNumber = generateEstimateNumber();
+    
     const estimatePayload = {
+      estimateNumber,
       clientId: estimateData.clientId,
       projectId: estimateData.projectId,
-      estimateNumber: generateEstimateNumber(),
+      items: estimateData.services.map(service => ({
+        serviceType: service.serviceType,
+        serviceName: service.serviceName,
+        description: service.description,
+        quantity: service.quantity,
+        unit: service.unit,
+        unitPrice: service.unitPrice,
+        total: service.total
+      })),
       subtotal: estimateData.subtotal,
       tax: estimateData.tax,
       discount: estimateData.discount,
       total: estimateData.total,
       notes: estimateData.notes,
       terms: estimateData.terms,
-      items: estimateData.services.map(service => ({
-        description: service.description || service.serviceName,
-        quantity: service.quantity.toString(),
-        unitPrice: service.unitPrice.toString(),
-        amount: service.total.toString(),
-        notes: null
-      }))
+      status: "pending"
     };
 
     try {
       await createEstimateMutation.mutateAsync(estimatePayload);
       toast({
         title: "Estimate Created",
-        description: "Your professional estimate has been created successfully.",
+        description: `Estimate ${estimateNumber} has been created successfully.`,
       });
       setLocation("/estimates");
     } catch (error) {
@@ -319,7 +388,7 @@ export default function ProfessionalEstimatePage() {
   const renderMeasurementInputs = () => {
     const serviceConfig = serviceTypes.find(s => s.value === currentService.serviceType);
     
-    if (!serviceConfig || showFenceTool) return null;
+    if (!serviceConfig) return null;
 
     switch (serviceConfig.type) {
       case "linear":
@@ -327,6 +396,7 @@ export default function ProfessionalEstimatePage() {
           <div>
             <Label>Length (ft)</Label>
             <Input
+              className="input-blue-border"
               type="number"
               step="0.1"
               value={currentService.measurements.length || ""}
@@ -342,6 +412,7 @@ export default function ProfessionalEstimatePage() {
             <div>
               <Label>Length (ft)</Label>
               <Input
+                className="input-blue-border"
                 type="number"
                 step="0.1"
                 value={currentService.measurements.length || ""}
@@ -351,6 +422,7 @@ export default function ProfessionalEstimatePage() {
             <div>
               <Label>{serviceConfig.value === "painting" || serviceConfig.value === "siding" ? "Height (ft)" : "Width (ft)"}</Label>
               <Input
+                className="input-blue-border"
                 type="number"
                 step="0.1"
                 value={serviceConfig.value === "painting" || serviceConfig.value === "siding" ? 
@@ -370,6 +442,7 @@ export default function ProfessionalEstimatePage() {
             <div>
               <Label>Length (ft)</Label>
               <Input
+                className="input-blue-border"
                 type="number"
                 step="0.1"
                 value={currentService.measurements.length || ""}
@@ -379,6 +452,7 @@ export default function ProfessionalEstimatePage() {
             <div>
               <Label>Width (ft)</Label>
               <Input
+                className="input-blue-border"
                 type="number"
                 step="0.1"
                 value={currentService.measurements.width || ""}
@@ -388,6 +462,7 @@ export default function ProfessionalEstimatePage() {
             <div>
               <Label>Pitch (optional)</Label>
               <Input
+                className="input-blue-border"
                 type="number"
                 step="0.1"
                 value={currentService.measurements.pitch || ""}
@@ -403,6 +478,7 @@ export default function ProfessionalEstimatePage() {
           <div>
             <Label>Quantity</Label>
             <Input
+              className="input-blue-border"
               type="number"
               value={currentService.measurements.count || 1}
               onChange={(e) => handleMeasurementChange("count", parseInt(e.target.value) || 1)}
@@ -417,14 +493,13 @@ export default function ProfessionalEstimatePage() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar />
-      <MobileSidebar />
+    <div className="min-h-screen bg-background">
+      {/* Hide sidebar for professional estimate creation */}
       
-      <main className="flex-1 overflow-y-auto bg-gray-50">
-        <div className="page-layout">
+      <div className="relative z-10 min-h-screen">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-6">
           {/* Header */}
-          <div className="mobile-header mb-6">
+          <div className="mb-6">
             <div className="flex items-center space-x-4">
               <Button
                 variant="outline"
@@ -436,7 +511,7 @@ export default function ProfessionalEstimatePage() {
               </Button>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Professional Estimate</h1>
-                <p className="text-gray-600">Create a complete estimate with professional measurements</p>
+                <p className="text-gray-600">Create professional estimates with AI-powered descriptions</p>
               </div>
             </div>
           </div>
@@ -449,7 +524,7 @@ export default function ProfessionalEstimatePage() {
               </TabsTrigger>
               <TabsTrigger value="services" className="flex items-center">
                 <Building2 className="h-4 w-4 mr-2" />
-                Services & Measurements
+                Services & AI Description
               </TabsTrigger>
               <TabsTrigger value="summary" className="flex items-center">
                 <DollarSign className="h-4 w-4 mr-2" />
@@ -470,7 +545,7 @@ export default function ProfessionalEstimatePage() {
                       value={estimateData.clientId?.toString() || ""} 
                       onValueChange={(value) => setEstimateData(prev => ({ ...prev, clientId: parseInt(value) }))}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="input-blue-border">
                         <SelectValue placeholder="Choose a client" />
                       </SelectTrigger>
                       <SelectContent>
@@ -492,7 +567,7 @@ export default function ProfessionalEstimatePage() {
                         projectId: value && value !== "no_project" ? parseInt(value) : null 
                       }))}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="input-blue-border">
                         <SelectValue placeholder="Choose a project" />
                       </SelectTrigger>
                       <SelectContent>
@@ -518,18 +593,24 @@ export default function ProfessionalEstimatePage() {
               </Card>
             </TabsContent>
 
-            {/* Services & Measurements */}
+            {/* Services & AI Description */}
             <TabsContent value="services" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Add Services</CardTitle>
+                  <CardTitle className="flex items-center">
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Service & AI Description
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="form-grid">
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <Label>Service Type *</Label>
-                      <Select value={currentService.serviceType} onValueChange={handleServiceTypeChange}>
-                        <SelectTrigger>
+                      <Select 
+                        value={currentService.serviceType} 
+                        onValueChange={handleServiceTypeChange}
+                      >
+                        <SelectTrigger className="input-blue-border">
                           <SelectValue placeholder="Select service type" />
                         </SelectTrigger>
                         <SelectContent>
@@ -543,71 +624,94 @@ export default function ProfessionalEstimatePage() {
                     </div>
 
                     <div>
-                      <Label>Service Name *</Label>
-                      <Input
-                        value={currentService.serviceName}
-                        onChange={(e) => setCurrentService(prev => ({ ...prev, serviceName: e.target.value }))}
-                        placeholder="e.g., Wood Fence Installation"
-                      />
-                    </div>
-
-                    <div className="md:col-span-2">
-                      <Label>Description</Label>
-                      <Textarea
-                        value={currentService.description}
-                        onChange={(e) => setCurrentService(prev => ({ ...prev, description: e.target.value }))}
-                        rows={2}
-                        placeholder="Detailed description of the service..."
-                      />
-                    </div>
-
-                    {/* Measurement Inputs */}
-                    {currentService.serviceType && !showFenceTool && (
-                      <div className="md:col-span-2">
-                        <Label>Measurements</Label>
-                        <div className="mt-2 space-y-4">
-                          {renderMeasurementInputs()}
-                          {currentService.quantity > 0 && (
-                            <div className="text-sm text-blue-600">
-                              Calculated: {currentService.quantity.toFixed(2)} {currentService.unit}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Fence Measurement Tool */}
-                    {showFenceTool && (
-                      <div className="md:col-span-2">
-                        <Label>Fence Measurements</Label>
-                        <div className="mt-2 p-4 border rounded-lg">
-                          <FenceMeasurementTool
-                            onMeasurementsChange={handleFenceMeasurements}
-                            serviceUnit="ft"
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    <div>
                       <Label>Unit Price ($)</Label>
                       <Input
+                        className="input-blue-border"
                         type="number"
                         step="0.01"
                         value={currentService.unitPrice}
                         onChange={(e) => setCurrentService(prev => ({ ...prev, unitPrice: parseFloat(e.target.value) || 0 }))}
+                        placeholder="Enter unit price"
                       />
-                    </div>
-
-                    <div>
-                      <Label>Total: {formatCurrency(currentService.quantity * currentService.unitPrice)}</Label>
                     </div>
                   </div>
 
-                  <Button onClick={addService} className="w-full">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Service
-                  </Button>
+                  {/* Measurements */}
+                  {currentService.serviceType && (
+                    <div className="md:col-span-2">
+                      <Label>Measurements</Label>
+                      <div className="mt-2 space-y-4">
+                        {renderMeasurementInputs()}
+                        {currentService.quantity > 0 && (
+                          <div className="text-sm text-blue-600">
+                            Calculated: {currentService.quantity.toFixed(2)} {currentService.unit}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Appointment Notes for AI */}
+                  <div>
+                    <Label>Appointment Notes *</Label>
+                    <Textarea
+                      className="input-blue-border"
+                      value={currentService.appointmentNotes}
+                      onChange={(e) => setCurrentService(prev => ({ ...prev, appointmentNotes: e.target.value }))}
+                      placeholder="Describe what was discussed during the appointment, measurements taken, materials discussed, etc. This will be used by AI to generate a professional description."
+                      rows={4}
+                    />
+                    <p className="text-sm text-gray-500 mt-1">
+                      Be detailed about the work scope, materials, and any special requirements discussed.
+                    </p>
+                  </div>
+
+                  {/* AI Description Generation */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label>Professional Description</Label>
+                      <Button
+                        onClick={generateAIDescription}
+                        disabled={!currentService.serviceType || !currentService.appointmentNotes.trim() || isGeneratingDescription}
+                        size="sm"
+                        variant="outline"
+                      >
+                        {isGeneratingDescription ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-4 w-4 mr-2" />
+                            Generate with AI
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                    
+                    <Textarea
+                      className="input-blue-border min-h-[100px]"
+                      value={currentService.description}
+                      onChange={(e) => setCurrentService(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="AI will generate a professional description based on your appointment notes..."
+                      rows={4}
+                    />
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <div className="text-lg font-semibold">
+                      Total: {formatCurrency(currentService.quantity * currentService.unitPrice)}
+                    </div>
+                    <Button 
+                      onClick={addService} 
+                      disabled={!currentService.serviceType || !currentService.description.trim()}
+                      className="flex items-center"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Service
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -618,34 +722,36 @@ export default function ProfessionalEstimatePage() {
                     <CardTitle>Added Services ({estimateData.services.length})</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       {estimateData.services.map((service) => (
-                        <div key={service.id} className="flex items-center justify-between p-3 border rounded-lg">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <Badge variant="outline">{service.serviceType}</Badge>
-                              <h4 className="font-medium">{service.serviceName}</h4>
+                        <div key={service.id} className="border rounded-lg p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Badge variant="outline">{service.serviceType}</Badge>
+                                <h4 className="font-medium text-lg">{service.serviceName}</h4>
+                              </div>
+                              <p className="text-gray-700">{service.description}</p>
+                              <div className="text-sm text-gray-500">
+                                {service.quantity.toFixed(2)} {service.unit} × {formatCurrency(service.unitPrice)} = {formatCurrency(service.total)}
+                              </div>
                             </div>
-                            <p className="text-sm text-gray-600 mb-1">{service.description}</p>
-                            <div className="text-sm text-gray-500">
-                              {service.quantity.toFixed(2)} {service.unit} × {formatCurrency(service.unitPrice)} = {formatCurrency(service.total)}
-                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => removeService(service.id)}
+                              className="text-red-600 hover:text-red-700 ml-4"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => removeService(service.id)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
                         </div>
                       ))}
                     </div>
                     
                     {estimateData.services.length > 0 && (
-                      <div className="mt-4">
-                        <Button onClick={() => setActiveTab("summary")}>
+                      <div className="mt-6">
+                        <Button onClick={() => setActiveTab("summary")} className="w-full">
                           Continue to Summary
                           <DollarSign className="h-4 w-4 ml-2" />
                         </Button>
@@ -665,18 +771,18 @@ export default function ProfessionalEstimatePage() {
                       <CardTitle>Estimate Summary</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-4">
+                      <div className="space-y-6">
                         {estimateData.services.map((service) => (
-                          <div key={service.id} className="flex justify-between items-start">
-                            <div>
-                              <h4 className="font-medium">{service.serviceName}</h4>
-                              <p className="text-sm text-gray-600">{service.description}</p>
-                              <p className="text-sm text-gray-500">
-                                {service.quantity.toFixed(2)} {service.unit} × {formatCurrency(service.unitPrice)}
-                              </p>
+                          <div key={service.id} className="border-b pb-4 last:border-b-0">
+                            <div className="flex justify-between items-start mb-2">
+                              <h4 className="font-semibold text-lg">{service.serviceName}</h4>
+                              <div className="text-right">
+                                <p className="font-bold text-lg">{formatCurrency(service.total)}</p>
+                              </div>
                             </div>
-                            <div className="text-right">
-                              <p className="font-medium">{formatCurrency(service.total)}</p>
+                            <p className="text-gray-700">{service.description}</p>
+                            <div className="text-sm text-gray-500">
+                              {service.quantity.toFixed(2)} {service.unit} × {formatCurrency(service.unitPrice)}
                             </div>
                           </div>
                         ))}
@@ -692,6 +798,7 @@ export default function ProfessionalEstimatePage() {
                       <div>
                         <Label>Terms & Conditions</Label>
                         <Textarea
+                          className="input-blue-border"
                           value={estimateData.terms}
                           onChange={(e) => setEstimateData(prev => ({ ...prev, terms: e.target.value }))}
                           rows={3}
@@ -700,6 +807,7 @@ export default function ProfessionalEstimatePage() {
                       <div>
                         <Label>Additional Notes</Label>
                         <Textarea
+                          className="input-blue-border"
                           value={estimateData.notes}
                           onChange={(e) => setEstimateData(prev => ({ ...prev, notes: e.target.value }))}
                           rows={3}
@@ -713,7 +821,7 @@ export default function ProfessionalEstimatePage() {
                 <div>
                   <Card>
                     <CardHeader>
-                      <CardTitle>Pricing</CardTitle>
+                      <CardTitle>Pricing Summary</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="flex justify-between">
@@ -724,6 +832,7 @@ export default function ProfessionalEstimatePage() {
                       <div className="space-y-2">
                         <Label>Tax (%)</Label>
                         <Input
+                          className="input-blue-border"
                           type="number"
                           step="0.1"
                           value={estimateData.tax}
@@ -734,6 +843,7 @@ export default function ProfessionalEstimatePage() {
                       <div className="space-y-2">
                         <Label>Discount (%)</Label>
                         <Input
+                          className="input-blue-border"
                           type="number"
                           step="0.1"
                           value={estimateData.discount}
@@ -748,7 +858,7 @@ export default function ProfessionalEstimatePage() {
                         <span>{formatCurrency(estimateData.total)}</span>
                       </div>
 
-                      <Button onClick={saveEstimate} className="w-full" disabled={createEstimateMutation.isPending}>
+                      <Button onClick={saveEstimate} className="w-full disabled={createEstimateMutation.isPending}">
                         <Save className="h-4 w-4 mr-2" />
                         {createEstimateMutation.isPending ? "Creating..." : "Create Estimate"}
                       </Button>
@@ -759,7 +869,7 @@ export default function ProfessionalEstimatePage() {
             </TabsContent>
           </Tabs>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

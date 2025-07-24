@@ -1,43 +1,43 @@
 import { useQuery } from '@tanstack/react-query';
-import { Achievement, ContractorAchievement } from '@shared/schema';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Achievement, ContractorAchievement } from '../../../../shared/schema';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Badge } from '../ui/badge';
+import { Progress } from '../ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Award, Trophy, Star, Check, GiftIcon, Brain, Calendar } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils';
 
 /**
- * Componente que muestra la colección de logros del contratista
+ * Component that displays the contractor's achievement collection
  */
 export function AchievementCollection() {
-  // Obtener todos los logros
+  // Get all achievements
   const { data: allAchievements, isLoading: loadingAll } = useQuery({
     queryKey: ['/api/achievements'],
   });
 
-  // Obtener logros del contratista
+  // Get contractor achievements
   const { data: contractorAchievements, isLoading: loadingContractor } = useQuery({
     queryKey: ['/api/contractor/achievements'],
   });
 
-  // Obtener estadísticas
+  // Get statistics
   const { data: stats, isLoading: loadingStats } = useQuery({
     queryKey: ['/api/contractor/stats'],
   });
 
   const isLoading = loadingAll || loadingContractor || loadingStats;
 
-  // Crear un mapa para buscar rápidamente el progreso de los logros del contratista
+  // Create a map to quickly find contractor achievement progress
   const achievementProgressMap = new Map<number, ContractorAchievement>();
   
-  if (contractorAchievements) {
+  if (contractorAchievements && Array.isArray(contractorAchievements)) {
     contractorAchievements.forEach((ca: ContractorAchievement) => {
       achievementProgressMap.set(ca.achievementId, ca);
     });
   }
 
-  // Obtener el icono según la categoría
+  // Get icon based on category
   const renderIcon = (category: string, level: string = 'bronze') => {
     const iconClass = cn(
       "h-6 w-6",
@@ -63,7 +63,7 @@ export function AchievementCollection() {
     }
   };
 
-  // Renderizar la tarjeta de un logro
+  // Render achievement card
   const renderAchievementCard = (achievement: Achievement) => {
     const progressData = achievementProgressMap.get(achievement.id);
     const isCompleted = progressData?.isCompleted || false;
@@ -75,7 +75,7 @@ export function AchievementCollection() {
         "transition-all duration-300 h-full",
         isCompleted 
           ? "bg-primary/5 border-primary/30" 
-          : "bg-background border-border/50 opacity-70"
+          : "bg-background border-gray-200/50 dark:border-gray-700/50 opacity-70"
       )}>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
@@ -97,7 +97,7 @@ export function AchievementCollection() {
         </CardHeader>
         <CardContent>
           <div className="mb-1 flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Progreso:</span>
+            <span className="text-muted-foreground">Progress:</span>
             <span className={isCompleted ? "font-medium text-primary" : "text-muted-foreground"}>
               {progress}/{achievement.requiredCount}
             </span>
@@ -113,12 +113,7 @@ export function AchievementCollection() {
             <div className="flex justify-between items-center mt-3 text-sm">
               <span className="text-primary font-medium">+{achievement.points} XP</span>
               
-              {achievement.rewards && achievement.rewards.length > 0 && (
-                <div className="flex items-center text-muted-foreground">
-                  <GiftIcon className="h-4 w-4 mr-1" />
-                  <span>Recompensa disponible</span>
-                </div>
-              )}
+              {/* Rewards feature placeholder - will be implemented in future version */}
             </div>
           )}
         </CardContent>
@@ -126,12 +121,14 @@ export function AchievementCollection() {
     );
   };
 
-  // Filtrar logros por categoría
+  // Filter achievements by category
   const filterAchievementsByCategory = (category: string) => {
-    return allAchievements?.filter((a: Achievement) => a.category === category) || [];
+    return (allAchievements && Array.isArray(allAchievements)) 
+      ? allAchievements.filter((a: Achievement) => a.category === category) 
+      : [];
   };
 
-  // Estadísticas de resumen
+  // Summary statistics
   const renderSummary = () => {
     if (!stats || isLoading) return null;
     
@@ -139,20 +136,20 @@ export function AchievementCollection() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Nivel</CardTitle>
+            <CardTitle className="text-lg">Level</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col items-center">
               <span className="text-3xl font-bold text-primary">
-                {stats.streak?.level || 1}
+                {stats?.streak?.level || 1}
               </span>
               <div className="mt-2 w-full">
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-muted-foreground">XP:</span>
-                  <span>{stats.streak?.xp || 0}/{stats.streak?.nextLevelXp || 100}</span>
+                  <span>{stats?.streak?.xp || 0}/{stats?.streak?.nextLevelXp || 100}</span>
                 </div>
                 <Progress 
-                  value={Math.round(((stats.streak?.xp || 0) / (stats.streak?.nextLevelXp || 100)) * 100)} 
+                  value={Math.round(((stats?.streak?.xp || 0) / (stats?.streak?.nextLevelXp || 100)) * 100)} 
                   className="h-2" 
                 />
               </div>
@@ -162,26 +159,26 @@ export function AchievementCollection() {
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Logros</CardTitle>
+            <CardTitle className="text-lg">Achievements</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex justify-between items-center">
               <div className="flex flex-col items-center">
-                <span className="text-2xl font-bold text-amber-700">{stats.stats?.bronzeCount || 0}</span>
-                <span className="text-xs text-muted-foreground">Bronce</span>
+                <span className="text-2xl font-bold text-amber-700">{stats?.stats?.bronzeCount || 0}</span>
+                <span className="text-xs text-muted-foreground">Bronze</span>
               </div>
               <div className="flex flex-col items-center">
-                <span className="text-2xl font-bold text-slate-400">{stats.stats?.silverCount || 0}</span>
-                <span className="text-xs text-muted-foreground">Plata</span>
+                <span className="text-2xl font-bold text-slate-400">{stats?.stats?.silverCount || 0}</span>
+                <span className="text-xs text-muted-foreground">Silver</span>
               </div>
               <div className="flex flex-col items-center">
-                <span className="text-2xl font-bold text-amber-500">{stats.stats?.goldCount || 0}</span>
-                <span className="text-xs text-muted-foreground">Oro</span>
+                <span className="text-2xl font-bold text-amber-500">{stats?.stats?.goldCount || 0}</span>
+                <span className="text-xs text-muted-foreground">Gold</span>
               </div>
             </div>
             <div className="mt-2 text-center">
               <span className="text-sm text-muted-foreground">
-                {stats.stats?.completedAchievements || 0} de {allAchievements?.length || 0} completados
+                {stats?.stats?.completedAchievements || 0} of {(allAchievements && Array.isArray(allAchievements)) ? allAchievements.length : 0} completed
               </span>
             </div>
           </CardContent>
@@ -189,18 +186,18 @@ export function AchievementCollection() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Racha</CardTitle>
+            <CardTitle className="text-lg">Streak</CardTitle>
           </CardHeader>
           <CardContent className="pt-2">
             <div className="flex flex-col items-center">
               <div className="flex items-baseline gap-1">
                 <span className="text-3xl font-bold text-primary">
-                  {stats.streak?.currentStreak || 0}
+                  {stats?.streak?.currentStreak || 0}
                 </span>
-                <span className="text-sm text-muted-foreground">días consecutivos</span>
+                <span className="text-sm text-muted-foreground">consecutive days</span>
               </div>
               <span className="text-sm text-muted-foreground mt-2">
-                Racha más larga: {stats.streak?.longestStreak || 0} días
+                Longest streak: {stats?.streak?.longestStreak || 0} days
               </span>
             </div>
           </CardContent>
@@ -221,23 +218,23 @@ export function AchievementCollection() {
 
   return (
     <div className="p-4 md:p-8">
-      <h1 className="text-2xl md:text-3xl font-bold mb-6">Mi Progreso</h1>
+      <h1 className="text-2xl md:text-3xl font-bold mb-6">My Progress</h1>
       
       {renderSummary()}
       
       <Tabs defaultValue="all" className="w-full">
         <TabsList className="grid grid-cols-6 mb-6">
-          <TabsTrigger value="all">Todos</TabsTrigger>
-          <TabsTrigger value="client">Clientes</TabsTrigger>
-          <TabsTrigger value="project">Proyectos</TabsTrigger>
-          <TabsTrigger value="estimate">Estimaciones</TabsTrigger>
-          <TabsTrigger value="invoice">Facturación</TabsTrigger>
-          <TabsTrigger value="system">Sistema</TabsTrigger>
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="client">Clients</TabsTrigger>
+          <TabsTrigger value="project">Projects</TabsTrigger>
+          <TabsTrigger value="estimate">Estimates</TabsTrigger>
+          <TabsTrigger value="invoice">Invoicing</TabsTrigger>
+          <TabsTrigger value="system">System</TabsTrigger>
         </TabsList>
         
         <TabsContent value="all" className="mt-0">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {allAchievements?.map(renderAchievementCard)}
+            {(allAchievements && Array.isArray(allAchievements)) ? allAchievements.map(renderAchievementCard) : null}
           </div>
         </TabsContent>
         

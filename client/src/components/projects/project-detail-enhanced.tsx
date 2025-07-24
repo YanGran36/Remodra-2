@@ -3,8 +3,8 @@ import { format } from "date-fns";
 import { 
   Edit, MapPin, Phone, Mail, User, Calendar, HardHat, Brain, Share2
 } from "lucide-react";
-import { ProjectWithClient } from "@/hooks/use-projects";
-import { formatCurrency } from "@/lib/utils";
+import { ProjectWithClient } from '../../hooks/use-projects';
+import { formatCurrency } from '../../lib/utils';
 import ProjectWorkerSection from "./project-worker-section";
 import ProjectAISection from "./project-ai-section";
 
@@ -15,22 +15,22 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from '../ui/dialog';
+import { Button } from '../ui/button';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+} from '../ui/card';
+import { Badge } from '../ui/badge';
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from '../ui/tabs';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface ProjectDetailEnhancedProps {
   project: ProjectWithClient;
@@ -58,11 +58,11 @@ export default function ProjectDetailEnhanced({ project, isOpen, onClose, onEdit
               </DialogDescription>
             </div>
             <Badge className="ml-auto">
-              {project.status === 'pending' && 'Pendiente'}
-              {project.status === 'in_progress' && 'En Progreso'}
-              {project.status === 'on_hold' && 'En Pausa'}
-              {project.status === 'completed' && 'Completado'}
-              {project.status === 'cancelled' && 'Cancelado'}
+              {project.status === 'pending' && 'Pending'}
+              {project.status === 'in_progress' && 'In Progress'}
+              {project.status === 'on_hold' && 'On Hold'}
+              {project.status === 'completed' && 'Completed'}
+              {project.status === 'cancelled' && 'Cancelled'}
             </Badge>
           </div>
         </DialogHeader>
@@ -98,11 +98,11 @@ export default function ProjectDetailEnhanced({ project, isOpen, onClose, onEdit
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Estado:</span>
-                        <span>{project.status === 'pending' && 'Pendiente'}
-                          {project.status === 'in_progress' && 'En Progreso'}
-                          {project.status === 'on_hold' && 'En Pausa'}
-                          {project.status === 'completed' && 'Completado'}
-                          {project.status === 'cancelled' && 'Cancelado'}</span>
+                        <span>{project.status === 'pending' && 'Pending'}
+                          {project.status === 'in_progress' && 'In Progress'}
+                          {project.status === 'on_hold' && 'On Hold'}
+                          {project.status === 'completed' && 'Completed'}
+                          {project.status === 'cancelled' && 'Cancelled'}</span>
                       </div>
                       
                       <div className="flex justify-between text-sm">
@@ -125,7 +125,7 @@ export default function ProjectDetailEnhanced({ project, isOpen, onClose, onEdit
                 
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Información del Cliente</CardTitle>
+                    <CardTitle className="text-sm">Client Information</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">

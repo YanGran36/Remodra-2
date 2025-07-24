@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
 import {
   Form,
   FormControl,
@@ -12,15 +12,16 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Loader2 } from "lucide-react";
-import { Client, ClientInput } from "@/hooks/use-clients";
+} from '../ui/form';
+import { Loader2, AlertCircle, CheckCircle } from "lucide-react";
+import { Client, ClientInput } from '../../hooks/use-clients';
+import { useToast } from '../../hooks/use-toast';
 
 // Schema de validación
 const clientFormSchema = z.object({
-  firstName: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
-  lastName: z.string().min(2, "El apellido debe tener al menos 2 caracteres"),
-  email: z.string().email("Ingresa un correo electrónico válido").optional().or(z.literal("")),
+  firstName: z.string().min(2, "First name must be at least 2 characters"),
+  lastName: z.string().min(2, "Last name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email address").optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   address: z.string().optional().or(z.literal("")),
   city: z.string().optional().or(z.literal("")),
@@ -37,6 +38,14 @@ type ClientFormProps = {
 };
 
 export default function ClientForm({ client, onSubmit, isSubmitting, onCancel }: ClientFormProps) {
+  const { toast } = useToast();
+  const [uniquenessStatus, setUniquenessStatus] = useState<{
+    email?: { isUnique: boolean; message: string; existingClient?: any };
+    phone?: { isUnique: boolean; message: string; existingClient?: any };
+    address?: { isUnique: boolean; message: string; existingClient?: any };
+  }>({});
+  const [isCheckingUniqueness, setIsCheckingUniqueness] = useState(false);
+
   // Formulario con valores por defecto
   const form = useForm<z.infer<typeof clientFormSchema>>({
     resolver: zodResolver(clientFormSchema),
@@ -53,7 +62,75 @@ export default function ClientForm({ client, onSubmit, isSubmitting, onCancel }:
     },
   });
 
+  // Check uniqueness when email, phone, or address changes
+  const checkUniqueness = async (field: string, value: string) => {
+    if (!value || value.length < 3) {
+      setUniquenessStatus(prev => ({ ...prev, [field]: undefined }));
+      return;
+    }
+
+    setIsCheckingUniqueness(true);
+    try {
+      const response = await fetch('/api/protected/clients/check-uniqueness', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: value })
+      });
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        setUniquenessStatus(prev => ({
+          ...prev,
+          [field]: { isUnique: true, message: `${field.charAt(0).toUpperCase() + field.slice(1)} is available` }
+        }));
+      } else if (response.status === 409) {
+        setUniquenessStatus(prev => ({
+          ...prev,
+          [field]: { 
+            isUnique: false, 
+            message: `Client already exists with this ${field}`,
+            existingClient: result.existingClient
+          }
+        }));
+      }
+    } catch (error) {
+      console.error('Error checking uniqueness:', error);
+    } finally {
+      setIsCheckingUniqueness(false);
+    }
+  };
+
+  // Debounced uniqueness check
+  useEffect(() => {
+    const email = form.watch('email');
+    const phone = form.watch('phone');
+    const address = form.watch('address');
+
+    const timeoutId = setTimeout(() => {
+      if (email) checkUniqueness('email', email);
+      if (phone) checkUniqueness('phone', phone);
+      if (address) checkUniqueness('address', address);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [form.watch('email'), form.watch('phone'), form.watch('address')]);
+
   const handleSubmit = (data: z.infer<typeof clientFormSchema>) => {
+    // Check if there are any uniqueness conflicts
+    const hasConflicts = Object.values(uniquenessStatus).some(
+      status => status && !status.isUnique
+    );
+
+    if (hasConflicts) {
+      toast({
+        title: "Duplicate Client Detected",
+        description: "A client with this information already exists. Please review the details.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     onSubmit(data);
   };
 
@@ -66,9 +143,9 @@ export default function ClientForm({ client, onSubmit, isSubmitting, onCancel }:
             name="firstName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nombre</FormLabel>
+                <FormLabel>First Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Nombre" {...field} />
+                  <Input placeholder="First Name" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -80,9 +157,9 @@ export default function ClientForm({ client, onSubmit, isSubmitting, onCancel }:
             name="lastName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Apellido</FormLabel>
+                <FormLabel>Last Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Apellido" {...field} />
+                  <Input placeholder="Last Name" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -96,11 +173,37 @@ export default function ClientForm({ client, onSubmit, isSubmitting, onCancel }:
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Correo electrónico</FormLabel>
+                <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input type="email" placeholder="correo@ejemplo.com" {...field} />
+                  <div className="relative">
+                    <Input 
+                      type="email" 
+                      placeholder="email@example.com" 
+                      {...field}
+                      className={uniquenessStatus.email ? 
+                        (uniquenessStatus.email.isUnique ? 'border-green-500' : 'border-red-500') : ''
+                      }
+                    />
+                    {isCheckingUniqueness && field.value && (
+                      <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-gray-400" />
+                    )}
+                    {uniquenessStatus.email && !isCheckingUniqueness && (
+                      <div className="absolute right-3 top-3">
+                        {uniquenessStatus.email.isUnique ? (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <AlertCircle className="h-4 w-4 text-red-500" />
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </FormControl>
                 <FormMessage />
+                {uniquenessStatus.email && (
+                  <p className={`text-sm ${uniquenessStatus.email.isUnique ? 'text-green-600' : 'text-red-600'}`}>
+                    {uniquenessStatus.email.message}
+                  </p>
+                )}
               </FormItem>
             )}
           />
@@ -110,11 +213,36 @@ export default function ClientForm({ client, onSubmit, isSubmitting, onCancel }:
             name="phone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Teléfono</FormLabel>
+                <FormLabel>Phone</FormLabel>
                 <FormControl>
-                  <Input placeholder="(123) 456-7890" {...field} />
+                  <div className="relative">
+                    <Input 
+                      placeholder="(123) 456-7890" 
+                      {...field}
+                      className={uniquenessStatus.phone ? 
+                        (uniquenessStatus.phone.isUnique ? 'border-green-500' : 'border-red-500') : ''
+                      }
+                    />
+                    {isCheckingUniqueness && field.value && (
+                      <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-gray-400" />
+                    )}
+                    {uniquenessStatus.phone && !isCheckingUniqueness && (
+                      <div className="absolute right-3 top-3">
+                        {uniquenessStatus.phone.isUnique ? (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <AlertCircle className="h-4 w-4 text-red-500" />
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </FormControl>
                 <FormMessage />
+                {uniquenessStatus.phone && (
+                  <p className={`text-sm ${uniquenessStatus.phone.isUnique ? 'text-green-600' : 'text-red-600'}`}>
+                    {uniquenessStatus.phone.message}
+                  </p>
+                )}
               </FormItem>
             )}
           />
@@ -125,11 +253,36 @@ export default function ClientForm({ client, onSubmit, isSubmitting, onCancel }:
           name="address"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Dirección</FormLabel>
+              <FormLabel>Address</FormLabel>
               <FormControl>
-                <Input placeholder="Dirección" {...field} />
+                <div className="relative">
+                  <Input 
+                    placeholder="Address" 
+                    {...field}
+                    className={uniquenessStatus.address ? 
+                      (uniquenessStatus.address.isUnique ? 'border-green-500' : 'border-red-500') : ''
+                    }
+                  />
+                  {isCheckingUniqueness && field.value && (
+                    <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-gray-400" />
+                  )}
+                  {uniquenessStatus.address && !isCheckingUniqueness && (
+                    <div className="absolute right-3 top-3">
+                      {uniquenessStatus.address.isUnique ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <AlertCircle className="h-4 w-4 text-red-500" />
+                      )}
+                    </div>
+                  )}
+                </div>
               </FormControl>
               <FormMessage />
+              {uniquenessStatus.address && (
+                <p className={`text-sm ${uniquenessStatus.address.isUnique ? 'text-green-600' : 'text-red-600'}`}>
+                  {uniquenessStatus.address.message}
+                </p>
+              )}
             </FormItem>
           )}
         />
@@ -140,9 +293,9 @@ export default function ClientForm({ client, onSubmit, isSubmitting, onCancel }:
             name="city"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Ciudad</FormLabel>
+                <FormLabel>City</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ciudad" {...field} />
+                  <Input placeholder="City" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -154,9 +307,9 @@ export default function ClientForm({ client, onSubmit, isSubmitting, onCancel }:
             name="state"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Estado/Provincia</FormLabel>
+                <FormLabel>State</FormLabel>
                 <FormControl>
-                  <Input placeholder="Estado/Provincia" {...field} />
+                  <Input placeholder="State" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -168,9 +321,9 @@ export default function ClientForm({ client, onSubmit, isSubmitting, onCancel }:
             name="zip"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Código postal</FormLabel>
+                <FormLabel>ZIP Code</FormLabel>
                 <FormControl>
-                  <Input placeholder="Código postal" {...field} />
+                  <Input placeholder="ZIP Code" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -183,10 +336,10 @@ export default function ClientForm({ client, onSubmit, isSubmitting, onCancel }:
           name="notes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Notas</FormLabel>
+              <FormLabel>Notes</FormLabel>
               <FormControl>
                 <Textarea 
-                  placeholder="Notas adicionales sobre este cliente..." 
+                  placeholder="Additional notes about this client..." 
                   className="resize-none" 
                   rows={4}
                   {...field} 
@@ -203,14 +356,14 @@ export default function ClientForm({ client, onSubmit, isSubmitting, onCancel }:
             variant="outline" 
             onClick={onCancel}
           >
-            Cancelar
+            Cancel
           </Button>
           <Button 
             type="submit"
             disabled={isSubmitting}
           >
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {client ? "Actualizar cliente" : "Crear cliente"}
+            {client ? "Update Client" : "Create Client"}
           </Button>
         </div>
       </form>
