@@ -91,10 +91,13 @@ export default function ClientPortal() {
           setClientAppointments(data.appointments || []);
           setAgentInfo(data.agent);
         } else {
-          console.error('[Client Portal] API error:', response.status, await response.text());
+          const errorText = await response.text();
+          console.error('[Client Portal] API error:', response.status, errorText);
+          setClientInfo(null);
         }
       } catch (error) {
         console.error('Error fetching client data:', error);
+        setClientInfo(null);
       } finally {
         setLoading(false);
       }
@@ -114,10 +117,22 @@ export default function ClientPortal() {
     </div>;
   }
 
-  if (!clientInfo) {
+  // Defensive: If any required data is missing, show a clear error message
+  if (!loading && (!clientInfo || typeof clientInfo !== 'object')) {
+    console.error('[Client Portal] clientInfo missing or invalid:', clientInfo);
     return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="text-center">
-        <p className="text-gray-600">Client not found</p>
+        <p className="text-red-600 text-lg font-bold">Client not found or failed to load client data.</p>
+        <p className="text-gray-500 mt-2">Please check the client link or try again later.</p>
+      </div>
+    </div>;
+  }
+  if (!loading && (!Array.isArray(clientProjects) || !Array.isArray(clientEstimates) || !Array.isArray(clientInvoices) || !Array.isArray(clientAppointments))) {
+    console.error('[Client Portal] One or more data arrays are missing or invalid:', { clientProjects, clientEstimates, clientInvoices, clientAppointments });
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <p className="text-red-600 text-lg font-bold">Client data is incomplete or corrupted.</p>
+        <p className="text-gray-500 mt-2">Please contact support.</p>
       </div>
     </div>;
   }
@@ -373,21 +388,21 @@ export default function ClientPortal() {
                   <Clock className="h-5 w-5 text-blue-600" />
                   <div>
                     <p className="text-xs text-blue-500 font-medium">Started</p>
-                    <p className="text-sm font-semibold text-blue-800">{format(project.startDate, "MMM dd, yyyy")}</p>
+                    <p className="text-sm font-semibold text-blue-800">{project.startDate && !isNaN(new Date(project.startDate).getTime()) ? format(new Date(project.startDate), "MMM dd, yyyy") : 'Not set'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
                   <Calendar className="h-5 w-5 text-purple-600" />
                   <div>
                     <p className="text-xs text-purple-500 font-medium">Est. Completion</p>
-                    <p className="text-sm font-semibold text-purple-800">{format(project.estimatedEnd, "MMM dd, yyyy")}</p>
+                    <p className="text-sm font-semibold text-purple-800">{project.estimatedEnd && !isNaN(new Date(project.estimatedEnd).getTime()) ? format(new Date(project.estimatedEnd), "MMM dd, yyyy") : 'Not set'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
                   <DollarSign className="h-5 w-5 text-green-600" />
                   <div>
                     <p className="text-xs text-green-500 font-medium">Budget</p>
-                    <p className="text-sm font-semibold text-green-800">${project.budget.toLocaleString()}</p>
+                    <p className="text-sm font-semibold text-green-800">{typeof project.budget === 'number' && !isNaN(project.budget) ? `$${project.budget.toLocaleString()}` : 'Not set'}</p>
                   </div>
                 </div>
               </div>
@@ -751,6 +766,12 @@ export default function ClientPortal() {
     </div>
   );
 
+  // Defensive: Null checks for all fields in render
+  const safeClientName = clientInfo?.name || clientInfo?.firstName || clientInfo?.email || 'Client';
+  const safeClientEmail = clientInfo?.email || 'N/A';
+  const safeClientPhone = clientInfo?.phone || 'N/A';
+  const safeClientAddress = clientInfo?.address || 'N/A';
+
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-gray-50">
@@ -769,7 +790,7 @@ export default function ClientPortal() {
                 </Button>
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">Client Portal</h1>
-                  <p className="text-gray-600">Welcome, {clientInfo.name}</p>
+                  <p className="text-gray-600">Welcome, {safeClientName}</p>
                 </div>
               </div>
             </div>
@@ -791,21 +812,21 @@ export default function ClientPortal() {
                   <Mail className="h-4 w-4 text-gray-500" />
                   <div>
                     <p className="text-sm text-gray-500">Email</p>
-                    <p className="font-medium">{clientInfo.email}</p>
+                    <p className="font-medium">{safeClientEmail}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-gray-500" />
                   <div>
                     <p className="text-sm text-gray-500">Phone</p>
-                    <p className="font-medium">{clientInfo.phone}</p>
+                    <p className="font-medium">{safeClientPhone}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-gray-500" />
                   <div>
                     <p className="text-sm text-gray-500">Address</p>
-                    <p className="font-medium">{clientInfo.address}</p>
+                    <p className="font-medium">{safeClientAddress}</p>
                   </div>
                 </div>
               </div>

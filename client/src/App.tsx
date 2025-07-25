@@ -14,7 +14,7 @@ import AuthPage from "./pages/auth-page";
 import SimpleLogin from "./pages/simple-login";
 import Landing from "./pages/landing";
 import Dashboard from "./pages/dashboard";
-import ClientsPage from "./pages/clients-page";
+import ClientsPage from "./pages/clients-page-new";
 import EstimatesPage from "./pages/estimates-page";
 import InvoicesPage from "./pages/invoices-page";
 import ProjectsPage from "./pages/projects-page";
@@ -71,7 +71,7 @@ function Router() {
       <ProtectedRoute path="/estimates/multi-service" component={MultiServiceEstimatePage} />
       <ProtectedRoute path="/estimates/professional" component={ProfessionalEstimatePage} />
       <ProtectedRoute path="/estimates/premium" component={PremiumEstimatePage} />
-      <ProtectedRoute path="/client-portal" component={ClientPortal} />
+      <ProtectedRoute path="/client-portal/:clientId" component={ClientPortal} />
       <Route path="/lead-capture" component={LeadCapturePage} />
     </Switch>
   );

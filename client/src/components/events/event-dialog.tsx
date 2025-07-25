@@ -34,6 +34,8 @@ export default function EventDialog({
     enabled: !!eventId && isOpen,
   });
 
+  const shouldShowLoading = !!eventId && isLoading;
+
   const queryClient = useQueryClient();
   
   const handleSuccess = () => {
@@ -52,7 +54,7 @@ export default function EventDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {isLoading ? (
+        {shouldShowLoading ? (
           <div className="flex justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
           </div>

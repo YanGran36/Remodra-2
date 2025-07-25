@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation, useSearch } from "wouter";
+import { useLocation } from "wouter";
 import { Loader2 } from "lucide-react";
 import EstimateForm from '../components/estimates/estimate-form';
 import { useProjects } from '../hooks/use-projects';
@@ -10,7 +10,8 @@ import TopNav from '../components/layout/top-nav';
 
 export default function EstimateCreatePage() {
   const [, setLocation] = useLocation();
-  const search = useSearch();
+  const [location] = useLocation();
+  const search = location.split('?')[1] || '';
   const params = new URLSearchParams(search);
   const projectId = params.get("projectId") ? Number(params.get("projectId")) : undefined;
   const clientId = params.get("clientId") ? Number(params.get("clientId")) : undefined;
@@ -35,24 +36,26 @@ export default function EstimateCreatePage() {
     projectClientId || clientId || null
   );
 
-  // Actualiza el estado cuando los datos estén disponibles
+  // Update loading logic: if neither projectId nor clientId nor projectClientId, set isLoading to false immediately
   useEffect(() => {
+    // If no projectId and no clientId and no projectClientId, we are not waiting for any data
+    if (!projectId && !clientId && !projectClientId) {
+      setIsLoading(false);
+      return;
+    }
     if (projectData && !isLoadingProject) {
       setProject(projectData);
     }
-    
     if (clientData && !isLoadingClient) {
       setClient(clientData);
     }
-    
-    // Una vez que tenemos todos los datos o confirmamos que no hay datos para cargar
     if (
       (!isLoadingProject && (projectData || !projectId)) &&
       (!isLoadingClient && (clientData || (!clientId && !projectClientId)))
     ) {
       setIsLoading(false);
     }
-  }, [projectData, clientData, isLoadingProject, isLoadingClient, projectId, clientId]);
+  }, [projectData, clientData, isLoadingProject, isLoadingClient, projectId, clientId, projectClientId]);
 
   // Manejar la creación exitosa del estimado
   const handleSuccess = (estimate: any) => {

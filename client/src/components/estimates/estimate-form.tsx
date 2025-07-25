@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Plus, Trash2, Loader2, Save, Edit, Tool } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Trash2, Loader2, Save, Edit } from "lucide-react";
 import { useToast } from '../../hooks/use-toast';
 import { useEstimates } from '../../hooks/use-estimates';
 import { useClients } from '../../hooks/use-clients';
@@ -414,6 +414,29 @@ export default function EstimateForm({ clientId, projectId, estimateId, onSucces
       <div className="flex flex-col items-center justify-center w-full h-64">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
         <p className="text-gray-500">Loading estimate data...</p>
+      </div>
+    );
+  }
+
+  // Debug log for clients
+  console.log('EstimateForm: clients.length =', clients.length, 'isLoading =', isLoading, 'isLoadingClients =', isLoadingClients);
+
+  // If clients are still loading, show a loading spinner
+  if (!isLoading && isLoadingClients) {
+    return (
+      <div className="flex flex-col items-center justify-center w-full h-64">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <p className="text-gray-500">Loading clients...</p>
+      </div>
+    );
+  }
+
+  // If there are no clients, show a message and a Create Client button
+  if (!isLoading && !isLoadingClients && clients.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center w-full h-64 gap-4">
+        <p className="text-gray-500 text-lg">No clients available. Please create a client first.</p>
+        <a href="/clients/create" className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Create Client</a>
       </div>
     );
   }
