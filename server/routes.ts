@@ -66,6 +66,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register new direct services routes for pricing page
   registerDirectServicesRoutes(app);
 
+  // Register pricing routes
+  registerPricingRoutes(app);
+
   // Register timeclock routes
   registerTimeclockRoutes(app);
 

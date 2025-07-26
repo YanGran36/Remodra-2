@@ -77,17 +77,19 @@ const formatCurrency = (amount: number | string) => {
 const getStatusBadge = (status: string) => {
   switch (status) {
     case 'draft':
-      return <Badge variant="outline" className="bg-gray-100 text-gray-800 hover:bg-gray-100">Draft</Badge>;
+      return <Badge className="bg-gray-400 text-white">Draft</Badge>;
     case 'sent':
-      return <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100">Sent</Badge>;
+      return <Badge className="bg-blue-400 text-white">Sent</Badge>;
     case 'accepted':
-      return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">Accepted</Badge>;
+      return <Badge className="bg-green-400 text-white">Accepted</Badge>;
     case 'rejected':
-      return <Badge variant="outline" className="bg-red-100 text-red-800 hover:bg-red-100">Rejected</Badge>;
+      return <Badge className="bg-red-400 text-white">Rejected</Badge>;
     case 'expired':
-      return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Expired</Badge>;
+      return <Badge className="bg-yellow-400 text-white">Expired</Badge>;
+    case 'converted':
+      return <Badge className="bg-purple-400 text-white">Converted</Badge>;
     default:
-      return <Badge variant="outline">{status}</Badge>;
+      return <Badge className="bg-gray-400 text-white">{status}</Badge>;
   }
 };
 
@@ -96,6 +98,7 @@ export default function EstimatesPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("date_desc");
   const [selectedEstimate, setSelectedEstimate] = useState<any>(null);
+  const [estimateType, setEstimateType] = useState<string>("standard");
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEstimate, setEditingEstimate] = useState<any>(null);
@@ -160,6 +163,32 @@ export default function EstimatesPage() {
     setLocation('/estimates/create');
   };
 
+  const handleCreateEstimate = () => {
+    switch (estimateType) {
+      case "standard":
+        window.location.href = '/estimates/create';
+        break;
+      case "multi-service":
+        window.location.href = '/estimates/multi-service';
+        break;
+      case "professional":
+        window.location.href = '/estimates/professional';
+        break;
+      case "premium":
+        // Premium estimates are for viewing existing ones, redirect to standard creation
+        window.location.href = '/estimates/create';
+        break;
+      case "agent":
+        window.location.href = '/agents/estimate-form';
+        break;
+      case "agent-service":
+        window.location.href = '/agents/service-estimate';
+        break;
+      default:
+        window.location.href = '/estimates/create';
+    }
+  };
+
   const editEstimate = (estimate: any) => {
     // Navigate to estimate detail page for editing
     setLocation(`/estimates/${estimate.id}`);
@@ -222,10 +251,24 @@ export default function EstimatesPage() {
 
           {/* Quick Action Buttons */}
           <div className="flex justify-center gap-4 mb-8">
-            <Button className="remodra-button" onClick={() => window.location.href = '/estimates/create'}>
-              <FileText className="h-5 w-5 mr-2" />
-              New Estimate
-            </Button>
+            <div className="flex gap-2">
+              <Select value={estimateType} onValueChange={(value: string) => setEstimateType(value)}>
+                <SelectTrigger className="remodra-input w-48">
+                  <SelectValue placeholder="Select estimate type" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-600">
+                  <SelectItem value="standard" className="text-slate-200 hover:bg-slate-700">Standard Estimate</SelectItem>
+                  <SelectItem value="multi-service" className="text-slate-200 hover:bg-slate-700">Multi-Service Estimate</SelectItem>
+                  <SelectItem value="professional" className="text-slate-200 hover:bg-slate-700">Professional Estimate</SelectItem>
+                  <SelectItem value="agent" className="text-slate-200 hover:bg-slate-700">Agent Estimate</SelectItem>
+                  <SelectItem value="agent-service" className="text-slate-200 hover:bg-slate-700">Agent Service Estimate</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button className="remodra-button" onClick={handleCreateEstimate}>
+                <FileText className="h-5 w-5 mr-2" />
+                Create Estimate
+              </Button>
+            </div>
             <Button className="remodra-button-outline" onClick={() => {
               // Export functionality
               const csvContent = "data:text/csv;charset=utf-8," + 
@@ -308,7 +351,7 @@ export default function EstimatesPage() {
               </div>
             ) : error ? (
               <div className="text-center py-8">
-                <p className="text-red-400">Error loading estimates: {error.message}</p>
+                <p className="text-red-400">Error loading estimates: {(error as any)?.message || 'Unknown error'}</p>
               </div>
             ) : filteredEstimates.length === 0 ? (
               <div className="remodra-empty">
@@ -359,6 +402,8 @@ export default function EstimatesPage() {
                               ? `${estimate.client.firstName} ${estimate.client.lastName}`
                               : estimate.client?.name 
                               ? estimate.client.name
+                              : estimate.clientId 
+                              ? `Client ID: ${estimate.clientId}`
                               : 'No Client'
                             }
                           </div>

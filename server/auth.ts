@@ -32,13 +32,13 @@ export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "contractor-hub-secret",
     // Configuración mejorada para manejo de sesiones
-    resave: false, // Only save if session was modified
-    saveUninitialized: false, // Don't save uninitialized sessions
+    resave: true, // Save session even if not modified
+    saveUninitialized: true, // Save uninitialized sessions
     rolling: true, // Extend session on each request
     store: storage.sessionStore,
     cookie: {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      secure: process.env.NODE_ENV === "production",
+      secure: false, // Allow cookies in development
       sameSite: "lax",
       httpOnly: true,
       path: "/", // Ensure cookie is available across all paths

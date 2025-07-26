@@ -18,9 +18,13 @@ import { FenceMeasurementTool } from '../components/measurement/fence-measuremen
 
 const formSchema = z.object({
   clientId: z.number(),
+  estimateNumber: z.string().min(1, "Estimate number is required"),
+  issueDate: z.string().min(1, "Issue date is required"),
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   notes: z.string().optional(),
+  subtotal: z.number().min(0, "Subtotal must be 0 or greater"),
+  total: z.number().min(0, "Total must be 0 or greater"),
   selectedServices: z.array(z.object({
     serviceType: z.string(),
     name: z.string(),
@@ -55,6 +59,9 @@ export default function VendorEstimateFormPage() {
       totalLaborCost: 0,
       totalMaterialsCost: 0,
       totalAmount: 0,
+      issueDate: new Date().toISOString().split('T')[0], // Today's date
+      subtotal: 0,
+      total: 0,
     },
   });
 
@@ -76,17 +83,36 @@ export default function VendorEstimateFormPage() {
 
   const createEstimateMutation = useMutation({
     mutationFn: async (data: FormValues) => {
-      const response = await fetch("/api/estimates", {
+      // Generate estimate number if not provided
+      const estimateNumber = data.estimateNumber || `EST-${Date.now()}`;
+      
+      // Prepare estimate data with required fields
+      const estimateData = {
+        clientId: data.clientId,
+        estimateNumber: estimateNumber,
+        issueDate: data.issueDate || new Date().toISOString(),
+        status: "draft",
+        estimateType: "agent",
+        subtotal: data.subtotal || 0,
+        tax: 0,
+        discount: 0,
+        total: data.total || 0,
+        notes: data.notes || "",
+        title: data.title,
+        description: data.description || "",
+      };
+      
+      const response = await fetch("/api/protected/estimates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(estimateData),
       });
       if (!response.ok) throw new Error("Failed to create estimate");
       return response.json();
     },
     onSuccess: () => {
       toast({ title: "Success", description: "Estimate created successfully!" });
-      queryClient.invalidateQueries({ queryKey: ["/api/estimates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/protected/estimates"] });
     },
     onError: (error: Error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -190,6 +216,34 @@ export default function VendorEstimateFormPage() {
                         <FormLabel>Description</FormLabel>
                         <FormControl>
                           <Textarea placeholder="Enter project description" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="estimateNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Estimate Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="EST-2024-001" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="issueDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Issue Date</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

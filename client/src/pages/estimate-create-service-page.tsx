@@ -44,6 +44,9 @@ import { Calendar } from '../components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { format } from "date-fns";
 import { CalendarIcon, ArrowLeft, Save, Trash, Plus, Minus, Loader2 } from "lucide-react";
+import Sidebar from '../components/layout/sidebar';
+import MobileSidebar from '../components/layout/mobile-sidebar';
+import TopNav from '../components/layout/top-nav';
 
 // Custom components
 import { ServiceItemSelector } from '../components/estimates/service-item-selector';
@@ -371,7 +374,13 @@ export default function EstimateCreateServicePage() {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-8">
+    <div className="remodra-layout">
+      <Sidebar />
+      <MobileSidebar />
+      <div className="remodra-main">
+        <TopNav />
+        <main className="p-8 space-y-6">
+          <div className="container mx-auto space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Create New Estimate</h1>
         <div className="space-x-2">
@@ -945,6 +954,9 @@ export default function EstimateCreateServicePage() {
           )}
         </form>
       </Form>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

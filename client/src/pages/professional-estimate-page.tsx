@@ -109,7 +109,7 @@ export default function ProfessionalEstimatePage() {
   });
 
   const { data: availableServices = [] } = useQuery<any[]>({
-    queryKey: ["/api/direct/services"],
+    queryKey: ["/api/pricing/services"],
   }); // AI Description Generation Mutation
   const generateDescriptionMutation = useMutation({
     mutationFn: async (data: {

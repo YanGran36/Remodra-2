@@ -37,6 +37,8 @@ import EstimatePrintPage from "./pages/estimate-print-page";
 import MultiServiceEstimatePage from "./pages/multi-service-estimate-page";
 import ProfessionalEstimatePage from "./pages/professional-estimate-page";
 import PremiumEstimatePage from "./pages/premium-estimate-page";
+import AgentEstimateFormPage from "./pages/agent-estimate-form-page";
+import AgentServiceEstimatePage from "./pages/agent-service-estimate-page";
 import ClientPortal from "./pages/client-portal";
 import LeadCapturePage from "./pages/lead-capture-page";
 
@@ -71,6 +73,8 @@ function Router() {
       <ProtectedRoute path="/estimates/multi-service" component={MultiServiceEstimatePage} />
       <ProtectedRoute path="/estimates/professional" component={ProfessionalEstimatePage} />
       <ProtectedRoute path="/estimates/premium" component={PremiumEstimatePage} />
+      <ProtectedRoute path="/agents/estimate-form" component={AgentEstimateFormPage} />
+      <ProtectedRoute path="/agents/service-estimate" component={AgentServiceEstimatePage} />
       <ProtectedRoute path="/client-portal/:clientId" component={ClientPortal} />
       <Route path="/lead-capture" component={LeadCapturePage} />
     </Switch>

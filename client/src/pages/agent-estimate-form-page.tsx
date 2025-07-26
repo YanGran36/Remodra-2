@@ -20,6 +20,9 @@ import { Calendar as CalendarComponent } from '../components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
+import Sidebar from '../components/layout/sidebar';
+import MobileSidebar from '../components/layout/mobile-sidebar';
+import TopNav from '../components/layout/top-nav';
 
 const formSchema = z.object({
   clientId: z.number(),
@@ -92,7 +95,7 @@ export default function AgentEstimateFormPage() {
 
   // Fetch available services
   const { data: services } = useQuery({
-    queryKey: ["/api/direct/services"],
+    queryKey: ["/api/pricing/services"],
   });
 
   // Fetch events for appointments
@@ -427,7 +430,12 @@ DETAILED WORK SCOPE:
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="remodra-layout">
+      <Sidebar />
+      <MobileSidebar />
+      <div className="remodra-main">
+        <TopNav />
+        <main className="p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/estimates">
@@ -1418,6 +1426,8 @@ DETAILED WORK SCOPE:
           </Tabs>
         </form>
       </Form>
+        </main>
+      </div>
     </div>
   );
 }

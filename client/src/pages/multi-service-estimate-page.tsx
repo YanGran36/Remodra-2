@@ -18,6 +18,9 @@ import { Separator } from '../components/ui/separator';
 import { Badge } from '../components/ui/badge';
 import { Building2, Calculator, FileText, User, ArrowLeft, Plus, Trash2 } from "lucide-react";
 import FenceMeasurementTool from '../components/measurement/fence-measurement-tool';
+import Sidebar from '../components/layout/sidebar';
+import MobileSidebar from '../components/layout/mobile-sidebar';
+import TopNav from '../components/layout/top-nav';
 
 interface SelectedService {
   serviceType: string;
@@ -63,14 +66,18 @@ export default function MultiServiceEstimatePage() {
   });
 
   // Fetch clients
-  const { data: clients } = useQuery({
+  const { data: clients, error: clientsError } = useQuery({
     queryKey: ["/api/protected/clients"],
   });
 
+
+
   // Fetch services
-  const { data: services, isLoading: servicesLoading } = useQuery({
-    queryKey: ["/api/direct/services"],
+  const { data: services, isLoading: servicesLoading, error: servicesError } = useQuery({
+    queryKey: ["/api/pricing/services"],
   });
+
+
 
   // Fetch materials
   const { data: materials } = useQuery({
@@ -222,8 +229,35 @@ export default function MultiServiceEstimatePage() {
 
   const totalEstimateValue = selectedServices.reduce((sum, service) => sum + service.laborCost + service.materialsCost, 0);
 
+  // Show loading state if services are loading
+  if (servicesLoading) {
+    return (
+      <div className="remodra-layout">
+        <Sidebar />
+        <MobileSidebar />
+        <div className="remodra-main">
+          <TopNav />
+          <main className="p-8 space-y-6">
+            <div className="container mx-auto max-w-6xl">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-amber-500 mx-auto"></div>
+                <p className="text-white mt-4">Loading services...</p>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto py-8 px-4 max-w-6xl">
+    <div className="remodra-layout">
+      <Sidebar />
+      <MobileSidebar />
+      <div className="remodra-main">
+        <TopNav />
+        <main className="p-8 space-y-6">
+          <div className="container mx-auto max-w-6xl">
       <div className="flex items-center gap-4 mb-8">
         <Button 
           variant="outline" 
@@ -829,6 +863,9 @@ export default function MultiServiceEstimatePage() {
           </Tabs>
         </form>
       </Form>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

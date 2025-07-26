@@ -19,8 +19,8 @@ function SignaturePad({
   height = 200,
   lineWidth = 2.5,
   lineColor = "#000000",
-  clearLabel = "Borrar",
-  confirmLabel = "Confirmar Firma"
+  clearLabel = "Clear",
+  confirmLabel = "Confirm Signature"
 }: {
   onChange: (value: string) => void;
   value?: string;
@@ -174,7 +174,7 @@ function SignaturePad({
           <div className="absolute inset-0 flex items-center justify-center text-gray-400 pointer-events-none">
             <div className="text-center p-4">
               <Edit3 className="h-6 w-6 mx-auto mb-2 opacity-50" />
-              <p>Dibuje su firma aquí</p>
+              <p>Draw your signature here</p>
             </div>
           </div>
         )}
@@ -204,7 +204,7 @@ function SignaturePad({
       
       {isMobile && (
         <p className="text-sm text-blue-600 mt-3 text-center">
-          Use su dedo o un lápiz táctil para firmar
+          Use your finger or a stylus to sign
         </p>
       )}
     </div>
@@ -318,8 +318,8 @@ export default function PublicEstimateView() {
       setActionResult({
         success: true,
         message: action === 'accept' 
-          ? "¡Estimado aceptado! Gracias por su confirmación." 
-          : "Estimado rechazado. Hemos registrado su decisión."
+                      ? "Estimate accepted! Thank you for your confirmation."
+            : "Estimate rejected. We have recorded your decision."
       });
       setActionComplete(true);
       
@@ -390,7 +390,7 @@ export default function PublicEstimateView() {
             <CardDescription>No pudimos encontrar el estimado solicitado</CardDescription>
           </CardHeader>
           <CardContent>
-            <p>El estimado que está buscando no existe o ha sido eliminado.</p>
+            <p>The estimate you are looking for does not exist or has been deleted.</p>
           </CardContent>
         </Card>
       </div>
@@ -425,36 +425,36 @@ export default function PublicEstimateView() {
               {estimate.status !== "accepted" && estimate.status !== "rejected" && "Estado Actual"}
             </CardTitle>
             <CardDescription>
-              {estimate.status === "accepted" && "Este estimado ha sido aceptado."}
-              {estimate.status === "rejected" && "Este estimado ha sido rechazado."}
-              {estimate.status === "draft" && "Este estimado está en borrador."}
-              {estimate.status === "converted" && "Este estimado ha sido convertido a factura."}
+              {estimate.status === "accepted" && "This estimate has been accepted."}
+              {estimate.status === "rejected" && "This estimate has been rejected."}
+              {estimate.status === "draft" && "This estimate is in draft."}
+              {estimate.status === "converted" && "This estimate has been converted to invoice."}
               {estimate.status === "sent" && actionComplete && actionResult?.message}
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <h3 className="text-lg font-semibold mb-2">Detalles del Estimado</h3>
-                <p><span className="font-medium">Número:</span> {estimate.estimateNumber}</p>
-                <p><span className="font-medium">Fecha:</span> {estimate.issueDate ? format(new Date(estimate.issueDate), 'dd/MM/yyyy') : 'No disponible'}</p>
-                <p><span className="font-medium">Expiración:</span> {estimate.expiryDate ? format(new Date(estimate.expiryDate), 'dd/MM/yyyy') : 'No disponible'}</p>
+                <h3 className="text-lg font-semibold mb-2">Estimate Details</h3>
+                <p><span className="font-medium">Number:</span> {estimate.estimateNumber}</p>
+                <p><span className="font-medium">Date:</span> {estimate.issueDate ? format(new Date(estimate.issueDate), 'dd/MM/yyyy') : 'Not available'}</p>
+                <p><span className="font-medium">Expiration:</span> {estimate.expiryDate ? format(new Date(estimate.expiryDate), 'dd/MM/yyyy') : 'Not available'}</p>
                 <p className="flex items-center gap-1">
-                  <span className="font-medium">Estado:</span> 
+                  <span className="font-medium">Status:</span> 
                   <Badge className={`${statusColors[estimate.status]} text-white flex gap-1 items-center`}>
                     {statusIcons[estimate.status]} 
-                    {estimate.status === 'draft' && 'Borrador'}
-                    {estimate.status === 'sent' && 'Enviado'}
-                    {estimate.status === 'accepted' && 'Aceptado'}
-                    {estimate.status === 'rejected' && 'Rechazado'}
-                    {estimate.status === 'converted' && 'Convertido'}
+                    {estimate.status === 'draft' && 'Draft'}
+                    {estimate.status === 'sent' && 'Sent'}
+                    {estimate.status === 'accepted' && 'Accepted'}
+                    {estimate.status === 'rejected' && 'Rejected'}
+                    {estimate.status === 'converted' && 'Converted'}
                   </Badge>
                 </p>
               </div>
               <div>
                 {contractor && (
                   <>
-                    <h3 className="text-lg font-semibold mb-2">Contratista</h3>
+                    <h3 className="text-lg font-semibold mb-2">Contractor</h3>
                     <p>{contractor.companyName || `${contractor.firstName} ${contractor.lastName}`}</p>
                     <p>{contractor.email}</p>
                     <p>{contractor.phone}</p>
@@ -463,7 +463,7 @@ export default function PublicEstimateView() {
                 <div className="mt-4">
                   {client && (
                     <>
-                      <h3 className="text-lg font-semibold mb-2">Cliente</h3>
+                      <h3 className="text-lg font-semibold mb-2">Client</h3>
                       <p>{client.firstName} {client.lastName}</p>
                       <p>{client.email}</p>
                       <p>{client.phone}</p>
@@ -477,14 +477,14 @@ export default function PublicEstimateView() {
             <Separator />
 
             <div>
-              <h3 className="text-lg font-semibold mb-4">Detalle de Ítems</h3>
+              <h3 className="text-lg font-semibold mb-4">Item Details</h3>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Descripción</TableHead>
-                    <TableHead className="text-right">Cantidad</TableHead>
-                    <TableHead className="text-right">Precio Unitario</TableHead>
-                    <TableHead className="text-right">Importe</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead className="text-right">Quantity</TableHead>
+                    <TableHead className="text-right">Unit Price</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -508,13 +508,13 @@ export default function PublicEstimateView() {
                 </div>
                 {Number(estimate.tax) > 0 && (
                   <div className="flex justify-between py-1">
-                    <span>Impuesto ({estimate.tax}%):</span>
+                    <span>Tax ({estimate.tax}%):</span>
                     <span>{formatCurrency((Number(estimate.subtotal) * Number(estimate.tax) / 100))}</span>
                   </div>
                 )}
                 {Number(estimate.discount) > 0 && (
                   <div className="flex justify-between py-1">
-                    <span>Descuento ({estimate.discount}%):</span>
+                    <span>Discount ({estimate.discount}%):</span>
                     <span>-{formatCurrency((Number(estimate.subtotal) * Number(estimate.discount) / 100))}</span>
                   </div>
                 )}
@@ -537,7 +537,7 @@ export default function PublicEstimateView() {
 
             {estimate.notes && (
               <div>
-                <h3 className="text-lg font-semibold mb-2">Notas</h3>
+                <h3 className="text-lg font-semibold mb-2">Notes</h3>
                 <div className="bg-gray-50 p-4 rounded-md whitespace-pre-wrap">
                   {estimate.notes}
                 </div>
@@ -546,7 +546,7 @@ export default function PublicEstimateView() {
 
             {estimate.clientSignature && (
               <div>
-                <h3 className="text-lg font-semibold mb-2">Firmado por el cliente</h3>
+                <h3 className="text-lg font-semibold mb-2">Signed by client</h3>
                 <div className="bg-gray-50 p-4 rounded-md">
                   {estimate.clientSignature}
                 </div>
@@ -555,8 +555,8 @@ export default function PublicEstimateView() {
           </CardContent>
           <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-50 p-6">
             <p className="text-sm text-gray-600">
-              {estimate.status === "accepted" && "Este estimado ha sido aceptado."}
-              {estimate.status === "rejected" && "Este estimado ha sido rechazado."}
+              {estimate.status === "accepted" && "This estimate has been accepted."}
+              {estimate.status === "rejected" && "This estimate has been rejected."}
             </p>
           </CardFooter>
         </Card>
@@ -578,10 +578,10 @@ export default function PublicEstimateView() {
               <div>
                 <CardTitle className="text-blue-600 flex items-center gap-2 text-2xl">
                   <Send className="h-6 w-6" />
-                  Estimado para su aprobación
+                  Estimate for Your Approval
                 </CardTitle>
                 <CardDescription className="text-lg mt-2">
-                  <span className="font-medium">{contractor?.companyName || `${contractor?.firstName} ${contractor?.lastName}`}</span> le ha enviado un estimado para su revisión.
+                  <span className="font-medium">{contractor?.companyName || `${contractor?.firstName} ${contractor?.lastName}`}</span> has sent you an estimate for review.
                 </CardDescription>
               </div>
               <div className="flex">
@@ -591,7 +591,7 @@ export default function PublicEstimateView() {
                   onClick={() => setAcceptDialogOpen(true)}
                 >
                   <CheckCircle className="h-5 w-5 mr-2" />
-                  Aprobar Estimado
+                  Approve Estimate
                 </Button>
               </div>
             </div>
@@ -599,18 +599,18 @@ export default function PublicEstimateView() {
           <CardContent className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <h3 className="text-lg font-semibold mb-2">Detalles del Estimado</h3>
-                <p><span className="font-medium">Número:</span> {estimate.estimateNumber}</p>
-                <p><span className="font-medium">Fecha:</span> {estimate.issueDate ? format(new Date(estimate.issueDate), 'dd/MM/yyyy') : 'No disponible'}</p>
-                <p><span className="font-medium">Expiración:</span> {estimate.expiryDate ? format(new Date(estimate.expiryDate), 'dd/MM/yyyy') : 'No disponible'}</p>
+                <h3 className="text-lg font-semibold mb-2">Estimate Details</h3>
+                <p><span className="font-medium">Number:</span> {estimate.estimateNumber}</p>
+                <p><span className="font-medium">Date:</span> {estimate.issueDate ? format(new Date(estimate.issueDate), 'dd/MM/yyyy') : 'Not available'}</p>
+                <p><span className="font-medium">Expiration:</span> {estimate.expiryDate ? format(new Date(estimate.expiryDate), 'dd/MM/yyyy') : 'Not available'}</p>
                 <p className="flex items-center gap-1">
-                  <span className="font-medium">Estado:</span> 
+                  <span className="font-medium">Status:</span> 
                   <Badge className={`${statusColors[estimate.status]} text-white flex gap-1 items-center`}>
                     {statusIcons[estimate.status]} 
-                    {estimate.status === 'draft' && 'Borrador'}
-                    {estimate.status === 'sent' && 'Enviado'}
-                    {estimate.status === 'accepted' && 'Aceptado'}
-                    {estimate.status === 'rejected' && 'Rechazado'}
+                    {estimate.status === 'draft' && 'Draft'}
+                    {estimate.status === 'sent' && 'Sent'}
+                    {estimate.status === 'accepted' && 'Accepted'}
+                    {estimate.status === 'rejected' && 'Rejected'}
                     {estimate.status === 'converted' && 'Converted'}
                   </Badge>
                 </p>
@@ -618,7 +618,7 @@ export default function PublicEstimateView() {
               <div>
                 {contractor && (
                   <>
-                    <h3 className="text-lg font-semibold mb-2">Contratista</h3>
+                    <h3 className="text-lg font-semibold mb-2">Contractor</h3>
                     <p>{contractor.companyName || `${contractor.firstName} ${contractor.lastName}`}</p>
                     <p>{contractor.email}</p>
                     <p>{contractor.phone}</p>
@@ -627,7 +627,7 @@ export default function PublicEstimateView() {
                 <div className="mt-4">
                   {client && (
                     <>
-                      <h3 className="text-lg font-semibold mb-2">Cliente</h3>
+                      <h3 className="text-lg font-semibold mb-2">Client</h3>
                       <p>{client.firstName} {client.lastName}</p>
                       <p>{client.email}</p>
                       <p>{client.phone}</p>
@@ -641,14 +641,14 @@ export default function PublicEstimateView() {
             <Separator />
 
             <div>
-              <h3 className="text-lg font-semibold mb-4">Detalle de Ítems</h3>
+              <h3 className="text-lg font-semibold mb-4">Item Details</h3>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Descripción</TableHead>
-                    <TableHead className="text-right">Cantidad</TableHead>
-                    <TableHead className="text-right">Precio Unitario</TableHead>
-                    <TableHead className="text-right">Importe</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead className="text-right">Quantity</TableHead>
+                    <TableHead className="text-right">Unit Price</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -692,7 +692,7 @@ export default function PublicEstimateView() {
 
             {estimate.terms && (
               <div>
-                <h3 className="text-lg font-semibold mb-2">Términos</h3>
+                <h3 className="text-lg font-semibold mb-2">Terms</h3>
                 <div className="bg-gray-50 p-4 rounded-md whitespace-pre-wrap">
                   {estimate.terms}
                 </div>
@@ -701,7 +701,7 @@ export default function PublicEstimateView() {
 
             {estimate.notes && (
               <div>
-                <h3 className="text-lg font-semibold mb-2">Notas</h3>
+                <h3 className="text-lg font-semibold mb-2">Notes</h3>
                 <div className="bg-gray-50 p-4 rounded-md whitespace-pre-wrap">
                   {estimate.notes}
                 </div>
@@ -717,22 +717,22 @@ export default function PublicEstimateView() {
             <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 p-6 rounded-lg shadow-sm">
               <h3 className="text-xl font-bold text-blue-800 mb-3 flex items-center gap-2">
                 <ClipboardCheck className="h-6 w-6" />
-                Revisión del Estimado
+                Estimate Review
               </h3>
               <div className="border-l-4 border-blue-400 pl-4 mb-4">
                 <p className="text-blue-800">
-                  Por favor, revise cuidadosamente el estimado antes de tomar una decisión.
+                  Please carefully review the estimate before making a decision.
                 </p>
                 <p className="text-blue-700 mt-2">
-                  <strong>Nota importante:</strong> Al aceptar este estimado, se generará automáticamente una factura que requerirá su firma para proceder con el pago.
+                  <strong>Important note:</strong> By accepting this estimate, an invoice will be automatically generated that will require your signature to proceed with payment.
                 </p>
               </div>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4 bg-gradient-to-b from-blue-50 to-blue-100 p-8 border-t border-blue-200">
             <div className="text-center mb-2">
-              <h3 className="text-xl font-bold text-blue-800">¿Está de acuerdo con este estimado?</h3>
-              <p className="text-blue-600 mt-1">Seleccione una de las siguientes opciones:</p>
+              <h3 className="text-xl font-bold text-blue-800">Do you agree with this estimate?</h3>
+              <p className="text-blue-600 mt-1">Select one of the following options:</p>
             </div>
             
             <div className="flex flex-col sm:flex-row justify-center gap-4 w-full max-w-2xl mx-auto">
@@ -742,7 +742,7 @@ export default function PublicEstimateView() {
                 className="w-full sm:w-1/3 py-6 text-lg h-auto border-2 border-gray-300 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-all"
               >
                 <XCircle className="h-5 w-5 mr-2 text-red-600" />
-                Rechazar
+                Reject
               </Button>
               
               <Button
@@ -754,7 +754,7 @@ export default function PublicEstimateView() {
                 </div>
                 <div className="relative z-10 flex items-center justify-center gap-2">
                   <CheckCircle className="h-6 w-6" />
-                  <span>APROBAR ESTIMADO</span>
+                  <span>APPROVE ESTIMATE</span>
                 </div>
               </Button>
             </div>
@@ -769,28 +769,28 @@ export default function PublicEstimateView() {
             <DialogHeader>
               <DialogTitle className="text-2xl text-green-700 flex items-center gap-2">
                 <CheckCircle className="h-6 w-6" />
-                Confirmar Aprobación
+                Confirm Approval
               </DialogTitle>
               <DialogDescription className="text-base">
-                Al aprobar este estimado, está autorizando al contratista a proceder con el trabajo.
+                By approving this estimate, you are authorizing the contractor to proceed with the work.
               </DialogDescription>
             </DialogHeader>
             <div className="py-6 space-y-4">
               <div className="bg-green-50 p-4 rounded-lg border border-green-200">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-green-800 font-medium">Total a pagar:</span>
+                  <span className="text-green-800 font-medium">Total to pay:</span>
                   <span className="text-2xl font-bold text-green-800">{formatCurrency(estimate.total)}</span>
                 </div>
                 <p className="text-sm text-green-700">
-                  Este es el importe total acordado para los trabajos descritos en este estimado.
+                  This is the total amount agreed for the work described in this estimate.
                 </p>
               </div>
               
               <div className="border-t border-b border-gray-200 py-4">
-                <p className="font-medium mb-1">Información importante:</p>
+                <p className="font-medium mb-1">Important information:</p>
                 <div className="bg-blue-50 p-3 rounded border border-blue-100">
                   <p className="text-sm text-blue-800">
-                    Al aceptar este estimado, se generará automáticamente una factura que requerirá su firma para proceder con el pago.
+                    By accepting this estimate, an invoice will be automatically generated that will require your signature to proceed with payment.
                   </p>
                 </div>
               </div>
@@ -802,7 +802,7 @@ export default function PublicEstimateView() {
                 disabled={actionInProgress}
                 className="w-full sm:w-auto"
               >
-                Cancelar
+                Cancel
               </Button>
               <Button 
                 onClick={() => handleAction('accept')}
@@ -817,7 +817,7 @@ export default function PublicEstimateView() {
                 ) : (
                   <>
                     <CheckCircle className="mr-2 h-5 w-5" />
-                    Aprobar Estimado
+                    Approve Estimate
                   </>
                 )}
               </Button>
@@ -831,31 +831,31 @@ export default function PublicEstimateView() {
             <DialogHeader>
               <DialogTitle className="text-2xl text-red-700 flex items-center gap-2">
                 <XCircle className="h-6 w-6" />
-                Confirmar Rechazo
+                Confirm Rejection
               </DialogTitle>
               <DialogDescription className="text-base">
-                Por favor, ayúdenos a mejorar indicando el motivo de su rechazo.
+                Please help us improve by indicating the reason for your rejection.
               </DialogDescription>
             </DialogHeader>
             <div className="py-6 space-y-4">
               <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                <p className="font-medium text-red-800 mb-2">Motivo de rechazo:</p>
+                <p className="font-medium text-red-800 mb-2">Reason for rejection:</p>
                 <Textarea
-                  placeholder="Por favor, explique brevemente por qué no está satisfecho con este estimado..."
+                  placeholder="Please briefly explain why you are not satisfied with this estimate..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   className="min-h-[100px] border-red-200 focus:border-red-400 focus:ring-red-400"
                 />
                 {!notes && (
                   <p className="text-sm text-red-600 mt-2">
-                    * Este campo es obligatorio para rechazar el estimado
+                    * This field is required to reject the estimate
                   </p>
                 )}
               </div>
               
               <div className="border-t border-gray-200 py-4">
                 <p className="text-gray-500 text-sm italic">
-                  Sus comentarios ayudarán al contratista a mejorar sus servicios. Gracias por su retroalimentación.
+                  Your comments will help the contractor improve their services. Thank you for your feedback.
                 </p>
               </div>
             </div>
@@ -866,7 +866,7 @@ export default function PublicEstimateView() {
                 disabled={actionInProgress}
                 className="w-full sm:w-auto"
               >
-                Cancelar
+                Cancel
               </Button>
               <Button 
                 variant="destructive"
@@ -882,7 +882,7 @@ export default function PublicEstimateView() {
                 ) : (
                   <>
                     <XCircle className="mr-2 h-5 w-5" />
-                    Rechazar Estimado
+                    Reject Estimate
                   </>
                 )}
               </Button>

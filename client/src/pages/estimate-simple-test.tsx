@@ -81,7 +81,7 @@ export default function EstimateSimpleTest() {
         <h1 className="text-2xl font-semibold text-foreground tracking-tight">Simple Estimate Creation Test</h1>
         <p className="text-muted-foreground">Test page for simple estimate creation</p>
       </div>
-      <p className="text-red-500 mb-6">Esta es una página de prueba para diagnóstico.</p>
+      <p className="text-red-500 mb-6">This is a test page for diagnostics.</p>
       
       <Card>
         <CardHeader>

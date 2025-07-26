@@ -10,7 +10,7 @@ export function registerPricingRoutes(app: Express) {
   // Verificar que el contratista tiene acceso a sus propios datos
   const verifyContractorOwnership = async (req: any, res: any, next: any) => {
     if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: 'No autenticado' });
+      return res.status(401).json({ message: 'Not authenticated' });
     }
 
     // El usuario autenticado ya incluye el ID del contratista
@@ -62,13 +62,13 @@ export function registerPricingRoutes(app: Express) {
         );
       
       if (!service) {
-        return res.status(404).json({ message: 'Servicio no encontrado' });
+        return res.status(404).json({ message: 'Service not found' });
       }
       
       res.json(service);
     } catch (error) {
-      console.error('Error al obtener servicio:', error);
-      res.status(500).json({ message: 'Error al obtener servicio' });
+      console.error('Error fetching service:', error);
+      res.status(500).json({ message: 'Error fetching service' });
     }
   });
 
@@ -86,8 +86,8 @@ export function registerPricingRoutes(app: Express) {
       
       res.status(201).json(newService);
     } catch (error) {
-      console.error('Error al crear servicio:', error);
-      res.status(500).json({ message: 'Error al crear servicio' });
+      console.error('Error creating service:', error);
+      res.status(500).json({ message: 'Error creating service' });
     }
   });
 
@@ -423,8 +423,8 @@ export function registerPricingRoutes(app: Express) {
       
       res.json(materials);
     } catch (error) {
-      console.error('Error al obtener materiales:', error);
-      res.status(500).json({ message: 'Error al obtener materiales' });
+      console.error('Error fetching materials:', error);
+      res.status(500).json({ message: 'Error fetching materials' });
     }
   });
 
@@ -445,8 +445,8 @@ export function registerPricingRoutes(app: Express) {
       
       res.json(material);
     } catch (error) {
-      console.error('Error al obtener material:', error);
-      res.status(500).json({ message: 'Error al obtener material' });
+      console.error('Error fetching material:', error);
+      res.status(500).json({ message: 'Error fetching material' });
     }
   });
 
@@ -464,8 +464,8 @@ export function registerPricingRoutes(app: Express) {
       
       res.status(201).json(newMaterial);
     } catch (error) {
-      console.error('Error al crear material:', error);
-      res.status(500).json({ message: 'Error al crear material' });
+      console.error('Error creating material:', error);
+      res.status(500).json({ message: 'Error creating material' });
     }
   });
 
@@ -534,8 +534,8 @@ export function registerPricingRoutes(app: Express) {
         res.status(201).json(newMaterial);
       }
     } catch (error) {
-      console.error('Error al actualizar material:', error);
-      res.status(500).json({ message: 'Error al actualizar material' });
+      console.error('Error updating material:', error);
+      res.status(500).json({ message: 'Error updating material' });
     }
   });
 
@@ -561,8 +561,8 @@ export function registerPricingRoutes(app: Express) {
       
       res.status(204).send();
     } catch (error) {
-      console.error('Error al eliminar material:', error);
-      res.status(500).json({ message: 'Error al eliminar material' });
+      console.error('Error deleting material:', error);
+      res.status(500).json({ message: 'Error deleting material' });
     }
   });
 }

@@ -48,13 +48,13 @@ const formatCurrency = (amount: number | string) => {
 export default function PremiumEstimatePage() {
   const [, setLocation] = useLocation();
   const { id } = useParams<{ id: string }>();
-  const estimateId = parseInt(id);
+  const estimateId = id ? parseInt(id) : null;
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isConvertingToInvoice, setIsConvertingToInvoice] = useState(false);
 
-  // Fetch estimate data
+  // Fetch estimate data only if we have an ID
   const { 
     data: estimate, 
     isLoading,
@@ -62,7 +62,7 @@ export default function PremiumEstimatePage() {
     refetch 
   } = useQuery({
     queryKey: [`/api/protected/estimates/${estimateId}`],
-    enabled: !isNaN(estimateId),
+    enabled: estimateId !== null && !isNaN(estimateId),
   });
 
   // Get days until expiry
@@ -85,10 +85,10 @@ export default function PremiumEstimatePage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/protected/estimates/${estimateId}`] });
-      toast({
-        title: "¡Estado actualizado!",
-        description: "El estado del estimado ha sido actualizado correctamente.",
-      });
+              toast({
+          title: "Status Updated!",
+          description: "The estimate status has been updated successfully.",
+        });
     },
     onError: (error: Error) => {
       toast({
@@ -113,10 +113,10 @@ export default function PremiumEstimatePage() {
     onSuccess: (data) => {
       setIsConvertingToInvoice(false);
       queryClient.invalidateQueries({ queryKey: ["/api/protected/invoices"] });
-      toast({
-        title: "¡Orden de trabajo creada!",
-        description: "El estimado ha sido convertido en una orden de trabajo exitosamente. El estado del estimado ha sido actualizado a 'converted'.",
-      });
+              toast({
+          title: "Work Order Created!",
+          description: "The estimate has been successfully converted to a work order. The estimate status has been updated to 'converted'.",
+        });
       // Stay on estimate page, status will be updated
     },
     onError: (error: Error) => {
@@ -134,12 +134,73 @@ export default function PremiumEstimatePage() {
     updateStatusMutation.mutate(status);
   };
 
+  // If no estimate ID, show creation form
+  if (!estimateId) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-white mb-4">Create Premium Estimate</h1>
+            <p className="text-slate-300">This page is for viewing existing premium estimates. To create a new estimate, please use the standard estimate creation form.</p>
+          </div>
+          <div className="text-center">
+            <Button onClick={() => setLocation('/estimates/create')} className="bg-amber-500 hover:bg-amber-600">
+              Go to Estimate Creation
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-amber-500 mx-auto"></div>
+          <p className="text-white mt-4">Loading estimate...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <h1 className="text-3xl font-bold text-white mb-4">Error Loading Estimate</h1>
+          <p className="text-slate-300 mb-4">{(error as any)?.message || 'Unknown error occurred'}</p>
+          <Button onClick={() => setLocation('/estimates')} className="bg-amber-500 hover:bg-amber-600">
+            Back to Estimates
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if no estimate data
+  if (!estimate) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <h1 className="text-3xl font-bold text-white mb-4">Estimate Not Found</h1>
+          <p className="text-slate-300 mb-4">The estimate you're looking for doesn't exist.</p>
+          <Button onClick={() => setLocation('/estimates')} className="bg-amber-500 hover:bg-amber-600">
+            Back to Estimates
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   // Handle convert to invoice
   const handleConvertToInvoice = () => {
     if (estimate?.status !== 'accepted') {
       toast({
-        title: "Acción no permitida",
-        description: "Solo los estimados aceptados pueden ser convertidos a órdenes de trabajo.",
+        title: "Action not allowed",
+        description: "Only accepted estimates can be converted to work orders.",
         variant: "destructive",
       });
       return;
@@ -417,7 +478,7 @@ export default function PremiumEstimatePage() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <FileSpreadsheet className="h-5 w-5 mr-2" />
-              Detalle del Estimado
+              Estimate Details
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -427,7 +488,7 @@ export default function PremiumEstimatePage() {
               tax={estimate.tax}
               discount={estimate.discount}
               total={estimate.total}
-              emptyMessage="Este estimado no tiene artículos"
+                              emptyMessage="This estimate has no items"
             />
           </CardContent>
         </Card>
@@ -437,12 +498,12 @@ export default function PremiumEstimatePage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <Card className="md:h-full flex flex-col">
           <CardHeader>
-            <CardTitle>Términos y Condiciones</CardTitle>
+            <CardTitle>Terms and Conditions</CardTitle>
           </CardHeader>
           <CardContent className="flex-grow">
             <div className="rounded-md bg-muted/50 p-4 h-full">
               <p className="whitespace-pre-line">
-                {estimate.terms || "No se han especificado términos y condiciones."}
+                {estimate.terms || "No terms and conditions have been specified."}
               </p>
             </div>
           </CardContent>
@@ -451,12 +512,12 @@ export default function PremiumEstimatePage() {
         <div className="grid grid-cols-1 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Notas</CardTitle>
+              <CardTitle>Notes</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="rounded-md bg-muted/50 p-4">
                 <p className="whitespace-pre-line">
-                  {estimate.notes || "No hay notas adicionales para este estimado."}
+                  {estimate.notes || "No additional notes for this estimate."}
                 </p>
               </div>
             </CardContent>
@@ -464,18 +525,18 @@ export default function PremiumEstimatePage() {
           
           <Card>
             <CardHeader>
-              <CardTitle>Firmas</CardTitle>
+              <CardTitle>Signatures</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-6">
                 <SignatureDisplay
-                  title="Firma del Contratista"
+                  title="Contractor Signature"
                   signature={estimate.contractorSignature}
                   date={estimate.issueDate ? new Date(estimate.issueDate) : undefined}
                 />
                 
                 <SignatureDisplay
-                  title="Firma del Cliente"
+                  title="Client Signature"
                   signature={estimate.clientSignature}
                   date={estimate.status === 'accepted' ? estimate.updatedAt ? new Date(estimate.updatedAt) : undefined : undefined}
                 />
