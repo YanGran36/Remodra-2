@@ -15,7 +15,7 @@ import { sessionStabilityMiddleware } from "./middleware/session-middleware";
 import { auditMiddleware } from "./middleware/audit-middleware";
 
 const app = express();
-const PORT = process.env.PORT || 5005;
+const PORT = process.env.PORT || 3001;
 
 // Security headers
 app.use(helmet({

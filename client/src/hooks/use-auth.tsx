@@ -7,15 +7,18 @@ import {
 import { Contractor, ContractorInsert } from "../../../shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from './use-toast';
+import { useLocation } from "wouter";
 
 type AuthContextType = {
   user: Contractor | null;
   isLoading: boolean;
   error: Error | null;
+  isAuthenticated: boolean;
   loginMutation: UseMutationResult<Contractor, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
   registerMutation: UseMutationResult<Contractor, Error, RegisterData>;
   isSessionRecoveryActive: boolean;
+  isLoggingOut: boolean;
   refreshSession: () => Promise<void>;
 };
 
@@ -38,6 +41,8 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const [isSessionRecoveryActive, setIsSessionRecoveryActive] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [, setLocation] = useLocation();
   
   const {
     data: user,
@@ -123,15 +128,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
+      setIsLoggingOut(true);
       await apiRequest("POST", "/api/logout");
     },
     onSuccess: () => {
+      // Clear data immediately
       queryClient.setQueryData(["/api/user"], null);
+      localStorage.removeItem('lastUserEmail');
+      localStorage.removeItem('userEmail');
+      
+      // Force immediate redirect
+      setLocation('/login');
+      
       toast({
         title: "Logged out successfully",
       });
+      
+      // Reset logout flag after a short delay
+      setTimeout(() => {
+        setIsLoggingOut(false);
+      }, 100);
     },
     onError: (error: Error) => {
+      setIsLoggingOut(false);
       toast({
         title: "Logout failed",
         description: error.message,
@@ -175,11 +194,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user: user ?? null,
         isLoading,
-        error,
+        error: error as Error | null,
+        isAuthenticated: !!user,
         loginMutation,
         logoutMutation,
         registerMutation,
         isSessionRecoveryActive,
+        isLoggingOut,
         refreshSession
       }}
     >

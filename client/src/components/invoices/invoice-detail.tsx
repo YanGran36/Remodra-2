@@ -167,7 +167,7 @@ export default function InvoiceDetail({ invoice, isOpen, onClose, onEdit }: Invo
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex justify-between items-center">
-            <span>Work Order #{invoice.invoiceNumber}</span>
+            <span>Work Order #{invoice.invoice_number || invoice.invoiceNumber}</span>
             {getStatusBadge(invoice.status)}
           </DialogTitle>
         </DialogHeader>

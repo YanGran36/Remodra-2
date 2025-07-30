@@ -32,6 +32,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Badge } from '../components/ui/badge';
 import { Separator } from '../components/ui/separator';
 import { apiRequest } from '../lib/queryClient';
+import Sidebar from '../components/layout/sidebar';
+import MobileSidebar from '../components/layout/mobile-sidebar';
+import TopNav from '../components/layout/top-nav';
 
 interface ServiceItem {
   id: string;
@@ -493,381 +496,386 @@ export default function ProfessionalEstimatePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hide sidebar for professional estimate creation */}
-      
-      <div className="relative z-10 min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-6">
-          {/* Header */}
-          <div className="mb-6">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setLocation("/estimates")}
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Estimates
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Professional Estimate</h1>
-                <p className="text-gray-600">Create professional estimates with AI-powered descriptions</p>
+    <div className="remodra-layout">
+      <Sidebar />
+      <MobileSidebar />
+      <div className="remodra-main">
+        <TopNav />
+        <div className="remodra-content">
+          <main className="p-8">
+            <div className="max-w-7xl mx-auto">
+              {/* Header */}
+              <div className="mb-6">
+                <div className="flex items-center space-x-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setLocation("/estimates")}
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Estimates
+                  </Button>
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Professional Estimate</h1>
+                    <p className="text-gray-600">Create professional estimates with AI-powered descriptions</p>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="client" className="flex items-center">
-                <User className="h-4 w-4 mr-2" />
-                Client
-              </TabsTrigger>
-              <TabsTrigger value="services" className="flex items-center">
-                <Building2 className="h-4 w-4 mr-2" />
-                Services & AI Description
-              </TabsTrigger>
-              <TabsTrigger value="summary" className="flex items-center">
-                <DollarSign className="h-4 w-4 mr-2" />
-                Summary
-              </TabsTrigger>
-            </TabsList>
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="client" className="flex items-center">
+                    <User className="h-4 w-4 mr-2" />
+                    Client
+                  </TabsTrigger>
+                  <TabsTrigger value="services" className="flex items-center">
+                    <Building2 className="h-4 w-4 mr-2" />
+                    Services & AI Description
+                  </TabsTrigger>
+                  <TabsTrigger value="summary" className="flex items-center">
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    Summary
+                  </TabsTrigger>
+                </TabsList>
 
-            {/* Client Selection */}
-            <TabsContent value="client" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Select Client</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="client">Client *</Label>
-                    <Select 
-                      value={estimateData.clientId?.toString() || ""} 
-                      onValueChange={(value) => setEstimateData(prev => ({ ...prev, clientId: parseInt(value) }))}
-                    >
-                      <SelectTrigger className="input-blue-border">
-                        <SelectValue placeholder="Choose a client" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {(clients as any[]).map((client: any) => (
-                          <SelectItem key={client.id} value={client.id.toString()}>
-                            {client.firstName} {client.lastName}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="project">Associated Project (Optional)</Label>
-                    <Select 
-                      value={estimateData.projectId?.toString() || "no_project"} 
-                      onValueChange={(value) => setEstimateData(prev => ({ 
-                        ...prev, 
-                        projectId: value && value !== "no_project" ? parseInt(value) : null 
-                      }))}
-                    >
-                      <SelectTrigger className="input-blue-border">
-                        <SelectValue placeholder="Choose a project" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="no_project">No Project</SelectItem>
-                        {(projects as any[]).map((project: any) => (
-                          <SelectItem key={project.id} value={project.id.toString()}>
-                            {project.title}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {estimateData.clientId && (
-                    <div className="mt-4">
-                      <Button onClick={() => setActiveTab("services")}>
-                        Continue to Services
-                        <Building2 className="h-4 w-4 ml-2" />
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Services & AI Description */}
-            <TabsContent value="services" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Service & AI Description
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <Label>Service Type *</Label>
-                      <Select 
-                        value={currentService.serviceType} 
-                        onValueChange={handleServiceTypeChange}
-                      >
-                        <SelectTrigger className="input-blue-border">
-                          <SelectValue placeholder="Select service type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {serviceTypes.map((type) => (
-                            <SelectItem key={type.value} value={type.value}>
-                              {type.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label>Unit Price ($)</Label>
-                      <Input
-                        className="input-blue-border"
-                        type="number"
-                        step="0.01"
-                        value={currentService.unitPrice}
-                        onChange={(e) => setCurrentService(prev => ({ ...prev, unitPrice: parseFloat(e.target.value) || 0 }))}
-                        placeholder="Enter unit price"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Measurements */}
-                  {currentService.serviceType && (
-                    <div className="md:col-span-2">
-                      <Label>Measurements</Label>
-                      <div className="mt-2 space-y-4">
-                        {renderMeasurementInputs()}
-                        {currentService.quantity > 0 && (
-                          <div className="text-sm text-blue-600">
-                            Calculated: {currentService.quantity.toFixed(2)} {currentService.unit}
-                          </div>
-                        )}
+                {/* Client Selection */}
+                <TabsContent value="client" className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Select Client</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label htmlFor="client">Client *</Label>
+                        <Select 
+                          value={estimateData.clientId?.toString() || ""} 
+                          onValueChange={(value) => setEstimateData(prev => ({ ...prev, clientId: parseInt(value) }))}
+                        >
+                          <SelectTrigger className="input-blue-border">
+                            <SelectValue placeholder="Choose a client" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {(clients as any[]).map((client: any) => (
+                              <SelectItem key={client.id} value={client.id.toString()}>
+                                {client.firstName} {client.lastName}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
-                    </div>
-                  )}
 
-                  {/* Appointment Notes for AI */}
-                  <div>
-                    <Label>Appointment Notes *</Label>
-                    <Textarea
-                      className="input-blue-border"
-                      value={currentService.appointmentNotes}
-                      onChange={(e) => setCurrentService(prev => ({ ...prev, appointmentNotes: e.target.value }))}
-                      placeholder="Describe what was discussed during the appointment, measurements taken, materials discussed, etc. This will be used by AI to generate a professional description."
-                      rows={4}
-                    />
-                    <p className="text-sm text-gray-500 mt-1">
-                      Be detailed about the work scope, materials, and any special requirements discussed.
-                    </p>
-                  </div>
+                      <div>
+                        <Label htmlFor="project">Associated Project (Optional)</Label>
+                        <Select 
+                          value={estimateData.projectId?.toString() || "no_project"} 
+                          onValueChange={(value) => setEstimateData(prev => ({ 
+                            ...prev, 
+                            projectId: value && value !== "no_project" ? parseInt(value) : null 
+                          }))}
+                        >
+                          <SelectTrigger className="input-blue-border">
+                            <SelectValue placeholder="Choose a project" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="no_project">No Project</SelectItem>
+                            {(projects as any[]).map((project: any) => (
+                              <SelectItem key={project.id} value={project.id.toString()}>
+                                {project.title}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                  {/* AI Description Generation */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <Label>Professional Description</Label>
-                      <Button
-                        onClick={generateAIDescription}
-                        disabled={!currentService.serviceType || !currentService.appointmentNotes.trim() || isGeneratingDescription}
-                        size="sm"
-                        variant="outline"
-                      >
-                        {isGeneratingDescription ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Generating...
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="h-4 w-4 mr-2" />
-                            Generate with AI
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                    
-                    <Textarea
-                      className="input-blue-border min-h-[100px]"
-                      value={currentService.description}
-                      onChange={(e) => setCurrentService(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="AI will generate a professional description based on your appointment notes..."
-                      rows={4}
-                    />
-                  </div>
+                      {estimateData.clientId && (
+                        <div className="mt-4">
+                          <Button onClick={() => setActiveTab("services")}>
+                            Continue to Services
+                            <Building2 className="h-4 w-4 ml-2" />
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
 
-                  <div className="flex justify-between items-center">
-                    <div className="text-lg font-semibold">
-                      Total: {formatCurrency(currentService.quantity * currentService.unitPrice)}
-                    </div>
-                    <Button 
-                      onClick={addService} 
-                      disabled={!currentService.serviceType || !currentService.description.trim()}
-                      className="flex items-center"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Service
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                {/* Services & AI Description */}
+                <TabsContent value="services" className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        Service & AI Description
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <Label>Service Type *</Label>
+                          <Select 
+                            value={currentService.serviceType} 
+                            onValueChange={handleServiceTypeChange}
+                          >
+                            <SelectTrigger className="input-blue-border">
+                              <SelectValue placeholder="Select service type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {serviceTypes.map((type) => (
+                                <SelectItem key={type.value} value={type.value}>
+                                  {type.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
 
-              {/* Services List */}
-              {estimateData.services.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Added Services ({estimateData.services.length})</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {estimateData.services.map((service) => (
-                        <div key={service.id} className="border rounded-lg p-4">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <Badge variant="outline">{service.serviceType}</Badge>
-                                <h4 className="font-medium text-lg">{service.serviceName}</h4>
+                        <div>
+                          <Label>Unit Price ($)</Label>
+                          <Input
+                            className="input-blue-border"
+                            type="number"
+                            step="0.01"
+                            value={currentService.unitPrice}
+                            onChange={(e) => setCurrentService(prev => ({ ...prev, unitPrice: parseFloat(e.target.value) || 0 }))}
+                            placeholder="Enter unit price"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Measurements */}
+                      {currentService.serviceType && (
+                        <div className="md:col-span-2">
+                          <Label>Measurements</Label>
+                          <div className="mt-2 space-y-4">
+                            {renderMeasurementInputs()}
+                            {currentService.quantity > 0 && (
+                              <div className="text-sm text-blue-600">
+                                Calculated: {currentService.quantity.toFixed(2)} {currentService.unit}
                               </div>
-                              <p className="text-gray-700">{service.description}</p>
-                              <div className="text-sm text-gray-500">
-                                {service.quantity.toFixed(2)} {service.unit} × {formatCurrency(service.unitPrice)} = {formatCurrency(service.total)}
-                              </div>
-                            </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => removeService(service.id)}
-                              className="text-red-600 hover:text-red-700 ml-4"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            )}
                           </div>
                         </div>
-                      ))}
-                    </div>
-                    
-                    {estimateData.services.length > 0 && (
-                      <div className="mt-6">
-                        <Button onClick={() => setActiveTab("summary")} className="w-full">
-                          Continue to Summary
-                          <DollarSign className="h-4 w-4 ml-2" />
+                      )}
+
+                      {/* Appointment Notes for AI */}
+                      <div>
+                        <Label>Appointment Notes *</Label>
+                        <Textarea
+                          className="input-blue-border"
+                          value={currentService.appointmentNotes}
+                          onChange={(e) => setCurrentService(prev => ({ ...prev, appointmentNotes: e.target.value }))}
+                          placeholder="Describe what was discussed during the appointment, measurements taken, materials discussed, etc. This will be used by AI to generate a professional description."
+                          rows={4}
+                        />
+                        <p className="text-sm text-gray-500 mt-1">
+                          Be detailed about the work scope, materials, and any special requirements discussed.
+                        </p>
+                      </div>
+
+                      {/* AI Description Generation */}
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <Label>Professional Description</Label>
+                          <Button
+                            onClick={generateAIDescription}
+                            disabled={!currentService.serviceType || !currentService.appointmentNotes.trim() || isGeneratingDescription}
+                            size="sm"
+                            variant="outline"
+                          >
+                            {isGeneratingDescription ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Generating...
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="h-4 w-4 mr-2" />
+                                Generate with AI
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                        
+                        <Textarea
+                          className="input-blue-border min-h-[100px]"
+                          value={currentService.description}
+                          onChange={(e) => setCurrentService(prev => ({ ...prev, description: e.target.value }))}
+                          placeholder="AI will generate a professional description based on your appointment notes..."
+                          rows={4}
+                        />
+                      </div>
+
+                      <div className="flex justify-between items-center">
+                        <div className="text-lg font-semibold">
+                          Total: {formatCurrency(currentService.quantity * currentService.unitPrice)}
+                        </div>
+                        <Button 
+                          onClick={addService} 
+                          disabled={!currentService.serviceType || !currentService.description.trim()}
+                          className="flex items-center"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Service
                         </Button>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
+                    </CardContent>
+                  </Card>
 
-            {/* Summary */}
-            <TabsContent value="summary" className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Estimate Summary</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-6">
-                        {estimateData.services.map((service) => (
-                          <div key={service.id} className="border-b pb-4 last:border-b-0">
-                            <div className="flex justify-between items-start mb-2">
-                              <h4 className="font-semibold text-lg">{service.serviceName}</h4>
-                              <div className="text-right">
-                                <p className="font-bold text-lg">{formatCurrency(service.total)}</p>
+                  {/* Services List */}
+                  {estimateData.services.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Added Services ({estimateData.services.length})</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {estimateData.services.map((service) => (
+                            <div key={service.id} className="border rounded-lg p-4">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <Badge variant="outline">{service.serviceType}</Badge>
+                                    <h4 className="font-medium text-lg">{service.serviceName}</h4>
+                                  </div>
+                                  <p className="text-gray-700">{service.description}</p>
+                                  <div className="text-sm text-gray-500">
+                                    {service.quantity.toFixed(2)} {service.unit} × {formatCurrency(service.unitPrice)} = {formatCurrency(service.total)}
+                                  </div>
+                                </div>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => removeService(service.id)}
+                                  className="text-red-600 hover:text-red-700 ml-4"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                               </div>
                             </div>
-                            <p className="text-gray-700">{service.description}</p>
-                            <div className="text-sm text-gray-500">
-                              {service.quantity.toFixed(2)} {service.unit} × {formatCurrency(service.unitPrice)}
-                            </div>
+                          ))}
+                        </div>
+                        
+                        {estimateData.services.length > 0 && (
+                          <div className="mt-6">
+                            <Button onClick={() => setActiveTab("summary")} className="w-full">
+                              Continue to Summary
+                              <DollarSign className="h-4 w-4 ml-2" />
+                            </Button>
                           </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
+                </TabsContent>
 
-                  <Card className="mt-6">
-                    <CardHeader>
-                      <CardTitle>Terms & Notes</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <Label>Terms & Conditions</Label>
-                        <Textarea
-                          className="input-blue-border"
-                          value={estimateData.terms}
-                          onChange={(e) => setEstimateData(prev => ({ ...prev, terms: e.target.value }))}
-                          rows={3}
-                        />
-                      </div>
-                      <div>
-                        <Label>Additional Notes</Label>
-                        <Textarea
-                          className="input-blue-border"
-                          value={estimateData.notes}
-                          onChange={(e) => setEstimateData(prev => ({ ...prev, notes: e.target.value }))}
-                          rows={3}
-                          placeholder="Any additional information for the client..."
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                {/* Summary */}
+                <TabsContent value="summary" className="space-y-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Estimate Summary</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-6">
+                            {estimateData.services.map((service) => (
+                              <div key={service.id} className="border-b pb-4 last:border-b-0">
+                                <div className="flex justify-between items-start mb-2">
+                                  <h4 className="font-semibold text-lg">{service.serviceName}</h4>
+                                  <div className="text-right">
+                                    <p className="font-bold text-lg">{formatCurrency(service.total)}</p>
+                                  </div>
+                                </div>
+                                <p className="text-gray-700">{service.description}</p>
+                                <div className="text-sm text-gray-500">
+                                  {service.quantity.toFixed(2)} {service.unit} × {formatCurrency(service.unitPrice)}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
 
-                <div>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Pricing Summary</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex justify-between">
-                        <span>Subtotal:</span>
-                        <span>{formatCurrency(estimateData.subtotal)}</span>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label>Tax (%)</Label>
-                        <Input
-                          className="input-blue-border"
-                          type="number"
-                          step="0.1"
-                          value={estimateData.tax}
-                          onChange={(e) => setEstimateData(prev => ({ ...prev, tax: parseFloat(e.target.value) || 0 }))}
-                        />
-                      </div>
+                      <Card className="mt-6">
+                        <CardHeader>
+                          <CardTitle>Terms & Notes</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div>
+                            <Label>Terms & Conditions</Label>
+                            <Textarea
+                              className="input-blue-border"
+                              value={estimateData.terms}
+                              onChange={(e) => setEstimateData(prev => ({ ...prev, terms: e.target.value }))}
+                              rows={3}
+                            />
+                          </div>
+                          <div>
+                            <Label>Additional Notes</Label>
+                            <Textarea
+                              className="input-blue-border"
+                              value={estimateData.notes}
+                              onChange={(e) => setEstimateData(prev => ({ ...prev, notes: e.target.value }))}
+                              rows={3}
+                              placeholder="Any additional information for the client..."
+                            />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
 
-                      <div className="space-y-2">
-                        <Label>Discount (%)</Label>
-                        <Input
-                          className="input-blue-border"
-                          type="number"
-                          step="0.1"
-                          value={estimateData.discount}
-                          onChange={(e) => setEstimateData(prev => ({ ...prev, discount: parseFloat(e.target.value) || 0 }))}
-                        />
-                      </div>
+                    <div>
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Pricing Summary</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="flex justify-between">
+                            <span>Subtotal:</span>
+                            <span>{formatCurrency(estimateData.subtotal)}</span>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label>Tax (%)</Label>
+                            <Input
+                              className="input-blue-border"
+                              type="number"
+                              step="0.1"
+                              value={estimateData.tax}
+                              onChange={(e) => setEstimateData(prev => ({ ...prev, tax: parseFloat(e.target.value) || 0 }))}
+                            />
+                          </div>
 
-                      <Separator />
-                      
-                      <div className="flex justify-between font-bold text-lg">
-                        <span>Total:</span>
-                        <span>{formatCurrency(estimateData.total)}</span>
-                      </div>
+                          <div className="space-y-2">
+                            <Label>Discount (%)</Label>
+                            <Input
+                              className="input-blue-border"
+                              type="number"
+                              step="0.1"
+                              value={estimateData.discount}
+                              onChange={(e) => setEstimateData(prev => ({ ...prev, discount: parseFloat(e.target.value) || 0 }))}
+                            />
+                          </div>
 
-                      <Button onClick={saveEstimate} className="w-full disabled={createEstimateMutation.isPending}">
-                        <Save className="h-4 w-4 mr-2" />
-                        {createEstimateMutation.isPending ? "Creating..." : "Create Estimate"}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
+                          <Separator />
+                          
+                          <div className="flex justify-between font-bold text-lg">
+                            <span>Total:</span>
+                            <span>{formatCurrency(estimateData.total)}</span>
+                          </div>
+
+                          <Button onClick={saveEstimate} className="w-full" disabled={createEstimateMutation.isPending}>
+                            <Save className="h-4 w-4 mr-2" />
+                            {createEstimateMutation.isPending ? "Creating..." : "Create Estimate"}
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+          </main>
         </div>
       </div>
     </div>

@@ -82,8 +82,15 @@ export default function VendorEstimateFormSimple() {
             </Button>
           </Link>
           <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-foreground tracking-tight">Create Simple Estimate</h1>
-            <p className="text-muted-foreground">Quick estimate creation for basic services</p>
+            <div className="flex justify-center mb-6">
+              <img 
+                src="/remodra-logo.png" 
+                alt="Remodra Logo" 
+                className="h-16 w-16 object-contain"
+              />
+            </div>
+            <h1 className="text-2xl font-semibold text-foreground tracking-tight text-center">Create Simple Estimate</h1>
+            <p className="text-muted-foreground text-center">Quick estimate creation for basic services</p>
           </div>
         </div>
       </div>

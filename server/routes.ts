@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { setupAuth, hashPassword } from "./auth";
 import { z } from "zod";
 import { db } from "../db";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, gte, lte } from "drizzle-orm";
 // Importar middleware de autorización
 import { verifyResourceOwnership, verifyRelationship, preventCascadeOperations, EntityType } from "./middleware/authorization";
 import { 
@@ -28,15 +28,17 @@ import {
   events
 } from "../shared/schema";
 
-import { analyzeProject, generateSharingContent, generateProfessionalJobDescription } from "./ai-service";
+import { analyzeProject, generateSharingContent, generateProfessionalJobDescription, generateServiceDescription, generateEstimateDescription } from "./ai-service";
 import * as achievementService from "./services/achievement-service";
 import { registerTimeclockRoutes } from "./routes/timeclock-routes";
 import { registerPricingRoutes } from "./routes/pricing";
 import { registerDirectServiceRoutes } from "./routes/direct-service";
 import { registerDirectServicesRoutes } from "./routes/direct-services";
 import subscriptionRoutes from "./routes/subscription";
+import searchRoutes from "./routes/search";
 import * as sqliteSchema from "../shared/schema-sqlite";
 import * as mainSchema from "../shared/schema";
+import { generateServiceDescriptionForEstimate } from './ai-service';
 
 // Use SQLite schemas in development
 const isLocalDev = process.env.NODE_ENV === 'development' && process.env.DATABASE_URL?.includes('sqlite');
@@ -74,6 +76,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register subscription routes
   app.use("/api/subscription", subscriptionRoutes);
+
+  // Register search routes
+  app.use("/api/search", searchRoutes);
 
   // Simple service price update endpoint
   app.post('/api/update-service-price', async (req: any, res) => {
@@ -1658,10 +1663,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let projectStatusUpdated = false;
         let newProjectStatus = null;
         let projectUpdateMessage = "";
+        console.log(`[AUTO PROJECT] Payment received: $${newAmountPaid}, checking for project creation...`);
         if (newAmountPaid > 0) { // ANY payment triggers project logic
           try {
+            console.log(`[AUTO PROJECT] Invoice has projectId: ${invoice.projectId}`);
             if (invoice.projectId) {
               // Update existing project
+              console.log(`[AUTO PROJECT] Updating existing project ${invoice.projectId}`);
               const currentProject = await storage.getProject(invoice.projectId, req.user!.id);
               if (currentProject && currentProject.status === "pending") {
                 newProjectStatus = "In Progress";
@@ -1670,13 +1678,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 });
                 projectStatusUpdated = true;
                 projectUpdateMessage = `Project automatically moved to In Progress status after receiving payment.`;
+                console.log(`[AUTO PROJECT] Updated existing project ${invoice.projectId} to in_progress`);
               }
             }
             // Create new project when invoice has no existing project
             if (!invoice.projectId) {
+              console.log(`[AUTO PROJECT] No existing project, creating new one for client ${invoice.clientId}`);
               const client = await storage.getClient(invoice.clientId, req.user!.id);
               if (client) {
                 let estimateDetails = null;
+                let serviceType = "general"; // Default service type
+                
                 if (invoice.estimateId) {
                   try {
                     estimateDetails = await storage.getEstimate(invoice.estimateId, req.user!.id);
@@ -1684,6 +1696,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     console.log("Could not fetch estimate details:", estimateError);
                   }
                 }
+                
+                // Try to determine service type from contractor's services
+                try {
+                  console.log(`[AUTO PROJECT] Fetching contractor services for user ${req.user!.id}`);
+                  // Get contractor's services to find the most appropriate one
+                  const contractorServices = await db
+                    .select()
+                    .from(sqliteSchema.service_pricing)
+                    .where(eq(sqliteSchema.service_pricing.contractor_id, req.user!.id));
+                  
+                  console.log(`[AUTO PROJECT] Found ${contractorServices.length} contractor services:`, contractorServices.map(s => ({ name: s.name, type: s.service_type })));
+                  
+                  if (contractorServices.length > 0) {
+                    // If we have estimate details, try to match by description
+                    if (estimateDetails?.description) {
+                      const description = estimateDetails.description.toLowerCase();
+                      for (const service of contractorServices) {
+                        if (description.includes(service.service_type.toLowerCase()) || 
+                            description.includes(service.name.toLowerCase())) {
+                          serviceType = service.service_type;
+                          break;
+                        }
+                      }
+                    }
+                    
+                    // If no match found, use the first available service
+                    if (serviceType === "general") {
+                      serviceType = contractorServices[0].service_type;
+                    }
+                  }
+                } catch (serviceError) {
+                  console.log("Could not fetch contractor services:", serviceError);
+                }
+                
                 const isFullyPaid = newAmountPaid >= totalAmount;
                 const projectStatus = isFullyPaid ? "in_progress" : "in_progress";
                 const projectTitle = estimateDetails?.title 
@@ -1692,24 +1738,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 const projectDescription = estimateDetails?.description 
                   ? `${estimateDetails.description}\n\nAutomatically created from invoice #${invoice.invoiceNumber} after receiving payment of $${newAmountPaid.toFixed(2)}. ${isFullyPaid ? 'Invoice fully paid.' : `Remaining balance: $${(totalAmount - newAmountPaid).toFixed(2)}`}`
                   : `Automatically created project from invoice #${invoice.invoiceNumber} after receiving payment of $${newAmountPaid.toFixed(2)}. ${isFullyPaid ? 'Invoice fully paid.' : `Remaining balance: $${(totalAmount - newAmountPaid).toFixed(2)}`}`;
+                
                 try {
-                  const newProject = await storage.createSimpleProject({
+                  const newProject = await storage.createProject({
                     contractorId: req.user!.id,
                     clientId: invoice.clientId,
                     title: projectTitle,
                     description: projectDescription,
                     status: projectStatus,
-                    budget: Number(invoice.total),
+                    serviceType: serviceType,
+                    budget: invoice.total,
                     startDate: new Date(),
-                    notes: `Project created automatically when invoice payment was received.\n\nPayment Details:\n- Amount: $${parseFloat(amount).toFixed(2)}\n- Method: ${paymentMethod || 'cash'}\n- Total Paid: $${newAmountPaid.toFixed(2)}\n- Invoice Total: $${totalAmount.toFixed(2)}\n${notes ? `- Notes: ${notes}\n` : ''}\n${estimateDetails ? `- Based on Estimate: ${estimateDetails.title || 'N/A'}` : ''}`
+                    notes: `Project created automatically when invoice payment was received.\n\nPayment Details:\n- Amount: $${parseFloat(amount).toFixed(2)}\n- Method: ${paymentMethod || 'cash'}\n- Total Paid: $${newAmountPaid.toFixed(2)}\n- Invoice Total: $${totalAmount.toFixed(2)}\n- Service Type: ${serviceType}\n${notes ? `- Notes: ${notes}\n` : ''}\n${estimateDetails ? `- Based on Estimate: ${estimateDetails.title || 'N/A'}` : ''}`
                   });
+                  
                   await storage.updateInvoice(invoiceId, req.user!.id, {
                     projectId: newProject.id
                   });
                   projectStatusUpdated = true;
                   newProjectStatus = "In Progress";
-                  projectUpdateMessage = `New project created and automatically started (In Progress) after receiving payment. Project ID: ${newProject.id}`;
-                  console.log(`[AUTO PROJECT] Created project ${newProject.id} for invoice ${invoice.invoiceNumber} with status: ${projectStatus}`);
+                  projectUpdateMessage = `New project created and automatically started (In Progress) after receiving payment. Project ID: ${newProject.id}, Service Type: ${serviceType}`;
+                  console.log(`[AUTO PROJECT] Created project ${newProject.id} for invoice ${invoice.invoiceNumber} with service type: ${serviceType}, status: ${projectStatus}`);
                 } catch (projectCreateError) {
                   console.error("[AUTO PROJECT] Error creating project:", projectCreateError);
                 }
@@ -1742,7 +1791,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           projectUpdate: {
             updated: projectStatusUpdated,
             newStatus: newProjectStatus,
-            message: projectUpdateMessage
+            message: projectUpdateMessage,
+            serviceType: serviceType,
+            projectId: projectStatusUpdated ? newProject?.id : undefined
           },
           message: projectStatusUpdated 
             ? `Payment recorded successfully. ${projectUpdateMessage}`
@@ -2190,9 +2241,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/protected/events", async (req, res) => {
     try {
       const contractorId = req.user!.id;
-      // Fetch all events for this contractor
-      const events = await db.select().from(eventsTable).where(eq(eventsTable.contractor_id, contractorId));
-      // Optionally, join with clients and agents for richer info
+      const { date } = req.query;
+      const dayStart = date ? new Date(date as string).setHours(0, 0, 0, 0) : 0; // Start of day or 0 for all events
+      const dayEnd = date ? new Date(date as string).setHours(23, 59, 59, 999) : Date.now() + (365 * 24 * 60 * 60 * 1000); // End of day or 1 year from now for all events
+
+      // Get all events for this contractor and date
+      const eventsList = await db.select().from(eventsTable)
+        .where(and( // Filter by contractor_id and start_time within the date range
+          eq(eventsTable.contractor_id, contractorId),
+          gte(eventsTable.start_time, dayStart),
+          lte(eventsTable.start_time, dayEnd)
+        ));
+
       // For now, just map fields
       const mapEvent = (e) => ({
         id: e.id,
@@ -2200,7 +2260,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clientId: e.client_id,
         projectId: e.project_id,
         agentId: e.agent_id,
-        eventType: e.event_type,
+        eventType: e.type,
         type: e.type,
         title: e.title,
         status: e.status,
@@ -2214,10 +2274,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdAt: e.created_at,
         updatedAt: e.updated_at
       });
-      res.json(events.map(mapEvent));
+      res.json(eventsList.map(mapEvent));
     } catch (error) {
       console.error("Error fetching events:", error);
       res.status(500).json({ message: "Failed to fetch events" });
+    }
+  });
+
+  // Update event route
+  app.patch("/api/protected/events/:id", async (req, res) => {
+    try {
+      const contractorId = req.user!.id;
+      const eventId = parseInt(req.params.id);
+      const { agent_id } = req.body;
+
+      if (!eventId) {
+        return res.status(400).json({ message: "Invalid event ID" });
+      }
+
+      // Verify the event belongs to this contractor
+      const existingEvent = await db.select().from(eventsTable)
+        .where(and(eq(eventsTable.id, eventId), eq(eventsTable.contractor_id, contractorId)))
+        .limit(1);
+
+      if (existingEvent.length === 0) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+
+      // Update the event with the new agent_id
+      await db.update(eventsTable)
+        .set({ 
+          agent_id: agent_id ? parseInt(agent_id) : null,
+          updated_at: new Date()
+        })
+        .where(eq(eventsTable.id, eventId));
+
+      res.json({ message: "Event updated successfully" });
+    } catch (error) {
+      console.error("Error updating event:", error);
+      res.status(500).json({ message: "Failed to update event" });
     }
   });
 
@@ -2238,7 +2333,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const eventsList = await db.select().from(eventsTable)
         .where(and(
           eq(eventsTable.contractor_id, contractorId),
-          sql`${eventsTable.start_time} >= ${dayStart} AND ${eventsTable.start_time} <= ${dayEnd}`
+          gte(eventsTable.start_time, dayStart),
+          lte(eventsTable.start_time, dayEnd)
         ));
 
       // Get all estimates for this contractor
@@ -2497,6 +2593,195 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Failed to generate job description",
         error: error instanceof Error ? error.message : String(error)
       });
+    }
+  });
+
+  // AI Description Generation Endpoints
+  app.post('/api/protected/ai/generate-service-description', async (req, res) => {
+    try {
+      const { serviceData } = req.body;
+      
+      if (!serviceData) {
+        return res.status(400).json({ error: 'Service data is required' });
+      }
+
+      const description = await generateServiceDescription(serviceData);
+      res.json({ description });
+    } catch (error) {
+      console.error('Error generating service description:', error);
+      res.status(500).json({ error: 'Failed to generate service description' });
+    }
+  });
+
+  app.post('/api/protected/ai/generate-estimate-description', async (req, res) => {
+    try {
+      const { estimateData } = req.body;
+      
+      if (!estimateData) {
+        return res.status(400).json({ error: 'Estimate data is required' });
+      }
+
+      const description = await generateEstimateDescription(estimateData);
+      res.json({ description });
+    } catch (error) {
+      console.error('Error generating estimate description:', error);
+      res.status(500).json({ error: 'Failed to generate estimate description' });
+    }
+  });
+
+  // AI Service Description Generation
+  app.post('/api/ai/generate-service-description', async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+
+      const { serviceType, serviceName, measurements, laborRate, unit } = req.body;
+
+      if (!serviceType || !serviceName) {
+        return res.status(400).json({ message: 'Service type and name are required' });
+      }
+
+      const result = await generateServiceDescriptionForEstimate({
+        serviceType,
+        serviceName,
+        measurements: measurements || {},
+        laborRate: laborRate || 0,
+        unit: unit || 'unit'
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error generating service description:', error);
+      res.status(500).json({ 
+        message: 'Error generating service description',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Add missing achievement and streak routes to prevent 404 errors
+  app.post('/api/contractor/streak/update', async (req, res) => {
+    try {
+      // Placeholder implementation - just return success
+      res.json({ success: true, message: 'Streak updated' });
+    } catch (error) {
+      console.error('Error updating streak:', error);
+      res.status(500).json({ error: 'Failed to update streak' });
+    }
+  });
+
+  app.get('/api/contractor/achievements/unread', async (req, res) => {
+    try {
+      // Placeholder implementation - return empty array
+      res.json([]);
+    } catch (error) {
+      console.error('Error fetching unread achievements:', error);
+      res.status(500).json({ error: 'Failed to fetch achievements' });
+    }
+  });
+
+  // Materials routes
+  app.get("/api/protected/materials", async (req, res) => {
+    try {
+      const materials = await storage.getMaterials(req.user!.id);
+      res.json(materials);
+    } catch (error) {
+      console.error("Error fetching materials:", error);
+      res.status(500).json({ message: "Failed to fetch materials" });
+    }
+  });
+
+  // Agents routes (already exists but adding for completeness)
+  app.get("/api/protected/agents", async (req, res) => {
+    try {
+      const agents = await storage.getAgents(req.user!.id);
+      res.json(agents);
+    } catch (error) {
+      console.error("Error fetching agents:", error);
+      res.status(500).json({ message: "Failed to fetch agents" });
+    }
+  });
+
+  // Payments routes
+  app.get("/api/protected/payments", async (req, res) => {
+    try {
+      const { invoiceId } = req.query;
+      if (invoiceId) {
+        const payments = await storage.getPayments(Number(invoiceId), req.user!.id);
+        res.json(payments);
+      } else {
+        // Get all payments for all invoices of this contractor
+        const invoices = await storage.getInvoices(req.user!.id);
+        const allPayments = [];
+        for (const invoice of invoices) {
+          const payments = await storage.getPayments(invoice.id, req.user!.id);
+          allPayments.push(...payments);
+        }
+        res.json(allPayments);
+      }
+    } catch (error) {
+      console.error("Error fetching payments:", error);
+      res.status(500).json({ message: "Failed to fetch payments" });
+    }
+  });
+
+  // Follow-ups routes
+  app.get("/api/protected/follow-ups", async (req, res) => {
+    try {
+      const followUps = await storage.getFollowUps(req.user!.id);
+      res.json(followUps);
+    } catch (error) {
+      console.error("Error fetching follow-ups:", error);
+      res.status(500).json({ message: "Failed to fetch follow-ups" });
+    }
+  });
+
+  // Attachments routes
+  app.get("/api/protected/attachments", async (req, res) => {
+    try {
+      const { entityType, entityId } = req.query;
+      if (entityType && entityId) {
+        const attachments = await storage.getAttachments(req.user!.id, entityType as string, Number(entityId));
+        res.json(attachments);
+      } else {
+        // Get all attachments for this contractor
+        const allAttachments = [];
+        const entities = ['client', 'project', 'estimate', 'invoice', 'material'];
+        
+        for (const entityType of entities) {
+          // Get all entities of this type for the contractor
+          let entities = [];
+          switch (entityType) {
+            case 'client':
+              entities = await storage.getClients(req.user!.id);
+              break;
+            case 'project':
+              entities = await storage.getProjects(req.user!.id);
+              break;
+            case 'estimate':
+              entities = await storage.getEstimates(req.user!.id);
+              break;
+            case 'invoice':
+              entities = await storage.getInvoices(req.user!.id);
+              break;
+            case 'material':
+              entities = await storage.getMaterials(req.user!.id);
+              break;
+          }
+          
+          // Get attachments for each entity
+          for (const entity of entities) {
+            const attachments = await storage.getAttachments(req.user!.id, entityType, entity.id);
+            allAttachments.push(...attachments);
+          }
+        }
+        
+        res.json(allAttachments);
+      }
+    } catch (error) {
+      console.error("Error fetching attachments:", error);
+      res.status(500).json({ message: "Failed to fetch attachments" });
     }
   });
 }

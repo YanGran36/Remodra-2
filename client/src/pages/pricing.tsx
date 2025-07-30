@@ -1,12 +1,13 @@
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
-import { Check, Crown, Zap, Clock, CreditCard, Users, Star } from "lucide-react";
+import { Check, Crown, Zap, Clock, CreditCard, Users, Star, ArrowLeft } from "lucide-react";
 import { useAuth } from '../hooks/use-auth';
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 const PricingPage = () => {
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
 
   const plans = [
     {
@@ -25,7 +26,7 @@ const PricingPage = () => {
         "No Stripe integration"
       ],
       icon: Users,
-      color: "blue",
+      color: "amber",
       popular: false
     },
     {
@@ -45,7 +46,7 @@ const PricingPage = () => {
         "Limited AI usage"
       ],
       icon: Zap,
-      color: "green",
+      color: "amber",
       popular: true
     },
     {
@@ -63,7 +64,7 @@ const PricingPage = () => {
       ],
       limitations: [],
       icon: Crown,
-      color: "purple",
+      color: "amber",
       popular: false
     }
   ];
@@ -71,23 +72,42 @@ const PricingPage = () => {
   const handleSubscribe = (planName: string) => {
     if (!user) {
       // Redirect to register/login with plan selection
-      window.location.href = `/auth?plan=${planName.toLowerCase()}`;
+      setLocation(`/auth?plan=${planName.toLowerCase()}`);
       return;
     }
     
     // If user is logged in, redirect to billing/upgrade page
-    window.location.href = `/billing/upgrade?plan=${planName.toLowerCase()}`;
+    setLocation(`/billing/upgrade?plan=${planName.toLowerCase()}`);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <div className="container mx-auto px-4 py-16">
+        {/* Navigation */}
+        <div className="mb-8">
+          <Button
+            variant="ghost"
+            onClick={() => setLocation('/')}
+            className="text-slate-400 hover:text-amber-400"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Home
+          </Button>
+        </div>
+
         {/* Header */}
         <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-4">
-            Choose Your <span className="text-blue-600">Remodra</span> Plan
+          <div className="flex justify-center mb-6">
+            <img 
+              src="/remodra-logo.png" 
+              alt="Remodra Logo" 
+              className="h-16 w-16 object-contain"
+            />
+          </div>
+          <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
+            Choose Your <span className="text-amber-400">Remodra</span> Plan
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+          <p className="text-xl text-slate-300 max-w-3xl mx-auto">
             Powerful contractor management tools that grow with your business. 
             Start your 14-day free trial today.
           </p>
@@ -100,31 +120,31 @@ const PricingPage = () => {
             return (
               <Card 
                 key={plan.name} 
-                className={`relative overflow-hidden ${
+                className={`relative overflow-hidden bg-gradient-to-br from-slate-800 to-slate-700 border-slate-600 ${
                   plan.popular 
-                    ? 'border-2 border-green-500 shadow-2xl scale-105' 
-                    : 'border shadow-lg hover:shadow-xl transition-shadow'
+                    ? 'border-2 border-amber-500 shadow-2xl scale-105' 
+                    : 'border shadow-lg hover:shadow-xl transition-shadow hover:border-amber-500'
                 }`}
               >
                 {plan.popular && (
-                  <div className="absolute top-0 left-0 right-0 bg-green-500 text-white text-center py-2 text-sm font-semibold">
+                  <div className="absolute top-0 left-0 right-0 bg-amber-500 text-slate-900 text-center py-2 text-sm font-semibold">
                     <Star className="inline h-4 w-4 mr-1" />
                     Most Popular
                   </div>
                 )}
                 
                 <CardHeader className={`text-center ${plan.popular ? 'pt-12' : 'pt-8'}`}>
-                  <div className={`mx-auto mb-4 p-3 rounded-full bg-${plan.color}-100 dark:bg-${plan.color}-900`}>
-                    <IconComponent className={`h-8 w-8 text-${plan.color}-600`} />
+                  <div className="mx-auto mb-4 p-3 rounded-full bg-amber-500/20">
+                    <IconComponent className="h-8 w-8 text-amber-400" />
                   </div>
-                  <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
+                  <CardTitle className="text-2xl font-bold text-white">{plan.name}</CardTitle>
                   <div className="mt-4">
-                    <span className="text-4xl font-bold text-gray-900 dark:text-white">
+                    <span className="text-4xl font-bold text-white">
                       ${plan.price}
                     </span>
-                    <span className="text-gray-600 dark:text-gray-400">/month</span>
+                    <span className="text-slate-400">/month</span>
                   </div>
-                  <p className="text-gray-600 dark:text-gray-400 mt-2">
+                  <p className="text-slate-300 mt-2">
                     {plan.description}
                   </p>
                 </CardHeader>
@@ -132,13 +152,13 @@ const PricingPage = () => {
                 <CardContent className="space-y-6">
                   {/* Features */}
                   <div className="space-y-3">
-                    <h4 className="font-semibold text-green-700 dark:text-green-400">
+                    <h4 className="font-semibold text-amber-400">
                       Included Features:
                     </h4>
                     {plan.features.map((feature, index) => (
                       <div key={index} className="flex items-center space-x-3">
-                        <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                        <Check className="h-4 w-4 text-amber-400 flex-shrink-0" />
+                        <span className="text-sm text-slate-300">
                           {feature}
                         </span>
                       </div>
@@ -148,13 +168,13 @@ const PricingPage = () => {
                   {/* Limitations */}
                   {plan.limitations.length > 0 && (
                     <div className="space-y-3">
-                      <h4 className="font-semibold text-gray-500 dark:text-gray-400">
+                      <h4 className="font-semibold text-slate-400">
                         Not Included:
                       </h4>
                       {plan.limitations.map((limitation, index) => (
                         <div key={index} className="flex items-center space-x-3">
-                          <div className="h-4 w-4 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0" />
-                          <span className="text-sm text-gray-500 dark:text-gray-400">
+                          <div className="h-4 w-4 rounded-full bg-slate-600 flex-shrink-0" />
+                          <span className="text-sm text-slate-400">
                             {limitation}
                           </span>
                         </div>
@@ -166,8 +186,8 @@ const PricingPage = () => {
                     onClick={() => handleSubscribe(plan.name)}
                     className={`w-full mt-6 ${
                       plan.popular 
-                        ? 'bg-green-600 hover:bg-green-700' 
-                        : `bg-${plan.color}-600 hover:bg-${plan.color}-700`
+                        ? 'bg-amber-500 hover:bg-amber-600 text-slate-900' 
+                        : 'bg-amber-500 hover:bg-amber-600 text-slate-900'
                     }`}
                     size="lg"
                   >
@@ -179,120 +199,63 @@ const PricingPage = () => {
           })}
         </div>
 
-        {/* Features Comparison */}
-        <div className="mt-20">
-          <h2 className="text-3xl font-bold text-center mb-12 text-gray-900 dark:text-white">
-            Feature Comparison
-          </h2>
-          
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th className="px-6 py-4 text-left font-semibold">Features</th>
-                    <th className="px-6 py-4 text-center font-semibold">Basic</th>
-                    <th className="px-6 py-4 text-center font-semibold">
-                      Pro
-                      <Badge className="ml-2 bg-green-500">Popular</Badge>
-                    </th>
-                    <th className="px-6 py-4 text-center font-semibold">Business</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
-                  <tr>
-                    <td className="px-6 py-4 font-medium">Client Management</td>
-                    <td className="px-6 py-4 text-center">Up to 10</td>
-                    <td className="px-6 py-4 text-center">Up to 50</td>
-                    <td className="px-6 py-4 text-center">Unlimited</td>
-                  </tr>
-                  <tr className="bg-gray-50 dark:bg-gray-700/50">
-                    <td className="px-6 py-4 font-medium">AI Cost Analysis</td>
-                    <td className="px-6 py-4 text-center">-</td>
-                    <td className="px-6 py-4 text-center">10/month</td>
-                    <td className="px-6 py-4 text-center">Unlimited</td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 font-medium">Time Clock</td>
-                    <td className="px-6 py-4 text-center">-</td>
-                    <td className="px-6 py-4 text-center">
-                      <Check className="h-5 w-5 text-green-500 mx-auto" />
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <Check className="h-5 w-5 text-green-500 mx-auto" />
-                    </td>
-                  </tr>
-                  <tr className="bg-gray-50 dark:bg-gray-700/50">
-                    <td className="px-6 py-4 font-medium">Stripe Integration</td>
-                    <td className="px-6 py-4 text-center">-</td>
-                    <td className="px-6 py-4 text-center">-</td>
-                    <td className="px-6 py-4 text-center">
-                      <Check className="h-5 w-5 text-green-500 mx-auto" />
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 font-medium">Branded Portal</td>
-                    <td className="px-6 py-4 text-center">Basic</td>
-                    <td className="px-6 py-4 text-center">Custom</td>
-                    <td className="px-6 py-4 text-center">Fully Branded</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        {/* FAQ Section */}
-        <div className="mt-20 text-center">
-          <h2 className="text-3xl font-bold mb-8 text-gray-900 dark:text-white">
-            Frequently Asked Questions
-          </h2>
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto text-left">
-            <div>
-              <h3 className="font-semibold mb-2">Can I change plans later?</h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Yes! You can upgrade or downgrade your plan at any time from your account settings.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-2">Is there a free trial?</h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                All plans include a 14-day free trial. No credit card required to start.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-2">What payment methods do you accept?</h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                We accept all major credit cards and PayPal through our secure payment processor.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-2">Can I cancel anytime?</h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Yes, you can cancel your subscription at any time. Your data will remain accessible until your billing period ends.
-              </p>
+        {/* Additional Info */}
+        <div className="mt-16 text-center">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-2xl font-bold text-white mb-6">
+              All Plans Include
+            </h2>
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="text-center">
+                <div className="mx-auto mb-4 p-3 rounded-full bg-amber-500/20 w-16 h-16 flex items-center justify-center">
+                  <Clock className="h-8 w-8 text-amber-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-white mb-2">14-Day Free Trial</h3>
+                <p className="text-slate-300">Try any plan risk-free for 14 days</p>
+              </div>
+              <div className="text-center">
+                <div className="mx-auto mb-4 p-3 rounded-full bg-amber-500/20 w-16 h-16 flex items-center justify-center">
+                  <CreditCard className="h-8 w-8 text-amber-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-white mb-2">Cancel Anytime</h3>
+                <p className="text-slate-300">No long-term contracts or hidden fees</p>
+              </div>
+              <div className="text-center">
+                <div className="mx-auto mb-4 p-3 rounded-full bg-amber-500/20 w-16 h-16 flex items-center justify-center">
+                  <Users className="h-8 w-8 text-amber-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-white mb-2">24/7 Support</h3>
+                <p className="text-slate-300">Get help whenever you need it</p>
+              </div>
             </div>
           </div>
         </div>
 
         {/* CTA Section */}
-        <div className="mt-20 text-center">
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-8 text-white">
-            <h2 className="text-3xl font-bold mb-4">Ready to Transform Your Business?</h2>
-            <p className="text-xl mb-6">Join thousands of contractors already using Remodra</p>
-            <div className="space-x-4">
-              <Button 
-                onClick={() => handleSubscribe('Pro')}
-                size="lg" 
-                className="bg-white text-blue-600 hover:bg-gray-100"
+        <div className="mt-16 text-center">
+          <div className="max-w-2xl mx-auto">
+            <h2 className="text-3xl font-bold text-white mb-4">
+              Ready to Get Started?
+            </h2>
+            <p className="text-xl text-slate-300 mb-8">
+              Join thousands of contractors who trust Remodra to manage their business
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button
+                onClick={() => setLocation('/auth')}
+                size="lg"
+                className="bg-amber-500 hover:bg-amber-600 text-slate-900 text-lg px-8 py-3"
               >
                 Start Free Trial
               </Button>
-              <Link href="/contact">
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
-                  Contact Sales
-                </Button>
-              </Link>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => setLocation('/simple-login')}
+                className="text-slate-300 border-slate-600 hover:bg-slate-800 text-lg px-8 py-3"
+              >
+                Sign In
+              </Button>
             </div>
           </div>
         </div>

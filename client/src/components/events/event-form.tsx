@@ -324,7 +324,8 @@ export default function EventForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="remodra-card p-6">
         {/* Event Loading Confirmation - show when editing */}
         {eventId && eventData && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
@@ -388,11 +389,12 @@ export default function EventForm({
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Event Title</FormLabel>
+              <FormLabel className="text-slate-300 font-medium">Event Title</FormLabel>
               <FormControl>
                 <Input 
                   placeholder="e.g.: Site visit for measurements" 
                   {...field} 
+                  className="remodra-input"
                 />
               </FormControl>
               <FormMessage />
@@ -405,12 +407,13 @@ export default function EventForm({
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel className="text-slate-300 font-medium">Description</FormLabel>
               <FormControl>
                 <Textarea 
                   placeholder="Event details" 
                   {...field} 
                   value={field.value || ""}
+                  className="remodra-input"
                 />
               </FormControl>
               <FormMessage />
@@ -424,7 +427,7 @@ export default function EventForm({
             name="date"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Date</FormLabel>
+                <FormLabel className="text-slate-300 font-medium">Date</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -464,8 +467,8 @@ export default function EventForm({
             control={form.control}
             name="startTime"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Start Time</FormLabel>
+                          <FormItem>
+              <FormLabel className="text-slate-300 font-medium">Start Time</FormLabel>
                 <FormControl>
                   <TimePicker
                     value={field.value}
@@ -482,8 +485,8 @@ export default function EventForm({
             control={form.control}
             name="endTime"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>End Time</FormLabel>
+                          <FormItem>
+              <FormLabel className="text-slate-300 font-medium">End Time</FormLabel>
                 <FormControl>
                   <TimePicker
                     value={field.value}
@@ -765,6 +768,8 @@ export default function EventForm({
           )}
         />
         
+        </div>
+        
         <div className="flex justify-between pt-2">
           <div className="flex gap-3">
             {eventId && currentEvent?.status !== "cancelled" && (
@@ -789,7 +794,7 @@ export default function EventForm({
                       placeholder="e.g., Client requested reschedule, weather conditions, emergency, etc."
                       value={cancellationReason}
                       onChange={(e) => setCancellationReason(e.target.value)}
-                      className="mt-2"
+                      className="remodra-input mt-2"
                       rows={3}
                     />
                   </div>
@@ -811,12 +816,13 @@ export default function EventForm({
           </div>
           
           <div className="flex gap-3">
-            <Button type="button" variant="outline" onClick={onCancel}>
+            <Button type="button" variant="outline" onClick={onCancel} className="remodra-button-outline">
               Close
             </Button>
             <Button 
               type="submit"
               disabled={createEventMutation.isPending || updateEventMutation.isPending}
+              className="remodra-button"
             >
               {(createEventMutation.isPending || updateEventMutation.isPending) && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -47,11 +47,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Input } from '../components/ui/input';
 import { useAuth } from '../hooks/use-auth';
 import { useLanguage } from '../hooks/use-language';
+import LogoTest from '../components/logo-test';
+import RemodraLogo from '../components/remodra-logo';
 import TopNav from '../components/layout/top-nav';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import ClientForm from '../components/clients/client-form';
 import EventDialog from '../components/events/event-dialog';
 import { useClients, ClientInput } from '../hooks/use-clients';
+import { usePlanAccess } from '../components/subscription/PlanAccessControl';
 
 // Lazy load the achievement component to improve initial load time
 const AchievementSummary = lazy(() => import("../components/achievements/AchievementSummary").then(module => ({
@@ -61,6 +64,7 @@ const AchievementSummary = lazy(() => import("../components/achievements/Achieve
 export default function Dashboard() {
   const { user } = useAuth();
   const { t } = useLanguage();
+  const { currentPlan, hasAccess, isBasic, isPro, isBusiness } = usePlanAccess();
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [, setLocation] = useLocation();
@@ -264,15 +268,12 @@ export default function Dashboard() {
       <MobileSidebar />
       <div className="remodra-main">
         <TopNav />
-        <main className="p-8 space-y-8">
+        <div className="remodra-content">
+          <main className="p-8 space-y-8">
           {/* Header with Remodra branding */}
           <div className="text-center mb-8">
             <div className="flex justify-center mb-6">
-              <img 
-                src="/remodra-logo.png" 
-                alt="Remodra Logo" 
-                className="h-16 w-16 object-contain"
-              />
+              <RemodraLogo size={64} />
             </div>
             <h1 className="remodra-title mb-3">
               Welcome back, {user?.firstName || 'Contractor'}!
@@ -442,6 +443,7 @@ export default function Dashboard() {
             </div>
           </div>
         </main>
+        </div>
       </div>
 
              {/* Client Form Dialog */}

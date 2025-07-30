@@ -1,18 +1,12 @@
 import { Router } from "express";
-import { db } from "../../db";
-import { contractors, subscription_plans } from "../../shared/schema-sqlite";
-import { eq } from "drizzle-orm";
+import { SubscriptionService } from "../services/subscription-service";
 
 const router = Router();
 
 // Get available subscription plans
 router.get("/plans", async (req, res) => {
   try {
-    const plans = await db
-      .select()
-      .from(subscription_plans)
-      .where(eq(subscription_plans.is_active, true));
-    
+    const plans = await SubscriptionService.getAllPlans();
     res.json(plans);
   } catch (error) {
     console.error("Error fetching subscription plans:", error);
@@ -27,57 +21,37 @@ router.get("/status", async (req, res) => {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
-    const contractor = await db
-      .select()
-      .from(contractors)
-      .where(eq(contractors.id, req.user.id))
-      .limit(1);
-
-    if (contractor.length === 0) {
+    const subscription = await SubscriptionService.getContractorSubscription(req.user.id);
+    
+    if (!subscription) {
       return res.status(404).json({ error: "Contractor not found" });
     }
 
-    const user = contractor[0];
+    const limits = await SubscriptionService.getPlanLimits(subscription.plan);
     
     res.json({
-      plan: user.plan,
-      subscriptionStatus: user.subscription_status,
-      planStartDate: user.plan_start_date,
-      planEndDate: user.plan_end_date,
-      currentClientCount: user.current_client_count,
-      aiUsageThisMonth: user.ai_usage_this_month,
-      aiUsageResetDate: user.ai_usage_reset_date
+      contractor: {
+        id: subscription.contractorId,
+        plan: subscription.plan,
+        subscriptionStatus: subscription.subscriptionStatus,
+        planStartDate: subscription.planStartDate,
+        planEndDate: subscription.planEndDate,
+        stripeCustomerId: subscription.stripeCustomerId,
+        stripeSubscriptionId: subscription.stripeSubscriptionId
+      },
+      plan: limits,
+      usage: {
+        currentClientCount: subscription.currentClientCount,
+        maxClients: limits?.clientLimit,
+        clientsRemaining: limits?.clientLimit === null ? 'unlimited' : Math.max(0, (limits?.clientLimit || 0) - subscription.currentClientCount),
+        currentAiUsage: subscription.aiUsageThisMonth,
+        maxAiUsage: limits?.aiUsageLimit,
+        aiUsageRemaining: limits?.aiUsageLimit === null ? 'unlimited' : Math.max(0, (limits?.aiUsageLimit || 0) - subscription.aiUsageThisMonth)
+      }
     });
   } catch (error) {
     console.error("Error fetching subscription status:", error);
     res.status(500).json({ error: "Failed to fetch subscription status" });
-  }
-});
-
-// Update subscription status (for webhook handling)
-router.post("/update-status", async (req, res) => {
-  try {
-    const { contractorId, status, plan, endDate } = req.body;
-
-    if (!contractorId || !status) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
-
-    const [updated] = await db
-      .update(contractors)
-      .set({
-        subscription_status: status,
-        plan: plan || "basic",
-        plan_end_date: endDate ? Date.now() + (endDate * 24 * 60 * 60 * 1000) : null,
-        updated_at: Date.now()
-      })
-      .where(eq(contractors.id, contractorId))
-      .returning();
-
-    res.json(updated);
-  } catch (error) {
-    console.error("Error updating subscription status:", error);
-    res.status(500).json({ error: "Failed to update subscription status" });
   }
 });
 
@@ -88,75 +62,69 @@ router.post("/check-limit", async (req, res) => {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
-    const { action, resource } = req.body;
+    const { action } = req.body;
 
-    const contractor = await db
-      .select()
-      .from(contractors)
-      .where(eq(contractors.id, req.user.id))
-      .limit(1);
-
-    if (contractor.length === 0) {
-      return res.status(404).json({ error: "Contractor not found" });
+    if (!action) {
+      return res.status(400).json({ error: "Action is required" });
     }
 
-    const user = contractor[0];
-
-    // Check subscription status
-    if (user.subscription_status !== "active") {
-      return res.json({
-        allowed: false,
-        reason: "Subscription not active",
-        message: "Please update your subscription to continue."
-      });
-    }
-
-    // Check plan limits based on action
-    let allowed = true;
-    let reason = "";
-    let message = "";
-
-    switch (action) {
-      case "create_client":
-        const clientLimit = user.plan === "premium" ? 1000 : user.plan === "professional" ? 500 : 50;
-        if (user.current_client_count >= clientLimit) {
-          allowed = false;
-          reason = "Client limit reached";
-          message = `You've reached your client limit (${clientLimit}). Please upgrade your plan.`;
-        }
-        break;
-      
-      case "use_ai":
-        const aiLimit = user.plan === "premium" ? 1000 : user.plan === "professional" ? 500 : 100;
-        if (user.ai_usage_this_month >= aiLimit) {
-          allowed = false;
-          reason = "AI usage limit reached";
-          message = `You've reached your AI usage limit (${aiLimit} requests/month). Please upgrade your plan.`;
-        }
-        break;
-      
-      case "create_project":
-        const projectLimit = user.plan === "premium" ? 1000 : user.plan === "professional" ? 500 : 100;
-        // This would need a project count field in the database
-        allowed = true;
-        break;
-      
-      default:
-        allowed = true;
-    }
+    const result = await SubscriptionService.checkActionAllowed(req.user.id, action);
 
     res.json({
-      allowed,
-      reason,
-      message,
-      currentUsage: {
-        clients: user.current_client_count,
-        aiUsage: user.ai_usage_this_month
-      }
+      allowed: result.allowed,
+      reason: result.reason,
+      message: result.message,
+      limits: result.limits
     });
   } catch (error) {
     console.error("Error checking subscription limit:", error);
     res.status(500).json({ error: "Failed to check subscription limit" });
+  }
+});
+
+// Get usage statistics
+router.get("/usage", async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const usageStats = await SubscriptionService.getUsageStats(req.user.id);
+    res.json(usageStats);
+  } catch (error) {
+    console.error("Error fetching usage stats:", error);
+    res.status(500).json({ error: "Failed to fetch usage statistics" });
+  }
+});
+
+// Update subscription plan (admin only)
+router.put("/update-plan", async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const { newPlan, stripeCustomerId, stripeSubscriptionId } = req.body;
+
+    if (!newPlan) {
+      return res.status(400).json({ error: "New plan is required" });
+    }
+
+    const success = await SubscriptionService.updateContractorPlan(
+      req.user.id,
+      newPlan,
+      stripeCustomerId,
+      stripeSubscriptionId
+    );
+
+    if (success) {
+      res.json({ message: "Plan updated successfully" });
+    } else {
+      res.status(500).json({ error: "Failed to update plan" });
+    }
+  } catch (error) {
+    console.error("Error updating subscription plan:", error);
+    res.status(500).json({ error: "Failed to update subscription plan" });
   }
 });
 

@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Button } from '../ui/button';
+import RemodraLogo from '../remodra-logo';
 
 
 export default function MobileSidebar() {
@@ -98,7 +99,7 @@ export default function MobileSidebar() {
   return (
     <>
       {/* Mobile menu toggle button */}
-      <div className="fixed top-4 left-4 lg:hidden z-50">
+      <div className="fixed top-4 left-4 hidden z-50">
         <Button
           id="mobile-sidebar-toggle"
           variant="ghost"
@@ -126,14 +127,12 @@ export default function MobileSidebar() {
         }`}
       >
         <div className="p-6 flex items-center justify-between border-b border-slate-600 bg-gradient-to-r from-slate-800/50 to-slate-900/50">
-          <div className="flex items-center">
-            <img 
-              src="/remodra-logo.png" 
-              alt="Remodra Logo" 
-              className="h-8 w-8 object-contain mr-4"
-            />
-            <span className="text-xl font-bold text-amber-400">Remodra</span>
-          </div>
+                      <div className="flex items-center">
+              <div className="mr-4">
+                <RemodraLogo size={32} />
+              </div>
+              <span className="text-xl font-bold text-amber-400">Remodra</span>
+            </div>
           <Button
             variant="ghost" 
             size="icon"
@@ -146,7 +145,7 @@ export default function MobileSidebar() {
         
         <div className="py-4 flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent">
           <nav className="space-y-1">
-            <Link href="/" className={getLinkClass("/")}>
+                          <Link href="/dashboard" className={getLinkClass("/dashboard")}>
               <LayoutDashboardIcon className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
               <span className="font-medium">Dashboard</span>
             </Link>
@@ -173,6 +172,10 @@ export default function MobileSidebar() {
             <Link href="/materials" className={getLinkClass("/materials")}>
               <Drill className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
               <span className="font-medium">Materials</span>
+            </Link>
+            <Link href="/simple-pricing" className={getLinkClass("/simple-pricing")}>
+              <Settings className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
+              <span className="font-medium">Services</span>
             </Link>
 
             <Link href="/timeclock" className={getLinkClass("/timeclock")}>

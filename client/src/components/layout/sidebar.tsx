@@ -22,13 +22,16 @@ import {
   FileText,
   CreditCard,
   MessageSquare,
-  LogOut
+  LogOut,
+  Calculator,
+  Lock
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { LanguageSwitcher } from '../language-switcher';
 import { Separator } from '../ui/separator';
 import { Button } from '../ui/button';
-
+import RemodraLogo from '../remodra-logo';
+import { Badge } from '../ui/badge';
 
 export default function Sidebar() {
   const [location] = useLocation();
@@ -56,59 +59,115 @@ export default function Sidebar() {
     return `${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`;
   };
 
-  const navigationItems = [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboardIcon },
-    { name: 'Calendar', href: '/calendar', icon: CalendarIcon },
-    { name: 'Clients', href: '/clients', icon: UsersIcon },
-    { name: 'Estimates', href: '/estimates', icon: FileTextIcon },
-    { name: 'Invoices', href: '/invoices', icon: BanknoteIcon },
-    { name: 'Projects', href: '/projects', icon: HammerIcon },
-    { name: 'Materials', href: '/materials', icon: Drill },
-    { name: 'Time Clock', href: '/timeclock', icon: Clock },
-    { name: 'AI Assistant', href: '/ai-assistant', icon: BotIcon },
-    { name: 'Tools', href: '/tools', icon: Palette },
-    { name: 'Settings', href: '/settings', icon: SettingsIcon },
+  // Define plan-based access control
+  const getPlanAccess = () => {
+    const plan = user?.plan || 'basic';
+    
+    const planAccess = {
+      basic: {
+        features: ['dashboard', 'calendar', 'estimates', 'invoices'],
+        name: 'Basic Plan',
+        color: 'bg-blue-500'
+      },
+      pro: {
+        features: ['dashboard', 'calendar', 'estimates', 'invoices', 'projects', 'ai-assistant'],
+        name: 'Pro Plan',
+        color: 'bg-green-500'
+      },
+      business: {
+        features: ['dashboard', 'calendar', 'estimates', 'invoices', 'projects', 'ai-assistant', 'clients', 'materials', 'timeclock', 'agents', 'tools'],
+        name: 'Business Plan',
+        color: 'bg-purple-500'
+      }
+    };
+    
+    return planAccess[plan as keyof typeof planAccess] || planAccess.basic;
+  };
+
+  const planAccess = getPlanAccess();
+
+  const allNavigationItems = [
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboardIcon, feature: 'dashboard' },
+    { name: 'Calendar', href: '/calendar', icon: CalendarIcon, feature: 'calendar' },
+    { name: 'Clients', href: '/clients', icon: UsersIcon, feature: 'clients' },
+    { name: 'Estimates', href: '/estimates', icon: FileTextIcon, feature: 'estimates' },
+    { name: 'Invoices', href: '/invoices', icon: BanknoteIcon, feature: 'invoices' },
+    { name: 'Projects', href: '/projects', icon: HammerIcon, feature: 'projects' },
+    { name: 'Materials', href: '/materials', icon: Drill, feature: 'materials' },
+    { name: 'Services', href: '/simple-pricing', icon: Settings, feature: 'services' },
+    { name: 'Time Clock', href: '/timeclock', icon: Clock, feature: 'timeclock' },
+    { name: 'Agents', href: '/agents', icon: Calculator, feature: 'agents' },
+    { name: 'AI Assistant', href: '/ai-assistant', icon: BotIcon, feature: 'ai-assistant' },
+    { name: 'Tools', href: '/tools', icon: Palette, feature: 'tools' },
+    { name: 'Settings', href: '/settings', icon: SettingsIcon, feature: 'settings' },
   ];
 
+  // Filter navigation items based on plan access
+  const navigationItems = allNavigationItems.filter(item => 
+    planAccess.features.includes(item.feature)
+  );
+
+  // Get locked features for upgrade prompts
+  const lockedFeatures = allNavigationItems.filter(item => 
+    !planAccess.features.includes(item.feature)
+  );
+
   return (
-    <div className="remodra-sidebar hidden lg:block">
-      {/* Logo */}
-      <div className="flex items-center justify-center h-16 px-4 border-b border-slate-600">
+    <div className="remodra-sidebar block flex flex-col">
+      {/* Logo - Fixed Header */}
+      <div className="flex items-center justify-center h-16 px-4 border-b border-slate-600 flex-shrink-0">
         <div className="flex items-center space-x-3">
-          <img 
-            src="/remodra-logo.png" 
-            alt="Remodra Logo" 
-            className="h-8 w-8 object-contain"
-          />
+          <RemodraLogo size={32} />
           <span className="text-xl font-bold text-amber-400">Remodra</span>
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+
+
+      {/* Navigation - Scrollable */}
+      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto min-h-0">
         {navigationItems.map((item) => {
           const isActive = location === item.href;
           return (
             <Link
               key={item.name}
               href={item.href}
-              className={`remodra-nav-item ${isActive ? 'active' : ''}`}
+              className={`remodra-nav-item flex items-center space-x-3 px-3 py-2 text-slate-300 rounded-lg transition-all duration-300 hover:text-amber-400 hover:bg-slate-700/50 ${isActive ? 'bg-gradient-to-r from-amber-400 to-yellow-600 text-slate-900 font-semibold' : ''}`}
             >
-              <item.icon className="h-5 w-5" />
-              <span>{item.name}</span>
+              <item.icon className="h-5 w-5 flex-shrink-0" />
+              <span className="text-sm font-medium">{item.name}</span>
             </Link>
           );
         })}
+
+        {/* Locked Features Section */}
+        {lockedFeatures.length > 0 && (
+          <>
+            <Separator className="my-4" />
+            <div className="px-3 py-2">
+              <h3 className="text-xs font-semibold text-slate-400 mb-2">Upgrade to Unlock</h3>
+              {lockedFeatures.map((item) => (
+                <div
+                  key={item.name}
+                  className="flex items-center space-x-3 px-3 py-2 text-slate-500 rounded-lg cursor-not-allowed"
+                >
+                  <Lock className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-sm font-medium">{item.name}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </nav>
 
-      {/* User Profile */}
-      <div className="p-4 border-t border-slate-600">
+      {/* User Profile - Fixed Footer */}
+      <div className="flex-shrink-0 p-4 border-t border-slate-600">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-yellow-600 rounded-full flex items-center justify-center">
-            <span className="text-sm font-bold text-slate-900">
-              {user?.firstName?.[0]}{user?.lastName?.[0]}
-            </span>
-          </div>
+          <Avatar className="h-8 w-8">
+            <AvatarFallback className="bg-amber-500 text-slate-900 text-sm font-semibold">
+              {getInitials()}
+            </AvatarFallback>
+          </Avatar>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-slate-200 truncate">
               {user?.firstName} {user?.lastName}
@@ -117,13 +176,22 @@ export default function Sidebar() {
               {user?.email}
             </p>
           </div>
+        </div>
+        
+        <div className="mt-3 space-y-2">
+          <div className="flex items-center justify-start">
+            <Badge className={`${planAccess.color} text-white text-xs`}>
+              {planAccess.name}
+            </Badge>
+          </div>
           <Button
+            onClick={handleLogout}
             variant="ghost"
             size="sm"
-            onClick={handleLogout}
-            className="text-slate-400 hover:text-amber-400"
+            className="w-full justify-start text-slate-400 hover:text-red-400 hover:bg-red-400/10"
           >
-            <LogOut className="h-4 w-4" />
+            <LogOutIcon className="h-4 w-4 mr-2" />
+            Logout
           </Button>
         </div>
       </div>

@@ -2,10 +2,14 @@ import { db } from "./index";
 import * as schema from "../shared/schema-sqlite";
 import { hashPassword } from "../server/auth";
 import { achievementSeedData, rewardSeedData } from "./achievement-seeds";
+import { seedSubscriptionPlans } from "./seed-subscription-plans";
 
 async function seed() {
   try {
     console.log("Starting database seed...");
+
+    // Seed subscription plans first
+    await seedSubscriptionPlans();
 
     // Check if database already has data
     const existingContractors = await db.query.contractors.findMany({
@@ -21,12 +25,12 @@ async function seed() {
     const hashedPassword = await hashPassword("password123");
     const now = Date.now();
     const [contractor] = await db.insert(schema.contractors).values({
-      firstName: "John",
-      lastName: "Contractor",
+      first_name: "John",
+      last_name: "Contractor",
       email: "john@abccontracting.com",
       username: "johncontractor",
       password: hashedPassword,
-      companyName: "ABC Contracting",
+      company_name: "ABC Contracting",
       phone: "(555) 987-6543",
       address: "123 Contractor Way",
       city: "Springfield",
@@ -35,13 +39,13 @@ async function seed() {
       language: "en",
       role: "contractor",
       plan: "basic",
-      subscriptionStatus: "active",
-      currentClientCount: 0,
-      aiUsageThisMonth: 0,
-      aiUsageResetDate: now,
+      subscription_status: "active",
+      current_client_count: 0,
+      ai_usage_this_month: 0,
+      ai_usage_reset_date: now,
       settings: "{}",
-      createdAt: now,
-      updatedAt: now
+      created_at: now,
+      updated_at: now
     }).returning();
 
     console.log(`Created contractor: ${contractor.firstName} ${contractor.lastName}`);
@@ -49,12 +53,12 @@ async function seed() {
     // Create test user for development
     const testPassword = await hashPassword("test123");
     const [testUser] = await db.insert(schema.contractors).values({
-      firstName: "Test",
-      lastName: "User",
+      first_name: "Test",
+      last_name: "User",
       email: "test@remodra.com",
       username: "testuser",
       password: testPassword,
-      companyName: "Test Company",
+      company_name: "Test Company",
       phone: "(555) 123-4567",
       address: "123 Test St",
       city: "Test City",
@@ -63,13 +67,13 @@ async function seed() {
       language: "en",
       role: "contractor",
       plan: "basic",
-      subscriptionStatus: "active",
-      currentClientCount: 0,
-      aiUsageThisMonth: 0,
-      aiUsageResetDate: now,
+      subscription_status: "active",
+      current_client_count: 0,
+      ai_usage_this_month: 0,
+      ai_usage_reset_date: now,
       settings: "{}",
-      createdAt: now,
-      updatedAt: now
+      created_at: now,
+      updated_at: now
     }).returning();
 
     console.log(`Created test user: ${testUser.email}`);
@@ -77,9 +81,9 @@ async function seed() {
     // Create clients
     const clients = await db.insert(schema.clients).values([
       {
-        contractorId: contractor.id,
-        firstName: "Sarah",
-        lastName: "Johnson",
+        contractor_id: contractor.id,
+        first_name: "Sarah",
+        last_name: "Johnson",
         email: "sarah.johnson@example.com",
         phone: "(555) 123-4567",
         address: "1234 Oak Street",
@@ -87,7 +91,7 @@ async function seed() {
         state: "IL",
         zip: "62701",
         notes: "Client prefers communication via text message rather than calls. Interested in discussing a bathroom remodel next year. Has referred two other clients.",
-        createdAt: now
+        created_at: now
       },
       {
         contractorId: contractor.id,
@@ -340,73 +344,73 @@ async function seed() {
     const oneDay = 24 * 60 * 60 * 1000;
     const events = await db.insert(schema.events).values([
       {
-        contractorId: contractor.id,
+        contractor_id: contractor.id,
         title: "Site visit - Johnson Kitchen Remodel",
         description: "Check progress and discuss countertop options",
-        startTime: today + 9 * 60 * 60 * 1000,
-        endTime: today + 10 * 60 * 60 * 1000,
+        start_time: today + 9 * 60 * 60 * 1000,
+        end_time: today + 10 * 60 * 60 * 1000,
         address: "1234 Oak Street, Springfield",
         type: "site-visit",
         status: "confirmed",
-        clientId: clients[0].id, // Sarah Johnson
-        projectId: projects[0].id, // Kitchen Remodel
+        client_id: clients[0].id, // Sarah Johnson
+        project_id: projects[0].id, // Kitchen Remodel
         notes: "Bring countertop samples",
-        createdAt: now
+        created_at: now
       },
       {
-        contractorId: contractor.id,
+        contractor_id: contractor.id,
         title: "Material pickup - Home Supply Co.",
         description: "Pick up ordered materials for Davis Deck project",
-        startTime: today + 11.5 * 60 * 60 * 1000,
-        endTime: today + 12.5 * 60 * 60 * 1000,
+        start_time: today + 11.5 * 60 * 60 * 1000,
+        end_time: today + 12.5 * 60 * 60 * 1000,
         address: "520 Industrial Blvd",
         type: "delivery",
         status: "confirmed",
-        clientId: clients[2].id, // James Davis
-        projectId: projects[3].id, // Deck Construction
+        client_id: clients[2].id, // James Davis
+        project_id: projects[3].id, // Deck Construction
         notes: "Order #45622",
-        createdAt: now
+        created_at: now
       },
       {
-        contractorId: contractor.id,
+        contractor_id: contractor.id,
         title: "Estimate Presentation - Taylor Bathroom Renovation",
         description: "Present and discuss bathroom renovation estimate",
-        startTime: today + 14 * 60 * 60 * 1000,
-        endTime: today + 15 * 60 * 60 * 1000,
+        start_time: today + 14 * 60 * 60 * 1000,
+        end_time: today + 15 * 60 * 60 * 1000,
         address: "567 Maple Drive, Springfield",
         type: "estimate",
         status: "confirmed",
-        clientId: clients[1].id, // Mark Taylor
-        projectId: projects[2].id, // Bathroom Renovation
+        client_id: clients[1].id, // Mark Taylor
+        project_id: projects[2].id, // Bathroom Renovation
         notes: "Bring material samples and estimate",
-        createdAt: now
+        created_at: now
       },
       {
-        contractorId: contractor.id,
+        contractor_id: contractor.id,
         title: "Follow-up call - Wilson Project",
         description: "Discuss project requirements and timeline",
-        startTime: today + oneDay,
-        endTime: today + oneDay,
+        start_time: today + oneDay,
+        end_time: today + oneDay,
         address: "Phone call",
         type: "meeting",
         status: "pending",
-        clientId: clients[3].id, // Robert Wilson
+        client_id: clients[3].id, // Robert Wilson
         notes: "Potential kitchen renovation project",
-        createdAt: now
+        created_at: now
       },
       {
-        contractorId: contractor.id,
+        contractor_id: contractor.id,
         title: "Final inspection - Garcia Basement",
         description: "Final walkthrough with client before completion",
-        startTime: today + 2 * oneDay,
-        endTime: today + 2 * oneDay,
+        start_time: today + 2 * oneDay,
+        end_time: today + 2 * oneDay,
         address: "789 Elm Street, Springfield",
         type: "site-visit",
         status: "confirmed",
-        clientId: clients[4].id, // Luis Garcia
-        projectId: projects[5].id, // Basement Finishing
+        client_id: clients[4].id, // Luis Garcia
+        project_id: projects[5].id, // Basement Finishing
         notes: "Bring final invoice and project documentation",
-        createdAt: now
+        created_at: now
       }
     ]).returning();
 

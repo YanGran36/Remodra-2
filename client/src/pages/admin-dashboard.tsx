@@ -946,8 +946,15 @@ export default function AdminDashboard() {
   return (
     <div className="container mx-auto p-4 md:p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-foreground tracking-tight">Panel de Administración</h1>
-        <p className="text-muted-foreground">Manage system administration and user access</p>
+        <div className="flex justify-center mb-6">
+          <img 
+            src="/remodra-logo.png" 
+            alt="Remodra Logo" 
+            className="h-16 w-16 object-contain"
+          />
+        </div>
+        <h1 className="text-2xl font-semibold text-foreground tracking-tight text-center">Panel de Administración</h1>
+        <p className="text-muted-foreground text-center">Manage system administration and user access</p>
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">

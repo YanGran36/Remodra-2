@@ -1,9 +1,8 @@
 import { Link, useLocation } from "wouter";
-import { Bell, Settings, Search, User, LogOut } from "lucide-react";
+import { Bell, Settings, User, LogOut } from "lucide-react";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Input } from "../ui/input";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -13,10 +12,11 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { LanguageSwitcher } from "../language-switcher";
+import { GlobalSearch } from "../shared/global-search";
 import { useAuth } from "../../hooks/use-auth";
 
 const navLinks = [
-  { href: "/", label: "Dashboard" },
+  { href: "/dashboard", label: "Dashboard" },
   { href: "/calendar", label: "Calendar" },
   { href: "/clients", label: "Clients" },
   { href: "/estimates", label: "Estimates" },
@@ -45,17 +45,8 @@ export default function TopNav() {
   return (
     <header className="remodra-topnav">
       <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-        {/* Search bar */}
-        <div className="flex-1 max-w-lg mx-4 lg:mx-8">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input
-              type="text"
-              placeholder="Search..."
-              className="remodra-input pl-10"
-            />
-          </div>
-        </div>
+        {/* Global Search */}
+        <GlobalSearch />
 
         {/* Right side actions */}
         <div className="flex items-center space-x-4">

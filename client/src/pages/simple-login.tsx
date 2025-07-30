@@ -1,126 +1,154 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useLocation } from 'wouter';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { useAuth } from '../hooks/use-auth';
+import { ArrowLeft, Lock, Eye, EyeOff } from 'lucide-react';
 
 export default function SimpleLogin() {
-  const [email, setEmail] = useState('test@remodra.com');
-  const [password, setPassword] = useState('test123');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [showPassword, setShowPassword] = React.useState(false);
+  const { loginMutation } = useAuth();
   const [, setLocation] = useLocation();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError('');
-
-    try {
-      const response = await fetch('http://localhost:5005/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const user = await response.json();
-        console.log('Login successful:', user);
-        setLocation('/dashboard');
-      } else {
-        const errorData = await response.json();
-        setError(errorData.message || 'Login failed');
-      }
-    } catch (err) {
-      console.error('Login error:', err);
-      setError('Network error. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+    loginMutation.mutate({ email, password });
   };
 
+  // Redirect to dashboard if login is successful
+  React.useEffect(() => {
+    if (loginMutation.isSuccess) {
+      setLocation('/dashboard');
+    }
+  }, [loginMutation.isSuccess, setLocation]);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="max-w-md w-full space-y-8">
-        <div className="bg-white rounded-lg shadow-xl p-8">
-          <div className="text-center">
-            <div className="flex justify-center mb-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Back to Landing */}
+        <div className="mb-6">
+          <Button
+            variant="ghost"
+            onClick={() => setLocation('/')}
+            className="text-slate-400 hover:text-amber-400"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Home
+          </Button>
+        </div>
+
+        <Card className="bg-gradient-to-br from-slate-800 to-slate-700 border-slate-600 shadow-xl">
+          <CardHeader className="text-center pb-6">
+            <div className="flex justify-center mb-6">
               <img 
                 src="/remodra-logo.png" 
                 alt="Remodra Logo" 
                 className="h-16 w-16 object-contain"
               />
             </div>
-            <p className="text-gray-600 mb-8">
-              Your Construction Management SaaS
-            </p>
-          </div>
-
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required
-              />
-            </div>
-
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-                {error}
+            <CardTitle className="text-2xl font-bold text-white mb-2">Welcome Back</CardTitle>
+            <p className="text-slate-400">Sign in to your Remodra account</p>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-300">Email Address</label>
+                <Input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-amber-500"
+                />
               </div>
-            )}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-300">Password</label>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-amber-500 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-300"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+              
+              {loginMutation.isError && (
+                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                  <p className="text-red-400 text-sm">
+                    {loginMutation.error?.message || 'Invalid email or password'}
+                  </p>
+                </div>
+              )}
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? 'Signing in...' : 'Sign In'}
-            </button>
-          </form>
-
-          <div className="mt-6 p-4 bg-blue-50 rounded-md">
-            <h3 className="text-sm font-medium text-blue-800 mb-2">Test Credentials:</h3>
-            <p className="text-sm text-blue-700">
-              <strong>Email:</strong> test@remodra.com<br />
-              <strong>Password:</strong> test123
-            </p>
-          </div>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <button
-                type="button"
-                onClick={() => setLocation('/auth')}
-                className="font-medium text-blue-600 hover:text-blue-500"
+              <Button
+                type="submit"
+                className="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold"
+                disabled={loginMutation.isPending}
               >
-                Create one here
-              </button>
-            </p>
-          </div>
-        </div>
+                {loginMutation.isPending ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-900 mr-2"></div>
+                    Signing in...
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    <Lock className="h-4 w-4 mr-2" />
+                    Sign In
+                  </div>
+                )}
+              </Button>
+            </form>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-slate-600" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-slate-800 px-2 text-slate-400">Or</span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <Button
+                variant="outline"
+                onClick={() => setLocation('/auth')}
+                className="w-full border-slate-600 text-slate-300 hover:bg-slate-700"
+              >
+                Create New Account
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setLocation('/pricing')}
+                className="w-full text-slate-400 hover:text-amber-400"
+              >
+                View Pricing Plans
+              </Button>
+            </div>
+
+            {/* Demo Account Info */}
+            <div className="mt-6 p-4 bg-slate-700/50 rounded-lg border border-slate-600">
+              <h4 className="text-sm font-semibold text-amber-400 mb-2">Demo Account</h4>
+              <div className="text-xs text-slate-400 space-y-1">
+                <p><strong>Email:</strong> test@remodra.com</p>
+                <p><strong>Password:</strong> test123</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

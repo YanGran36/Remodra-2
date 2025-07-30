@@ -132,7 +132,7 @@ export default function ClientInvoiceView({
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Invoice #{invoice.invoiceNumber}</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Invoice #{invoice.invoice_number || invoice.invoiceNumber}</h1>
           <p className="text-gray-600 mt-1">
             Issued on {format(new Date(invoice.issueDate), 'MMMM d, yyyy')}
           </p>

@@ -93,8 +93,15 @@ export default function ToolsDashboard() {
         <div className="remodra-content">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-6">
             <div className="mb-6">
-              <h1 className="text-2xl font-semibold text-foreground tracking-tight">Tools & Customization</h1>
-              <p className="text-muted-foreground">Customize your Remodra experience</p>
+              <div className="flex justify-center mb-6">
+                <img 
+                  src="/remodra-logo.png" 
+                  alt="Remodra Logo" 
+                  className="h-16 w-16 object-contain"
+                />
+              </div>
+              <h1 className="text-2xl font-semibold text-foreground tracking-tight text-center">Tools & Customization</h1>
+              <p className="text-muted-foreground text-center">Customize your Remodra experience</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">

@@ -9,6 +9,9 @@ import { Badge } from '../components/ui/badge';
 import { Trash2, Edit, ArrowLeft } from "lucide-react";
 import { useToast } from '../hooks/use-toast';
 import { Link } from "wouter";
+import Sidebar from '../components/layout/sidebar';
+import MobileSidebar from '../components/layout/mobile-sidebar';
+import TopNav from '../components/layout/top-nav';
 
 interface Service {
   id: string;
@@ -88,7 +91,8 @@ export default function SimplePricingPage() {
             description: "Service has been updated successfully",
           });
         } else {
-          throw new Error('Failed to update service');
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || 'Failed to update service');
         }
       } else {
         // Create new service
@@ -106,14 +110,15 @@ export default function SimplePricingPage() {
             description: "New service has been saved successfully",
           });
         } else {
-          throw new Error('Failed to save service');
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || 'Failed to save service');
         }
       }
     } catch (error) {
       console.error('Error saving service:', error);
       toast({
-        title: "Error",
-        description: "Could not save service. Please try again.",
+        title: "Error saving",
+        description: error instanceof Error ? error.message : "Could not save service. Please try again.",
         variant: "destructive",
       });
     }
@@ -167,16 +172,24 @@ export default function SimplePricingPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-foreground tracking-tight">Service Labor Rates</h1>
-        <Link href="/">
-          <Button variant="outline" className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
-          </Button>
-        </Link>
-      </div>
+    <div className="remodra-layout">
+      <Sidebar />
+      <MobileSidebar />
+      <div className="remodra-main">
+        <TopNav />
+        <div className="remodra-content">
+          <main className="p-6 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-semibold text-foreground tracking-tight">Service Labor Rates</h1>
+              </div>
+              <Link href="/">
+                <Button variant="outline" className="flex items-center gap-2">
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Dashboard
+                </Button>
+              </Link>
+            </div>
       
       {/* Add New Service Form */}
       <Card>
@@ -318,6 +331,9 @@ export default function SimplePricingPage() {
           </Table>
         </CardContent>
       </Card>
+          </main>
+        </div>
+      </div>
     </div>
   );
 }

@@ -16,8 +16,8 @@ export async function apiRequest(
   data?: unknown | undefined,
   options?: RequestInit
 ): Promise<Response> {
-  // If the URL starts with /api, prepend the backend base URL
-  const fullUrl = url.startsWith('/api') ? `${API_BASE_URL}${url}` : url;
+  // If the URL starts with /api, use it directly (Vite proxy will handle it)
+  const fullUrl = url.startsWith('/api') ? url : `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
   
   const res = await fetch(fullUrl, {
     method,
@@ -43,7 +43,7 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const url = queryKey[0] as string;
-    const fullUrl = url.startsWith('/api') ? `${API_BASE_URL}${url}` : url;
+    const fullUrl = url.startsWith('/api') ? url : `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
     
     const res = await fetch(fullUrl, {
       credentials: "include",

@@ -374,7 +374,7 @@ export default function PublicInvoiceView() {
                 </span>
               </div>
               <CardTitle className="text-xl md:text-2xl font-semibold">
-                Factura #{invoice.invoiceNumber || invoice.id}
+                Factura #{invoice.invoice_number || invoice.invoiceNumber || invoice.id}
               </CardTitle>
             </div>
             <div className="flex flex-col items-start md:items-end mt-4 md:mt-0">

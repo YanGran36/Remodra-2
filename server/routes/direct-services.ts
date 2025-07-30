@@ -1,6 +1,7 @@
 import { Express } from 'express';
 import { db, pool } from '../../db';
 import { servicePricing } from '../../shared/schema';
+import { service_pricing } from '../../shared/schema-sqlite';
 import { eq, and } from 'drizzle-orm';
 
 export function registerDirectServicesRoutes(app: Express) {
@@ -16,15 +17,15 @@ export function registerDirectServicesRoutes(app: Express) {
       
       const services = await db
         .select({
-          id: servicePricing.id,
-          name: servicePricing.name,
-          serviceType: servicePricing.serviceType,
-          unit: servicePricing.unit,
-          laborRate: servicePricing.laborRate,
-          laborMethod: servicePricing.laborCalculationMethod
+          id: service_pricing.id,
+          name: service_pricing.name,
+          serviceType: service_pricing.service_type,
+          unit: service_pricing.unit,
+          laborRate: service_pricing.labor_rate,
+          laborMethod: service_pricing.labor_calculation_method
         })
-        .from(servicePricing)
-        .where(eq(servicePricing.contractorId, req.user.id));
+        .from(service_pricing)
+        .where(eq(service_pricing.contractor_id, req.user.id));
       
       console.log(`[DIRECT] Found ${services.length} services:`, services);
       
@@ -56,8 +57,17 @@ export function registerDirectServicesRoutes(app: Express) {
       };
       
       const [newService] = await db
-        .insert(servicePricing)
-        .values(serviceData)
+        .insert(service_pricing)
+        .values({
+          name: serviceData.name,
+          service_type: serviceData.serviceType,
+          unit: serviceData.unit,
+          labor_rate: serviceData.laborRate,
+          labor_calculation_method: serviceData.laborCalculationMethod,
+          contractor_id: serviceData.contractorId,
+          created_at: Date.now(),
+          updated_at: Date.now()
+        })
         .returning();
       
       console.log(`[DIRECT] Created service:`, newService);
@@ -66,10 +76,10 @@ export function registerDirectServicesRoutes(app: Express) {
       const formattedService = {
         id: newService.id,
         name: newService.name,
-        serviceType: newService.serviceType,
+        serviceType: newService.service_type,
         unit: newService.unit,
-        laborRate: parseFloat(newService.laborRate),
-        laborMethod: newService.laborCalculationMethod
+        laborRate: parseFloat(newService.labor_rate),
+        laborMethod: newService.labor_calculation_method
       };
       
       res.status(201).json(formattedService);

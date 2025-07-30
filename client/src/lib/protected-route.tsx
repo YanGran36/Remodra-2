@@ -9,9 +9,9 @@ export function ProtectedRoute({
   path: string;
   component: () => React.JSX.Element;
 }) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isLoggingOut } = useAuth();
 
-  if (isLoading) {
+  if (isLoading || isLoggingOut) {
     return (
       <Route path={path}>
         <div className="flex items-center justify-center min-h-screen">

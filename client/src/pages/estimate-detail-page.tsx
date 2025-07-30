@@ -201,7 +201,7 @@ export default function EstimateDetailPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">
-              Estimate {estimate.estimateNumber || `#${estimate.id}`}
+              Estimate {estimate.estimate_number || estimate.estimateNumber || `EST-${estimate.id}`}
             </h1>
             
             <div className="flex items-center gap-2 mt-1">
@@ -497,6 +497,7 @@ export default function EstimateDetailPage() {
           <Button
             variant="destructive"
             onClick={handleRejectEstimate}
+            className="bg-red-600 hover:bg-red-700 text-white font-medium shadow-md hover:shadow-lg transition-all"
           >
             <X className="h-4 w-4 mr-2" />
             Reject

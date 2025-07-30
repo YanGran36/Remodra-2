@@ -228,7 +228,7 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl">
-            Estimate {estimate.estimateNumber || `#${estimate.id}`}
+            Estimate {estimate.estimate_number || estimate.estimateNumber || `EST-${estimate.id}`}
           </DialogTitle>
           <DialogDescription>
             <div className="flex items-center gap-2 mt-1">
@@ -408,6 +408,7 @@ export default function EstimateDetail({ estimateId, isOpen, onClose }: Estimate
                           <Button
                             variant="destructive"
                             onClick={handleRejectEstimate}
+                            className="bg-red-600 hover:bg-red-700 text-white font-medium shadow-md hover:shadow-lg transition-all"
                           >
                             <X className="h-4 w-4 mr-2" />
                             Reject

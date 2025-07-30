@@ -183,7 +183,7 @@ function ServicePricingSection() {
         <Button
           variant="outline"
           className="mt-4"
-          onClick={() => window.location.href = '/pricing-config'}
+          onClick={() => window.location.href = '/simple-pricing'}
         >
           Configure Services
         </Button>
@@ -254,7 +254,7 @@ function ServicePricingSection() {
           <Button
             variant="outline"
             className="flex-1"
-            onClick={() => window.location.href = '/pricing-config'}
+            onClick={() => window.location.href = '/simple-pricing'}
           >
             <Settings className="h-4 w-4 mr-2" />
             Manage All Services
@@ -402,11 +402,18 @@ export default function SettingsPage() {
         <div className="remodra-content">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-6">
             <div className="mb-6">
-              <h1 className="text-2xl font-semibold text-foreground tracking-tight flex items-center">
+              <div className="flex justify-center mb-6">
+                <img 
+                  src="/remodra-logo.png" 
+                  alt="Remodra Logo" 
+                  className="h-16 w-16 object-contain"
+                />
+              </div>
+              <h1 className="text-2xl font-semibold text-foreground tracking-tight flex items-center justify-center">
                 <Settings className="h-6 w-6 mr-2" />
                 Settings
               </h1>
-              <p className="text-muted-foreground">Manage your account settings and preferences</p>
+              <p className="text-muted-foreground text-center">Manage your account settings and preferences</p>
             </div>
 
             <Tabs defaultValue="profile" className="space-y-4">
@@ -464,9 +471,9 @@ export default function SettingsPage() {
                                 name="lastName"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>Last Name</FormLabel>
+                                    <FormLabel className="text-slate-300 font-medium">Last Name</FormLabel>
                                     <FormControl>
-                                      <Input placeholder="Doe" {...field} />
+                                      <Input placeholder="Doe" {...field} className="remodra-input" />
                                     </FormControl>
                                     <FormMessage />
                                   </FormItem>
@@ -479,9 +486,9 @@ export default function SettingsPage() {
                               name="companyName"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>Company Name</FormLabel>
+                                  <FormLabel className="text-slate-300 font-medium">Company Name</FormLabel>
                                   <FormControl>
-                                    <Input placeholder="Your Company LLC" {...field} />
+                                    <Input placeholder="Your Company LLC" {...field} className="remodra-input" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -493,9 +500,9 @@ export default function SettingsPage() {
                               name="email"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>Email</FormLabel>
+                                  <FormLabel className="text-slate-300 font-medium">Email</FormLabel>
                                   <FormControl>
-                                    <Input type="email" placeholder="john@example.com" {...field} />
+                                    <Input type="email" placeholder="john@example.com" {...field} className="remodra-input" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>

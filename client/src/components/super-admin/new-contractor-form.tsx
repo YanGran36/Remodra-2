@@ -299,9 +299,9 @@ export function NewContractorForm({ onSuccess }: NewContractorFormProps) {
                     name="companyName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Nombre de la Empresa</FormLabel>
+                        <FormLabel className="text-slate-300 font-medium">Nombre de la Empresa</FormLabel>
                         <FormControl>
-                          <Input placeholder="Empresa Contratista S.A." {...field} />
+                          <Input placeholder="Empresa Contratista S.A." {...field} className="remodra-input" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -313,9 +313,9 @@ export function NewContractorForm({ onSuccess }: NewContractorFormProps) {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Correo Electrónico</FormLabel>
+                        <FormLabel className="text-slate-300 font-medium">Correo Electrónico</FormLabel>
                         <FormControl>
-                          <Input placeholder="info@empresa.com" {...field} />
+                          <Input placeholder="info@empresa.com" {...field} className="remodra-input" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

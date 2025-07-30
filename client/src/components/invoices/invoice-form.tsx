@@ -304,9 +304,10 @@ export default function InvoiceForm({ invoiceToEdit, isOpen, onClose, fromEstima
   function generateInvoiceNumber(): string {
     const date = new Date();
     const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
     // Generate a random 3-digit number
     const random = Math.floor(Math.random() * 900) + 100;
-    return `OT-${year}-${random}`;
+    return `OT-${year}${month}-${random}`;
   }
   
   function calculateTaxRate(subtotal: string | number, tax: string | number): number {

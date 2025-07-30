@@ -247,3 +247,235 @@ export async function generateSharingContent(
     throw new Error(`Error generating sharing content: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
+
+export async function generateServiceDescription(serviceData: {
+  serviceType: string;
+  serviceName: string;
+  measurements: any;
+  materials?: any[];
+  laborRate: number;
+  unit: string;
+}) {
+  try {
+    // Check if OpenAI is properly configured
+    if (!openai || !process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === "sk-proj-...your-actual-openai-api-key..." || process.env.OPENAI_API_KEY.includes("dummy-key")) {
+      // Fallback to manual description generation
+      return `Professional ${serviceData.serviceName} installation including all materials and labor.`;
+    }
+    
+    const { serviceType, serviceName, measurements, materials, laborRate, unit } = serviceData;
+    
+    // Build measurement details
+    let measurementDetails = '';
+    if (measurements) {
+      if (measurements.linearFeet) measurementDetails += `${measurements.linearFeet} linear feet`;
+      if (measurements.squareFeet) measurementDetails += `${measurements.squareFeet} square feet`;
+      if (measurements.units) measurementDetails += `${measurements.units} units`;
+      if (measurements.quantity) measurementDetails += `${measurements.quantity} ${unit}`;
+    }
+
+    const prompt = `As a professional contractor, write a detailed, professional description for a ${serviceName} project. 
+
+Service Details:
+- Service Type: ${serviceType}
+- Service Name: ${serviceName}
+- Measurements: ${measurementDetails}
+- Labor Rate: $${laborRate} per ${unit}
+${materials && materials.length > 0 ? `- Materials: ${materials.map(m => m.name).join(', ')}` : ''}
+
+Write a professional contractor description that:
+1. Explains what work will be performed
+2. Mentions the scope and measurements
+3. Sounds professional and trustworthy
+4. Is 2-3 sentences long
+5. Uses contractor terminology
+6. Focuses on value and quality
+
+Write only the description, no additional text:`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "You are a professional contractor with 30+ years of experience. Write clear, professional project descriptions that build trust with clients."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      max_tokens: 150,
+      temperature: 0.7,
+    });
+
+    return completion.choices[0]?.message?.content?.trim() || 
+           `Professional ${serviceName} installation including all materials and labor.`;
+  } catch (error) {
+    console.error('Error generating service description:', error);
+    return `Professional ${serviceData.serviceName} installation including all materials and labor.`;
+  }
+}
+
+export async function generateEstimateDescription(estimateData: {
+  clientName: string;
+  services: any[];
+  totalAmount: number;
+  projectType: string;
+}) {
+  try {
+    // Check if OpenAI is properly configured
+    if (!openai || !process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === "sk-proj-...your-actual-openai-api-key..." || process.env.OPENAI_API_KEY.includes("dummy-key")) {
+      // Fallback to manual description generation
+      return `Professional ${estimateData.projectType} project for ${estimateData.clientName} including all services and materials.`;
+    }
+    
+    const { clientName, services, totalAmount, projectType } = estimateData;
+    
+    const serviceList = services.map(s => `${s.name} (${s.measurements?.quantity || 0} ${s.unit})`).join(', ');
+    
+    const prompt = `As a professional contractor, write a comprehensive project description for ${clientName}'s ${projectType} project.
+
+Project Details:
+- Client: ${clientName}
+- Services: ${serviceList}
+- Total Project Value: $${totalAmount.toLocaleString()}
+- Project Type: ${projectType}
+
+Write a professional project overview that:
+1. Addresses the client personally
+2. Summarizes the scope of work
+3. Mentions the total project value
+4. Sounds professional and trustworthy
+5. Is 3-4 sentences long
+6. Uses contractor terminology
+7. Emphasizes quality and value
+
+Write only the description, no additional text:`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "You are a professional contractor with 30+ years of experience. Write comprehensive project descriptions that build trust and clearly explain the scope of work."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      max_tokens: 200,
+      temperature: 0.7,
+    });
+
+    return completion.choices[0]?.message?.content?.trim() || 
+           `Professional ${projectType} project for ${clientName} including all materials and labor.`;
+  } catch (error) {
+    console.error('Error generating estimate description:', error);
+    return `Professional ${estimateData.projectType} project for ${estimateData.clientName} including all materials and labor.`;
+  }
+}
+
+/**
+ * Generates a professional service description for estimate items
+ */
+export async function generateServiceDescriptionForEstimate(serviceData: {
+  serviceType: string;
+  serviceName: string;
+  measurements: any;
+  laborRate: number;
+  unit: string;
+}): Promise<{ description: string }> {
+  try {
+    // Check if OpenAI is properly configured
+    if (!openai || !process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === "sk-proj-...your-actual-openai-api-key..." || process.env.OPENAI_API_KEY.includes("dummy-key")) {
+      // Fallback to manual description generation
+      return generateFallbackServiceDescription(serviceData);
+    }
+
+    const { serviceType, serviceName, measurements, laborRate, unit } = serviceData;
+    
+    // Build measurement details
+    let measurementDetails = '';
+    if (measurements) {
+      if (measurements.quantity) measurementDetails += `${measurements.quantity} ${unit}`;
+    }
+
+    const prompt = `As a professional contractor, write a concise, professional description for a ${serviceName} service.
+
+Service Details:
+- Service Type: ${serviceType}
+- Service Name: ${serviceName}
+- Scope: ${measurementDetails}
+- Labor Rate: $${laborRate} per ${unit}
+
+Write a professional service description that:
+1. Clearly explains what work will be performed
+2. Mentions the scope and measurements
+3. Sounds professional and trustworthy
+4. Is 1-2 sentences long
+5. Uses contractor terminology
+6. Focuses on value and quality
+7. Is written in a way that builds client confidence
+
+Write only the description, no additional text:`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "You are a professional contractor with 30+ years of experience. Write clear, professional service descriptions that build trust with clients and clearly explain the scope of work."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      max_tokens: 100,
+      temperature: 0.7,
+    });
+
+    const description = completion.choices[0]?.message?.content?.trim() || 
+           `Professional ${serviceName} installation including all materials and labor.`;
+
+    return { description };
+  } catch (error) {
+    console.error('Error generating service description for estimate:', error);
+    // Fallback to manual description generation
+    return generateFallbackServiceDescription(serviceData);
+  }
+}
+
+/**
+ * Generates a fallback service description when AI is not available
+ */
+function generateFallbackServiceDescription(serviceData: {
+  serviceType: string;
+  serviceName: string;
+  measurements: any;
+  laborRate: number;
+  unit: string;
+}): { description: string } {
+  const { serviceType, serviceName, measurements, unit } = serviceData;
+  
+  let measurementText = '';
+  if (measurements && measurements.quantity) {
+    measurementText = ` for ${measurements.quantity} ${unit}`;
+  }
+
+  // Generate descriptions based on service type
+  const descriptions: { [key: string]: string } = {
+    'fence': `Professional fence installation${measurementText} including premium materials, proper post setting, and quality craftsmanship.`,
+    'roof': `Complete roof repair${measurementText} including inspection, materials, and professional installation with warranty.`,
+    'other': `Professional ${serviceName.toLowerCase()} service${measurementText} including all necessary materials and expert labor.`,
+    'cleaning': `Professional cleaning service${measurementText} using industry-standard equipment and eco-friendly products.`,
+    'maintenance': `Comprehensive maintenance service${measurementText} including inspection, repairs, and preventive care.`
+  };
+
+  const description = descriptions[serviceType] || 
+    `Professional ${serviceName.toLowerCase()} service${measurementText} including all materials and expert installation.`;
+
+  return { description };
+}

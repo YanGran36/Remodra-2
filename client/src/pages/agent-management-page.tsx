@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Edit2, Trash2, Calendar, User, Phone, Mail, MapPin, Home } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
@@ -15,8 +15,11 @@ import { useToast } from '../hooks/use-toast';
 import { Agent, AgentInsert } from '../../../shared/schema';
 import AgentScheduler from '../components/agents/AgentScheduler';
 import { Link } from 'wouter';
+import Sidebar from '../components/layout/sidebar';
+import MobileSidebar from '../components/layout/mobile-sidebar';
+import TopNav from '../components/layout/top-nav';
 
-const AgentManagementPage: React.FC = () => {
+export default function AgentManagementPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showAgentDialog, setShowAgentDialog] = useState(false);
@@ -38,6 +41,13 @@ const AgentManagementPage: React.FC = () => {
     hireDate: '',
     notes: '',
     colorCode: '#3B82F6'
+  });
+
+  // Assignment form state
+  const [assignmentData, setAssignmentData] = useState<any>({
+    selectedDate: new Date().toISOString().split('T')[0],
+    appointmentId: '',
+    newAgentId: ''
   });
 
   // Predefined color options for agents
@@ -65,6 +75,20 @@ const AgentManagementPage: React.FC = () => {
       });
       if (!response.ok) {
         throw new Error('Failed to fetch agents');
+      }
+      return response.json();
+    },
+  });
+
+  // Fetch appointments for assignment
+  const { data: appointments = [] } = useQuery({
+    queryKey: ['/api/protected/events'],
+    queryFn: async () => {
+      const response = await fetch('/api/protected/events', {
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch appointments');
       }
       return response.json();
     },
@@ -163,6 +187,47 @@ const AgentManagementPage: React.FC = () => {
     },
   });
 
+  // Assign appointment mutation
+  const assignEstimateMutation = useMutation({
+    mutationFn: async (assignmentData: any) => {
+      // Update the appointment with the new agent
+      const eventResponse = await fetch(`/api/protected/events/${assignmentData.appointmentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          agent_id: assignmentData.newAgentId
+        }),
+      });
+      
+      if (!eventResponse.ok) {
+        const error = await eventResponse.json();
+        throw new Error(error.message || 'Failed to update appointment');
+      }
+      
+      return await eventResponse.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Agent Updated",
+        description: "The appointment has been successfully reassigned to the new agent.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/protected/events'] });
+      setAssignmentData({
+        selectedDate: new Date().toISOString().split('T')[0],
+        appointmentId: '',
+        newAgentId: ''
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Assignment Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const resetForm = () => {
     setFormData({
       firstName: '',
@@ -226,6 +291,26 @@ const AgentManagementPage: React.FC = () => {
     }
   };
 
+
+
+  const handleAssignSubmit = () => {
+    if (!assignmentData.appointmentId || !assignmentData.newAgentId) {
+      toast({
+        title: "Missing Information",
+        description: "Please select an appointment and a new agent.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const assignmentPayload = {
+      appointmentId: assignmentData.appointmentId,
+      newAgentId: assignmentData.newAgentId
+    };
+
+    assignEstimateMutation.mutate(assignmentPayload);
+  };
+
   const specialtyOptions = [
     'fencing', 'roofing', 'siding', 'gutters', 'windows', 'doors', 
     'flooring', 'painting', 'electrical', 'plumbing', 'hvac'
@@ -240,58 +325,76 @@ const AgentManagementPage: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-foreground tracking-tight">Agent Management</h1>
-          <p className="text-muted-foreground">Manage your field agents and their assignments</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <Link href="/">
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
-              <Home className="h-4 w-4" />
-              Home
-            </Button>
-          </Link>
-          <Link href="/calendar">
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Calendar
-            </Button>
-          </Link>
-        </div>
-      </div>
+    <div className="remodra-layout">
+      <Sidebar />
+      <MobileSidebar />
+      <div className="remodra-main">
+        <TopNav />
+        <div className="remodra-content">
+          <main className="p-8 space-y-8">
+            {/* Header with Remodra branding */}
+            <div className="text-center mb-8">
+              <div className="flex justify-center mb-6">
+                <img 
+                  src="/remodra-logo.png" 
+                  alt="Remodra Logo" 
+                  className="h-16 w-16 object-contain"
+                />
+              </div>
+              <h1 className="remodra-title mb-3">
+                Agent Management
+              </h1>
+              <p className="remodra-subtitle">
+                Manage your field agents, schedules, and assignments
+              </p>
+            </div>
+
+            {/* Quick Action Buttons */}
+            <div className="flex justify-center gap-4 mb-8">
+              <Button className="remodra-button" onClick={() => resetForm()}>
+                <Plus className="h-5 w-5 mr-2" />
+                Add New Agent
+              </Button>
+              <Link href="/calendar">
+                <Button className="remodra-button-outline">
+                  <Calendar className="h-5 w-5 mr-2" />
+                  View Calendar
+                </Button>
+              </Link>
+              <Link href="/">
+                <Button className="remodra-button-outline">
+                  <Home className="h-5 w-5 mr-2" />
+                  Dashboard
+                </Button>
+              </Link>
+            </div>
       <Dialog open={showAgentDialog} onOpenChange={setShowAgentDialog}>
-        <DialogTrigger asChild>
-          <Button onClick={() => resetForm()}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Agent
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-slate-900 border-slate-600">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-slate-200 text-xl font-bold">
               {editingAgent ? 'Edit Agent' : 'Add New Agent'}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="firstName">First Name *</Label>
+                <Label htmlFor="firstName" className="text-slate-300 font-medium mb-2">First Name *</Label>
                 <Input
                   id="firstName"
                   value={formData.firstName}
                   onChange={(e) => setFormData({...formData, firstName: e.target.value})}
                   placeholder="John"
+                  className="remodra-input"
                 />
               </div>
               <div>
-                <Label htmlFor="lastName">Last Name *</Label>
+                <Label htmlFor="lastName" className="text-slate-300 font-medium mb-2">Last Name *</Label>
                 <Input
                   id="lastName"
                   value={formData.lastName}
                   onChange={(e) => setFormData({...formData, lastName: e.target.value})}
                   placeholder="Doe"
+                  className="remodra-input"
                 />
               </div>
             </div>
@@ -445,187 +548,346 @@ const AgentManagementPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
+
+
       <Tabs defaultValue="agents" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="agents">Agents</TabsTrigger>
-          <TabsTrigger value="schedule">Daily Schedule</TabsTrigger>
+        <TabsList className="remodra-card p-3 bg-gradient-to-r from-slate-800 to-slate-700 border-2 border-amber-500/30 shadow-lg">
+          <TabsTrigger 
+            value="agents" 
+            className="flex items-center px-6 py-3 text-slate-300 hover:text-amber-400 hover:bg-slate-700/50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-400 data-[state=active]:to-yellow-500 data-[state=active]:text-slate-900 data-[state=active]:font-bold data-[state=active]:shadow-lg data-[state=active]:scale-105 rounded-lg transition-all duration-300 border border-transparent data-[state=active]:border-amber-300"
+          >
+            <User className="h-5 w-5 mr-2" />
+            <span className="font-semibold">Agents</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="reassign" 
+            className="flex items-center px-6 py-3 text-slate-300 hover:text-amber-400 hover:bg-slate-700/50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-400 data-[state=active]:to-yellow-500 data-[state=active]:text-slate-900 data-[state=active]:font-bold data-[state=active]:shadow-lg data-[state=active]:scale-105 rounded-lg transition-all duration-300 border border-transparent data-[state=active]:border-amber-300"
+          >
+            <Calendar className="h-5 w-5 mr-2" />
+            <span className="font-semibold">Reassign Appointments</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="schedule" 
+            className="flex items-center px-6 py-3 text-slate-300 hover:text-amber-400 hover:bg-slate-700/50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-400 data-[state=active]:to-yellow-500 data-[state=active]:text-slate-900 data-[state=active]:font-bold data-[state=active]:shadow-lg data-[state=active]:scale-105 rounded-lg transition-all duration-300 border border-transparent data-[state=active]:border-amber-300"
+          >
+            <MapPin className="h-5 w-5 mr-2" />
+            <span className="font-semibold">Daily Schedule</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="agents" className="space-y-6">
+          {/* Agents Summary Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="remodra-card p-4 text-center">
+              <div className="text-2xl font-bold text-amber-400">{agents.length}</div>
+              <div className="text-sm text-slate-300">Total Agents</div>
+            </div>
+            <div className="remodra-card p-4 text-center">
+              <div className="text-2xl font-bold text-green-400">
+                {agents.filter(a => a.isActive).length}
+              </div>
+              <div className="text-sm text-slate-300">Active Agents</div>
+            </div>
+            <div className="remodra-card p-4 text-center">
+              <div className="text-2xl font-bold text-blue-400">
+                {agents.filter(a => a.role === 'field_agent').length}
+              </div>
+              <div className="text-sm text-slate-300">Field Agents</div>
+            </div>
+            <div className="remodra-card p-4 text-center">
+              <div className="text-2xl font-bold text-purple-400">
+                {agents.filter(a => a.role === 'senior_agent').length}
+              </div>
+              <div className="text-sm text-slate-300">Senior Agents</div>
+            </div>
+          </div>
+
           <div className="grid gap-6">
             {agents.map((agent) => (
-              <Card key={agent.id}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="relative">
-                        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10">
-                          <User className="h-6 w-6 text-primary" />
-                        </div>
-                        <div 
-                          className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white shadow-sm"
-                          style={{ backgroundColor: agent.colorCode || '#3B82F6' }}
-                          title="Calendar Color"
-                        />
+              <div key={agent.id} className="remodra-card p-6 hover:shadow-lg transition-all duration-300 border border-slate-600 hover:border-amber-500/50">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="relative">
+                      <div className="flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 border-2 border-slate-600">
+                        <User className="h-8 w-8 text-amber-400" />
                       </div>
-                      <div>
-                        <CardTitle className="text-base font-medium font-sans text-foreground">
-                          {agent.firstName} {agent.lastName}
-                        </CardTitle>
-                        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                          {agent.phone && (
-                            <div className="flex items-center space-x-1">
-                              <Phone className="h-3 w-3" />
-                              <span>{agent.phone}</span>
-                            </div>
-                          )}
-                          {agent.email && (
-                            <div className="flex items-center space-x-1">
-                              <Mail className="h-3 w-3" />
-                              <span>{agent.email}</span>
-                            </div>
-                          )}
-                          {agent.employeeId && (
-                            <Badge variant="outline">ID: {agent.employeeId}</Badge>
-                          )}
-                        </div>
-                      </div>
+                      <div 
+                        className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-slate-800 shadow-lg"
+                        style={{ backgroundColor: agent.colorCode || '#3B82F6' }}
+                        title="Calendar Color"
+                      />
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant={agent.isActive ? "default" : "secondary"}>
-                        {agent.isActive ? 'Active' : 'Inactive'}
-                      </Badge>
-                      <Badge variant="outline">
-                        {agent.role.replace('_', ' ')}
-                      </Badge>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEditAgent(agent)}
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteAgent(agent)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                    <div>
+                      <h3 className="text-xl font-bold text-slate-200 mb-1">
+                        {agent.firstName} {agent.lastName}
+                      </h3>
+                      <div className="flex items-center space-x-4 text-sm text-slate-400">
+                        {agent.phone && (
+                          <div className="flex items-center space-x-1">
+                            <Phone className="h-4 w-4" />
+                            <span>{agent.phone}</span>
+                          </div>
+                        )}
+                        {agent.email && (
+                          <div className="flex items-center space-x-1">
+                            <Mail className="h-4 w-4" />
+                            <span>{agent.email}</span>
+                          </div>
+                        )}
+                        {agent.employeeId && (
+                          <Badge variant="outline" className="bg-slate-700 text-slate-300 border-slate-600">
+                            ID: {agent.employeeId}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </CardHeader>
+                  <div className="flex items-center space-x-3">
+                    <Badge 
+                      variant={agent.isActive ? "default" : "secondary"}
+                      className={agent.isActive ? "bg-slate-700 text-slate-200 border-slate-600" : "bg-red-600/20 text-red-400 border-red-500/30"}
+                    >
+                      {agent.isActive ? 'Active' : 'Inactive'}
+                    </Badge>
+                    <Badge variant="outline" className="bg-slate-700 text-slate-300 border-slate-600">
+                      {agent.role.replace('_', ' ')}
+                    </Badge>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditAgent(agent)}
+                      className="remodra-button-outline"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteAgent(agent)}
+                      className="bg-red-600/20 text-red-400 border-red-500/30 hover:bg-red-600/30"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
                 
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <div className="text-muted-foreground">Full Name</div>
-                      <div className="font-medium">{agent.firstName} {agent.lastName}</div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Role</div>
-                      <div className="font-medium">{agent.role.replace('_', ' ')}</div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Phone</div>
-                      <div className="font-medium">{agent.phone}</div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Email</div>
-                      <div className="font-medium">{agent.email || '-'}</div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Employee ID</div>
-                      <div className="font-medium">{agent.employeeId || '-'}</div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Status</div>
-                      <div className="font-medium">{agent.isActive ? 'Active' : 'Inactive'}</div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Specialties</div>
-                      <div className="font-medium">
-                        {Array.isArray(agent.specialties)
-                          ? agent.specialties.join(', ')
-                          : (typeof agent.specialties === 'string' && agent.specialties.trim().length > 0
-                              ? (() => { try { return JSON.parse(agent.specialties).join(', '); } catch { return agent.specialties; } })()
-                              : '-')}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Color</div>
-                      <div className="flex items-center gap-2 font-medium">
-                        <span className="inline-block w-4 h-4 rounded-full border" style={{ backgroundColor: agent.colorCode || '#3B82F6' }}></span>
-                        <span>{agent.colorCode || '-'}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Hourly Rate</div>
-                      <div className="font-medium">{agent.hourlyRate ? `$${Number(agent.hourlyRate).toFixed(2)}/hr` : '-'}</div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Commission Rate</div>
-                      <div className="font-medium">{agent.commissionRate ? `${Number(agent.commissionRate).toFixed(1)}%` : '-'}</div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Hire Date</div>
-                      <div className="font-medium">{agent.hireDate ? new Date(agent.hireDate).toLocaleDateString() : '-'}</div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Created</div>
-                      <div className="font-medium">{agent.createdAt ? new Date(agent.createdAt).toLocaleDateString() : '-'}</div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Updated</div>
-                      <div className="font-medium">{agent.updatedAt ? new Date(agent.updatedAt).toLocaleDateString() : '-'}</div>
+                {/* Agent Details Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-600">
+                    <div className="text-slate-400 text-xs uppercase tracking-wide mb-1">Role</div>
+                    <div className="font-semibold text-slate-200">{agent.role.replace('_', ' ')}</div>
+                  </div>
+                  <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-600">
+                    <div className="text-slate-400 text-xs uppercase tracking-wide mb-1">Status</div>
+                    <div className="font-semibold text-slate-200">{agent.isActive ? 'Active' : 'Inactive'}</div>
+                  </div>
+                  <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-600">
+                    <div className="text-slate-400 text-xs uppercase tracking-wide mb-1">Hourly Rate</div>
+                    <div className="font-semibold text-slate-200">{agent.hourlyRate ? `$${Number(agent.hourlyRate).toFixed(2)}/hr` : '-'}</div>
+                  </div>
+                  <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-600">
+                    <div className="text-slate-400 text-xs uppercase tracking-wide mb-1">Commission</div>
+                    <div className="font-semibold text-slate-200">{agent.commissionRate ? `${Number(agent.commissionRate).toFixed(1)}%` : '-'}</div>
+                  </div>
+                  <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-600">
+                    <div className="text-slate-400 text-xs uppercase tracking-wide mb-1">Hire Date</div>
+                    <div className="font-semibold text-slate-200">{agent.hireDate ? new Date(agent.hireDate).toLocaleDateString() : '-'}</div>
+                  </div>
+                  <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-600">
+                    <div className="text-slate-400 text-xs uppercase tracking-wide mb-1">Specialties</div>
+                    <div className="font-semibold text-slate-200">
+                      {Array.isArray(agent.specialties)
+                        ? agent.specialties.join(', ')
+                        : (typeof agent.specialties === 'string' && agent.specialties.trim().length > 0
+                            ? (() => { try { return JSON.parse(agent.specialties).join(', '); } catch { return agent.specialties; } })()
+                            : '-')}
                     </div>
                   </div>
-                  
-                  {agent.notes && (
-                    <div className="mt-4 p-3 bg-muted/30 rounded-lg">
-                      <div className="text-sm text-muted-foreground mb-1">Notes</div>
-                      <div className="text-sm">{agent.notes}</div>
+                  <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-600">
+                    <div className="text-slate-400 text-xs uppercase tracking-wide mb-1">Calendar Color</div>
+                    <div className="flex items-center gap-2 font-semibold text-slate-200">
+                      <span className="inline-block w-4 h-4 rounded-full border border-slate-600" style={{ backgroundColor: agent.colorCode || '#3B82F6' }}></span>
+                      <span>{colorOptions.find(c => c.value === agent.colorCode)?.name || 'Custom'}</span>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
+                  </div>
+                  <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-600">
+                    <div className="text-slate-400 text-xs uppercase tracking-wide mb-1">Created</div>
+                    <div className="font-semibold text-slate-200">{agent.createdAt ? new Date(agent.createdAt).toLocaleDateString() : '-'}</div>
+                  </div>
+                </div>
+                
+                {agent.notes && (
+                  <div className="mt-4 p-4 bg-slate-800/30 rounded-lg border border-slate-600">
+                    <div className="text-slate-400 text-sm font-medium mb-2">Notes</div>
+                    <div className="text-slate-300 text-sm">{agent.notes}</div>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
 
           {agents.length === 0 && (
-            <Card>
-              <CardContent className="text-center py-12">
-                <User className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-base font-semibold mb-2">No Agents Found</h3>
-                <p className="text-muted-foreground mb-4">
-                  Get started by adding your first field agent to handle estimates.
-                </p>
-                <Button onClick={() => setShowAgentDialog(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Your First Agent
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="remodra-card p-12 text-center">
+              <div className="flex justify-center mb-6">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 border-2 border-slate-600 flex items-center justify-center">
+                  <User className="h-10 w-10 text-amber-400" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-slate-200 mb-3">No Agents Found</h3>
+              <p className="text-slate-400 mb-6 max-w-md mx-auto">
+                Get started by adding your first field agent to handle estimates and appointments.
+              </p>
+              <Button className="remodra-button" onClick={() => resetForm()}>
+                <Plus className="h-5 w-5 mr-2" />
+                Add Your First Agent
+              </Button>
+            </div>
           )}
         </TabsContent>
 
-        <TabsContent value="schedule" className="space-y-6">
-          <div className="flex items-center space-x-4">
-            <Label htmlFor="scheduleDate">Select Date:</Label>
-            <Input
-              id="scheduleDate"
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-auto"
-            />
+        <TabsContent value="reassign" className="space-y-6">
+          <div className="remodra-card p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-semibold text-amber-400 mb-2">Reassign Appointments</h3>
+                <p className="text-slate-300">Change which agent is assigned to existing appointments</p>
+              </div>
+            </div>
+
+            <div className="remodra-card p-6 border border-slate-600">
+              <div className="mb-6">
+                <h4 className="text-lg font-semibold text-slate-200 mb-2">Reassign Appointment to Different Agent</h4>
+                <p className="text-slate-400">Select an existing appointment and change its assigned agent</p>
+              </div>
+              
+              <div className="space-y-6">
+                {/* Date Selection */}
+                <div>
+                  <Label htmlFor="selectedDate" className="text-slate-300 font-medium mb-2">Select Date</Label>
+                  <Input
+                    id="selectedDate"
+                    type="date"
+                    value={assignmentData.selectedDate}
+                    onChange={(e) => setAssignmentData({...assignmentData, selectedDate: e.target.value})}
+                    className="remodra-input"
+                  />
+                </div>
+
+                {/* Available Appointments Section */}
+                <div className="p-4 bg-slate-700/50 border border-slate-600 rounded-lg">
+                  <div className="text-sm font-semibold text-amber-400 mb-3">
+                    Appointments for {assignmentData.selectedDate}
+                  </div>
+                  <div className="text-sm text-slate-300 space-y-2">
+                    {appointments
+                      .filter((appointment: any) => {
+                        const appointmentDate = new Date(appointment.start_time);
+                        const selectedDate = new Date(assignmentData.selectedDate);
+                        return appointmentDate.toDateString() === selectedDate.toDateString();
+                      })
+                      .slice(0, 5)
+                      .map((appointment: any) => (
+                        <div key={appointment.id} className="p-2 bg-slate-800/50 rounded border border-slate-600">
+                          {appointment.title} - {new Date(appointment.start_time).toLocaleTimeString()}
+                        </div>
+                      ))}
+                    {appointments.filter((appointment: any) => {
+                      const appointmentDate = new Date(appointment.start_time);
+                      const selectedDate = new Date(assignmentData.selectedDate);
+                      return appointmentDate.toDateString() === selectedDate.toDateString();
+                    }).length === 0 && (
+                      <div className="text-slate-400 italic">No appointments for this date</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Select Appointment */}
+                <div>
+                  <Label htmlFor="appointmentId" className="text-slate-300 font-medium mb-2">Select Appointment</Label>
+                  <Select
+                    value={assignmentData.appointmentId}
+                    onValueChange={(value) => setAssignmentData({...assignmentData, appointmentId: value})}
+                  >
+                    <SelectTrigger className="remodra-input">
+                      <SelectValue placeholder="Choose an appointment" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-800 border-slate-600">
+                      {appointments
+                        .filter((appointment: any) => {
+                          const appointmentDate = new Date(appointment.start_time);
+                          const selectedDate = new Date(assignmentData.selectedDate);
+                          return appointmentDate.toDateString() === selectedDate.toDateString();
+                        })
+                        .map((appointment: any) => (
+                          <SelectItem key={appointment.id} value={appointment.id.toString()} className="text-slate-200 hover:bg-slate-700">
+                            {appointment.title} - {new Date(appointment.start_time).toLocaleTimeString()}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Select New Agent */}
+                <div>
+                  <Label htmlFor="newAgentId" className="text-slate-300 font-medium mb-2">Assign to Agent</Label>
+                  <Select
+                    value={assignmentData.newAgentId}
+                    onValueChange={(value) => setAssignmentData({...assignmentData, newAgentId: value})}
+                  >
+                    <SelectTrigger className="remodra-input">
+                      <SelectValue placeholder="Choose a new agent" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-800 border-slate-600">
+                      {agents.map((agent: any) => (
+                        <SelectItem key={agent.id} value={agent.id.toString()} className="text-slate-200 hover:bg-slate-700">
+                          {agent.firstName} {agent.lastName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button 
+                    onClick={handleAssignSubmit}
+                    disabled={assignEstimateMutation.isPending}
+                    className="remodra-button"
+                  >
+                    {assignEstimateMutation.isPending ? 'Updating...' : 'Reassign Appointment'}
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
-          
-          <AgentScheduler selectedDate={selectedDate} />
+        </TabsContent>
+
+        <TabsContent value="schedule" className="space-y-6">
+          <div className="remodra-card p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-semibold text-amber-400 mb-2">Daily Schedule</h3>
+                <p className="text-slate-300">View and manage agent schedules for specific dates</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-4 mb-6">
+              <Label htmlFor="scheduleDate" className="text-slate-300 font-medium">Select Date:</Label>
+              <Input
+                id="scheduleDate"
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="remodra-input w-auto"
+              />
+            </div>
+            
+            <AgentScheduler selectedDate={selectedDate} />
+          </div>
         </TabsContent>
       </Tabs>
+          </main>
+        </div>
+      </div>
     </div>
   );
-};
-
-export default AgentManagementPage;
+}

@@ -111,9 +111,9 @@ const PAGE_WIDTH = 210; // A4 width in mm
 const CONTENT_WIDTH = PAGE_WIDTH - (PAGE_MARGIN * 2);
 
 // Default colors - these will be overridden by template settings if available
-const PRIMARY_COLOR_DEFAULT = "#003366"; // Primary color for headers
-const SECONDARY_COLOR_DEFAULT = "#0D6EFD"; // Color secundario
-const ACCENT_COLOR_DEFAULT = "#4F46E5"; // Color de acento
+const PRIMARY_COLOR_DEFAULT = "#1e293b"; // Dark slate for headers
+const SECONDARY_COLOR_DEFAULT = "#475569"; // Medium slate for secondary elements
+const ACCENT_COLOR_DEFAULT = "#0f172a"; // Very dark slate for accents
 
 // Get template settings from localStorage or use defaults
 interface TemplateSettings {
@@ -175,10 +175,10 @@ function getTemplateSettings(): TemplateSettings {
   
   // Return default template settings if no saved template found
   return {
-    colorPrimary: "#0f766e",
-    colorSecondary: "#2563eb",
+    colorPrimary: "#1e293b", // Dark slate
+    colorSecondary: "#475569", // Medium slate
     fontMain: "helvetica",
-    headerStyle: 'gradient',
+    headerStyle: 'simple', // Changed from gradient to simple for better readability
     tableStyle: 'bordered',
     showHeader: true,
     showFooter: true,
@@ -413,8 +413,8 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
     const headerStyle = templateSettings?.headerStyle || 'gradient';
     
     if (headerStyle === 'gradient') {
-      // Gradient header
-      pdf.setFillColor(247, 250, 252); // Light gray background
+      // Gradient header - using darker colors for better readability
+      pdf.setFillColor(248, 250, 252); // Very light gray background
       pdf.rect(0, 0, PAGE_WIDTH, 40, 'F');
     } else if (headerStyle === 'boxed') {
       // Boxed header
@@ -427,7 +427,9 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
     // Simple style doesn't need special formatting
   }
   
-  pdf.setTextColor(PRIMARY_COLOR);
+  // Use darker text color for better readability
+  const textColor = PRIMARY_COLOR;
+  pdf.setTextColor(textColor);
   pdf.setFontSize(22);
   pdf.setFont(fontFamily, "bold");
   pdf.text("ESTIMATE", PAGE_MARGIN, 15);
@@ -447,10 +449,12 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   // Business information
   pdf.setFontSize(12);
   pdf.setFont("helvetica", "bold");
+  pdf.setTextColor(textColor);
   pdf.text(data.contractor.businessName, PAGE_WIDTH - PAGE_MARGIN - 80, 15, { align: 'right' });
   
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(10);
+  pdf.setTextColor(60, 60, 60); // Dark gray for contact info
   if (data.contractor.address) {
     pdf.text(data.contractor.address, PAGE_WIDTH - PAGE_MARGIN - 80, 20, { align: 'right' });
   }
@@ -475,12 +479,12 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   // Client
   pdf.setFontSize(12);
   pdf.setFont("helvetica", "bold");
-  pdf.setTextColor(PRIMARY_COLOR);
+  pdf.setTextColor(textColor);
   pdf.text("CLIENT", PAGE_MARGIN, currentY);
   
   currentY += 8;
   pdf.setFont("helvetica", "normal");
-  pdf.setTextColor(60, 60, 60);
+  pdf.setTextColor(40, 40, 40); // Darker text for better readability
   pdf.setFontSize(11);
   pdf.text(`${data.client.firstName} ${data.client.lastName}`, PAGE_MARGIN, currentY);
   
@@ -567,15 +571,15 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   currentY += 8;
   
   // Table headers
-  pdf.setFillColor(247, 250, 252);
+  pdf.setFillColor(241, 245, 249); // Slightly darker background for better contrast
   pdf.rect(PAGE_MARGIN, currentY, CONTENT_WIDTH, 8, 'F');
   
-  pdf.setTextColor(60, 60, 60);
+  pdf.setTextColor(30, 30, 30); // Very dark text for better readability
   pdf.setFontSize(10);
-  pdf.text("Description", PAGE_MARGIN + 5, currentY + 5.5);
-  pdf.text("Qty.", PAGE_MARGIN + 100, currentY + 5.5);
-  pdf.text("Unit Price", PAGE_MARGIN + 125, currentY + 5.5);
-  pdf.text("Total", PAGE_MARGIN + 160, currentY + 5.5);
+  pdf.setFont("helvetica", "bold");
+  
+  // Render table header columns based on template settings
+  renderTableHeaderColumns(pdf, currentY);
   
   currentY += 8;
   
@@ -584,9 +588,9 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   for (const item of data.items) {
     const itemHeight = 10;
     
-    // Alternar colores de fondo para mejorar legibilidad
+    // Alternate row colors for better readability
     if (alternateRow) {
-      pdf.setFillColor(252, 252, 252);
+      pdf.setFillColor(248, 250, 252); // Very light gray for alternate rows
       pdf.rect(PAGE_MARGIN, currentY, CONTENT_WIDTH, itemHeight, 'F');
     }
     alternateRow = !alternateRow;
@@ -596,44 +600,25 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
       pdf.addPage();
       currentY = 20;
       // Table headers en la nueva página
-      pdf.setFillColor(247, 250, 252);
+      pdf.setFillColor(241, 245, 249); // Slightly darker background for better contrast
       pdf.rect(PAGE_MARGIN, currentY, CONTENT_WIDTH, 8, 'F');
       
-      pdf.setTextColor(60, 60, 60);
+      pdf.setTextColor(30, 30, 30); // Very dark text for better readability
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "bold");
-      pdf.text("Description", PAGE_MARGIN + 5, currentY + 5.5);
-      pdf.text("Qty.", PAGE_MARGIN + 100, currentY + 5.5);
-      pdf.text("Unit Price", PAGE_MARGIN + 125, currentY + 5.5);
-      pdf.text("Total", PAGE_MARGIN + 160, currentY + 5.5);
+      
+      // Render table header columns based on template settings
+      renderTableHeaderColumns(pdf, currentY);
       
       currentY += 8;
     }
     
-    pdf.setTextColor(60, 60, 60);
+    pdf.setTextColor(40, 40, 40); // Darker text for better readability
     pdf.setFontSize(9);
     pdf.setFont("helvetica", "normal");
     
-    // Description (truncated if too long)
-    const description = item.description.length > 50 
-      ? item.description.substring(0, 50) + "..." 
-      : item.description;
-    pdf.text(description, PAGE_MARGIN + 5, currentY + 5.5);
-    
-    // Quantity
-    pdf.text(String(item.quantity), PAGE_MARGIN + 100, currentY + 5.5);
-    
-    // Unit price
-    const unitPriceNumber = typeof item.unitPrice === 'string' 
-      ? parseFloat(item.unitPrice) 
-      : item.unitPrice;
-    pdf.text(formatCurrency(unitPriceNumber), PAGE_MARGIN + 125, currentY + 5.5);
-    
-    // Total amount
-    const amountNumber = typeof item.amount === 'string' 
-      ? parseFloat(item.amount) 
-      : item.amount;
-    pdf.text(formatCurrency(amountNumber), PAGE_MARGIN + 160, currentY + 5.5);
+    // Render data row based on column visibility settings
+    renderTableDataRow(pdf, item, currentY);
     
     currentY += itemHeight;
   }
@@ -651,7 +636,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   }
   
   // Align totals to the right
-  pdf.setTextColor(60, 60, 60);
+  pdf.setTextColor(30, 30, 30); // Very dark text for better readability
   pdf.setFontSize(10);
   
   // Subtotal
@@ -694,7 +679,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   
   pdf.setFontSize(11);
   pdf.setFont("helvetica", "bold");
-  pdf.setTextColor(PRIMARY_COLOR);
+  pdf.setTextColor(textColor);
   pdf.text("TOTAL:", PAGE_WIDTH - PAGE_MARGIN - 60, currentY + 5);
   pdf.text(formatCurrency(data.total), PAGE_WIDTH - PAGE_MARGIN, currentY + 5, { align: 'right' });
   
@@ -710,14 +695,14 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
     
     pdf.setFontSize(11);
     pdf.setFont("helvetica", "bold");
-    pdf.setTextColor(PRIMARY_COLOR);
+    pdf.setTextColor(textColor);
     pdf.text("TERMS AND CONDITIONS", PAGE_MARGIN, currentY);
     
     currentY += 8;
     
     pdf.setFontSize(9);
     pdf.setFont("helvetica", "normal");
-    pdf.setTextColor(80, 80, 80);
+    pdf.setTextColor(50, 50, 50); // Darker text for better readability
     
     // Dividir los términos en múltiples líneas si es necesario
     const termLines = pdf.splitTextToSize(data.terms, CONTENT_WIDTH);
@@ -736,14 +721,14 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
     
     pdf.setFontSize(11);
     pdf.setFont("helvetica", "bold");
-    pdf.setTextColor(PRIMARY_COLOR);
+    pdf.setTextColor(textColor);
     pdf.text("NOTES", PAGE_MARGIN, currentY);
     
     currentY += 8;
     
     pdf.setFontSize(9);
     pdf.setFont("helvetica", "normal");
-    pdf.setTextColor(80, 80, 80);
+    pdf.setTextColor(50, 50, 50); // Darker text for better readability
     
     // Split notes into multiple lines if necessary
     const noteLines = pdf.splitTextToSize(data.notes, CONTENT_WIDTH);
@@ -756,7 +741,7 @@ export async function generateEstimatePDF(data: EstimateData): Promise<Blob> {
   const footerY = 280;
   
   pdf.setFontSize(8);
-  pdf.setTextColor(120, 120, 120);
+  pdf.setTextColor(100, 100, 100); // Darker footer text for better readability
   pdf.text(`Generated on ${new Date().toLocaleDateString()} by ${data.contractor.businessName}`, 
     PAGE_MARGIN, footerY);
   
@@ -802,7 +787,9 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     // Simple style doesn't need special formatting
   }
   
-  pdf.setTextColor(PRIMARY_COLOR);
+  // Use darker text color for better readability
+  const textColor = PRIMARY_COLOR;
+  pdf.setTextColor(textColor);
   pdf.setFontSize(22);
   pdf.setFont(fontFamily, "bold");
   pdf.text("INVOICE", PAGE_MARGIN, 15);
@@ -980,44 +967,25 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
       pdf.addPage();
       currentY = 20;
       // Table headers en la nueva página
-      pdf.setFillColor(247, 250, 252);
+      pdf.setFillColor(241, 245, 249); // Slightly darker background for better contrast
       pdf.rect(PAGE_MARGIN, currentY, CONTENT_WIDTH, 8, 'F');
       
-      pdf.setTextColor(60, 60, 60);
+      pdf.setTextColor(30, 30, 30); // Very dark text for better readability
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "bold");
-      pdf.text("Description", PAGE_MARGIN + 5, currentY + 5.5);
-      pdf.text("Qty.", PAGE_MARGIN + 100, currentY + 5.5);
-      pdf.text("Unit Price", PAGE_MARGIN + 125, currentY + 5.5);
-      pdf.text("Total", PAGE_MARGIN + 160, currentY + 5.5);
+      
+      // Render table header columns based on template settings
+      renderTableHeaderColumns(pdf, currentY);
       
       currentY += 8;
     }
     
-    pdf.setTextColor(60, 60, 60);
+    pdf.setTextColor(40, 40, 40); // Darker text for better readability
     pdf.setFontSize(9);
     pdf.setFont("helvetica", "normal");
     
-    // Description (truncated if too long)
-    const description = item.description.length > 50 
-      ? item.description.substring(0, 50) + "..." 
-      : item.description;
-    pdf.text(description, PAGE_MARGIN + 5, currentY + 5.5);
-    
-    // Quantity
-    pdf.text(String(item.quantity), PAGE_MARGIN + 100, currentY + 5.5);
-    
-    // Unit price
-    const unitPriceNumber = typeof item.unitPrice === 'string' 
-      ? parseFloat(item.unitPrice) 
-      : item.unitPrice;
-    pdf.text(formatCurrency(unitPriceNumber), PAGE_MARGIN + 125, currentY + 5.5);
-    
-    // Total amount
-    const amountNumber = typeof item.amount === 'string' 
-      ? parseFloat(item.amount) 
-      : item.amount;
-    pdf.text(formatCurrency(amountNumber), PAGE_MARGIN + 160, currentY + 5.5);
+    // Render data row based on column visibility settings
+    renderTableDataRow(pdf, item, currentY);
     
     currentY += itemHeight;
   }
@@ -1035,7 +1003,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   }
   
   // Align totals to the right
-  pdf.setTextColor(60, 60, 60);
+  pdf.setTextColor(30, 30, 30); // Very dark text for better readability
   pdf.setFontSize(10);
   
   // Subtotal
@@ -1161,14 +1129,14 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     
     pdf.setFontSize(11);
     pdf.setFont("helvetica", "bold");
-    pdf.setTextColor(PRIMARY_COLOR);
+    pdf.setTextColor(textColor);
     pdf.text("TERMS AND CONDITIONS", PAGE_MARGIN, currentY);
     
     currentY += 8;
     
     pdf.setFontSize(9);
     pdf.setFont("helvetica", "normal");
-    pdf.setTextColor(80, 80, 80);
+    pdf.setTextColor(50, 50, 50);
     
     // Dividir los términos en múltiples líneas si es necesario
     const termLines = pdf.splitTextToSize(data.terms, CONTENT_WIDTH);
@@ -1187,14 +1155,14 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
     
     pdf.setFontSize(11);
     pdf.setFont("helvetica", "bold");
-    pdf.setTextColor(PRIMARY_COLOR);
+    pdf.setTextColor(textColor);
     pdf.text("NOTES", PAGE_MARGIN, currentY);
     
     currentY += 8;
     
     pdf.setFontSize(9);
     pdf.setFont("helvetica", "normal");
-    pdf.setTextColor(80, 80, 80);
+    pdf.setTextColor(50, 50, 50);
     
     // Split notes into multiple lines if necessary
     const noteLines = pdf.splitTextToSize(data.notes, CONTENT_WIDTH);
@@ -1207,7 +1175,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Blob> {
   const footerY = 280;
   
   pdf.setFontSize(8);
-  pdf.setTextColor(120, 120, 120);
+  pdf.setTextColor(100, 100, 100);
   pdf.text(`Generated on ${new Date().toLocaleDateString()} by ${data.contractor.businessName}`, 
     PAGE_MARGIN, footerY);
   

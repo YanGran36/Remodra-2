@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: remodra
+      POSTGRES_USER: remodra_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secure_password_here}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U remodra_user -d remodra"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Remodra SaaS Application
+  remodra:
+    build: .
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://remodra_user:${POSTGRES_PASSWORD:-secure_password_here}@postgres:5432/remodra
+      SESSION_SECRET: ${SESSION_SECRET:-your-super-secure-session-secret}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      PORT: 3001
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx Reverse Proxy (Optional)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - remodra
+    restart: unless-stopped
+
+volumes:
+  postgres_data: 

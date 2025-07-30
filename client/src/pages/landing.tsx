@@ -1,291 +1,266 @@
-import { useState } from "react";
-import { Link } from "wouter";
-import { useAuth } from '../hooks/use-auth';
+import React from 'react';
+import { useLocation } from 'wouter';
 import { Button } from '../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { 
-  CheckCircle, 
-  Star, 
+  Wrench, 
   Users, 
-  Calendar, 
   FileText, 
-  Calculator,
-  Clock,
-  Bot,
-  ArrowRight,
-  Building,
+  Calendar, 
+  TrendingUp, 
+  Shield, 
   Zap,
-  Shield
-} from "lucide-react";
+  CheckCircle,
+  Star
+} from 'lucide-react';
 
 export default function Landing() {
-  const { user } = useAuth();
-
-  // If user is logged in, show them a different view but allow demo mode
-  // Commenting out redirect for customer flow demonstration
-  // if (user) {
-  //   window.location.href = "/dashboard";
-  //   return null;
-  // }
+  const [, setLocation] = useLocation();
 
   const features = [
     {
-      icon: <Users className="h-6 w-6" />,
-      title: "Client Management",
-      description: "Keep track of all your clients in one organized place"
-    },
-    {
-      icon: <Calendar className="h-6 w-6" />,
-      title: "Project Scheduling",
-      description: "Never miss a deadline with our smart calendar system"
-    },
-    {
-      icon: <FileText className="h-6 w-6" />,
+      icon: FileText,
       title: "Professional Estimates",
-      description: "Create stunning estimates that win more projects"
+      description: "Create detailed estimates with AI-powered cost analysis"
     },
     {
-      icon: <Calculator className="h-6 w-6" />,
-      title: "Smart Invoicing",
-      description: "Get paid faster with automated invoice generation"
+      icon: Users,
+      title: "Client Management",
+      description: "Organize client information and communication"
     },
     {
-      icon: <Clock className="h-6 w-6" />,
-      title: "Time Tracking",
-      description: "Track hours and manage your team efficiently"
+      icon: Wrench,
+      title: "Project Tracking",
+      description: "Monitor project progress and timelines"
     },
     {
-      icon: <Bot className="h-6 w-6" />,
-      title: "AI Cost Analysis",
-      description: "Get intelligent pricing recommendations powered by AI"
+      icon: Calendar,
+      title: "Scheduling",
+      description: "Manage appointments and field agents"
+    },
+    {
+      icon: TrendingUp,
+      title: "Business Analytics",
+      description: "Track performance and growth metrics"
+    },
+    {
+      icon: Shield,
+      title: "Secure & Reliable",
+      description: "Enterprise-grade security for your data"
     }
   ];
 
   const testimonials = [
     {
-      name: "Mike Rodriguez",
-      company: "Rodriguez Construction",
+      name: "John Smith",
+      company: "Smith Contracting",
       rating: 5,
-      text: "Remodra transformed how I run my business. I'm closing 40% more deals with their professional estimates."
+      text: "Remodra has transformed how we manage our projects. The estimates are professional and accurate."
     },
     {
       name: "Sarah Johnson",
-      company: "Johnson Home Renovations", 
+      company: "Johnson Builders",
       rating: 5,
-      text: "The AI cost analysis is incredible. It helps me price jobs perfectly and stay competitive."
-    },
-    {
-      name: "David Chen",
-      company: "Elite Remodeling",
-      rating: 5,
-      text: "Finally, software built specifically for contractors. Everything I need in one place."
+      text: "The client management features are incredible. Our workflow is now 3x more efficient."
     }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Navigation */}
-      <nav className="border-b border-slate-700/50 bg-slate-900/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl p-2 mr-3">
-                <img 
-                  src="/remodra-logo.png" 
-                  alt="Remodra Logo" 
-                  className="h-6 w-6 object-contain"
-                />
-              </div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                Remodra
-              </h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link href="/auth">
-                <Button variant="ghost" className="text-white hover:bg-white/10">
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/plans">
-                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
-                  Start Free Trial
-                </Button>
-              </Link>
-            </div>
-          </div>
+      <nav className="flex justify-between items-center p-6 max-w-7xl mx-auto">
+        <div className="flex items-center space-x-3">
+          <img 
+            src="/remodra-logo.png" 
+            alt="Remodra Logo" 
+            className="h-10 w-10 object-contain"
+          />
+          <span className="text-2xl font-bold text-amber-400">Remodra</span>
+        </div>
+        <div className="flex items-center space-x-4">
+          <Button
+            variant="ghost"
+            onClick={() => setLocation('/pricing')}
+            className="text-slate-300 hover:text-amber-400"
+          >
+            Pricing
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => setLocation('/simple-login')}
+            className="text-slate-300 hover:text-amber-400"
+          >
+            Sign In
+          </Button>
+          <Button
+            onClick={() => setLocation('/auth')}
+            className="bg-amber-500 hover:bg-amber-600 text-slate-900"
+          >
+            Get Started
+          </Button>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <Badge className="mb-6 bg-blue-500/20 text-blue-300 border-blue-400/30">
-            <Zap className="mr-2 h-4 w-4" />
-            The #1 Platform for Remodeling Contractors
-          </Badge>
-          
-          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-            Grow Your
-            <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 bg-clip-text text-transparent block">
-              Remodeling Business
-            </span>
-          </h1>
-          
-          <p className="text-xl text-slate-300 mb-8 max-w-3xl mx-auto leading-relaxed">
-            Everything you need to manage clients, create professional estimates, track projects, 
-            and grow your contracting business. Built specifically for remodeling professionals.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link href="/plans">
-              <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg">
-                Start Your Free Trial
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-            <Link href="/auth">
-              <Button size="lg" variant="outline" className="border-slate-600 text-white hover:bg-white/10 px-8 py-4 text-lg">
-                Sign In
-              </Button>
-            </Link>
-          </div>
-          
-          <p className="text-sm text-slate-400 mt-4">
-            ✅ 14-day free trial • ✅ No credit card required • ✅ Cancel anytime
-          </p>
+      <div className="text-center py-20 px-6 max-w-6xl mx-auto">
+        <div className="flex justify-center mb-8">
+          <img 
+            src="/remodra-logo.png" 
+            alt="Remodra Logo" 
+            className="h-24 w-24 object-contain"
+          />
         </div>
-      </section>
+        <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
+          Professional Contractor
+          <span className="text-amber-400"> Management</span>
+        </h1>
+        <p className="text-xl text-slate-300 mb-8 max-w-3xl mx-auto">
+          Streamline your contracting business with AI-powered estimates, client management, 
+          and project tracking. Built by contractors, for contractors.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+          <Button
+            onClick={() => setLocation('/auth')}
+            size="lg"
+            className="bg-amber-500 hover:bg-amber-600 text-slate-900 text-lg px-8 py-3"
+          >
+            <Zap className="mr-2 h-5 w-5" />
+            Start Free Trial
+          </Button>
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => setLocation('/simple-login')}
+            className="text-slate-300 border-slate-600 hover:bg-slate-800 text-lg px-8 py-3"
+          >
+            Demo Login
+          </Button>
+        </div>
+        
+        {/* Trust Indicators */}
+        <div className="flex justify-center items-center space-x-8 text-slate-400">
+          <div className="flex items-center space-x-2">
+            <CheckCircle className="h-5 w-5 text-green-400" />
+            <span>30-day free trial</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Shield className="h-5 w-5 text-blue-400" />
+            <span>Secure & reliable</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Star className="h-5 w-5 text-yellow-400" />
+            <span>4.9/5 rating</span>
+          </div>
+        </div>
+      </div>
 
       {/* Features Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-slate-800/30">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-white mb-4">
-              Everything You Need to Succeed
-            </h2>
-            <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-              Powerful tools designed specifically for remodeling contractors to streamline operations and win more projects.
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <Card key={index} className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-all duration-300 hover:scale-105">
-                <CardHeader>
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white mb-4">
-                    {feature.icon}
-                  </div>
-                  <CardTitle className="text-white">{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-slate-300">
-                    {feature.description}
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+      <div className="py-20 px-6 max-w-7xl mx-auto">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            Everything You Need to Succeed
+          </h2>
+          <p className="text-xl text-slate-300 max-w-2xl mx-auto">
+            Powerful tools designed specifically for contractors to grow their business
+          </p>
         </div>
-      </section>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {features.map((feature, index) => (
+            <Card key={index} className="bg-gradient-to-br from-slate-800 to-slate-700 border-slate-600 hover:border-amber-500 transition-all duration-300">
+              <CardContent className="p-6">
+                <div className="flex items-center mb-4">
+                  <div className="p-3 bg-amber-500/20 rounded-lg">
+                    <feature.icon className="h-6 w-6 text-amber-400" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-2">{feature.title}</h3>
+                <p className="text-slate-300">{feature.description}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
 
       {/* Testimonials Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-white mb-4">
-              Trusted by 1000+ Contractors
-            </h2>
-            <p className="text-xl text-slate-300">
-              See what contractors are saying about Remodra
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <Card key={index} className="bg-slate-800/50 border-slate-700">
-                <CardHeader>
-                  <div className="flex items-center mb-2">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
-                    ))}
-                  </div>
-                  <CardDescription className="text-slate-300 text-base leading-relaxed">
-                    "{testimonial.text}"
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-white font-semibold">{testimonial.name}</div>
-                  <div className="text-slate-400 text-sm">{testimonial.company}</div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+      <div className="py-20 px-6 max-w-6xl mx-auto">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            Trusted by Contractors Nationwide
+          </h2>
         </div>
-      </section>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {testimonials.map((testimonial, index) => (
+            <Card key={index} className="bg-gradient-to-br from-slate-800 to-slate-700 border-slate-600">
+              <CardContent className="p-6">
+                <div className="flex items-center mb-4">
+                  {[...Array(testimonial.rating)].map((_, i) => (
+                    <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
+                  ))}
+                </div>
+                <p className="text-slate-300 mb-4 italic">"{testimonial.text}"</p>
+                <div>
+                  <p className="font-semibold text-white">{testimonial.name}</p>
+                  <p className="text-slate-400">{testimonial.company}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-blue-600/20 to-purple-600/20">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-bold text-white mb-6">
+      <div className="py-20 px-6 text-center">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             Ready to Transform Your Business?
           </h2>
           <p className="text-xl text-slate-300 mb-8">
-            Join thousands of contractors who are already growing with Remodra. 
-            Start your free trial today and see the difference.
+            Join thousands of contractors who trust Remodra to manage their business
           </p>
-          
-          <Link href="/plans">
-            <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg">
-              Start Your Free Trial Now
-              <ArrowRight className="ml-2 h-5 w-5" />
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button
+              onClick={() => setLocation('/auth')}
+              size="lg"
+              className="bg-amber-500 hover:bg-amber-600 text-slate-900 text-lg px-8 py-3"
+            >
+              Start Your Free Trial
             </Button>
-          </Link>
-          
-          <div className="flex items-center justify-center mt-6 space-x-6 text-slate-300">
-            <div className="flex items-center">
-              <Shield className="h-5 w-5 mr-2 text-green-400" />
-              <span>Secure & Reliable</span>
-            </div>
-            <div className="flex items-center">
-              <CheckCircle className="h-5 w-5 mr-2 text-green-400" />
-              <span>Cancel Anytime</span>
-            </div>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => setLocation('/pricing')}
+              className="text-slate-300 border-slate-600 hover:bg-slate-800 text-lg px-8 py-3"
+            >
+              View Pricing Plans
+            </Button>
           </div>
         </div>
-      </section>
+      </div>
 
       {/* Footer */}
-      <footer className="border-t border-slate-700/50 bg-slate-900/80 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center mb-4 md:mb-0">
-              <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl p-2 mr-3">
-                <img 
-                  src="/remodra-logo.png" 
-                  alt="Remodra Logo" 
-                  className="h-6 w-6 object-contain"
-                />
-              </div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                Remodra
-              </h1>
-            </div>
-            
-            <div className="flex items-center space-x-6 text-slate-400">
-              <Link href="/auth" className="hover:text-white transition-colors">
-                Sign In
-              </Link>
-              <Link href="/plans" className="hover:text-white transition-colors">
-                Pricing
-              </Link>
-              <span className="text-sm">
-                © 2024 Remodra. All rights reserved.
-              </span>
-            </div>
+      <footer className="py-12 px-6 border-t border-slate-700">
+        <div className="max-w-7xl mx-auto text-center">
+          <div className="flex justify-center items-center space-x-3 mb-6">
+            <img 
+              src="/remodra-logo.png" 
+              alt="Remodra Logo" 
+              className="h-8 w-8 object-contain"
+            />
+            <span className="text-xl font-bold text-amber-400">Remodra</span>
+          </div>
+          <p className="text-slate-400 mb-4">
+            Professional contractor management system
+          </p>
+          <div className="flex justify-center space-x-6 text-sm text-slate-500">
+            <span>© 2025 Remodra. All rights reserved.</span>
+            <span>Privacy Policy</span>
+            <span>Terms of Service</span>
           </div>
         </div>
       </footer>
     </div>
   );
-}
+} 

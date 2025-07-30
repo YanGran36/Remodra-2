@@ -1,35 +1,48 @@
-import { useState } from "react";
+import React, { useState } from 'react';
+import { useRoute, Link } from 'wouter';
 import { useInvoices } from '../hooks/use-invoices';
-import { useLanguage } from '../hooks/use-language';
-import { useLocation } from "wouter";
+import { useToast } from '../hooks/use-toast';
+import { format } from 'date-fns';
+import { enUS } from 'date-fns/locale';
+
+// UI Components
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Input } from '../components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../components/ui/alert-dialog';
+
+// Icons
 import { 
-  FileText, 
   Plus, 
   Search, 
-  Printer, 
-  FileEdit, 
-  Mail, 
-  Download, 
+  Filter, 
   Eye, 
-  Trash2,
-  Calendar, 
-  Clock,
-  Receipt,
-  Settings,
+  Edit, 
+  Trash2, 
+  Download, 
+  Send, 
+  DollarSign,
+  Calendar,
   User,
-  Edit
-} from "lucide-react";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '../components/ui/select';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Badge } from '../components/ui/badge';
-import { format } from "date-fns";
+  FileText,
+  RefreshCw,
+  MoreHorizontal,
+  Check
+} from 'lucide-react';
+
+// Layout Components
 import Sidebar from '../components/layout/sidebar';
 import MobileSidebar from '../components/layout/mobile-sidebar';
 import TopNav from '../components/layout/top-nav';
@@ -40,83 +53,108 @@ const formatCurrency = (amount: number | string) => {
     .format(typeof amount === 'string' ? parseFloat(amount) : amount);
 };
 
+// Helper function to format date
+const formatDate = (dateString?: string | Date | null) => {
+  if (!dateString) return 'N/A';
+  try {
+    return format(new Date(dateString), 'MMM dd, yyyy', { locale: enUS });
+  } catch {
+    return 'Invalid Date';
+  }
+};
+
+// Helper function to get status badge styling
+const getStatusBadge = (status: string) => {
+  switch (status?.toLowerCase()) {
+    case 'paid':
+      return <Badge className="bg-green-500 hover:bg-green-600">Paid</Badge>;
+    case 'pending':
+      return <Badge className="bg-yellow-500 hover:bg-yellow-600">Pending</Badge>;
+    case 'overdue':
+      return <Badge className="bg-red-500 hover:bg-red-600">Overdue</Badge>;
+    case 'draft':
+      return <Badge className="bg-gray-500 hover:bg-gray-600">Draft</Badge>;
+    case 'cancelled':
+      return <Badge className="bg-red-700 hover:bg-red-800">Cancelled</Badge>;
+    default:
+      return <Badge variant="secondary">{status || 'Unknown'}</Badge>;
+  }
+};
+
 export default function InvoicesPage() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<string>("date_desc");
-  const [, setLocation] = useLocation();
-  const { t } = useLanguage();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<any>(null);
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  
+  const { toast } = useToast();
+  const { 
+    invoices, 
+    isLoadingInvoices, 
+    deleteInvoiceMutation,
+    refetchInvoices 
+  } = useInvoices();
 
-  // Fetch invoices
-  const { invoices = [], isLoadingInvoices, invoicesError } = useInvoices();
+  // Filter invoices based on search and status
+  const filteredInvoices = invoices?.filter((invoice: any) => {
+    const clientName = invoice.client ? `${invoice.client.firstName || ''} ${invoice.client.lastName || ''}`.trim() : '';
+    const projectTitle = invoice.project?.title || '';
+    
+    const matchesSearch = 
+      invoice.invoice_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      projectTitle.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || invoice.status?.toLowerCase() === statusFilter.toLowerCase();
+    
+    return matchesSearch && matchesStatus;
+  }) || [];
 
-  // Filter and sort invoices
-  const filteredInvoices = invoices && Array.isArray(invoices)
-    ? (invoices as any[])
-        .filter((invoice: any) => {
-          // Status filter
-          if (statusFilter !== "all" && invoice.status !== statusFilter) {
-            return false;
-          }
-          
-          // Search filter
-          if (searchQuery) {
-            const lowerCaseQuery = searchQuery.toLowerCase();
-            return (
-              invoice.invoiceNumber?.toLowerCase().includes(lowerCaseQuery) ||
-              invoice.client?.firstName?.toLowerCase().includes(lowerCaseQuery) ||
-              invoice.client?.lastName?.toLowerCase().includes(lowerCaseQuery) ||
-              (invoice.project?.title && invoice.project.title.toLowerCase().includes(lowerCaseQuery))
-            );
-          }
-          
-          return true;
-        })
-        .sort((a: any, b: any) => {
-          if (sortBy === "date_desc") {
-            return new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime();
-          } else if (sortBy === "date_asc") {
-            return new Date(a.issueDate).getTime() - new Date(b.issueDate).getTime();
-          } else if (sortBy === "amount_desc") {
-            return parseFloat(b.total) - parseFloat(a.total);
-          } else if (sortBy === "amount_asc") {
-            return parseFloat(a.total) - parseFloat(b.total);
-          }
-          return 0;
-        })
-    : [];
-
-  const viewInvoiceDetails = (invoiceId: number) => {
-    setLocation(`/invoices/${invoiceId}`);
+  // Handle delete confirmation
+  const handleDeleteClick = (invoice: any) => {
+    setInvoiceToDelete(invoice);
+    setIsDeleteModalOpen(true);
   };
 
-  const calculateTotal = () => {
-    if (!invoices || !Array.isArray(invoices)) return { total: 0, count: 0, paid: 0, pending: 0 };
-    
-    let total = 0;
-    let paid = 0;
-    let pending = 0;
-    
-    (invoices as any[]).forEach((invoice: any) => {
-      const invoiceTotal = parseFloat(invoice.total || 0);
-      total += invoiceTotal;
-      
-      if (invoice.status.toLowerCase() === 'paid' || invoice.status.toLowerCase() === 'pagado') {
-        paid += invoiceTotal;
-      } else {
-        pending += invoiceTotal;
+  const handleDeleteConfirm = async () => {
+    if (invoiceToDelete) {
+      try {
+        await deleteInvoiceMutation.mutateAsync(invoiceToDelete.id);
+        setIsDeleteModalOpen(false);
+        setInvoiceToDelete(null);
+        toast({
+          title: 'Invoice deleted',
+          description: 'The invoice has been deleted successfully.',
+        });
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to delete invoice.',
+          variant: 'destructive',
+        });
       }
-    });
-    
-    return { 
-      total, 
-      count: invoices.length,
-      paid,
-      pending
-    };
+    }
   };
 
-  const { total, count, paid, pending } = calculateTotal();
+  // Handle refresh
+  const handleRefresh = () => {
+    refetchInvoices();
+    toast({
+      title: 'Data refreshed',
+      description: 'Invoice data has been refreshed.',
+    });
+  };
+
+  // Calculate summary stats
+  const totalInvoices = filteredInvoices.length;
+  const totalAmount = filteredInvoices.reduce((sum: number, invoice: any) => sum + (parseFloat(invoice.total) || 0), 0);
+  const paidAmount = filteredInvoices
+    .filter((invoice: any) => invoice.status?.toLowerCase() === 'paid')
+    .reduce((sum: number, invoice: any) => sum + (parseFloat(invoice.total) || 0), 0);
+  const pendingAmount = filteredInvoices
+    .filter((invoice: any) => invoice.status?.toLowerCase() === 'pending')
+    .reduce((sum: number, invoice: any) => sum + (parseFloat(invoice.total) || 0), 0);
 
   return (
     <div className="remodra-layout">
@@ -124,226 +162,290 @@ export default function InvoicesPage() {
       <MobileSidebar />
       <div className="remodra-main">
         <TopNav />
-        <main className="p-8 space-y-8">
-          {/* Header with Remodra branding */}
-          <div className="text-center mb-8">
-            <div className="remodra-logo mb-6">
-              <span className="remodra-logo-text">R</span>
-            </div>
-            <h1 className="remodra-title mb-3">
-              Invoices
-            </h1>
-            <p className="remodra-subtitle">
-              Manage your billing and payments professionally
-            </p>
-          </div>
-
-          {/* Quick Action Buttons */}
-          <div className="flex justify-center gap-4 mb-8">
-            <Button className="remodra-button">
-              <Receipt className="h-5 w-5 mr-2" />
-              New Invoice
-            </Button>
-            <Button className="remodra-button-outline">
-              <Download className="h-5 w-5 mr-2" />
-              Export Invoices
-            </Button>
-            <Button className="remodra-button-outline">
-              <Settings className="h-5 w-5 mr-2" />
-              Invoice Settings
-            </Button>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="remodra-stats-card">
-              <div className="remodra-stats-number">{count}</div>
-              <div className="remodra-stats-label">Total Invoices</div>
-              <div className="remodra-stats-accent"></div>
-            </div>
-            <div className="remodra-stats-card">
-              <div className="remodra-stats-number">{formatCurrency(total)}</div>
-              <div className="remodra-stats-label">Total Amount</div>
-              <div className="remodra-stats-accent"></div>
-            </div>
-            <div className="remodra-stats-card">
-              <div className="remodra-stats-number">{formatCurrency(paid)}</div>
-              <div className="remodra-stats-label">Paid Amount</div>
-              <div className="remodra-stats-accent"></div>
-            </div>
-            <div className="remodra-stats-card">
-              <div className="remodra-stats-number">{formatCurrency(pending)}</div>
-              <div className="remodra-stats-label">Pending Amount</div>
-              <div className="remodra-stats-accent"></div>
-            </div>
-          </div>
-
-          {/* Filters */}
-          <div className="remodra-card p-6">
-            <div className="flex flex-col lg:flex-row gap-4">
-              <Select value={statusFilter} onValueChange={(value: string) => setStatusFilter(value)}>
-                <SelectTrigger className="remodra-input w-full lg:w-48">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-600">
-                  <SelectItem value="all" className="text-slate-200 hover:bg-slate-700">All Status</SelectItem>
-                  <SelectItem value="paid" className="text-slate-200 hover:bg-slate-700">Paid</SelectItem>
-                  <SelectItem value="pending" className="text-slate-200 hover:bg-slate-700">Pending</SelectItem>
-                  <SelectItem value="overdue" className="text-slate-200 hover:bg-slate-700">Overdue</SelectItem>
-                  <SelectItem value="partially_paid" className="text-slate-200 hover:bg-slate-700">Partially Paid</SelectItem>
-                  <SelectItem value="cancelled" className="text-slate-200 hover:bg-slate-700">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={sortBy} onValueChange={(value: string) => setSortBy(value)}>
-                <SelectTrigger className="remodra-input w-full lg:w-48">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-600">
-                  <SelectItem value="date_desc" className="text-slate-200 hover:bg-slate-700">Newest First</SelectItem>
-                  <SelectItem value="date_asc" className="text-slate-200 hover:bg-slate-700">Oldest First</SelectItem>
-                  <SelectItem value="amount_desc" className="text-slate-200 hover:bg-slate-700">Highest Amount</SelectItem>
-                  <SelectItem value="amount_asc" className="text-slate-200 hover:bg-slate-700">Lowest Amount</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Invoices List */}
-          <div className="remodra-card p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-amber-400">Invoice Directory</h2>
-              <Badge className="remodra-badge">
-                {filteredInvoices.length} Invoices
-              </Badge>
-            </div>
-
-            {isLoadingInvoices ? (
-              <div className="remodra-loading">
-                <div className="remodra-spinner"></div>
-                <p className="text-slate-300">Loading invoices...</p>
+        <div className="remodra-content">
+          <main className="p-8 space-y-8">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <div className="flex justify-center mb-6">
+                <img 
+                  src="/remodra-logo.png" 
+                  alt="Remodra Logo" 
+                  className="h-16 w-16 object-contain"
+                />
               </div>
-            ) : invoicesError ? (
-              <div className="text-center py-8">
-                <p className="text-red-400">Error loading invoices: {invoicesError.message}</p>
-                <Button 
-                  className="remodra-button mt-4"
-                  onClick={() => window.location.reload()}
-                >
-                  Retry
-                </Button>
-              </div>
-            ) : filteredInvoices.length === 0 ? (
-              <div className="remodra-empty">
-                <div className="remodra-empty-icon">📄</div>
-                <div className="remodra-empty-title">No Invoices Found</div>
-                <div className="remodra-empty-description">
-                  {searchQuery ? `No invoices match "${searchQuery}"` : "Start by creating your first invoice"}
+              <h1 className="text-3xl font-bold text-amber-400 mb-2">Invoices</h1>
+              <p className="text-slate-400">Manage your invoices and payments</p>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="flex justify-center gap-4 mb-8">
+              <Button asChild>
+                <Link href="/invoices/create">
+                  <Plus className="h-5 w-5 mr-2" />
+                  Create Invoice
+                </Link>
+              </Button>
+              <Button variant="outline" onClick={handleRefresh}>
+                <RefreshCw className="h-5 w-5 mr-2" />
+                Refresh
+              </Button>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              <Card className="bg-slate-800 border-slate-600">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-400">Total Invoices</p>
+                      <p className="text-2xl font-bold text-amber-400">{totalInvoices}</p>
+                    </div>
+                    <FileText className="h-8 w-8 text-slate-400" />
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-slate-800 border-slate-600">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-400">Total Amount</p>
+                      <p className="text-2xl font-bold text-green-400">{formatCurrency(totalAmount)}</p>
+                    </div>
+                    <DollarSign className="h-8 w-8 text-slate-400" />
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-slate-800 border-slate-600">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-400">Paid Amount</p>
+                      <p className="text-2xl font-bold text-green-400">{formatCurrency(paidAmount)}</p>
+                    </div>
+                    <Check className="h-8 w-8 text-green-400" />
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-slate-800 border-slate-600">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-400">Pending Amount</p>
+                      <p className="text-2xl font-bold text-yellow-400">{formatCurrency(pendingAmount)}</p>
+                    </div>
+                    <Calendar className="h-8 w-8 text-yellow-400" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Filters and Search */}
+            <Card className="bg-slate-800 border-slate-600">
+              <CardContent className="p-6">
+                <div className="flex flex-col lg:flex-row gap-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+                    <Input
+                      placeholder="Search invoices..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full lg:w-48">
+                      <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="paid">Paid</SelectItem>
+                      <SelectItem value="overdue">Overdue</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  <Select value={viewMode} onValueChange={(value: 'table' | 'cards') => setViewMode(value)}>
+                    <SelectTrigger className="w-full lg:w-48">
+                      <SelectValue placeholder="View mode" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="table">Table View</SelectItem>
+                      <SelectItem value="cards">Card View</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <Button className="remodra-button mt-4">
-                  <Receipt className="h-4 w-4 mr-2" />
-                  Create First Invoice
-                </Button>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-slate-600">
-                      <th className="text-left py-3 px-4 text-slate-300 font-semibold">Invoice</th>
-                      <th className="text-left py-3 px-4 text-slate-300 font-semibold">Client</th>
-                      <th className="text-left py-3 px-4 text-slate-300 font-semibold">Project</th>
-                      <th className="text-left py-3 px-4 text-slate-300 font-semibold">Amount</th>
-                      <th className="text-left py-3 px-4 text-slate-300 font-semibold">Status</th>
-                      <th className="text-left py-3 px-4 text-slate-300 font-semibold">Date</th>
-                      <th className="text-left py-3 px-4 text-slate-300 font-semibold">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+              </CardContent>
+            </Card>
+
+            {/* Invoices List */}
+            <Card className="bg-slate-800 border-slate-600">
+              <CardHeader>
+                <CardTitle className="text-amber-400">Invoice Directory</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoadingInvoices ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-400 mx-auto"></div>
+                    <p className="mt-2 text-slate-400">Loading invoices...</p>
+                  </div>
+                ) : filteredInvoices.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="text-4xl mb-4">📄</div>
+                    <div className="text-xl font-semibold text-slate-200">No Invoices Found</div>
+                    <div className="text-slate-400 mt-2">
+                      {searchQuery || statusFilter !== 'all' 
+                        ? 'No invoices match your filters' 
+                        : 'Start by creating your first invoice'}
+                    </div>
+                    <Button className="mt-4" asChild>
+                      <Link href="/invoices/create">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create First Invoice
+                      </Link>
+                    </Button>
+                  </div>
+                ) : viewMode === 'table' ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Invoice #</TableHead>
+                        <TableHead>Client</TableHead>
+                        <TableHead>Project</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredInvoices.map((invoice: any) => (
+                        <TableRow key={invoice.id}>
+                          <TableCell className="font-medium">
+                            <Link href={`/invoices/${invoice.id}`} className="text-amber-400 hover:underline">
+                              {invoice.invoice_number}
+                            </Link>
+                          </TableCell>
+                          <TableCell>
+                            {invoice.client ? `${invoice.client.firstName || ''} ${invoice.client.lastName || ''}`.trim() || 'N/A' : 'N/A'}
+                          </TableCell>
+                          <TableCell>{invoice.project?.title || 'N/A'}</TableCell>
+                          <TableCell className="font-medium">{formatCurrency(invoice.total)}</TableCell>
+                          <TableCell>{getStatusBadge(invoice.status)}</TableCell>
+                          <TableCell>{formatDate(invoice.created_at)}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Button variant="outline" size="sm" asChild>
+                                <Link href={`/invoices/${invoice.id}`}>
+                                  <Eye className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                              <Button variant="outline" size="sm" asChild>
+                                <Link href={`/invoices/${invoice.id}/edit`}>
+                                  <Edit className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleDeleteClick(invoice)}
+                                className="border-red-600/50 text-red-400 hover:bg-red-600 hover:border-red-600 hover:text-white"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredInvoices.map((invoice: any) => (
-                      <tr key={invoice.id} className="border-b border-slate-700 hover:bg-slate-800/50 transition-colors">
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-yellow-600 rounded flex items-center justify-center">
-                              <Receipt className="h-4 w-4 text-slate-900" />
+                      <Card key={invoice.id} className="bg-slate-700 border-slate-600 hover:shadow-lg transition-all duration-300">
+                        <CardHeader>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <CardTitle className="text-lg">
+                                <Link href={`/invoices/${invoice.id}`} className="text-amber-400 hover:underline">
+                                  {invoice.invoice_number}
+                                </Link>
+                              </CardTitle>
+                              <p className="text-sm text-slate-400">
+                                {invoice.client ? `${invoice.client.firstName || ''} ${invoice.client.lastName || ''}`.trim() || 'N/A' : 'N/A'}
+                              </p>
+                            </div>
+                            {getStatusBadge(invoice.status)}
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-3">
+                            <div>
+                              <p className="text-sm text-slate-400">Project</p>
+                              <p className="font-medium">{invoice.project?.title || 'N/A'}</p>
                             </div>
                             <div>
-                              <div className="font-medium text-slate-200">
-                                {invoice.invoiceNumber || `#${invoice.id}`}
-                              </div>
+                              <p className="text-sm text-slate-400">Amount</p>
+                              <p className="text-xl font-bold text-green-400">{formatCurrency(invoice.total)}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-slate-400">Date</p>
+                              <p className="font-medium">{formatDate(invoice.created_at)}</p>
+                            </div>
+                            <div className="flex items-center gap-2 pt-2">
+                              <Button variant="outline" size="sm" asChild className="flex-1">
+                                <Link href={`/invoices/${invoice.id}`}>
+                                  <Eye className="h-4 w-4 mr-1" />
+                                  View
+                                </Link>
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleDeleteClick(invoice)}
+                                className="border-red-600/50 text-red-400 hover:bg-red-600 hover:border-red-600 hover:text-white"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </div>
                           </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="text-slate-200">
-                            {invoice.client?.firstName} {invoice.client?.lastName}
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="text-slate-300 text-sm max-w-32 truncate">
-                            {invoice.project?.title || 'No Project'}
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="text-amber-400 font-semibold">
-                            {formatCurrency(invoice.total || 0)}
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <Badge className={`${
-                            invoice.status === 'paid' ? 'remodra-badge' :
-                            invoice.status === 'overdue' ? 'border-red-600/50 text-red-400' :
-                            'remodra-badge-outline'
-                          }`}>
-                            {invoice.status}
-                          </Badge>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="text-slate-300 text-sm">
-                            {invoice.issueDate ? format(new Date(invoice.issueDate), 'MMM dd, yyyy') : 'No date'}
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => viewInvoiceDetails(invoice.id)}
-                              className="remodra-button-outline h-8 w-8 p-0"
-                            >
-                              <Eye className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="remodra-button-outline h-8 w-8 p-0"
-                            >
-                              <Edit className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="remodra-button-outline h-8 w-8 p-0"
-                            >
-                              <Printer className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="remodra-button-outline h-8 w-8 p-0"
-                            >
-                              <Mail className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
+                        </CardContent>
+                      </Card>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </main>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </main>
+        </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <AlertDialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Invoice</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete invoice "{invoiceToDelete?.invoice_number}"? 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
-}
+} 

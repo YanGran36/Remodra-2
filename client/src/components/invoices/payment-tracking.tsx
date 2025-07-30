@@ -145,18 +145,18 @@ export default function PaymentTracking({
   return (
     <div>
       {/* Simple Invoice Summary */}
-      <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg flex flex-col md:flex-row md:items-center md:gap-8">
+      <div className="mb-6 p-4 bg-slate-800/50 border border-white/20 rounded-lg flex flex-col md:flex-row md:items-center md:gap-8">
         {summaryRows.map((row, idx) => (
           <div key={row.label} className="flex-1 mb-2 md:mb-0">
-            <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">{row.label}</div>
-            <div className={`text-lg font-bold ${row.label === 'Remaining Balance' && remaining > 0 ? 'text-red-600' : row.label === 'Amount Paid' ? 'text-green-600' : 'text-gray-900'}`}>{row.value}</div>
+            <div className="text-xs text-slate-400 font-medium uppercase tracking-wide">{row.label}</div>
+            <div className={`text-lg font-bold ${row.label === 'Remaining Balance' && remaining > 0 ? 'text-red-400' : row.label === 'Amount Paid' ? 'text-green-400' : 'text-slate-200'}`}>{row.value}</div>
           </div>
         ))}
       </div>
       {/* Payment History */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <Card className="remodra-card">
+        <CardHeader className="bg-gradient-to-r from-slate-800 to-slate-700 rounded-t-lg border-b border-slate-600">
+          <CardTitle className="flex items-center gap-2 text-amber-400">
             <Receipt className="h-5 w-5" />
             Payment History
           </CardTitle>
@@ -172,30 +172,30 @@ export default function PaymentTracking({
                 return (
                   <div
                     key={payment.id}
-                    className={`flex items-center justify-between p-4 border rounded-lg transition-colors ${
+                    className={`flex items-center justify-between p-4 border rounded-lg ${
                       isReversed 
-                        ? 'bg-gray-50 border-gray-200 opacity-75' 
-                        : 'hover:bg-gray-50'
+                        ? 'bg-slate-800/50 border-white/20 opacity-75' 
+                        : 'bg-slate-800/30 border-white/20'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <div className={`p-2 rounded-full ${
-                        isReversed ? 'bg-gray-100' : 'bg-green-100'
+                        isReversed ? 'bg-slate-700' : 'bg-green-600/20'
                       }`}>
                         {getPaymentMethodIcon(payment.method)}
                       </div>
                       <div>
                         <p className={`font-semibold text-lg ${
-                          isReversed ? 'line-through text-gray-500' : ''
+                          isReversed ? 'line-through text-slate-400' : 'text-slate-200'
                         }`}>
                           {formatCurrency(payment.amount)}
                         </p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-slate-400">
                           {getPaymentMethodLabel(payment.method)} • {format(new Date(paymentDate), 'MMM dd, yyyy')}
                         </p>
                         {payment.notes && (
                           <p className={`text-xs mt-1 ${
-                            isReversed ? 'text-red-600' : 'text-gray-500'
+                            isReversed ? 'text-red-400' : 'text-slate-500'
                           }`}>
                             {payment.notes}
                           </p>
@@ -206,12 +206,12 @@ export default function PaymentTracking({
                       <div>
                         <Badge className={
                           isReversed 
-                            ? 'bg-red-100 text-red-800 border-red-200' 
-                            : 'bg-green-100 text-green-800 border-green-200'
+                            ? 'bg-red-600/20 text-red-400 border-white/30' 
+                            : 'bg-green-600/10 text-green-300 border-white/30'
                         }>
                           {isReversed ? 'Reversed' : 'Received'}
                         </Badge>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-slate-400 mt-1">
                           {format(new Date(createdDate), 'MMM dd, yyyy')}
                         </p>
                       </div>
@@ -233,8 +233,8 @@ export default function PaymentTracking({
               })}
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              <Receipt className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+            <div className="text-center py-8 text-slate-400">
+              <Receipt className="h-12 w-12 mx-auto mb-4 text-slate-600" />
               <p>No payments recorded yet</p>
               <p className="text-sm">Payment history will appear here once payments are made</p>
             </div>
@@ -261,28 +261,28 @@ export default function PaymentTracking({
 
       {/* Payment Instructions */}
       {remaining > 0 && (
-        <Card className="border-l-4 border-l-yellow-500">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <AlertCircle className="h-5 w-5 text-yellow-600" />
+        <Card className="remodra-card border-l-4 border-l-amber-500">
+          <CardHeader className="bg-gradient-to-r from-slate-800 to-slate-700 rounded-t-lg border-b border-slate-600">
+            <CardTitle className="flex items-center gap-2 text-lg text-amber-400">
+              <AlertCircle className="h-5 w-5 text-amber-400" />
               Payment Instructions
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-              <p className="text-sm text-yellow-800">
+            <div className="bg-amber-600/20 p-4 rounded-lg border border-white/20">
+              <p className="text-sm text-amber-300">
                 <strong>Remaining Balance:</strong> {formatCurrency(remaining)}
               </p>
               {dueDate && (
-                <p className="text-sm text-red-600 mt-1">
+                <p className="text-sm text-red-400 mt-1">
                   <strong>Note:</strong> This invoice is overdue. Please make payment as soon as possible.
                 </p>
               )}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="font-medium text-gray-700 mb-2">Accepted Payment Methods:</p>
-                <ul className="space-y-1 text-gray-600">
+                <p className="font-medium text-slate-200 mb-2">Accepted Payment Methods:</p>
+                <ul className="space-y-1 text-slate-400">
                   <li>• Credit/Debit Cards</li>
                   <li>• Bank Transfers</li>
                   <li>• Checks</li>
@@ -290,8 +290,8 @@ export default function PaymentTracking({
                 </ul>
               </div>
               <div>
-                <p className="font-medium text-gray-700 mb-2">Contact Information:</p>
-                <p className="text-gray-600">For payment questions, please contact your contractor directly.</p>
+                <p className="font-medium text-slate-200 mb-2">Contact Information:</p>
+                <p className="text-slate-400">For payment questions, please contact your contractor directly.</p>
               </div>
             </div>
           </CardContent>

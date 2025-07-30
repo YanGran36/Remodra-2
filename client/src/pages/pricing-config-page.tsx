@@ -116,19 +116,35 @@ const PricingConfigPage = () => {
         originalServiceType: editingService.originalServiceType || editingService.serviceType || editingService.id
       };
       
-      const response = await fetch(`/api/pricing/direct-service`, {
-        method: 'PUT',
+      if (editingService.originalServiceType && editingService.originalServiceType !== editingService.serviceType) {
+        // If service type changed, delete old and create new
+        const deleteResponse = await fetch(`/api/direct/services/${editingService.originalServiceType}`, {
+          method: 'DELETE'
+        });
+        
+        if (!deleteResponse.ok) {
+          throw new Error('Failed to delete old service');
+        }
+      }
+      
+      const response = await fetch('/api/direct/services', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(serviceData)
+        body: JSON.stringify({
+          name: serviceData.name,
+          serviceType: serviceData.serviceType,
+          unit: serviceData.unit,
+          laborRate: serviceData.laborRate,
+          laborMethod: serviceData.laborMethod
+        })
       });
       
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Error al guardar servicio:", errorText);
-        throw new Error("No se pudo guardar el servicio");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to save service');
       }
       
-      await queryClient.invalidateQueries({ queryKey: ['/api/pricing/services'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/direct/services'] });
       
       toast({
         title: "Service saved",
@@ -155,18 +171,17 @@ const PricingConfigPage = () => {
     setIsLoading(true);
     
     try {
-      const response = await fetch(`/api/pricing/direct-service/${serviceId}`, {
+      const response = await fetch(`/api/direct/services/${serviceId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' }
       });
       
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Error deleting service:", errorText);
-        throw new Error("Could not delete from database");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Could not delete service');
       }
       
-      await queryClient.invalidateQueries({ queryKey: ['/api/pricing/services'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/direct/services'] });
       
       toast({
         title: "Service deleted",
@@ -176,7 +191,7 @@ const PricingConfigPage = () => {
       console.error('Error deleting service:', error);
       toast({
         title: "Error deleting",
-        description: "Service could not be deleted. Please try again.",
+        description: error instanceof Error ? error.message : "Service could not be deleted. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -223,13 +238,20 @@ const PricingConfigPage = () => {
 
           {/* Header */}
           <div className="mb-6">
+            <div className="flex justify-center mb-6">
+              <img 
+                src="/remodra-logo.png" 
+                alt="Remodra Logo" 
+                className="h-16 w-16 object-contain"
+              />
+            </div>
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-semibold text-foreground tracking-tight flex items-center">
+                <h1 className="text-2xl font-semibold text-foreground tracking-tight flex items-center justify-center">
                   <DollarSign className="h-6 w-6 mr-2" />
                   Pricing Configuration
                 </h1>
-                <p className="text-muted-foreground">Manage your service rates and material pricing</p>
+                <p className="text-muted-foreground text-center">Manage your service rates and material pricing</p>
               </div>
               <Link href="/settings">
                 <Button variant="outline" className="flex items-center gap-2">

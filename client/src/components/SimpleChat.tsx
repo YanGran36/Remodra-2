@@ -121,20 +121,20 @@ export default function SimpleChat({ clientId }: SimpleChatProps) {
       </div>
       
       {/* Input */}
-      <form onSubmit={handleSubmit} className="border-t p-3">
+      <form onSubmit={handleSubmit} className="border-t border-slate-600 p-3">
         <div className="flex gap-2">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask about your projects..."
-            className="flex-1 px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-4 py-3 border border-slate-600 bg-slate-800 text-slate-200 rounded-lg focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 transition-all duration-200 placeholder:text-slate-400"
             disabled={loading}
           />
           <button
             type="submit"
             disabled={loading || !input.trim()}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+            className="px-4 py-3 bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900 font-semibold rounded-lg hover:from-amber-500 hover:to-yellow-600 disabled:opacity-50 transition-all duration-200"
           >
             Send
           </button>

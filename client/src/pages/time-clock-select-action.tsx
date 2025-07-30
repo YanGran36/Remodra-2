@@ -117,6 +117,13 @@ export default function TimeClockSelectAction() {
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 p-4">
       <div className="text-center mb-8">
+        <div className="flex justify-center mb-6">
+          <img 
+            src="/remodra-logo.png" 
+            alt="Remodra Logo" 
+            className="h-16 w-16 object-contain"
+          />
+        </div>
         <h1 className="text-2xl font-semibold text-foreground tracking-tight mb-2">Time Clock</h1>
         <p className="text-muted-foreground">Select your action for today</p>
       </div>

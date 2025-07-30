@@ -1,43 +1,40 @@
-import { useState } from "react";
-import { useLocation } from "wouter";
-import { ArrowLeft } from "lucide-react";
-import { Button } from "../components/ui/button";
-import LeadCaptureForm from "../components/leads/lead-capture-form";
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Textarea } from '../components/ui/textarea';
 
 export default function LeadCapturePage() {
-  const [, setLocation] = useLocation();
-
-  const handleSuccess = (data: any) => {
-    // Navigate to calendar to show the scheduled meeting
-    setLocation("/calendar");
-  };
-
-  const handleCancel = () => {
-    setLocation("/");
-  };
-
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setLocation("/")}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-foreground tracking-tight">New Client</h1>
-            <p className="text-muted-foreground">Capture and manage new potential clients</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-4 w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center">
+            <span className="text-2xl font-bold text-slate-900">R</span>
           </div>
-        </div>
-      </div>
-
-      <LeadCaptureForm 
-        onSuccess={handleSuccess}
-        onCancel={handleCancel}
-      />
+          <CardTitle className="text-2xl font-bold text-slate-200">Get a Quote</CardTitle>
+          <p className="text-slate-400">Tell us about your project</p>
+        </CardHeader>
+        <CardContent>
+          <form className="space-y-4">
+            <div>
+              <Input placeholder="Name" className="remodra-input w-full" />
+            </div>
+            <div>
+              <Input type="email" placeholder="Email" className="remodra-input w-full" />
+            </div>
+            <div>
+              <Input placeholder="Phone" className="remodra-input w-full" />
+            </div>
+            <div>
+              <Textarea placeholder="Project Description" className="remodra-input w-full" />
+            </div>
+            <Button className="remodra-button w-full">
+              Submit Request
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
-}
+} 

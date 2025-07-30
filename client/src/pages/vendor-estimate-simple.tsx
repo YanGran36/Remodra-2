@@ -3,11 +3,17 @@ import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../hooks/use-auth';
+import { useEstimates } from '../hooks/use-estimates';
 import { apiRequest } from '../lib/queryClient';
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { ArrowLeft, Calculator, FileText, Users, Wrench } from "lucide-react";
+
+// Layout Components
+import Sidebar from '../components/layout/sidebar';
+import MobileSidebar from '../components/layout/mobile-sidebar';
+import TopNav from '../components/layout/top-nav';
 
 // UI Components
 import { Button } from '../components/ui/button';
@@ -80,28 +86,7 @@ export default function VendorEstimateSimple() {
     queryKey: ["/api/direct/services"],
   });
 
-  // Create estimate mutation
-  const createEstimateMutation = useMutation({
-    mutationFn: async (data: FormValues & { laborCost: number; materialsCost: number; totalAmount: number }) => {
-      const response = await apiRequest("POST", "/api/protected/estimates", data);
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Estimate Created",
-        description: "The estimate has been created successfully.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/protected/estimates"] });
-      setLocation("/estimates");
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+  const { createEstimateMutation } = useEstimates();
 
   // Watch form values for calculations
   const watchedValues = form.watch();
@@ -158,7 +143,14 @@ export default function VendorEstimateSimple() {
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="remodra-layout">
+      <Sidebar />
+      <MobileSidebar />
+      <div className="remodra-main">
+        <TopNav />
+        <div className="remodra-content">
+          <main className="p-8 space-y-8 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen">
+            <div className="container mx-auto max-w-6xl">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -170,8 +162,15 @@ export default function VendorEstimateSimple() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-semibold text-foreground tracking-tight">Create New Estimate</h1>
-            <p className="text-muted-foreground">Generate a professional estimate for your client</p>
+            <div className="flex justify-center mb-6">
+              <img 
+                src="/remodra-logo.png" 
+                alt="Remodra Logo" 
+                className="h-16 w-16 object-contain"
+              />
+            </div>
+            <h1 className="text-2xl font-semibold text-foreground tracking-tight text-center">Create New Estimate</h1>
+            <p className="text-muted-foreground text-center">Generate a professional estimate for your client</p>
           </div>
         </div>
       </div>
@@ -416,6 +415,10 @@ export default function VendorEstimateSimple() {
               )}
             </CardContent>
           </Card>
+        </div>
+      </div>
+            </div>
+          </main>
         </div>
       </div>
     </div>

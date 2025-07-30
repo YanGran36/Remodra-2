@@ -231,6 +231,33 @@ export const service_pricing = sqliteTable("service_pricing", {
   updated_at: integer("updated_at").notNull()
 });
 
+// Material pricing
+export const material_pricing = sqliteTable("material_pricing", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  contractor_id: integer("contractor_id").references(() => contractors.id).notNull(),
+  
+  // Material data
+  name: text("name").notNull(),
+  description: text("description"),
+  category: text("category").notNull(), // fence, roof, etc. (to associate with service type)
+  
+  // Additional identification fields to map to estimate materials
+  code: text("code"), // Original code (wood_fence, vinyl_fence, etc.)
+  material_id: text("material_id"), // Alternative ID for search
+  id_string: text("id_string"), // Another way to store ID as string
+  
+  // Prices and units
+  unit_price: real("unit_price").notNull(),
+  unit: text("unit").notNull(), // ft, sqft, box, unit, etc.
+  
+  // Metadata
+  supplier: text("supplier"),
+  status: text("status").default("active").notNull(), // active, inactive
+  is_default: integer("is_default", { mode: "boolean" }).default(false),
+  created_at: integer("created_at"),
+  updated_at: integer("updated_at")
+});
+
 // Materials
 export const materials = sqliteTable("materials", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -586,6 +613,7 @@ export const schema = {
   payments,
   events,
   service_pricing,
+  material_pricing,
   materials,
   attachments,
   follow_ups,

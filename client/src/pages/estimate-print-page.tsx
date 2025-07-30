@@ -65,8 +65,15 @@ export default function EstimatePrintPage() {
           {/* Header */}
           <div className="flex justify-between items-start mb-6 border-b pb-6">
             <div>
-              <h1 className="text-2xl font-semibold text-foreground tracking-tight">ESTIMATE</h1>
-              <p className="text-muted-foreground">Professional estimate document</p>
+              <div className="flex justify-center mb-6">
+                <img 
+                  src="/remodra-logo.png" 
+                  alt="Remodra Logo" 
+                  className="h-16 w-16 object-contain"
+                />
+              </div>
+              <h1 className="text-2xl font-semibold text-foreground tracking-tight text-center">ESTIMATE</h1>
+              <p className="text-muted-foreground text-center">Professional estimate document</p>
             </div>
             <div className="text-right">
               {user?.companyName && (

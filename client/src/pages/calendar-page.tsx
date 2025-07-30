@@ -1,20 +1,22 @@
-import { useState } from "react";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Loader2, Home, UserPlus, Users, Search, Filter } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Loader2, Home, UserPlus, Users, Search, Filter, UserCheck } from "lucide-react";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, getDay, startOfWeek, endOfWeek, startOfDay, endOfDay, isWithinInterval, addWeeks, subWeeks, addDays, subDays } from "date-fns";
-import { Card, CardContent } from '../components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
 import TopNav from '../components/layout/top-nav';
 import Sidebar from '../components/layout/sidebar';
 import MobileSidebar from '../components/layout/mobile-sidebar';
 import { useLocation } from "wouter";
 import { useEvents } from '../hooks/use-events';
+import { useToast } from '../hooks/use-toast';
 import EventDialog from '../components/events/event-dialog';
 import AgentScheduler from '../components/agents/AgentScheduler';
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 // Event interface
 interface CalendarEvent {
@@ -53,6 +55,23 @@ export default function CalendarPage() {
   const [currentEventId, setCurrentEventId] = useState<number | undefined>(undefined);
   const [defaultClientId, setDefaultClientId] = useState<string | undefined>(undefined);
   const [defaultEventType, setDefaultEventType] = useState<string | undefined>("estimate");
+  
+  // Reassignment functionality
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [assignmentData, setAssignmentData] = useState<any>({
+    selectedDate: format(currentDate, 'yyyy-MM-dd'),
+    appointmentId: '',
+    newAgentId: ''
+  });
+
+  // Sync assignment date with current calendar date
+  useEffect(() => {
+    setAssignmentData(prev => ({
+      ...prev,
+      selectedDate: format(currentDate, 'yyyy-MM-dd')
+    }));
+  }, [currentDate]);
   
   // Obtener eventos reales desde la API
   const { getEvents, formatEvent, deleteEvent } = useEvents();
@@ -240,17 +259,81 @@ export default function CalendarPage() {
     handleOpenEditEventDialog(Number(eventId));
   };
 
+  // Reassignment mutation
+  const assignEstimateMutation = useMutation({
+    mutationFn: async (assignmentData: any) => {
+      // Update the appointment with the new agent
+      const eventResponse = await fetch(`/api/protected/events/${assignmentData.appointmentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          agent_id: assignmentData.newAgentId
+        }),
+      });
+      
+      if (!eventResponse.ok) {
+        const error = await eventResponse.json();
+        throw new Error(error.message || 'Failed to update appointment');
+      }
+      
+      return await eventResponse.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Agent Updated",
+        description: "The appointment has been successfully reassigned to the new agent.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/protected/events'] });
+      setAssignmentData({
+        selectedDate: new Date().toISOString().split('T')[0],
+        appointmentId: '',
+        newAgentId: ''
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Assignment Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleAssignSubmit = () => {
+    if (!assignmentData.appointmentId || !assignmentData.newAgentId) {
+      toast({
+        title: "Missing Information",
+        description: "Please select an appointment and a new agent.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const assignmentPayload = {
+      appointmentId: assignmentData.appointmentId,
+      newAgentId: assignmentData.newAgentId
+    };
+
+    assignEstimateMutation.mutate(assignmentPayload);
+  };
+
   return (
     <div className="remodra-layout">
       <Sidebar />
       <MobileSidebar />
       <div className="remodra-main">
         <TopNav />
-        <main className="p-8 space-y-8">
+        <div className="remodra-content">
+          <main className="p-8 space-y-8">
           {/* Header with Remodra branding */}
           <div className="text-center mb-8">
-            <div className="remodra-logo mb-6">
-              <span className="remodra-logo-text">R</span>
+            <div className="flex justify-center mb-6">
+              <img 
+                src="/remodra-logo.png" 
+                alt="Remodra Logo" 
+                className="h-16 w-16 object-contain"
+              />
             </div>
             <h1 className="remodra-title mb-3">
               Calendar & Scheduling
@@ -272,53 +355,65 @@ export default function CalendarPage() {
             </Button>
           </div>
 
-          {/* Search and Filters */}
-          <div className="remodra-card p-6">
-            <div className="flex flex-col lg:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
-                <Input
-                  placeholder="Search events by title, location, or client..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="remodra-input pl-12"
-                />
-              </div>
-              <Select value={filter} onValueChange={(value: string) => setFilter(value)}>
-                <SelectTrigger className="remodra-input w-full lg:w-48">
-                  <SelectValue placeholder="Filter by type" />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-600">
-                  <SelectItem value="all" className="text-slate-200 hover:bg-slate-700">All Events</SelectItem>
-                  <SelectItem value="meeting" className="text-slate-200 hover:bg-slate-700">Meetings</SelectItem>
-                  <SelectItem value="site-visit" className="text-slate-200 hover:bg-slate-700">Site Visits</SelectItem>
-                  <SelectItem value="estimate" className="text-slate-200 hover:bg-slate-700">Estimates</SelectItem>
-                  <SelectItem value="invoice" className="text-slate-200 hover:bg-slate-700">Invoices</SelectItem>
-                  <SelectItem value="delivery" className="text-slate-200 hover:bg-slate-700">Deliveries</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
           <Tabs defaultValue="calendar" className="space-y-4">
-            <TabsList className="bg-slate-800 border-slate-600">
-              <TabsTrigger value="calendar" className="flex items-center data-[state=active]:bg-amber-400 data-[state=active]:text-slate-900">
-                <CalendarIcon className="h-4 w-4 mr-2" />
-                Calendar
+            <TabsList className="remodra-card p-3 bg-gradient-to-r from-slate-800 to-slate-700 border-2 border-amber-500/30 shadow-lg">
+              <TabsTrigger 
+                value="calendar" 
+                className="flex items-center px-6 py-3 text-slate-300 hover:text-amber-400 hover:bg-slate-700/50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-400 data-[state=active]:to-yellow-500 data-[state=active]:text-slate-900 data-[state=active]:font-bold data-[state=active]:shadow-lg data-[state=active]:scale-105 rounded-lg transition-all duration-300 border border-transparent data-[state=active]:border-amber-300"
+              >
+                <CalendarIcon className="h-5 w-5 mr-2" />
+                <span className="font-semibold">Calendar</span>
               </TabsTrigger>
-              <TabsTrigger value="agents" className="flex items-center data-[state=active]:bg-amber-400 data-[state=active]:text-slate-900">
-                <Users className="h-4 w-4 mr-2" />
-                Agent Management
+              <TabsTrigger 
+                value="reassign" 
+                className="flex items-center px-6 py-3 text-slate-300 hover:text-amber-400 hover:bg-slate-700/50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-400 data-[state=active]:to-yellow-500 data-[state=active]:text-slate-900 data-[state=active]:font-bold data-[state=active]:shadow-lg data-[state=active]:scale-105 rounded-lg transition-all duration-300 border border-transparent data-[state=active]:border-amber-300"
+              >
+                <UserCheck className="h-5 w-5 mr-2" />
+                <span className="font-semibold">Reassign Appointments</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="agents" 
+                className="flex items-center px-6 py-3 text-slate-300 hover:text-amber-400 hover:bg-slate-700/50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-400 data-[state=active]:to-yellow-500 data-[state=active]:text-slate-900 data-[state=active]:font-bold data-[state=active]:shadow-lg data-[state=active]:scale-105 rounded-lg transition-all duration-300 border border-transparent data-[state=active]:border-amber-300"
+              >
+                <Users className="h-5 w-5 mr-2" />
+                <span className="font-semibold">Agent Management</span>
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="calendar" className="space-y-4">
+              {/* Search and Filters */}
+              <div className="remodra-card p-6">
+                <div className="flex flex-col lg:flex-row gap-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                    <Input
+                      placeholder="Search events by title, location, or client..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="remodra-input pl-12"
+                    />
+                  </div>
+                  <Select value={filter} onValueChange={(value: string) => setFilter(value)}>
+                    <SelectTrigger className="remodra-input w-full lg:w-48">
+                      <SelectValue placeholder="Filter by type" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-800 border-slate-600">
+                      <SelectItem value="all" className="text-slate-200 hover:bg-slate-700">All Events</SelectItem>
+                      <SelectItem value="meeting" className="text-slate-200 hover:bg-slate-700">Meetings</SelectItem>
+                      <SelectItem value="site-visit" className="text-slate-200 hover:bg-slate-700">Site Visits</SelectItem>
+                      <SelectItem value="estimate" className="text-slate-200 hover:bg-slate-700">Estimates</SelectItem>
+                      <SelectItem value="invoice" className="text-slate-200 hover:bg-slate-700">Invoices</SelectItem>
+                      <SelectItem value="delivery" className="text-slate-200 hover:bg-slate-700">Deliveries</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               {/* Agent Color Legend */}
               {agents.length > 0 && (
                 <div className="remodra-card p-6">
                   <div className="flex flex-wrap items-center gap-4">
                     <span className="text-sm font-medium text-slate-300">Agent Assignments:</span>
-                    {agents.filter((agent: any) => agent.isActive).map((agent: any) => (
+                    {agents.map((agent: any) => (
                       <div key={agent.id} className="flex items-center gap-2">
                         <div 
                           className="w-4 h-4 rounded-full border-2 border-slate-600 shadow-sm" 
@@ -532,6 +627,140 @@ export default function CalendarPage() {
               </div>
             </TabsContent>
 
+            <TabsContent value="reassign" className="space-y-4">
+              <div className="remodra-card p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-amber-400 mb-2">Reassign Appointments</h3>
+                    <p className="text-slate-300">Change which agent is assigned to existing appointments</p>
+                  </div>
+                </div>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Reassign Appointment to Different Agent</CardTitle>
+                    <CardDescription>Select an existing appointment and change its assigned agent</CardDescription>
+                  </CardHeader>
+                  
+
+                  <CardContent className="space-y-4">
+                    {/* Date Selection - Auto-synced with main calendar */}
+                    <div>
+                      <Label htmlFor="selectedDate">Calendar Date (Auto-synced)</Label>
+                      <Input
+                        id="selectedDate"
+                        type="date"
+                        value={format(currentDate, 'yyyy-MM-dd')}
+                        onChange={(e) => {
+                          // Create date in local timezone to avoid timezone issues
+                          const [year, month, day] = e.target.value.split('-').map(Number);
+                          const newDate = new Date(year, month - 1, day);
+                          setCurrentDate(newDate);
+                        }}
+                        className="remodra-input"
+                      />
+                    </div>
+
+                    {/* Available Appointments Section */}
+                    <div className="p-4 bg-slate-700 border border-slate-600 rounded-md">
+                      <div className="text-sm font-semibold text-amber-400 mb-2">
+                        Appointments for {format(currentDate, 'yyyy-MM-dd')}
+                      </div>
+                      <div className="text-sm text-slate-300 space-y-1">
+                        {apiEvents && apiEvents.length > 0 ? (
+                          apiEvents
+                            .filter((event: any) => {
+                              if (!event.startTime) return false;
+                              const appointmentDate = new Date(event.startTime);
+                              return isSameDay(appointmentDate, currentDate);
+                            })
+                            .slice(0, 5)
+                            .map((event: any) => (
+                              <div key={event.id}>
+                                {event.title} - {new Date(event.startTime).toLocaleTimeString()}
+                              </div>
+                            ))
+                        ) : (
+                          <div className="text-slate-400">Loading appointments...</div>
+                        )}
+                        {apiEvents && apiEvents.filter((event: any) => {
+                          if (!event.startTime) return false;
+                          const appointmentDate = new Date(event.startTime);
+                          return isSameDay(appointmentDate, currentDate);
+                        }).length === 0 && (
+                          <div className="text-slate-400">No appointments for this date</div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Select Appointment */}
+                    <div>
+                      <Label htmlFor="appointmentId">Select Appointment</Label>
+                      <Select
+                        value={assignmentData.appointmentId}
+                        onValueChange={(value) => setAssignmentData({...assignmentData, appointmentId: value})}
+                      >
+                        <SelectTrigger className="remodra-input">
+                          <SelectValue placeholder="Choose an appointment" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-slate-800 border-slate-600">
+                          {apiEvents && apiEvents.length > 0 ? (
+                            apiEvents
+                              .filter((event: any) => {
+                                if (!event.startTime) return false;
+                                const appointmentDate = new Date(event.startTime);
+                                return isSameDay(appointmentDate, currentDate);
+                              })
+                              .map((event: any) => (
+                                <SelectItem key={event.id} value={event.id.toString()}>
+                                  {event.title} - {new Date(event.startTime).toLocaleTimeString()}
+                                </SelectItem>
+                              ))
+                          ) : (
+                            <SelectItem value="" disabled>No appointments available</SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Select New Agent */}
+                    <div>
+                      <Label htmlFor="newAgentId">Assign to Agent</Label>
+                      <Select
+                        value={assignmentData.newAgentId}
+                        onValueChange={(value) => setAssignmentData({...assignmentData, newAgentId: value})}
+                      >
+                        <SelectTrigger className="remodra-input">
+                          <SelectValue placeholder="Choose a new agent" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-slate-800 border-slate-600">
+                          {agents && agents.length > 0 ? (
+                            agents.map((agent: any) => (
+                              <SelectItem key={agent.id} value={agent.id.toString()}>
+                                {agent.firstName} {agent.lastName}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="" disabled>No agents available</SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex justify-end space-x-2">
+                      <Button 
+                        onClick={handleAssignSubmit}
+                        disabled={assignEstimateMutation.isPending}
+                        className="remodra-button"
+                      >
+                        {assignEstimateMutation.isPending ? 'Updating...' : 'Reassign Appointment'}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
             <TabsContent value="agents" className="space-y-4">
               <div className="remodra-card p-6">
                 <div className="flex items-center justify-between mb-6">
@@ -563,6 +792,7 @@ export default function CalendarPage() {
             </TabsContent>
           </Tabs>
         </main>
+        </div>
       </div>
 
       {/* Event Dialogs */}

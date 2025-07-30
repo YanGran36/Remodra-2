@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useEstimates } from '../hooks/use-estimates';
 import { useToast } from '../hooks/use-toast';
+import { getQueryFn } from '../lib/queryClient';
 import { 
   ChevronDown, 
   FileText, 
@@ -23,7 +24,11 @@ import {
   Settings,
   Edit,
   User,
-  Calendar
+  Calendar,
+  X,
+  Send,
+  ChevronUp,
+  ChevronsUpDown
 } from "lucide-react";
 import { 
   Select, 
@@ -62,6 +67,16 @@ import {
   DialogTitle,
   DialogDescription
 } from '../components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../components/ui/alert-dialog';
 import { Skeleton } from '../components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import TopNav from '../components/layout/top-nav';
@@ -77,19 +92,27 @@ const formatCurrency = (amount: number | string) => {
 const getStatusBadge = (status: string) => {
   switch (status) {
     case 'draft':
-      return <Badge className="bg-gray-400 text-white">Draft</Badge>;
+      return <Badge variant="outline" className="!bg-stone-400 !text-stone-900 !border-stone-300 font-semibold">Draft</Badge>;
     case 'sent':
-      return <Badge className="bg-blue-400 text-white">Sent</Badge>;
+      return <Badge variant="outline" className="!bg-blue-400 !text-blue-900 !border-blue-300 font-semibold">Sent</Badge>;
     case 'accepted':
-      return <Badge className="bg-green-400 text-white">Accepted</Badge>;
+      return <Badge variant="outline" className="!bg-green-400 !text-green-900 !border-green-300 font-semibold">Accepted</Badge>;
     case 'rejected':
-      return <Badge className="bg-red-400 text-white">Rejected</Badge>;
+      return <Badge variant="outline" className="!bg-red-400 !text-red-900 !border-red-300 font-semibold">Rejected</Badge>;
     case 'expired':
-      return <Badge className="bg-yellow-400 text-white">Expired</Badge>;
+      return <Badge variant="outline" className="!bg-yellow-400 !text-yellow-900 !border-yellow-300 font-semibold">Expired</Badge>;
     case 'converted':
-      return <Badge className="bg-purple-400 text-white">Converted</Badge>;
+      return <Badge variant="outline" className="!bg-purple-400 !text-purple-900 !border-purple-300 font-semibold">Converted</Badge>;
+    case 'pending':
+      return <Badge variant="outline" className="!bg-indigo-400 !text-indigo-900 !border-indigo-300 font-semibold">Pending</Badge>;
+    case 'in_progress':
+      return <Badge variant="outline" className="!bg-cyan-400 !text-cyan-900 !border-cyan-300 font-semibold">In Progress</Badge>;
+    case 'completed':
+      return <Badge variant="outline" className="!bg-emerald-400 !text-emerald-900 !border-emerald-300 font-semibold">Completed</Badge>;
+    case 'cancelled':
+      return <Badge variant="outline" className="!bg-rose-400 !text-rose-900 !border-rose-300 font-semibold">Cancelled</Badge>;
     default:
-      return <Badge className="bg-gray-400 text-white">{status}</Badge>;
+      return <Badge variant="outline" className="!bg-gray-400 !text-gray-900 !border-gray-300 font-semibold">{status}</Badge>;
   }
 };
 
@@ -97,14 +120,33 @@ export default function EstimatesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("date_desc");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [selectedEstimate, setSelectedEstimate] = useState<any>(null);
-  const [estimateType, setEstimateType] = useState<string>("standard");
+  const [estimateType, setEstimateType] = useState<string>("agent");
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEstimate, setEditingEstimate] = useState<any>(null);
   
+  // Confirmation dialog states
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    action: () => void;
+    confirmText: string;
+    cancelText: string;
+  }>({
+    isOpen: false,
+    title: '',
+    description: '',
+    action: () => {},
+    confirmText: 'Confirm',
+    cancelText: 'Cancel'
+  });
+  
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   // Use the estimates hook for all estimate-related operations
   const { 
@@ -113,9 +155,21 @@ export default function EstimatesPage() {
     updateEstimateStatusMutation 
   } = useEstimates();
 
-  // Fetch estimates
+  // Fetch estimates with automatic refetching
   const { data: estimates = [], isLoading, error } = useQuery({
     queryKey: ["/api/protected/estimates"],
+    queryFn: async () => {
+      const response = await fetch("/api/protected/estimates", {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch estimates");
+      }
+      return response.json();
+    },
+    refetchInterval: 5000, // Refetch every 5 seconds
+    refetchOnWindowFocus: true, // Refetch when window regains focus
+    staleTime: 0, // Always consider data stale to ensure fresh data
   });
 
   // Filter and sort estimates
@@ -131,9 +185,9 @@ export default function EstimatesPage() {
           if (searchQuery) {
             const lowerCaseQuery = searchQuery.toLowerCase();
             return (
-              estimate.estimateNumber.toLowerCase().includes(lowerCaseQuery) ||
-              estimate.client?.firstName.toLowerCase().includes(lowerCaseQuery) ||
-              estimate.client?.lastName.toLowerCase().includes(lowerCaseQuery) ||
+              (estimate.estimate_number || estimate.estimateNumber || '').toLowerCase().includes(lowerCaseQuery) ||
+              estimate.client?.first_name?.toLowerCase().includes(lowerCaseQuery) ||
+              estimate.client?.last_name?.toLowerCase().includes(lowerCaseQuery) ||
               (estimate.project?.title && estimate.project.title.toLowerCase().includes(lowerCaseQuery))
             );
           }
@@ -141,16 +195,33 @@ export default function EstimatesPage() {
           return true;
         })
         .sort((a: any, b: any) => {
-          if (sortBy === "date_desc") {
-            return new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime();
-          } else if (sortBy === "date_asc") {
-            return new Date(a.issueDate).getTime() - new Date(b.issueDate).getTime();
-          } else if (sortBy === "amount_desc") {
-            return parseFloat(b.total) - parseFloat(a.total);
-          } else if (sortBy === "amount_asc") {
-            return parseFloat(a.total) - parseFloat(b.total);
+          let comparison = 0;
+          
+          switch (sortBy) {
+            case "estimate":
+              const aEstimate = (a.estimate_number || a.estimateNumber || `EST-${a.id}`).toLowerCase();
+              const bEstimate = (b.estimate_number || b.estimateNumber || `EST-${b.id}`).toLowerCase();
+              comparison = aEstimate.localeCompare(bEstimate);
+              break;
+            case "client":
+              const aClient = `${a.client?.first_name || ''} ${a.client?.last_name || ''}`.toLowerCase();
+              const bClient = `${b.client?.first_name || ''} ${b.client?.last_name || ''}`.toLowerCase();
+              comparison = aClient.localeCompare(bClient);
+              break;
+            case "amount":
+              comparison = parseFloat(a.total || 0) - parseFloat(b.total || 0);
+              break;
+            case "status":
+              comparison = (a.status || '').localeCompare(b.status || '');
+              break;
+            case "date":
+              comparison = new Date(a.created_at || a.createdAt).getTime() - new Date(b.created_at || b.createdAt).getTime();
+              break;
+            default:
+              comparison = new Date(b.created_at || b.createdAt).getTime() - new Date(a.created_at || a.createdAt).getTime();
           }
-          return 0;
+          
+          return sortDirection === "asc" ? comparison : -comparison;
         })
     : [];
 
@@ -166,32 +237,32 @@ export default function EstimatesPage() {
   const handleCreateEstimate = () => {
     switch (estimateType) {
       case "standard":
-        window.location.href = '/estimates/create';
+        setLocation('/estimates/create');
         break;
       case "multi-service":
-        window.location.href = '/estimates/multi-service';
+        setLocation('/estimates/multi-service');
         break;
       case "professional":
-        window.location.href = '/estimates/professional';
+        setLocation('/estimates/professional');
         break;
       case "premium":
         // Premium estimates are for viewing existing ones, redirect to standard creation
-        window.location.href = '/estimates/create';
+        setLocation('/estimates/create');
         break;
       case "agent":
-        window.location.href = '/agents/estimate-form';
+        setLocation('/agents/estimate-form');
         break;
       case "agent-service":
-        window.location.href = '/agents/service-estimate';
+        setLocation('/agents/service-estimate');
         break;
       default:
-        window.location.href = '/estimates/create';
+        setLocation('/estimates/create');
     }
   };
 
   const editEstimate = (estimate: any) => {
-    // Navigate to estimate detail page for editing
-    setLocation(`/estimates/${estimate.id}`);
+    // Navigate to clean vendor estimate form for editing
+    setLocation(`/estimates/edit/${estimate.id}`);
   };
 
   const printEstimate = (estimate: any) => {
@@ -200,7 +271,7 @@ export default function EstimatesPage() {
   };
 
   const deleteEstimate = async (estimate: any) => {
-    if (window.confirm(`Are you sure you want to delete estimate ${estimate.estimateNumber || estimate.id}?`)) {
+    if (window.confirm(`Are you sure you want to delete estimate ${estimate.estimate_number || estimate.estimateNumber || estimate.id}?`)) {
       try {
         await deleteEstimateMutation.mutateAsync(estimate.id);
         toast({
@@ -215,6 +286,106 @@ export default function EstimatesPage() {
         });
       }
     }
+  };
+
+  const handleStatusChange = (estimate: any, status: string) => {
+    const statusMessages = {
+      'sent': {
+        title: 'Mark as Sent',
+        description: `Are you sure you want to mark estimate ${estimate.estimate_number || estimate.estimateNumber || estimate.id} as sent to the client?`,
+        confirmText: 'Send',
+        cancelText: 'Cancel'
+      },
+      'accepted': {
+        title: 'Accept Estimate',
+        description: `Are you sure you want to accept estimate ${estimate.estimate_number || estimate.estimateNumber || estimate.id}? This will mark it as approved by the client.`,
+        confirmText: 'Accept',
+        cancelText: 'Cancel'
+      },
+      'rejected': {
+        title: 'Reject Estimate',
+        description: `Are you sure you want to reject estimate ${estimate.estimate_number || estimate.estimateNumber || estimate.id}? This will mark it as declined by the client.`,
+        confirmText: 'Reject',
+        cancelText: 'Cancel'
+      }
+    };
+
+    const message = statusMessages[status as keyof typeof statusMessages];
+    
+    setConfirmDialog({
+      isOpen: true,
+      title: message.title,
+      description: message.description,
+      action: () => {
+        updateEstimateStatusMutation.mutate(
+          { id: estimate.id, status },
+          {
+            onSuccess: () => {
+              toast({
+                title: "Status Updated",
+                description: `Estimate status has been updated to ${status}.`,
+              });
+              setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+            }
+          }
+        );
+      },
+      confirmText: message.confirmText,
+      cancelText: message.cancelText
+    });
+  };
+
+  const handleConvertToInvoice = (estimate: any) => {
+    if (estimate.status !== 'accepted') {
+      toast({
+        title: "Action not allowed",
+        description: "Only accepted estimates can be converted to work orders.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Convert to Work Order',
+              description: `Are you sure you want to convert estimate ${estimate.estimate_number || estimate.estimateNumber || estimate.id} to a work order? This will create an invoice and mark the estimate as converted.`,
+      action: () => {
+        convertToInvoiceMutation.mutate(estimate.id, {
+          onSuccess: (data) => {
+            toast({
+              title: "Work Order Created",
+              description: `Work order has been created from the estimate.`,
+            });
+            setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+          }
+        });
+      },
+      confirmText: 'Convert',
+      cancelText: 'Cancel'
+    });
+  };
+
+  const handleSendEstimate = (estimate: any) => {
+    // Use the existing handleStatusChange which now has confirmation
+    handleStatusChange(estimate, 'sent');
+  };
+
+  const handleSort = (column: string) => {
+    if (sortBy === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(column);
+      setSortDirection("desc");
+    }
+  };
+
+  const getSortIcon = (column: string) => {
+    if (sortBy !== column) {
+      return <ChevronsUpDown className="h-4 w-4 text-slate-400" />;
+    }
+    return sortDirection === "asc" 
+      ? <ChevronUp className="h-4 w-4 text-amber-400" />
+      : <ChevronDown className="h-4 w-4 text-amber-400" />;
   };
 
   const calculateTotal = () => {
@@ -235,11 +406,16 @@ export default function EstimatesPage() {
       <MobileSidebar />
       <div className="remodra-main">
         <TopNav />
-        <main className="p-8 space-y-8">
+        <div className="remodra-content">
+          <main className="p-8 space-y-8 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen">
           {/* Header with Remodra branding */}
           <div className="text-center mb-8">
-            <div className="remodra-logo mb-6">
-              <span className="remodra-logo-text">R</span>
+            <div className="flex justify-center mb-6">
+              <img 
+                src="/remodra-logo.png" 
+                alt="Remodra Logo" 
+                className="h-16 w-16 object-contain"
+              />
             </div>
             <h1 className="remodra-title mb-3">
               Estimates
@@ -257,9 +433,6 @@ export default function EstimatesPage() {
                   <SelectValue placeholder="Select estimate type" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 border-slate-600">
-                  <SelectItem value="standard" className="text-slate-200 hover:bg-slate-700">Standard Estimate</SelectItem>
-                  <SelectItem value="multi-service" className="text-slate-200 hover:bg-slate-700">Multi-Service Estimate</SelectItem>
-                  <SelectItem value="professional" className="text-slate-200 hover:bg-slate-700">Professional Estimate</SelectItem>
                   <SelectItem value="agent" className="text-slate-200 hover:bg-slate-700">Agent Estimate</SelectItem>
                   <SelectItem value="agent-service" className="text-slate-200 hover:bg-slate-700">Agent Service Estimate</SelectItem>
                 </SelectContent>
@@ -274,7 +447,7 @@ export default function EstimatesPage() {
               const csvContent = "data:text/csv;charset=utf-8," + 
                 "Estimate Number,Client,Status,Total,Issue Date,Expiry Date\n" +
                 (estimates as any[]).map(e => 
-                  `"${e.estimateNumber}","${e.client?.firstName || ''} ${e.client?.lastName || ''}","${e.status}","${e.total || 0}","${new Date(e.issueDate).toLocaleDateString()}","${new Date(e.expiryDate).toLocaleDateString()}"`
+                  `"${e.estimate_number || e.estimateNumber}","${e.client?.first_name || e.client?.firstName || ''} ${e.client?.last_name || e.client?.lastName || ''}","${e.status}","${e.total || 0}","${new Date(e.issue_date || e.issueDate).toLocaleDateString()}","${new Date(e.expiry_date || e.expiryDate).toLocaleDateString()}"`
                 ).join("\n");
               const encodedUri = encodeURI(csvContent);
               const link = document.createElement("a");
@@ -370,11 +543,51 @@ export default function EstimatesPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-slate-600">
-                      <th className="text-left py-3 px-4 text-slate-300 font-semibold">Estimate</th>
-                      <th className="text-left py-3 px-4 text-slate-300 font-semibold">Client</th>
-                      <th className="text-left py-3 px-4 text-slate-300 font-semibold">Amount</th>
-                      <th className="text-left py-3 px-4 text-slate-300 font-semibold">Status</th>
-                      <th className="text-left py-3 px-4 text-slate-300 font-semibold">Date</th>
+                      <th 
+                        className="text-left py-3 px-4 text-slate-300 font-semibold cursor-pointer hover:bg-slate-700/50 transition-colors"
+                        onClick={() => handleSort("estimate")}
+                      >
+                        <div className="flex items-center gap-2">
+                          Estimate
+                          {getSortIcon("estimate")}
+                        </div>
+                      </th>
+                      <th 
+                        className="text-left py-3 px-4 text-slate-300 font-semibold cursor-pointer hover:bg-slate-700/50 transition-colors"
+                        onClick={() => handleSort("client")}
+                      >
+                        <div className="flex items-center gap-2">
+                          Client
+                          {getSortIcon("client")}
+                        </div>
+                      </th>
+                      <th 
+                        className="text-left py-3 px-4 text-slate-300 font-semibold cursor-pointer hover:bg-slate-700/50 transition-colors"
+                        onClick={() => handleSort("amount")}
+                      >
+                        <div className="flex items-center gap-2">
+                          Amount
+                          {getSortIcon("amount")}
+                        </div>
+                      </th>
+                      <th 
+                        className="text-left py-3 px-4 text-slate-300 font-semibold cursor-pointer hover:bg-slate-700/50 transition-colors"
+                        onClick={() => handleSort("status")}
+                      >
+                        <div className="flex items-center gap-2">
+                          Status
+                          {getSortIcon("status")}
+                        </div>
+                      </th>
+                      <th 
+                        className="text-left py-3 px-4 text-slate-300 font-semibold cursor-pointer hover:bg-slate-700/50 transition-colors"
+                        onClick={() => handleSort("date")}
+                      >
+                        <div className="flex items-center gap-2">
+                          Date
+                          {getSortIcon("date")}
+                        </div>
+                      </th>
                       <th className="text-right py-3 px-4 text-slate-300 font-semibold">Actions</th>
                     </tr>
                   </thead>
@@ -388,7 +601,7 @@ export default function EstimatesPage() {
                             </div>
                             <div>
                               <div className="font-medium text-slate-200">
-                                {estimate.estimateNumber || `EST-${estimate.id}`}
+                                {estimate.estimate_number || estimate.estimateNumber || `EST-${estimate.id}`}
                               </div>
                               {estimate.title && (
                                 <div className="text-xs text-slate-400 truncate max-w-[200px]">{estimate.title}</div>
@@ -398,8 +611,8 @@ export default function EstimatesPage() {
                         </td>
                         <td className="py-3 px-4">
                           <div className="text-sm text-slate-300">
-                            {estimate.client?.firstName && estimate.client?.lastName 
-                              ? `${estimate.client.firstName} ${estimate.client.lastName}`
+                            {estimate.client?.first_name && estimate.client?.last_name 
+                              ? `${estimate.client.first_name} ${estimate.client.last_name}`
                               : estimate.client?.name 
                               ? estimate.client.name
                               : estimate.clientId 
@@ -414,28 +627,145 @@ export default function EstimatesPage() {
                           </div>
                         </td>
                         <td className="py-3 px-4">
-                          <Badge className={`text-xs ${
-                            estimate.status === 'accepted' ? 'remodra-badge' :
-                            estimate.status === 'rejected' ? 'border-red-600/50 text-red-400' :
-                            'remodra-badge-outline'
-                          }`}>
-                            {estimate.status}
-                          </Badge>
+                          {getStatusBadge(estimate.status)}
                         </td>
                         <td className="py-3 px-4">
                           <div className="text-sm text-slate-300">
-                            {new Date(estimate.createdAt).toLocaleDateString()}
+                            {new Date(estimate.created_at || estimate.createdAt).toLocaleDateString()}
                           </div>
                         </td>
                         <td className="py-3 px-4">
-                          <div className="flex items-center justify-end">
+                          <div className="flex items-center justify-end gap-2">
+                            {/* Status-based actions */}
+                            {estimate.status === 'draft' && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  className="bg-amber-500 hover:bg-amber-600 text-slate-900 h-8 px-3"
+                                  onClick={() => handleSendEstimate(estimate)}
+                                  disabled={updateEstimateStatusMutation.isPending}
+                                >
+                                  <Send className="h-3 w-3 mr-1" />
+                                  Send
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="remodra-button-outline h-8 px-3"
+                                  onClick={() => editEstimate(estimate)}
+                                >
+                                  <Edit className="h-3 w-3 mr-1" />
+                                  Edit
+                                </Button>
+                              </>
+                            )}
+                            
+                            {estimate.status === 'sent' && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  className="bg-green-600 hover:bg-green-700 text-white h-8 px-3"
+                                  onClick={() => handleStatusChange(estimate, 'accepted')}
+                                  disabled={updateEstimateStatusMutation.isPending}
+                                >
+                                  <Check className="h-3 w-3 mr-1" />
+                                  Accept
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  className="h-8 px-3 bg-red-600 hover:bg-red-700 text-white font-medium shadow-md hover:shadow-lg transition-all"
+                                  onClick={() => handleStatusChange(estimate, 'rejected')}
+                                  disabled={updateEstimateStatusMutation.isPending}
+                                >
+                                  <X className="h-3 w-3 mr-1" />
+                                  Reject
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="remodra-button-outline h-8 px-3"
+                                  onClick={() => editEstimate(estimate)}
+                                >
+                                  <Edit className="h-3 w-3 mr-1" />
+                                  Edit
+                                </Button>
+                              </>
+                            )}
+                            
+                            {estimate.status === 'rejected' && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  className="bg-amber-500 hover:bg-amber-600 text-slate-900 h-8 px-3"
+                                  onClick={() => handleStatusChange(estimate, 'sent')}
+                                  disabled={updateEstimateStatusMutation.isPending}
+                                >
+                                  <Send className="h-3 w-3 mr-1" />
+                                  Resend
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  className="bg-green-600 hover:bg-green-700 text-white h-8 px-3"
+                                  onClick={() => handleStatusChange(estimate, 'accepted')}
+                                  disabled={updateEstimateStatusMutation.isPending}
+                                >
+                                  <Check className="h-3 w-3 mr-1" />
+                                  Accept
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="remodra-button-outline h-8 px-3"
+                                  onClick={() => editEstimate(estimate)}
+                                >
+                                  <Edit className="h-3 w-3 mr-1" />
+                                  Edit
+                                </Button>
+                              </>
+                            )}
+                            
+                            {estimate.status === 'accepted' && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  className="bg-blue-600 hover:bg-blue-700 text-white h-8 px-3"
+                                  onClick={() => handleConvertToInvoice(estimate)}
+                                  disabled={convertToInvoiceMutation.isPending}
+                                >
+                                  <BanknoteIcon className="h-3 w-3 mr-1" />
+                                  Convert to Invoice
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  className="h-8 px-3"
+                                  onClick={() => handleStatusChange(estimate, 'rejected')}
+                                  disabled={updateEstimateStatusMutation.isPending}
+                                >
+                                  <X className="h-3 w-3 mr-1" />
+                                  Client Said No
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="remodra-button-outline h-8 px-3"
+                                  onClick={() => editEstimate(estimate)}
+                                >
+                                  <Edit className="h-3 w-3 mr-1" />
+                                  Edit
+                                </Button>
+                              </>
+                            )}
+                            
+                            {/* Always available actions */}
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   className="remodra-button-outline h-8 w-8 p-0"
-                                  title="Actions"
+                                  title="More Actions"
                                 >
                                   <ChevronDown className="h-3 w-3" />
                                 </Button>
@@ -446,21 +776,14 @@ export default function EstimatesPage() {
                                   className="text-slate-200 hover:bg-slate-700 cursor-pointer"
                                 >
                                   <Eye className="h-3 w-3 mr-2" />
-                                  View Estimate
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  onClick={() => editEstimate(estimate)}
-                                  className="text-slate-200 hover:bg-slate-700 cursor-pointer"
-                                >
-                                  <Edit className="h-3 w-3 mr-2" />
-                                  Edit Estimate
+                                  View Details
                                 </DropdownMenuItem>
                                 <DropdownMenuItem 
                                   onClick={() => printEstimate(estimate)}
                                   className="text-slate-200 hover:bg-slate-700 cursor-pointer"
                                 >
                                   <Printer className="h-3 w-3 mr-2" />
-                                  Print Estimate
+                                  Print
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator className="bg-slate-600" />
                                 <DropdownMenuItem 
@@ -468,7 +791,7 @@ export default function EstimatesPage() {
                                   className="text-red-400 hover:bg-red-600/20 cursor-pointer"
                                 >
                                   <Trash2 className="h-3 w-3 mr-2" />
-                                  Delete Estimate
+                                  Delete
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -482,7 +805,31 @@ export default function EstimatesPage() {
             )}
           </div>
         </main>
+        </div>
       </div>
+      
+      {/* Confirmation Dialog */}
+      <AlertDialog open={confirmDialog.isOpen} onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, isOpen: open }))}>
+        <AlertDialogContent className="bg-slate-800 border-slate-600">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-slate-200">{confirmDialog.title}</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-300">
+              {confirmDialog.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="remodra-button-outline">
+              {confirmDialog.cancelText}
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDialog.action}
+              className="remodra-button"
+            >
+              {confirmDialog.confirmText}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

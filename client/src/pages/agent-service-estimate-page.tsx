@@ -47,6 +47,7 @@ import {
 // Layout Components
 import Sidebar from '../components/layout/sidebar';
 import MobileSidebar from '../components/layout/mobile-sidebar';
+import TopNav from '../components/layout/top-nav';
 
 // UI Components
 import { ServiceItemSelector } from '../components/estimates/service-item-selector';
@@ -115,8 +116,18 @@ const estimateFormSchema = z.object({
   clientId: z.coerce.number().positive("Please select a client"),
   projectId: z.coerce.number().optional(),
   estimateNumber: z.string().optional(),
-  issueDate: z.date(),
-  expiryDate: z.date().optional(),
+  issueDate: z.union([z.date(), z.string()]).transform((val) => {
+    if (typeof val === 'string') {
+      return new Date(val);
+    }
+    return val;
+  }),
+  expiryDate: z.union([z.date(), z.string()]).optional().transform((val) => {
+    if (typeof val === 'string' && val) {
+      return new Date(val);
+    }
+    return val;
+  }),
   status: z.string().default("pending"),
   subtotal: z.coerce.number().min(0).default(0),
   tax: z.coerce.number().min(0).default(0),
@@ -690,1084 +701,1063 @@ const recalculateTotal = (items: SelectedItem[]) => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="remodra-layout">
       <Sidebar />
       <MobileSidebar />
-      
-      <div className="lg:pl-72 relative z-10 min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-semibold text-foreground tracking-tight">Agent Estimate Form</h1>
-              <p className="text-muted-foreground">Create estimates for field agent services</p>
-            </div>
-            <div className="flex space-x-2">
-              <Button 
-                variant="outline" 
-                onClick={() => setLocation('/')}
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Home
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => setLocation('/estimates')}
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Estimates
-              </Button>
-            </div>
-          </div>
-
-      <Form {...form}>
-        <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="client">Client</TabsTrigger>
-              <TabsTrigger value="services">Services</TabsTrigger>
-              <TabsTrigger value="labor">Labor</TabsTrigger>
-              <TabsTrigger value="measurement">Measurements</TabsTrigger>
-              <TabsTrigger value="summary">Summary & Analysis</TabsTrigger>
-            </TabsList>
-            
-            {/* New TAB: Labor Costs */}
-            <TabsContent value="labor" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Labor Costs</CardTitle>
-                  <CardDescription>
-                    Add labor costs for each service type
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {/* Solo mostrar servicios que hayan sido seleccionados */}
-                    {selectedServiceTypes.length > 0 ? (
-                      <div className="space-y-6">
-                        {selectedServiceTypes.map(serviceType => {
-                          // Obtener la tarifa laboral para este tipo de servicio
-                          // Obtener la tarifa laboral con valores predeterminados por si acaso
-                          const laborRate = LABOR_RATES_BY_SERVICE[serviceType as keyof typeof LABOR_RATES_BY_SERVICE] || { baseHours: 4, hourlyRate: 45 };
-                          // Buscar si ya existe un item de labor para este servicio
-                          const existingLaborItem = laborItems.find(item => item.service === serviceType);
-                          
-                          return (
-                            <div key={serviceType} className="border p-4 rounded-md">
-                              <div className="flex justify-between items-center mb-4">
-                                <h3 className="font-semibold text-lg">{getServiceLabel(serviceType)}</h3>
-                                <Badge variant="outline">Labor</Badge>
-                              </div>
-                              
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                <div>
-                                  <div className="text-sm font-medium mb-2">Hours</div>
-                                  <Input 
-                                    id={`${serviceType}-hours`}
-                                    type="number"
-                                    placeholder="Hours"
-                                    value={existingLaborItem?.hours || laborRate.baseHours}
-                                    min={0}
-                                    step="0.5"
-                                    onChange={(e) => {
-                                      const hours = parseFloat(e.target.value) || 0;
-                                      const rate = existingLaborItem?.rate || laborRate.hourlyRate;
-                                      const total = hours * rate;
-                                      
-                                      // Actualizar o añadir item de labor
-                                      updateLaborItem(serviceType, hours, rate, total);
-                                    }}
-                                  />
-                                </div>
-                                <div>
-                                  <div className="text-sm font-medium mb-2">Hourly Rate ($)</div>
-                                  <Input 
-                                    id={`${serviceType}-rate`}
-                                    type="number"
-                                    placeholder="Rate"
-                                    value={existingLaborItem?.rate || laborRate.hourlyRate}
-                                    min={0}
-                                    step="0.01"
-                                    onChange={(e) => {
-                                      const rate = parseFloat(e.target.value) || 0;
-                                      const hours = existingLaborItem?.hours || laborRate.baseHours;
-                                      const total = hours * rate;
-                                      
-                                      // Actualizar o añadir item de labor
-                                      updateLaborItem(serviceType, hours, rate, total);
-                                    }}
-                                  />
-                                </div>
-                                <div>
-                                  <div className="text-sm font-medium mb-2">Total</div>
-                                  <div className="h-10 px-3 py-2 border rounded-md bg-muted/30 flex items-center">
-                                    ${existingLaborItem?.total || (laborRate.baseHours * laborRate.hourlyRate)}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center p-8 text-center border rounded-md border-dashed">
-                        <AlertTriangle className="h-10 w-10 text-amber-500 mb-2" />
-                        <h3 className="text-lg font-semibold mb-1">No Services Selected</h3>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Please select at least one service type in the Services tab before adding labor costs.
-                        </p>
-                        <Button variant="secondary" size="sm" onClick={() => setActiveTab("services")}>
-                          Go to Services Tab
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setActiveTab("services")}
-                  >
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => setActiveTab("measurement")}
-                  >
-                    Next: Measurements
-                  </Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
-            
-            {/* TAB: Client Information */}
-            <TabsContent value="client" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Client Information</CardTitle>
-                  <CardDescription>
-                    Select a client for this estimate
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="clientId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Client</FormLabel>
-                        <Select
-                          onValueChange={(value) => field.onChange(parseInt(value))}
-                          defaultValue={field.value?.toString()}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a client" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {clients.map((client: any) => (
-                              <SelectItem 
-                                key={client.id} 
-                                value={client.id.toString()}
-                              >
-                                {client.firstName} {client.lastName}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="projectId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Project (Optional)</FormLabel>
-                        <Select
-                          onValueChange={(value) => field.onChange(parseInt(value))}
-                          defaultValue={field.value?.toString()}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a project (optional)" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="0">No Project</SelectItem>
-                            {/* Aquí podríamos cargar los proyectos del cliente cuando selecciona uno */}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="issueDate"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Issue Date</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant={"outline"}
-                                  className={
-                                    "w-full pl-3 text-left font-normal flex justify-between"
-                                  }
-                                >
-                                  {field.value ? (
-                                    format(field.value, "PPP")
-                                  ) : (
-                                    <span>Pick a date</span>
-                                  )}
-                                  <CalendarIcon className="h-4 w-4" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="expiryDate"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Expiry Date</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant={"outline"}
-                                  className={
-                                    "w-full pl-3 text-left font-normal flex justify-between"
-                                  }
-                                >
-                                  {field.value ? (
-                                    format(field.value, "PPP")
-                                  ) : (
-                                    <span>Pick a date</span>
-                                  )}
-                                  <CalendarIcon className="h-4 w-4" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+      <div className="remodra-main">
+        <TopNav />
+        <div className="remodra-content">
+          <main className="p-8 space-y-6">
+            <div className="remodra-card p-6 mb-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <div className="flex justify-center mb-6">
+                    <img 
+                      src="/remodra-logo.png" 
+                      alt="Remodra Logo" 
+                      className="h-16 w-16 object-contain"
                     />
                   </div>
-                </CardContent>
-                <CardFooter className="flex justify-between">
+                  <h1 className="text-2xl font-semibold text-foreground tracking-tight text-center">Agent Estimate Form</h1>
+                  <p className="text-muted-foreground text-center">Create estimates for field agent services</p>
+                </div>
+                <div className="flex space-x-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setLocation('/')}
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Home
+                  </Button>
                   <Button 
                     variant="outline" 
                     onClick={() => setLocation('/estimates')}
                   >
-                    Cancel
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Estimates
                   </Button>
-                  <Button 
-                    type="button" 
-                    onClick={() => setActiveTab("services")}
-                  >
-                    Next: Select Services
-                  </Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
-            
-            {/* TAB: Services Selection */}
-            <TabsContent value="services" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Multi Services</CardTitle>
-                  <CardDescription>
-                    Select the services you want to include in this estimate
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    {SERVICE_TYPES.map((service) => {
-                      const isSelected = selectedServiceTypes.includes(service.value);
-                      const serviceInfo = SERVICE_INFO[service.value as keyof typeof SERVICE_INFO];
-                      
-                      return (
-                        <Card 
-                          key={service.value}
-                          className="transition-all relative overflow-hidden border-2 hover:border-blue-300"
-                        >
-                          <CardContent className="p-4">
-                            <div 
-                              className="w-full h-1.5 rounded-full mb-3"
-                              style={{ backgroundColor: serviceInfo?.color || "#888" }}
-                            ></div>
-                            
-                            <div className="flex items-center gap-3 mb-2">
-                              <div className="text-2xl">{serviceInfo?.icon || "🔧"}</div>
-                              <h3 className="font-semibold text-lg">{service.label}</h3>
-                            </div>
-                            
-                            <p className="text-sm text-muted-foreground mb-3">
-                              {serviceInfo?.description || "Service description"}
-                            </p>
-                            
-                            <div className="flex items-center justify-between">
-                              <Badge variant="outline" className="bg-primary/10">
-                                {serviceInfo?.unitType === 'sq.ft' ? 'Area Based' : 
-                                 serviceInfo?.unitType === 'ln.ft' ? 'Length Based' :
-                                 serviceInfo?.unitType === 'unit' ? 'Per Unit' : 'Custom'}
-                              </Badge>
-                              
-                              <Button 
-                                type="button"
-                                size="sm"
-                                variant={isSelected ? "default" : "outline"}
-                                className={isSelected ? "bg-blue-600 hover:bg-blue-700" : ""}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  toggleServiceType(service.value);
-                                }}
-                              >
-                                {isSelected ? "✓ Added" : "+ ADD"}
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Form {...form}>
+              <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                  <TabsList className="grid w-full grid-cols-5">
+                    <TabsTrigger value="client">Client</TabsTrigger>
+                    <TabsTrigger value="services">Services</TabsTrigger>
+                    <TabsTrigger value="labor">Labor</TabsTrigger>
+                    <TabsTrigger value="measurement">Measurements</TabsTrigger>
+                    <TabsTrigger value="summary">Summary & Analysis</TabsTrigger>
+                  </TabsList>
                   
-                  {selectedServiceTypes.length > 0 && (
-                    <div className="space-y-6 mt-6">
-                      <Separator />
-                      
-                      <div className="space-y-6">
-                        {selectedServiceTypes.map(serviceType => {
-                          const serviceInfo = SERVICE_INFO[serviceType as keyof typeof SERVICE_INFO];
-                          const materials = MATERIALS_BY_SERVICE[serviceType as keyof typeof MATERIALS_BY_SERVICE] || [];
-                          const options = OPTIONS_BY_SERVICE[serviceType as keyof typeof OPTIONS_BY_SERVICE] || [];
-                          
-                          return (
-                            <div key={serviceType} className="space-y-4">
-                              <h3 className="text-lg font-semibold">
-                                {getServiceLabel(serviceType)} Materials & Options
-                              </h3>
-                              
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                  <h4 className="text-sm font-medium mb-2">Materials</h4>
-                                  <div className="grid grid-cols-1 gap-2">
-                                    {materials.map(material => (
-                                      <Card key={material.id} className="overflow-hidden">
-                                        <CardContent className="p-3">
-                                          <div className="flex justify-between items-center">
-                                            <div>
-                                              <h5 className="font-medium">{material.name}</h5>
-                                              <p className="text-sm text-muted-foreground">
-                                                ${material.unitPrice.toFixed(2)}/{material.unit}
-                                              </p>
-                                            </div>
-                                            <Button 
-                                              size="sm" 
-                                              variant="outline"
-                                              type="button" 
-                                              onClick={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                addMaterial(serviceType, material.id);
-                                              }}
-                                            >
-                                              <Plus className="h-4 w-4" />
-                                            </Button>
-                                          </div>
-                                        </CardContent>
-                                      </Card>
-                                    ))}
-                                  </div>
-                                </div>
+                  {/* New TAB: Labor Costs */}
+                  <TabsContent value="labor" className="space-y-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Labor Costs</CardTitle>
+                        <CardDescription>
+                          Add labor costs for each service type
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {/* Solo mostrar servicios que hayan sido seleccionados */}
+                          {selectedServiceTypes.length > 0 ? (
+                            <div className="space-y-6">
+                              {selectedServiceTypes.map(serviceType => {
+                                // Obtener la tarifa laboral para este tipo de servicio
+                                // Obtener la tarifa laboral con valores predeterminados por si acaso
+                                const laborRate = LABOR_RATES_BY_SERVICE[serviceType as keyof typeof LABOR_RATES_BY_SERVICE] || { baseHours: 4, hourlyRate: 45 };
+                                // Buscar si ya existe un item de labor para este servicio
+                                const existingLaborItem = laborItems.find(item => item.service === serviceType);
                                 
-                                <div>
-                                  <h4 className="text-sm font-medium mb-2">Additional Options</h4>
-                                  <div className="grid grid-cols-1 gap-2">
-                                    {options.map(option => (
-                                      <Card key={option.id} className="overflow-hidden">
-                                        <CardContent className="p-3">
-                                          <div className="flex justify-between items-center">
-                                            <div>
-                                              <h5 className="font-medium">{option.name}</h5>
-                                              <p className="text-sm text-muted-foreground">
-                                                ${option.unitPrice.toFixed(2)}/{option.unit}
-                                              </p>
-                                            </div>
-                                            <Button 
-                                              size="sm" 
-                                              variant="outline"
-                                              type="button" 
-                                              onClick={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                addOption(serviceType, option.id);
-                                              }}
-                                            >
-                                              <Plus className="h-4 w-4" />
-                                            </Button>
-                                          </div>
-                                        </CardContent>
-                                      </Card>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
-                              
-                              <Separator />
-                            </div>
-                          );
-                        })}
-                      </div>
-                      
-                      <div>
-                        <h3 className="text-lg font-semibold mb-3">Selected Items</h3>
-                        {selectedItems.length === 0 ? (
-                          <div className="text-center py-8 text-muted-foreground border rounded-md">
-                            No items selected. Add materials or options from above.
-                          </div>
-                        ) : (
-                          <Card>
-                            <CardContent className="p-0">
-                              <table className="w-full">
-                                <thead className="bg-muted/50">
-                                  <tr>
-                                    <th className="text-left p-3">Item</th>
-                                    <th className="text-center p-3">Type</th>
-                                    <th className="text-center p-3">Quantity</th>
-                                    <th className="text-right p-3">Unit Price</th>
-                                    <th className="text-right p-3">Total</th>
-                                    <th className="text-center p-3">Actions</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {selectedItems.map((item, index) => (
-                                    <tr key={`${item.id}-${item.type}-${index}`} className="border-t border-gray-200 dark:border-gray-700">
-                                      <td className="p-3">
-                                        <div>
-                                          <div className="font-medium">{item.name}</div>
-                                          <div className="text-sm text-muted-foreground">
-                                            {getServiceLabel(item.service)}
-                                          </div>
-                                        </div>
-                                      </td>
-                                      <td className="p-3 text-center">
-                                        <span className="px-2 py-1 rounded-full text-xs bg-primary/10">
-                                          {item.type === 'material' ? 'Material' : 'Option'}
-                                        </span>
-                                      </td>
-                                      <td className="p-3 text-center">
-                                        <div className="flex items-center justify-center gap-2">
-                                          <Button 
-                                            size="icon" 
-                                            variant="outline" 
-                                            className="h-7 w-7" 
-                                            onClick={() => updateItemQuantity(index, item.quantity - 1)}
-                                            disabled={item.quantity <= 1}
-                                          >
-                                            <Minus className="h-3 w-3" />
-                                          </Button>
-                                          <span className="w-8 text-center">{item.quantity}</span>
-                                          <Button 
-                                            size="icon" 
-                                            variant="outline" 
-                                            className="h-7 w-7" 
-                                            onClick={() => updateItemQuantity(index, item.quantity + 1)}
-                                          >
-                                            <Plus className="h-3 w-3" />
-                                          </Button>
-                                        </div>
-                                      </td>
-                                      <td className="p-3 text-right">
-                                        <Input
+                                return (
+                                  <div key={serviceType} className="border p-4 rounded-md">
+                                    <div className="flex justify-between items-center mb-4">
+                                      <h3 className="font-semibold text-lg">{getServiceLabel(serviceType)}</h3>
+                                      <Badge variant="outline">Labor</Badge>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                      <div>
+                                        <div className="text-sm font-medium mb-2">Hours</div>
+                                        <Input 
+                                          id={`${serviceType}-hours`}
                                           type="number"
-                                          min="0"
-                                          step="0.01"
-                                          className="w-20 text-right"
-                                          value={item.unitPrice}
+                                          placeholder="Hours"
+                                          value={existingLaborItem?.hours || laborRate.baseHours}
+                                          min={0}
+                                          step="0.5"
                                           onChange={(e) => {
-                                            const newPrice = parseFloat(e.target.value) || 0;
-                                            const updatedItems = [...selectedItems];
-                                            updatedItems[index] = {
-                                              ...updatedItems[index],
-                                              unitPrice: newPrice,
-                                              total: updatedItems[index].quantity * newPrice
-                                            };
-                                            setSelectedItems(updatedItems);
-                                            recalculateTotal(updatedItems);
+                                            const hours = parseFloat(e.target.value) || 0;
+                                            const rate = existingLaborItem?.rate || laborRate.hourlyRate;
+                                            const total = hours * rate;
+                                            
+                                            // Actualizar o añadir item de labor
+                                            updateLaborItem(serviceType, hours, rate, total);
                                           }}
                                         />
-                                        /{item.unit}
-                                      </td>
-                                      <td className="p-3 text-right font-medium">
-                                        ${item.total.toFixed(2)}
-                                      </td>
-                                      <td className="p-3 text-center">
-                                        <Button 
-                                          size="icon" 
-                                          variant="ghost" 
-                                          className="h-8 w-8 text-destructive hover:text-destructive/90" 
-                                          onClick={() => removeItem(index)}
-                                        >
-                                          <Trash className="h-4 w-4" />
-                                        </Button>
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                                <tfoot className="bg-muted/20">
-                                  <tr>
-                                    <td colSpan={4} className="p-3 text-right font-medium">
-                                      Subtotal:
-                                    </td>
-                                    <td className="p-3 text-right font-medium">
-                                      ${form.getValues("subtotal").toFixed(2)}
-                                    </td>
-                                    <td></td>
-                                  </tr>
-                                </tfoot>
-                              </table>
-                            </CardContent>
-                          </Card>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setActiveTab("client")}
-                  >
-                    Previous
-                  </Button>
-                  <Button 
-                    type="button" 
-                    onClick={() => setActiveTab("measurement")}
-                    disabled={selectedItems.length === 0}
-                  >
-                    Next: Measurements
-                  </Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
-            
-            {/* TAB: Measurements */}
-            <TabsContent value="measurement" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Property Measurements</CardTitle>
-                  <CardDescription>
-                    Use our digital tools to measure the property
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-lg">Digital Measurement</CardTitle>
-                        <CardDescription>
-                          Draw and calculate areas, lengths, and distances
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <Button 
-                          variant="outline" 
-                          className="w-full" 
-                          onClick={() => setIsDigitalMeasurementOpen(true)}
-                        >
-                          <Ruler className="h-4 w-4 mr-2" />
-                          Open Measurement Tool
-                        </Button>
-                        
-                        {measurements.length > 0 && (
-                          <div className="mt-4">
-                            <h4 className="font-semibold text-sm mb-2">Saved Measurements</h4>
-                            <div className="border rounded-md divide-y">
-                              {measurements.map((measurement, index) => (
-                                <div key={index} className="p-2 text-sm border-b last:border-0">
-                                  <div className="flex justify-between items-center">
-                                    <div className="flex items-center space-x-2">
-                                      <div className="w-3 h-3 rounded-full" 
-                                           style={{ backgroundColor: measurement.color || "#FF5722" }}></div>
-                                      <span className="font-medium capitalize">
-                                        {measurement.type === 'line' ? 'Line' : 
-                                         measurement.type === 'area' ? 'Area' : 
-                                         measurement.type === 'perimeter' ? 'Perimeter' : 'Measurement'} {index + 1}
-                                      </span>
+                                      </div>
+                                      <div>
+                                        <div className="text-sm font-medium mb-2">Hourly Rate ($)</div>
+                                        <Input 
+                                          id={`${serviceType}-rate`}
+                                          type="number"
+                                          placeholder="Rate"
+                                          value={existingLaborItem?.rate || laborRate.hourlyRate}
+                                          min={0}
+                                          step="0.01"
+                                          onChange={(e) => {
+                                            const rate = parseFloat(e.target.value) || 0;
+                                            const hours = existingLaborItem?.hours || laborRate.baseHours;
+                                            const total = hours * rate;
+                                            
+                                            // Actualizar o añadir item de labor
+                                            updateLaborItem(serviceType, hours, rate, total);
+                                          }}
+                                        />
+                                      </div>
+                                      <div>
+                                        <div className="text-sm font-medium mb-2">Total</div>
+                                        <div className="h-10 px-3 py-2 border rounded-md bg-muted/30 flex items-center">
+                                          ${existingLaborItem?.total || (laborRate.baseHours * laborRate.hourlyRate)}
+                                        </div>
+                                      </div>
                                     </div>
-                                    <span className="font-semibold">{measurement.label || 
-                                      (measurement.realLength ? 
-                                        `${measurement.realLength.toFixed(2)} ${measurement.unit}` : 
-                                        measurement.realArea ? 
-                                        `${measurement.realArea.toFixed(2)} ${measurement.unit}²` : 
-                                        '')}</span>
                                   </div>
-                                  {measurement.serviceType && (
-                                    <div className="mt-1 flex justify-between text-xs text-muted-foreground">
-                                      <span>Service: {measurement.serviceType}</span>
-                                      {measurement.costEstimate && (
-                                        <span className="text-primary font-medium">
-                                          Est. cost: ${measurement.costEstimate.toFixed(2)}
-                                        </span>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-lg">LiDAR Scanner</CardTitle>
-                        <CardDescription>
-                          Use your device's camera to scan and measure
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <Button 
-                          variant="outline" 
-                          className="w-full" 
-                          onClick={() => setIsLidarScannerOpen(true)}
-                        >
-                          <Scan className="h-4 w-4 mr-2" />
-                          Open LiDAR Scanner
-                        </Button>
-                        
-                        {scanResults.length > 0 && (
-                          <div className="mt-4">
-                            <h4 className="font-semibold text-sm mb-2">Scan Results</h4>
-                            <div className="border rounded-md divide-y">
-                              {scanResults.map((scan, index) => (
-                                <div key={index} className="p-2 text-sm">
-                                  <div className="flex justify-between">
-                                    <span>{scan.type}</span>
-                                    <span className="font-semibold">{scan.value} {scan.unit}</span>
-                                  </div>
-                                  <p className="text-xs text-muted-foreground">{scan.description}</p>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setActiveTab("services")}
-                  >
-                    Previous
-                  </Button>
-                  <Button 
-                    type="button" 
-                    onClick={() => setActiveTab("summary")}
-                  >
-                    Next: Summary & Analysis
-                  </Button>
-                </CardFooter>
-              </Card>
-              
-              {/* Advanced Digital Measurement Dialog */}
-              <Dialog open={isDigitalMeasurementOpen} onOpenChange={setIsDigitalMeasurementOpen}>
-                <DialogContent className="max-w-5xl h-[90vh] flex flex-col overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Advanced Measurement Tool</DialogTitle>
-                    <DialogDescription>
-                      Take precise measurements to calculate accurate costs for your estimate
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="flex-1 overflow-hidden">
-                    <AdvancedMeasurement 
-                      unit="ft"
-                      canvasWidth={850}
-                      canvasHeight={600}
-                      showCostEstimates={true}
-                      initialMeasurements={measurements}
-                      // Pasar los tipos de servicio seleccionados en el estimado principal
-                      defaultServiceType={selectedServiceTypes.length > 0 ? selectedServiceTypes[0] : "roofing"}
-                      // Opciones de cálculo flexible para diferentes compañías
-                      calculationOptions={{
-                        // Precios personalizados por servicio
-                        servicePrices: {
-                          roofing: { rate: 6.5, unit: 'sqft', label: 'Roofing' },
-                          siding: { rate: 8.75, unit: 'sqft', label: 'Siding' },
-                          fence: { rate: 28.0, unit: 'ft', label: 'Fence' },
-                          deck: { rate: 35.0, unit: 'sqft', label: 'Deck' },
-                          gutters: { rate: 12.0, unit: 'ft', label: 'Gutters' },
-                          windows: { rate: 45.0, unit: 'ft', label: 'Windows' }
-                        },
-                        // Método de cálculo para labor (por área, por longitud, etc.)
-                        laborCalculationMethod: 'by_measurement', // otras opciones: 'hourly', 'fixed'
-                        // Factor para labor basado en complejidad
-                        laborFactor: 0.35 // 35% del costo de material
-                      }}
-                      onMeasurementsChange={(newMeasurements) => {
-                        setMeasurements(newMeasurements);
-                        
-                        // Procesar mediciones para agregarlas automáticamente al estimado
-                        if (newMeasurements.length > 0 && selectedServiceTypes.length > 0) {
-                          const serviceType = selectedServiceTypes[0];
-                          
-                          // Eliminar ítems de medición anteriores
-                          const baseItems = selectedItems.filter(item => 
-                            !item.id.toString().includes('measurement'));
-                          
-                          // Crear nuevos ítems basados en las mediciones
-                          const measurementItems: SelectedItem[] = [];
-                          
-                          // Procesar mediciones según tipo de servicio
-                          newMeasurements.forEach((measurement, idx) => {
-                            if (serviceType === 'fence' && measurement.type === 'line' && measurement.realLength) {
-                              // Para cercas - medición lineal
-                              const length = Math.ceil(measurement.realLength);
-                              measurementItems.push({
-                                id: `measurement-${idx}`,
-                                service: serviceType,
-                                name: 'Instalación de Cerca',
-                                description: `Cerca completa - ${length} pies lineales`,
-                                quantity: length,
-                                unit: 'ft',
-                                unitPrice: 57, // Precio por unit que incluye material y mano de obra
-                                total: length * 57,
-                                type: 'material'
-                              });
-                            }
-                            else if ((serviceType === 'roof' || serviceType === 'roofing') && 
-                                    measurement.type === 'area' && measurement.realArea) {
-                              // Para roofs - medición de área
-                              const area = Math.ceil(measurement.realArea);
-                              measurementItems.push({
-                                id: `measurement-${idx}`,
-                                service: serviceType,
-                                name: 'Instalación de Techo',
-                                description: `Techo completo - ${area} pies cuadrados`,
-                                quantity: area,
-                                unit: 'sqft',
-                                unitPrice: 8.7,
-                                total: area * 8.7,
-                                type: 'material'
-                              });
-                            }
-                          });
-                          
-                          // Actualizar ítems y recalcular total
-                          if (measurementItems.length > 0) {
-                            const updatedItems = [...baseItems, ...measurementItems];
-                            setSelectedItems(updatedItems);
-                            recalculateTotal(updatedItems);
-                          }
-                        }
-                        
-                        const totalLength = newMeasurements
-                          .filter(m => (m.type === 'line' || m.type === 'perimeter') && m.realLength)
-                          .reduce((sum, m) => sum + (m.realLength || 0), 0);
-                          
-                        const totalArea = newMeasurements
-                          .filter(m => m.type === 'area' && m.realArea)
-                          .reduce((sum, m) => sum + (m.realArea || 0), 0);
-                          
-                        console.log(`Measurements updated - Total Area: ${totalArea} sqft, Total Length: ${totalLength} ft`);
-                        
-                        // Calcular estimación de costos total
-                        const totalCost = newMeasurements.reduce((sum, m) => sum + (m.costEstimate || 0), 0);
-                        if (totalCost > 0) {
-                          console.log(`Total cost estimate: $${totalCost.toFixed(2)}`);
-                          
-                          // Si hay costo estimado, actualizar labor y materiales
-                          const materialsCost = totalCost * 0.65; // 65% materiales
-                          const laborCost = totalCost * 0.35; // 35% labor
-                          
-                          // Actualizar laborSubtotal para estimados más precisos
-                          setLaborSubtotal(Math.round(laborCost));
-                          
-                          // También podríamos crear automáticamente un ítem de material 
-                          // basado en las medidas, pero lo dejamos a elección del usuario
-                        }
-                      }} 
-                    />
-                  </div>
-                  <div className="flex justify-between mt-4">
-                    <p className="text-sm text-muted-foreground">
-                      Pro Tip: Select a service type and material quality to get accurate cost estimates
-                    </p>
-                    <Button onClick={() => setIsDigitalMeasurementOpen(false)}>
-                      Done
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-              
-              {/* LiDAR Scanner Dialog */}
-              <Dialog open={isLidarScannerOpen} onOpenChange={setIsLidarScannerOpen}>
-                <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
-                  <DialogHeader>
-                    <DialogTitle>LiDAR Scanner</DialogTitle>
-                    <DialogDescription>
-                      Use your device's camera to scan and measure
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="flex-1 overflow-hidden border rounded-md">
-                    <LiDARScanner 
-                      onSaveScan={(scan) => {
-                        setScanResults(prev => [...prev, scan]);
-                      }} 
-                    />
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </TabsContent>
-            
-            {/* TAB: Summary & Analysis */}
-            <TabsContent value="summary" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Estimate Summary & Analysis</CardTitle>
-                  <CardDescription>
-                    Review the estimate details and run AI analysis
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="tax"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Tax Rate (%)</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number"
-                              {...field}
-                              onChange={(e) => {
-                                field.onChange(parseFloat(e.target.value) || 0);
-                              }}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="discount"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Discount Amount</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number"
-                              {...field}
-                              onChange={(e) => {
-                                field.onChange(parseFloat(e.target.value) || 0);
-                              }}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="total"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Total Amount</FormLabel>
-                          <FormControl>
-                            <Input 
-                              {...field}
-                              value={`$${field.value.toFixed(2)}`}
-                              disabled
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="notes"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Notes</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              {...field}
-                              placeholder="Add any additional notes here..."
-                              rows={3}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="terms"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Terms & Conditions</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              {...field}
-                              placeholder="Add terms and conditions here..."
-                              rows={3}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="flex flex-col gap-4">
-                    <h3 className="text-lg font-semibold">AI Cost Analysis</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Our AI can analyze your estimate and provide recommendations on pricing, materials, and labor costs.
-                    </p>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={runAiAnalysis}
-                      disabled={isAnalyzing || selectedItems.length === 0}
-                      className="w-full md:w-auto"
-                    >
-                      {isAnalyzing ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Analyzing...
-                        </>
-                      ) : (
-                        <>
-                          <Calculator className="h-4 w-4 mr-2" />
-                          Run AI Analysis
-                        </>
-                      )}
-                    </Button>
-                    
-                    {showAiAnalysis && (
-                      <Card className="border-primary/20 mt-4">
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-lg">AI Analysis Results</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          {/* Si ya tenemos un resultado del análisis, lo usamos, si no mostramos el panel interactivo */}
-                          {aiAnalysisResult ? (
-                            <div className="space-y-4">
-                              <div className="rounded-md bg-slate-50 p-4 dark:bg-slate-900">
-                                <div className="flex items-center justify-between">
-                                  <h3 className="text-lg font-semibold">Total Recomendado</h3>
-                                  <span className="text-xl font-bold">${aiAnalysisResult.recommendedTotal.toFixed(2)}</span>
-                                </div>
-                                <div className="space-y-2 mt-4">
-                                  <h3 className="font-semibold">Recomendaciones</h3>
-                                  <ul className="list-disc pl-5 space-y-1">
-                                    {aiAnalysisResult.breakdown.recommendations.map((rec, i) => (
-                                      <li key={i} className="text-sm">{rec}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              </div>
+                                );
+                              })}
                             </div>
                           ) : (
-                            <AiAnalysisPanel 
-                              serviceType={selectedServiceTypes[0] || ""}
-                              materials={selectedItems.map(item => ({
-                                name: item.name,
-                                quantity: item.quantity,
-                                unit: item.unit,
-                                unitPrice: item.unitPrice
-                              }))}
-                              onCreateEstimate={(result) => setAiAnalysisResult(result)}
-                            />
+                            <div className="flex flex-col items-center justify-center p-8 text-center border rounded-md border-dashed">
+                              <AlertTriangle className="h-10 w-10 text-amber-500 mb-2" />
+                              <h3 className="text-lg font-semibold mb-1">No Services Selected</h3>
+                              <p className="text-sm text-muted-foreground mb-4">
+                                Please select at least one service type in the Services tab before adding labor costs.
+                              </p>
+                              <Button variant="secondary" size="sm" onClick={() => setActiveTab("services")}>
+                                Go to Services Tab
+                              </Button>
+                            </div>
                           )}
-                        </CardContent>
-                      </Card>
-                    )}
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setActiveTab("measurement")}
-                  >
-                    Previous
-                  </Button>
-                  <Button 
-                    type="button" 
-                    disabled={isSubmitting || selectedItems.length === 0}
-                    className="min-w-[160px] bg-green-600 hover:bg-green-700 text-white"
-                    onClick={() => {
-                      // Llamar manualmente a onSubmit para crear el estimado
-                      form.handleSubmit(onSubmit)();
-                    }}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Creating...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4 mr-2" />
-                        Create Estimate
-                      </>
-                    )}
-                  </Button>
-                  <div className="mt-2 text-xs text-muted-foreground italic">
-                    Note: Estimate will only be created when you click this button
-                  </div>
-                </CardFooter>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </form>
-      </Form>
+                        </div>
+                      </CardContent>
+                      <CardFooter className="flex justify-between">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setActiveTab("services")}
+                        >
+                          Previous
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={() => setActiveTab("measurement")}
+                        >
+                          Next: Measurements
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  </TabsContent>
+                  
+                  {/* TAB: Client Information */}
+                  <TabsContent value="client" className="space-y-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Client Information</CardTitle>
+                        <CardDescription>
+                          Select a client for this estimate
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="clientId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Client</FormLabel>
+                              <Select
+                                onValueChange={(value) => field.onChange(parseInt(value))}
+                                defaultValue={field.value?.toString()}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select a client" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {clients.map((client: any) => (
+                                    <SelectItem 
+                                      key={client.id} 
+                                      value={client.id.toString()}
+                                    >
+                                      {client.firstName} {client.lastName}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="projectId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Project (Optional)</FormLabel>
+                              <Select
+                                onValueChange={(value) => field.onChange(parseInt(value))}
+                                defaultValue={field.value?.toString()}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select a project (optional)" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="0">No Project</SelectItem>
+                                  {/* Aquí podríamos cargar los proyectos del cliente cuando selecciona uno */}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="issueDate"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-col">
+                                <FormLabel>Issue Date</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="date"
+                                    value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
+                                    onChange={(e) => {
+                                      const date = e.target.value ? new Date(e.target.value) : new Date();
+                                      field.onChange(date);
+                                    }}
+                                    className="remodra-input"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name="expiryDate"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-col">
+                                <FormLabel>Expiry Date</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="date"
+                                    value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
+                                    onChange={(e) => {
+                                      const date = e.target.value ? new Date(e.target.value) : new Date();
+                                      field.onChange(date);
+                                    }}
+                                    className="remodra-input"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </CardContent>
+                      <CardFooter className="flex justify-between">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setLocation('/estimates')}
+                        >
+                          Cancel
+                        </Button>
+                        <Button 
+                          type="button" 
+                          onClick={() => setActiveTab("services")}
+                        >
+                          Next: Select Services
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  </TabsContent>
+                  
+                  {/* TAB: Services Selection */}
+                  <TabsContent value="services" className="space-y-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Multi Services</CardTitle>
+                        <CardDescription>
+                          Select the services you want to include in this estimate
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                          {SERVICE_TYPES.map((service) => {
+                            const isSelected = selectedServiceTypes.includes(service.value);
+                            const serviceInfo = SERVICE_INFO[service.value as keyof typeof SERVICE_INFO];
+                            
+                            return (
+                              <Card 
+                                key={service.value}
+                                className="transition-all relative overflow-hidden border-2 hover:border-blue-300"
+                              >
+                                <CardContent className="p-4">
+                                  <div 
+                                    className="w-full h-1.5 rounded-full mb-3"
+                                    style={{ backgroundColor: serviceInfo?.color || "#888" }}
+                                  ></div>
+                                  
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <div className="text-2xl">{serviceInfo?.icon || "🔧"}</div>
+                                    <h3 className="font-semibold text-lg">{service.label}</h3>
+                                  </div>
+                                  
+                                  <p className="text-sm text-muted-foreground mb-3">
+                                    {serviceInfo?.description || "Service description"}
+                                  </p>
+                                  
+                                  <div className="flex items-center justify-between">
+                                    <Badge variant="outline" className="bg-primary/10">
+                                      {serviceInfo?.unitType === 'sq.ft' ? 'Area Based' : 
+                                       serviceInfo?.unitType === 'ln.ft' ? 'Length Based' :
+                                       serviceInfo?.unitType === 'unit' ? 'Per Unit' : 'Custom'}
+                                    </Badge>
+                                    
+                                    <Button 
+                                      type="button"
+                                      size="sm"
+                                      variant={isSelected ? "default" : "outline"}
+                                      className={isSelected ? "bg-blue-600 hover:bg-blue-700" : ""}
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        toggleServiceType(service.value);
+                                      }}
+                                    >
+                                      {isSelected ? "✓ Added" : "+ ADD"}
+                                    </Button>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            );
+                          })}
+                        </div>
+                        
+                        {selectedServiceTypes.length > 0 && (
+                          <div className="space-y-6 mt-6">
+                            <Separator />
+                            
+                            <div className="space-y-6">
+                              {selectedServiceTypes.map(serviceType => {
+                                const serviceInfo = SERVICE_INFO[serviceType as keyof typeof SERVICE_INFO];
+                                const materials = MATERIALS_BY_SERVICE[serviceType as keyof typeof MATERIALS_BY_SERVICE] || [];
+                                const options = OPTIONS_BY_SERVICE[serviceType as keyof typeof OPTIONS_BY_SERVICE] || [];
+                                
+                                return (
+                                  <div key={serviceType} className="space-y-4">
+                                    <h3 className="text-lg font-semibold">
+                                      {getServiceLabel(serviceType)} Materials & Options
+                                    </h3>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                      <div>
+                                        <h4 className="text-sm font-medium mb-2">Materials</h4>
+                                        <div className="grid grid-cols-1 gap-2">
+                                          {materials.map(material => (
+                                            <Card key={material.id} className="overflow-hidden">
+                                              <CardContent className="p-3">
+                                                <div className="flex justify-between items-center">
+                                                  <div>
+                                                    <h5 className="font-medium">{material.name}</h5>
+                                                    <p className="text-sm text-muted-foreground">
+                                                      ${material.unitPrice.toFixed(2)}/{material.unit}
+                                                    </p>
+                                                  </div>
+                                                  <Button 
+                                                    size="sm" 
+                                                    variant="outline"
+                                                    type="button" 
+                                                    onClick={(e) => {
+                                                      e.preventDefault();
+                                                      e.stopPropagation();
+                                                      addMaterial(serviceType, material.id);
+                                                    }}
+                                                  >
+                                                    <Plus className="h-4 w-4" />
+                                                  </Button>
+                                                </div>
+                                              </CardContent>
+                                            </Card>
+                                          ))}
+                                        </div>
+                                      </div>
+                                      
+                                      <div>
+                                        <h4 className="text-sm font-medium mb-2">Additional Options</h4>
+                                        <div className="grid grid-cols-1 gap-2">
+                                          {options.map(option => (
+                                            <Card key={option.id} className="overflow-hidden">
+                                              <CardContent className="p-3">
+                                                <div className="flex justify-between items-center">
+                                                  <div>
+                                                    <h5 className="font-medium">{option.name}</h5>
+                                                    <p className="text-sm text-muted-foreground">
+                                                      ${option.unitPrice.toFixed(2)}/{option.unit}
+                                                    </p>
+                                                  </div>
+                                                  <Button 
+                                                    size="sm" 
+                                                    variant="outline"
+                                                    type="button" 
+                                                    onClick={(e) => {
+                                                      e.preventDefault();
+                                                      e.stopPropagation();
+                                                      addOption(serviceType, option.id);
+                                                    }}
+                                                  >
+                                                    <Plus className="h-4 w-4" />
+                                                  </Button>
+                                                </div>
+                                              </CardContent>
+                                            </Card>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    
+                                    <Separator />
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            
+                            <div>
+                              <h3 className="text-lg font-semibold mb-3">Selected Items</h3>
+                              {selectedItems.length === 0 ? (
+                                <div className="text-center py-8 text-muted-foreground border rounded-md">
+                                  No items selected. Add materials or options from above.
+                                </div>
+                              ) : (
+                                <Card>
+                                  <CardContent className="p-0">
+                                    <table className="w-full">
+                                      <thead className="bg-muted/50">
+                                        <tr>
+                                          <th className="text-left p-3">Item</th>
+                                          <th className="text-center p-3">Type</th>
+                                          <th className="text-center p-3">Quantity</th>
+                                          <th className="text-right p-3">Unit Price</th>
+                                          <th className="text-right p-3">Total</th>
+                                          <th className="text-center p-3">Actions</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {selectedItems.map((item, index) => (
+                                          <tr key={`${item.id}-${item.type}-${index}`} className="border-t border-gray-200 dark:border-gray-700">
+                                            <td className="p-3">
+                                              <div>
+                                                <div className="font-medium">{item.name}</div>
+                                                <div className="text-sm text-muted-foreground">
+                                                  {getServiceLabel(item.service)}
+                                                </div>
+                                              </div>
+                                            </td>
+                                            <td className="p-3 text-center">
+                                              <span className="px-2 py-1 rounded-full text-xs bg-primary/10">
+                                                {item.type === 'material' ? 'Material' : 'Option'}
+                                              </span>
+                                            </td>
+                                            <td className="p-3 text-center">
+                                              <div className="flex items-center justify-center gap-2">
+                                                <Button 
+                                                  size="icon" 
+                                                  variant="outline" 
+                                                  className="h-7 w-7" 
+                                                  onClick={() => updateItemQuantity(index, item.quantity - 1)}
+                                                  disabled={item.quantity <= 1}
+                                                >
+                                                  <Minus className="h-3 w-3" />
+                                                </Button>
+                                                <span className="w-8 text-center">{item.quantity}</span>
+                                                <Button 
+                                                  size="icon" 
+                                                  variant="outline" 
+                                                  className="h-7 w-7" 
+                                                  onClick={() => updateItemQuantity(index, item.quantity + 1)}
+                                                >
+                                                  <Plus className="h-3 w-3" />
+                                                </Button>
+                                              </div>
+                                            </td>
+                                            <td className="p-3 text-right">
+                                              <Input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                className="w-20 text-right"
+                                                value={item.unitPrice}
+                                                onChange={(e) => {
+                                                  const newPrice = parseFloat(e.target.value) || 0;
+                                                  const updatedItems = [...selectedItems];
+                                                  updatedItems[index] = {
+                                                    ...updatedItems[index],
+                                                    unitPrice: newPrice,
+                                                    total: updatedItems[index].quantity * newPrice
+                                                  };
+                                                  setSelectedItems(updatedItems);
+                                                  recalculateTotal(updatedItems);
+                                                }}
+                                              />
+                                              /{item.unit}
+                                            </td>
+                                            <td className="p-3 text-right font-medium">
+                                              ${item.total.toFixed(2)}
+                                            </td>
+                                            <td className="p-3 text-center">
+                                              <Button 
+                                                size="icon" 
+                                                variant="ghost" 
+                                                className="h-8 w-8 text-destructive hover:text-destructive/90" 
+                                                onClick={() => removeItem(index)}
+                                              >
+                                                <Trash className="h-4 w-4" />
+                                              </Button>
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                      <tfoot className="bg-muted/20">
+                                        <tr>
+                                          <td colSpan={4} className="p-3 text-right font-medium">
+                                            Subtotal:
+                                          </td>
+                                          <td className="p-3 text-right font-medium">
+                                            ${form.getValues("subtotal").toFixed(2)}
+                                          </td>
+                                          <td></td>
+                                        </tr>
+                                      </tfoot>
+                                    </table>
+                                  </CardContent>
+                                </Card>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                      <CardFooter className="flex justify-between">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => setActiveTab("client")}
+                        >
+                          Previous
+                        </Button>
+                        <Button 
+                          type="button" 
+                          onClick={() => setActiveTab("measurement")}
+                          disabled={selectedItems.length === 0}
+                        >
+                          Next: Measurements
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  </TabsContent>
+                  
+                  {/* TAB: Measurements */}
+                  <TabsContent value="measurement" className="space-y-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Property Measurements</CardTitle>
+                        <CardDescription>
+                          Use our digital tools to measure the property
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <Card>
+                            <CardHeader>
+                              <CardTitle className="text-lg">Digital Measurement</CardTitle>
+                              <CardDescription>
+                                Draw and calculate areas, lengths, and distances
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <Button 
+                                variant="outline" 
+                                className="w-full" 
+                                onClick={() => setIsDigitalMeasurementOpen(true)}
+                              >
+                                <Ruler className="h-4 w-4 mr-2" />
+                                Open Measurement Tool
+                              </Button>
+                              
+                              {measurements.length > 0 && (
+                                <div className="mt-4">
+                                  <h4 className="font-semibold text-sm mb-2">Saved Measurements</h4>
+                                  <div className="border rounded-md divide-y">
+                                    {measurements.map((measurement, index) => (
+                                      <div key={index} className="p-2 text-sm border-b last:border-0">
+                                        <div className="flex justify-between items-center">
+                                          <div className="flex items-center space-x-2">
+                                            <div className="w-3 h-3 rounded-full" 
+                                                 style={{ backgroundColor: measurement.color || "#FF5722" }}></div>
+                                            <span className="font-medium capitalize">
+                                              {measurement.type === 'line' ? 'Line' : 
+                                               measurement.type === 'area' ? 'Area' : 
+                                               measurement.type === 'perimeter' ? 'Perimeter' : 'Measurement'} {index + 1}
+                                            </span>
+                                          </div>
+                                          <span className="font-semibold">{measurement.label || 
+                                            (measurement.realLength ? 
+                                              `${measurement.realLength.toFixed(2)} ${measurement.unit}` : 
+                                              measurement.realArea ? 
+                                              `${measurement.realArea.toFixed(2)} ${measurement.unit}²` : 
+                                              '')}</span>
+                                        </div>
+                                        {measurement.serviceType && (
+                                          <div className="mt-1 flex justify-between text-xs text-muted-foreground">
+                                            <span>Service: {measurement.serviceType}</span>
+                                            {measurement.costEstimate && (
+                                              <span className="text-primary font-medium">
+                                                Est. cost: ${measurement.costEstimate.toFixed(2)}
+                                              </span>
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                          
+                          <Card>
+                            <CardHeader>
+                              <CardTitle className="text-lg">LiDAR Scanner</CardTitle>
+                              <CardDescription>
+                                Use your device's camera to scan and measure
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <Button 
+                                variant="outline" 
+                                className="w-full" 
+                                onClick={() => setIsLidarScannerOpen(true)}
+                              >
+                                <Scan className="h-4 w-4 mr-2" />
+                                Open LiDAR Scanner
+                              </Button>
+                              
+                              {scanResults.length > 0 && (
+                                <div className="mt-4">
+                                  <h4 className="font-semibold text-sm mb-2">Scan Results</h4>
+                                  <div className="border rounded-md divide-y">
+                                    {scanResults.map((scan, index) => (
+                                      <div key={index} className="p-2 text-sm">
+                                        <div className="flex justify-between">
+                                          <span>{scan.type}</span>
+                                          <span className="font-semibold">{scan.value} {scan.unit}</span>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">{scan.description}</p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </CardContent>
+                      <CardFooter className="flex justify-between">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => setActiveTab("services")}
+                        >
+                          Previous
+                        </Button>
+                        <Button 
+                          type="button" 
+                          onClick={() => setActiveTab("summary")}
+                        >
+                          Next: Summary & Analysis
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                    
+                    {/* Advanced Digital Measurement Dialog */}
+                    <Dialog open={isDigitalMeasurementOpen} onOpenChange={setIsDigitalMeasurementOpen}>
+                      <DialogContent className="max-w-5xl h-[90vh] flex flex-col overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>Advanced Measurement Tool</DialogTitle>
+                          <DialogDescription>
+                            Take precise measurements to calculate accurate costs for your estimate
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="flex-1 overflow-hidden">
+                          <AdvancedMeasurement 
+                            unit="ft"
+                            canvasWidth={850}
+                            canvasHeight={600}
+                            showCostEstimates={true}
+                            initialMeasurements={measurements}
+                            // Pasar los tipos de servicio seleccionados en el estimado principal
+                            defaultServiceType={selectedServiceTypes.length > 0 ? selectedServiceTypes[0] : "roofing"}
+                            // Opciones de cálculo flexible para diferentes compañías
+                            calculationOptions={{
+                              // Precios personalizados por servicio
+                              servicePrices: {
+                                roofing: { rate: 6.5, unit: 'sqft', label: 'Roofing' },
+                                siding: { rate: 8.75, unit: 'sqft', label: 'Siding' },
+                                fence: { rate: 28.0, unit: 'ft', label: 'Fence' },
+                                deck: { rate: 35.0, unit: 'sqft', label: 'Deck' },
+                                gutters: { rate: 12.0, unit: 'ft', label: 'Gutters' },
+                                windows: { rate: 45.0, unit: 'ft', label: 'Windows' }
+                              },
+                              // Método de cálculo para labor (por área, por longitud, etc.)
+                              laborCalculationMethod: 'by_measurement', // otras opciones: 'hourly', 'fixed'
+                              // Factor para labor basado en complejidad
+                              laborFactor: 0.35 // 35% del costo de material
+                            }}
+                            onMeasurementsChange={(newMeasurements) => {
+                              setMeasurements(newMeasurements);
+                              
+                              // Procesar mediciones para agregarlas automáticamente al estimado
+                              if (newMeasurements.length > 0 && selectedServiceTypes.length > 0) {
+                                const serviceType = selectedServiceTypes[0];
+                                
+                                // Eliminar ítems de medición anteriores
+                                const baseItems = selectedItems.filter(item => 
+                                  !item.id.toString().includes('measurement'));
+                                
+                                // Crear nuevos ítems basados en las mediciones
+                                const measurementItems: SelectedItem[] = [];
+                                
+                                // Procesar mediciones según tipo de servicio
+                                newMeasurements.forEach((measurement, idx) => {
+                                  if (serviceType === 'fence' && measurement.type === 'line' && measurement.realLength) {
+                                    // Para cercas - medición lineal
+                                    const length = Math.ceil(measurement.realLength);
+                                    measurementItems.push({
+                                      id: `measurement-${idx}`,
+                                      service: serviceType,
+                                      name: 'Instalación de Cerca',
+                                      description: `Cerca completa - ${length} pies lineales`,
+                                      quantity: length,
+                                      unit: 'ft',
+                                      unitPrice: 57, // Precio por unit que incluye material y mano de obra
+                                      total: length * 57,
+                                      type: 'material'
+                                    });
+                                  }
+                                  else if ((serviceType === 'roof' || serviceType === 'roofing') && 
+                                          measurement.type === 'area' && measurement.realArea) {
+                                    // Para roofs - medición de área
+                                    const area = Math.ceil(measurement.realArea);
+                                    measurementItems.push({
+                                      id: `measurement-${idx}`,
+                                      service: serviceType,
+                                      name: 'Instalación de Techo',
+                                      description: `Techo completo - ${area} pies cuadrados`,
+                                      quantity: area,
+                                      unit: 'sqft',
+                                      unitPrice: 8.7,
+                                      total: area * 8.7,
+                                      type: 'material'
+                                    });
+                                  }
+                                });
+                                
+                                // Actualizar ítems y recalcular total
+                                if (measurementItems.length > 0) {
+                                  const updatedItems = [...baseItems, ...measurementItems];
+                                  setSelectedItems(updatedItems);
+                                  recalculateTotal(updatedItems);
+                                }
+                              }
+                              
+                              const totalLength = newMeasurements
+                                .filter(m => (m.type === 'line' || m.type === 'perimeter') && m.realLength)
+                                .reduce((sum, m) => sum + (m.realLength || 0), 0);
+                                  
+                              const totalArea = newMeasurements
+                                .filter(m => m.type === 'area' && m.realArea)
+                                .reduce((sum, m) => sum + (m.realArea || 0), 0);
+                                  
+                              console.log(`Measurements updated - Total Area: ${totalArea} sqft, Total Length: ${totalLength} ft`);
+                              
+                              // Calcular estimación de costos total
+                              const totalCost = newMeasurements.reduce((sum, m) => sum + (m.costEstimate || 0), 0);
+                              if (totalCost > 0) {
+                                console.log(`Total cost estimate: $${totalCost.toFixed(2)}`);
+                                
+                                // Si hay costo estimado, actualizar labor y materiales
+                                const materialsCost = totalCost * 0.65; // 65% materiales
+                                const laborCost = totalCost * 0.35; // 35% labor
+                                
+                                // Actualizar laborSubtotal para estimados más precisos
+                                setLaborSubtotal(Math.round(laborCost));
+                                
+                                // También podríamos crear automáticamente un ítem de material 
+                                // basado en las medidas, pero lo dejamos a elección del usuario
+                              }
+                            }} 
+                          />
+                        </div>
+                        <div className="flex justify-between mt-4">
+                          <p className="text-sm text-muted-foreground">
+                            Pro Tip: Select a service type and material quality to get accurate cost estimates
+                          </p>
+                          <Button onClick={() => setIsDigitalMeasurementOpen(false)}>
+                            Done
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                    
+                    {/* LiDAR Scanner Dialog */}
+                    <Dialog open={isLidarScannerOpen} onOpenChange={setIsLidarScannerOpen}>
+                      <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
+                        <DialogHeader>
+                          <DialogTitle>LiDAR Scanner</DialogTitle>
+                          <DialogDescription>
+                            Use your device's camera to scan and measure
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="flex-1 overflow-hidden border rounded-md">
+                          <LiDARScanner 
+                            onSaveScan={(scan) => {
+                              setScanResults(prev => [...prev, scan]);
+                            }} 
+                          />
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </TabsContent>
+                  
+                  {/* TAB: Summary & Analysis */}
+                  <TabsContent value="summary" className="space-y-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Estimate Summary & Analysis</CardTitle>
+                        <CardDescription>
+                          Review the estimate details and run AI analysis
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="tax"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Tax Rate (%)</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="number"
+                                    {...field}
+                                    onChange={(e) => {
+                                      field.onChange(parseFloat(e.target.value) || 0);
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name="discount"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Discount Amount</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="number"
+                                    {...field}
+                                    onChange={(e) => {
+                                      field.onChange(parseFloat(e.target.value) || 0);
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name="total"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Total Amount</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    {...field}
+                                    value={`$${field.value.toFixed(2)}`}
+                                    disabled
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="notes"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Notes</FormLabel>
+                                <FormControl>
+                                  <Textarea 
+                                    {...field}
+                                    placeholder="Add any additional notes here..."
+                                    rows={3}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name="terms"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Terms & Conditions</FormLabel>
+                                <FormControl>
+                                  <Textarea 
+                                    {...field}
+                                    placeholder="Add terms and conditions here..."
+                                    rows={3}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        
+                        <div className="flex flex-col gap-4">
+                          <h3 className="text-lg font-semibold">AI Cost Analysis</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Our AI can analyze your estimate and provide recommendations on pricing, materials, and labor costs.
+                          </p>
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={runAiAnalysis}
+                            disabled={isAnalyzing || selectedItems.length === 0}
+                            className="w-full md:w-auto"
+                          >
+                            {isAnalyzing ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Analyzing...
+                              </>
+                            ) : (
+                              <>
+                                <Calculator className="h-4 w-4 mr-2" />
+                                Run AI Analysis
+                              </>
+                            )}
+                          </Button>
+                          
+                          {showAiAnalysis && (
+                            <Card className="border-primary/20 mt-4">
+                              <CardHeader className="pb-2">
+                                <CardTitle className="text-lg">AI Analysis Results</CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                {/* Si ya tenemos un resultado del análisis, lo usamos, si no mostramos el panel interactivo */}
+                                {aiAnalysisResult ? (
+                                  <div className="space-y-4">
+                                    <div className="rounded-md bg-slate-50 p-4 dark:bg-slate-900">
+                                      <div className="flex items-center justify-between">
+                                        <h3 className="text-lg font-semibold">Total Recomendado</h3>
+                                        <span className="text-xl font-bold">${aiAnalysisResult.recommendedTotal.toFixed(2)}</span>
+                                      </div>
+                                      <div className="space-y-2 mt-4">
+                                        <h3 className="font-semibold">Recomendaciones</h3>
+                                        <ul className="list-disc pl-5 space-y-1">
+                                          {aiAnalysisResult.breakdown.recommendations.map((rec, i) => (
+                                            <li key={i} className="text-sm">{rec}</li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <AiAnalysisPanel 
+                                    serviceType={selectedServiceTypes[0] || ""}
+                                    materials={selectedItems.map(item => ({
+                                      name: item.name,
+                                      quantity: item.quantity,
+                                      unit: item.unit,
+                                      unitPrice: item.unitPrice
+                                    }))}
+                                    onCreateEstimate={(result) => setAiAnalysisResult(result)}
+                                  />
+                                )}
+                              </CardContent>
+                            </Card>
+                          )}
+                        </div>
+                      </CardContent>
+                      <CardFooter className="flex justify-between">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => setActiveTab("measurement")}
+                        >
+                          Previous
+                        </Button>
+                        <Button 
+                          type="button" 
+                          disabled={isSubmitting || selectedItems.length === 0}
+                          className="min-w-[160px] bg-green-600 hover:bg-green-700 text-white"
+                          onClick={() => {
+                            // Llamar manualmente a onSubmit para crear el estimado
+                            form.handleSubmit(onSubmit)();
+                          }}
+                        >
+                          {isSubmitting ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Creating...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="h-4 w-4 mr-2" />
+                              Create Estimate
+                            </>
+                          )}
+                        </Button>
+                        <div className="mt-2 text-xs text-muted-foreground italic">
+                          Note: Estimate will only be created when you click this button
+                        </div>
+                      </CardFooter>
+                    </Card>
+                  </TabsContent>
+                </Tabs>
+              </form>
+            </Form>
+          </main>
         </div>
       </div>
     </div>

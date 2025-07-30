@@ -186,8 +186,15 @@ const BillingPage = () => {
         {/* Header with Home Button */}
         <div className="flex items-center justify-between">
           <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-foreground tracking-tight">Billing & Subscription</h1>
-            <p className="text-muted-foreground">Manage your subscription and billing information</p>
+            <div className="flex justify-center mb-6">
+              <img 
+                src="/remodra-logo.png" 
+                alt="Remodra Logo" 
+                className="h-16 w-16 object-contain"
+              />
+            </div>
+            <h1 className="text-2xl font-semibold text-foreground tracking-tight text-center">Billing & Subscription</h1>
+            <p className="text-muted-foreground text-center">Manage your subscription and billing information</p>
           </div>
           <Button 
             variant="outline" 

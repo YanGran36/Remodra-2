@@ -43,7 +43,7 @@ import {
   Plus,
   Users
 } from "lucide-react";
-import { format } from "date-fns";
+// Removed date-fns dependency
 import { apiRequest } from '../../lib/queryClient';
 import { useToast } from '../../hooks/use-toast';
 import { 
@@ -265,7 +265,10 @@ function SortableProjectCard({
                 <div className="flex items-center gap-1.5">
                   <CalendarIcon className="h-3.5 w-3.5 text-blue-600" />
                   <span className="text-xs text-blue-700 font-medium">
-                    {format(new Date(project.startDate), 'MMM dd')}
+                    {new Date(project.startDate).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric'
+                    })}
                   </span>
                 </div>
               )}

@@ -94,9 +94,9 @@ export default function ProjectForm({
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Título del proyecto</FormLabel>
+              <FormLabel className="text-slate-300 font-medium">Título del proyecto</FormLabel>
               <FormControl>
-                <Input placeholder="Título" {...field} />
+                <Input placeholder="Título" {...field} className="remodra-input" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -108,11 +108,11 @@ export default function ProjectForm({
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Descripción</FormLabel>
+              <FormLabel className="text-slate-300 font-medium">Descripción</FormLabel>
               <FormControl>
                 <Textarea 
                   placeholder="Descripción del proyecto" 
-                  className="resize-none" 
+                  className="remodra-input resize-none" 
                   rows={3}
                   {...field} 
                 />

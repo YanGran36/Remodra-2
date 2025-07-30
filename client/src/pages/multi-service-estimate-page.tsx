@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from '../lib/queryClient';
 import { useAuth } from '../hooks/use-auth';
 import { useToast } from '../hooks/use-toast';
+import { useEstimates } from '../hooks/use-estimates';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
@@ -84,27 +85,7 @@ export default function MultiServiceEstimatePage() {
     queryKey: ["/api/pricing/materials"],
   });
 
-  const createEstimateMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const response = await apiRequest("POST", "/api/protected/estimates", data);
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Success!",
-        description: "Estimate created successfully",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/protected/estimates"] });
-      setLocation("/estimates");
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+  const { createEstimateMutation } = useEstimates();
 
   const onSubmit = (values: FormValues) => {
     // Calculate totals from all selected services
@@ -269,8 +250,15 @@ export default function MultiServiceEstimatePage() {
           Back to Estimates
         </Button>
         <div>
-          <h1 className="text-2xl font-semibold text-foreground tracking-tight">Create Multi-Service Estimate</h1>
-          <p className="text-muted-foreground">Office estimate with multiple services</p>
+          <div className="flex justify-center mb-6">
+            <img 
+              src="/remodra-logo.png" 
+              alt="Remodra Logo" 
+              className="h-16 w-16 object-contain"
+            />
+          </div>
+          <h1 className="text-2xl font-semibold text-foreground tracking-tight text-center">Create Multi-Service Estimate</h1>
+          <p className="text-muted-foreground text-center">Office estimate with multiple services</p>
         </div>
       </div>
 

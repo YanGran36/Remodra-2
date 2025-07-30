@@ -44,28 +44,32 @@
   }
 
   .remodra-sidebar {
-    @apply fixed left-0 top-0 h-full w-64 bg-gradient-to-b from-slate-900 to-slate-800 border-r border-slate-600 z-40 hidden lg:block;
+    @apply fixed left-0 top-0 h-full w-64 bg-gradient-to-b from-slate-900 to-slate-800 border-r border-slate-600 z-40 block;
   }
 
   .remodra-main {
-    @apply flex-1 ml-0 lg:ml-64 min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col;
+    @apply flex-1 ml-64 min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col overflow-hidden;
   }
 
   .remodra-main-mobile {
-    @apply flex-1 min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col;
+    @apply flex-1 min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col overflow-hidden;
   }
 
   .remodra-topnav {
     @apply sticky top-0 z-30 bg-gradient-to-r from-slate-900 to-slate-800 border-b border-slate-600 backdrop-blur-sm;
   }
 
+  .remodra-content {
+    @apply flex-1 overflow-y-auto overflow-x-hidden;
+  }
+
   /* Mobile Sidebar Overlay */
   .remodra-mobile-overlay {
-    @apply fixed inset-0 z-50 bg-black/60 backdrop-blur-sm lg:hidden;
+    @apply fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden;
   }
 
   .remodra-mobile-sidebar {
-    @apply fixed left-0 top-0 h-full w-72 bg-gradient-to-b from-slate-900 to-slate-800 border-r border-slate-600 z-50 transform transition-transform duration-300 ease-in-out lg:hidden;
+    @apply fixed left-0 top-0 h-full w-72 bg-gradient-to-b from-slate-900 to-slate-800 border-r border-slate-600 z-50 transform transition-transform duration-300 ease-in-out hidden;
   }
 
   /* Remodra Branding */
@@ -75,6 +79,11 @@
 
   .remodra-logo-text {
     @apply text-2xl font-bold text-slate-900;
+  }
+
+  /* Remodra Logo Component */
+  .remodra-logo-component {
+    @apply object-contain;
   }
 
   .remodra-title {
@@ -131,6 +140,32 @@
 
   .remodra-nav-item.active {
     @apply bg-gradient-to-r from-amber-400 to-yellow-600 text-slate-900 font-semibold;
+  }
+
+  /* Custom Scrollbar for Sidebar */
+  .remodra-sidebar nav::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .remodra-sidebar nav::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .remodra-sidebar nav::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.3);
+    border-radius: 3px;
+  }
+
+  .remodra-sidebar nav::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.5);
+  }
+
+  /* Ensure sidebar navigation is always scrollable */
+  .remodra-sidebar nav {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
   }
 
   /* Remodra Forms */
@@ -291,3 +326,61 @@
 .text-popover-foreground {
   @apply text-slate-200 !important;
 }
+
+/* Kanban Board Specific Styles */
+.remodra-kanban-column {
+  @apply bg-gradient-to-b from-slate-800/50 to-slate-900/50 border border-slate-700/50 rounded-lg;
+}
+
+.remodra-kanban-column:hover {
+  @apply border-amber-500/30 shadow-lg;
+}
+
+.remodra-project-card {
+  @apply bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-slate-700/50 rounded-lg p-3;
+}
+
+.remodra-project-card:hover {
+  @apply border-amber-500/50 shadow-md;
+}
+
+.remodra-project-card.dragging {
+  @apply opacity-75 scale-105 shadow-2xl border-2 border-amber-500 rotate-1 z-50;
+}
+
+.remodra-project-card.updating {
+  @apply opacity-60 cursor-not-allowed;
+}
+
+.remodra-drop-zone {
+  @apply bg-gradient-to-b from-amber-500/20 to-amber-600/20 border-2 border-dashed border-amber-500/50 rounded-lg p-4;
+}
+
+.remodra-drop-zone.active {
+  @apply bg-gradient-to-b from-amber-500/30 to-amber-600/30 scale-105 shadow-xl ring-4 ring-amber-500/20;
+}
+
+/* Enhanced Badge Styles */
+.remodra-badge-outline {
+  @apply bg-transparent border border-slate-600 text-slate-300;
+}
+
+.remodra-badge-outline:hover {
+  @apply border-amber-500/50 text-amber-400;
+}
+
+/* Compact Button Styles */
+.remodra-button-compact {
+  @apply h-7 text-xs px-2 py-1;
+}
+
+/* Project Status Colors */
+.project-status-pending { @apply bg-yellow-500/20 text-yellow-400 border-yellow-500/30; }
+.project-status-in-progress { @apply bg-blue-500/20 text-blue-400 border-blue-500/30; }
+.project-status-completed { @apply bg-green-500/20 text-green-400 border-green-500/30; }
+.project-status-project-initiated { @apply bg-purple-500/20 text-purple-400 border-purple-500/30; }
+.project-status-site-assessment { @apply bg-indigo-500/20 text-indigo-400 border-indigo-500/30; }
+.project-status-permits-approvals { @apply bg-orange-500/20 text-orange-400 border-orange-500/30; }
+.project-status-materials-ordered { @apply bg-teal-500/20 text-teal-400 border-teal-500/30; }
+.project-status-installation-begins { @apply bg-blue-500/20 text-blue-400 border-blue-500/30; }
+.project-status-quality-inspection { @apply bg-amber-500/20 text-amber-400 border-amber-500/30; }

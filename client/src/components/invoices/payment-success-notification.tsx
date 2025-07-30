@@ -27,6 +27,8 @@ interface PaymentSuccessNotificationProps {
     updated: boolean;
     newStatus?: string;
     message: string;
+    serviceType?: string;
+    projectId?: number;
   };
   onViewProject?: () => void;
   onViewInvoice?: () => void;
@@ -107,11 +109,26 @@ export default function PaymentSuccessNotification({
                 <h3 className="font-semibold text-purple-900">Project Created!</h3>
               </div>
               <p className="text-sm text-purple-700 mb-3">{projectUpdate.message}</p>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-300">
-                  {projectUpdate.newStatus}
-                </Badge>
-                <span className="text-xs text-purple-600">Status</span>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-300">
+                    {projectUpdate.newStatus}
+                  </Badge>
+                  <span className="text-xs text-purple-600">Status</span>
+                </div>
+                {projectUpdate.serviceType && (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
+                      {projectUpdate.serviceType.charAt(0).toUpperCase() + projectUpdate.serviceType.slice(1)}
+                    </Badge>
+                    <span className="text-xs text-blue-600">Service Type</span>
+                  </div>
+                )}
+                {projectUpdate.projectId && (
+                  <div className="text-xs text-purple-600">
+                    Project ID: {projectUpdate.projectId}
+                  </div>
+                )}
               </div>
             </div>
           )}

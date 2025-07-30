@@ -212,9 +212,9 @@ export default function LeadCaptureForm({ onSuccess, onCancel }: LeadCaptureForm
                     name="firstName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>First Name *</FormLabel>
+                        <FormLabel className="text-slate-300 font-medium">First Name *</FormLabel>
                         <FormControl>
-                          <Input placeholder="John" {...field} />
+                          <Input placeholder="John" {...field} className="remodra-input" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -225,9 +225,9 @@ export default function LeadCaptureForm({ onSuccess, onCancel }: LeadCaptureForm
                     name="lastName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Last Name *</FormLabel>
+                        <FormLabel className="text-slate-300 font-medium">Last Name *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Smith" {...field} />
+                          <Input placeholder="Smith" {...field} className="remodra-input" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -240,12 +240,12 @@ export default function LeadCaptureForm({ onSuccess, onCancel }: LeadCaptureForm
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2">
+                      <FormLabel className="flex items-center gap-2 text-slate-300 font-medium">
                         <Phone className="h-4 w-4" />
                         Phone Number *
                       </FormLabel>
                       <FormControl>
-                        <Input placeholder="(555) 123-4567" {...field} />
+                        <Input placeholder="(555) 123-4567" {...field} className="remodra-input" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -257,12 +257,12 @@ export default function LeadCaptureForm({ onSuccess, onCancel }: LeadCaptureForm
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2">
+                      <FormLabel className="flex items-center gap-2 text-slate-300 font-medium">
                         <Mail className="h-4 w-4" />
                         Email (Optional)
                       </FormLabel>
                       <FormControl>
-                        <Input placeholder="john@example.com" {...field} />
+                        <Input placeholder="john@example.com" {...field} className="remodra-input" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -274,7 +274,7 @@ export default function LeadCaptureForm({ onSuccess, onCancel }: LeadCaptureForm
                   name="address"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2">
+                      <FormLabel className="flex items-center gap-2 text-slate-300 font-medium">
                         <MapPin className="h-4 w-4" />
                         Street Address *
                       </FormLabel>
@@ -282,6 +282,7 @@ export default function LeadCaptureForm({ onSuccess, onCancel }: LeadCaptureForm
                         <Input 
                           placeholder="123 Main St" 
                           {...field} 
+                          className="remodra-input"
                         />
                       </FormControl>
                       <FormMessage />

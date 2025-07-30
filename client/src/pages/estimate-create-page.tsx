@@ -93,11 +93,19 @@ export default function EstimateCreatePage() {
         <TopNav />
         <div className="remodra-content">
           <div className="container py-8">
+            <div className="flex justify-center mb-6">
+              <img 
+                src="/remodra-logo.png" 
+                alt="Remodra Logo" 
+                className="h-16 w-16 object-contain"
+              />
+            </div>
+            
             {project && (
               <div className="mb-6">
-                <h1 className="text-2xl font-semibold text-foreground tracking-tight mb-2">New estimate for project: {project.title}</h1>
+                <h1 className="text-2xl font-semibold text-foreground tracking-tight mb-2 text-center">New estimate for project: {project.title}</h1>
                 {client && (
-                  <p className="text-muted-foreground">
+                  <p className="text-muted-foreground text-center">
                     Cliente: {client.firstName} {client.lastName}
                   </p>
                 )}
@@ -106,8 +114,8 @@ export default function EstimateCreatePage() {
 
             {!project && client && (
               <div className="mb-6">
-                <h1 className="text-2xl font-semibold text-foreground tracking-tight mb-2">New estimate</h1>
-                <p className="text-muted-foreground">
+                <h1 className="text-2xl font-semibold text-foreground tracking-tight mb-2 text-center">New estimate</h1>
+                <p className="text-muted-foreground text-center">
                   Cliente: {client.firstName} {client.lastName}
                 </p>
               </div>
@@ -115,8 +123,8 @@ export default function EstimateCreatePage() {
 
             {!project && !client && (
               <div className="mb-6">
-                <h1 className="text-2xl font-semibold text-foreground tracking-tight">New estimate</h1>
-                <p className="text-muted-foreground mt-1">Create a new estimate. Select a client and project first.</p>
+                <h1 className="text-2xl font-semibold text-foreground tracking-tight text-center">New estimate</h1>
+                <p className="text-muted-foreground mt-1 text-center">Create a new estimate. Select a client and project first.</p>
               </div>
             )}
 

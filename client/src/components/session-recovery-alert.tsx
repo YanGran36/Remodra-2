@@ -20,10 +20,10 @@ export function SessionRecoveryAlert() {
     if (!isLoading && !user && localStorage.getItem('lastUserEmail') && reconnectAttempts < 3) {
       setShowAlert(true);
       
-      // Intentar reconectar automáticamente en la primera pérdida de sesión
-      if (reconnectAttempts === 0) {
-        handleReconnect();
-      }
+      // Disabled automatic reconnection to prevent login page changes
+      // if (reconnectAttempts === 0) {
+      //   handleReconnect();
+      // }
     } else if (user) {
       // Reset cuando el usuario está autenticado
       setShowAlert(false);

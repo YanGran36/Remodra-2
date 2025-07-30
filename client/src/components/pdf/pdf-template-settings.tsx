@@ -75,10 +75,10 @@ const defaultConfig: PdfTemplateConfig = {
   showItemNotes: true,
   showProjectDetails: true,
   showClientDetails: true,
-  colorPrimary: "#0f766e",
-  colorSecondary: "#2563eb",
+  colorPrimary: "#1e293b", // Dark slate for better readability
+  colorSecondary: "#475569", // Medium slate
   fontMain: "Inter",
-  headerStyle: 'gradient',
+  headerStyle: 'simple', // Changed from gradient to simple for better readability
   tableStyle: 'bordered',
   showTerms: true,
   showNotes: true,
@@ -98,10 +98,10 @@ const defaultConfig: PdfTemplateConfig = {
 const templates = {
   professional: {
     ...defaultConfig,
-    headerStyle: 'gradient',
+    headerStyle: 'simple',
     tableStyle: 'bordered',
-    colorPrimary: "#0f766e",
-    colorSecondary: "#2563eb",
+    colorPrimary: "#1e293b", // Dark slate
+    colorSecondary: "#475569", // Medium slate
     showColumns: {
       ...defaultConfig.showColumns,
       service: true
@@ -113,8 +113,8 @@ const templates = {
     showFooter: false,
     tableStyle: 'minimal',
     showItemNotes: false,
-    colorPrimary: "#1e293b",
-    colorSecondary: "#64748b",
+    colorPrimary: "#0f172a", // Very dark slate
+    colorSecondary: "#334155", // Dark slate
     showColumns: {
       ...defaultConfig.showColumns,
       service: true
@@ -124,8 +124,8 @@ const templates = {
     ...defaultConfig,
     headerStyle: 'boxed',
     tableStyle: 'striped',
-    colorPrimary: "#6d28d9",
-    colorSecondary: "#4f46e5",
+    colorPrimary: "#374151", // Dark gray
+    colorSecondary: "#6b7280", // Medium gray
     showColumns: {
       ...defaultConfig.showColumns,
       service: true

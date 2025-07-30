@@ -348,10 +348,10 @@ export default function PublicEstimateView() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-gray-50">
+      <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="text-lg">Cargando estimado...</p>
+          <Loader2 className="h-12 w-12 animate-spin text-amber-400" />
+          <p className="text-lg text-slate-200">Loading estimate...</p>
         </div>
       </div>
     );
@@ -359,20 +359,20 @@ export default function PublicEstimateView() {
 
   if (error) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-gray-50">
-        <Card className="w-full max-w-3xl shadow-lg">
-          <CardHeader className="bg-red-50">
-            <CardTitle className="text-red-600 flex items-center gap-2">
+      <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <Card className="w-full max-w-3xl shadow-lg remodra-card">
+          <CardHeader className="bg-red-900/20 border-red-500/20">
+            <CardTitle className="text-red-400 flex items-center gap-2">
               <AlertCircle className="h-6 w-6" />
               Error
             </CardTitle>
-            <CardDescription>No pudimos cargar el estimado</CardDescription>
+            <CardDescription className="text-slate-300">Could not load the estimate</CardDescription>
           </CardHeader>
           <CardContent className="p-6">
-            <p className="text-lg text-center mb-6">{error}</p>
+            <p className="text-lg text-center mb-6 text-slate-200">{error}</p>
             <div className="flex justify-center">
-              <Button onClick={() => window.location.reload()}>
-                Intentar nuevamente
+              <Button onClick={() => window.location.reload()} className="remodra-button">
+                Try Again
               </Button>
             </div>
           </CardContent>
@@ -383,14 +383,14 @@ export default function PublicEstimateView() {
 
   if (!estimate) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-gray-50">
-        <Card className="w-full max-w-3xl shadow-lg">
+      <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <Card className="w-full max-w-3xl shadow-lg remodra-card">
           <CardHeader>
-            <CardTitle>Estimado no encontrado</CardTitle>
-            <CardDescription>No pudimos encontrar el estimado solicitado</CardDescription>
+            <CardTitle className="text-amber-400">Estimate Not Found</CardTitle>
+            <CardDescription className="text-slate-300">Could not find the requested estimate</CardDescription>
           </CardHeader>
           <CardContent>
-            <p>The estimate you are looking for does not exist or has been deleted.</p>
+            <p className="text-slate-200">The estimate you are looking for does not exist or has been deleted.</p>
           </CardContent>
         </Card>
       </div>
@@ -400,31 +400,31 @@ export default function PublicEstimateView() {
   // Si ya se ha tomado acción y se ha completado la acción actual
   if (actionComplete) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-gray-50">
-        <Card className="w-full max-w-4xl shadow-lg">
+      <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <Card className="w-full max-w-4xl shadow-lg remodra-card">
           <CardHeader className={
             estimate.status === "accepted" || actionResult?.success
-              ? "bg-green-50"
+              ? "bg-green-900/20 border-green-500/20"
               : estimate.status === "rejected"
-              ? "bg-red-50"
-              : "bg-blue-50"
+              ? "bg-red-900/20 border-red-500/20"
+              : "bg-blue-900/20 border-blue-500/20"
           }>
             <CardTitle className={
               estimate.status === "accepted" || actionResult?.success
-                ? "text-green-600 flex items-center gap-2"
+                ? "text-green-400 flex items-center gap-2"
                 : estimate.status === "rejected"
-                ? "text-red-600 flex items-center gap-2"
-                : "text-blue-600 flex items-center gap-2"
+                ? "text-red-400 flex items-center gap-2"
+                : "text-blue-400 flex items-center gap-2"
             }>
               {estimate.status === "accepted" && <CheckCircle className="h-6 w-6" />}
               {estimate.status === "rejected" && <XCircle className="h-6 w-6" />}
               {estimate.status !== "accepted" && estimate.status !== "rejected" && <AlertCircle className="h-6 w-6" />}
               
-              {estimate.status === "accepted" && "Estimado Aceptado"}
-              {estimate.status === "rejected" && "Estimado Rechazado"}
-              {estimate.status !== "accepted" && estimate.status !== "rejected" && "Estado Actual"}
+              {estimate.status === "accepted" && "Estimate Accepted"}
+              {estimate.status === "rejected" && "Estimate Rejected"}
+              {estimate.status !== "accepted" && estimate.status !== "rejected" && "Current Status"}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-slate-300">
               {estimate.status === "accepted" && "This estimate has been accepted."}
               {estimate.status === "rejected" && "This estimate has been rejected."}
               {estimate.status === "draft" && "This estimate is in draft."}
@@ -435,12 +435,12 @@ export default function PublicEstimateView() {
           <CardContent className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <h3 className="text-lg font-semibold mb-2">Estimate Details</h3>
-                <p><span className="font-medium">Number:</span> {estimate.estimateNumber}</p>
-                <p><span className="font-medium">Date:</span> {estimate.issueDate ? format(new Date(estimate.issueDate), 'dd/MM/yyyy') : 'Not available'}</p>
-                <p><span className="font-medium">Expiration:</span> {estimate.expiryDate ? format(new Date(estimate.expiryDate), 'dd/MM/yyyy') : 'Not available'}</p>
+                <h3 className="text-lg font-semibold mb-2 text-amber-400">Estimate Details</h3>
+                <p className="text-slate-200"><span className="font-medium text-slate-300">Number:</span> {estimate.estimateNumber}</p>
+                <p className="text-slate-200"><span className="font-medium text-slate-300">Date:</span> {estimate.issueDate ? format(new Date(estimate.issueDate), 'dd/MM/yyyy') : 'Not available'}</p>
+                <p className="text-slate-200"><span className="font-medium text-slate-300">Expiration:</span> {estimate.expiryDate ? format(new Date(estimate.expiryDate), 'dd/MM/yyyy') : 'Not available'}</p>
                 <p className="flex items-center gap-1">
-                  <span className="font-medium">Status:</span> 
+                  <span className="font-medium text-slate-300">Status:</span> 
                   <Badge className={`${statusColors[estimate.status]} text-white flex gap-1 items-center`}>
                     {statusIcons[estimate.status]} 
                     {estimate.status === 'draft' && 'Draft'}
@@ -454,46 +454,46 @@ export default function PublicEstimateView() {
               <div>
                 {contractor && (
                   <>
-                    <h3 className="text-lg font-semibold mb-2">Contractor</h3>
-                    <p>{contractor.companyName || `${contractor.firstName} ${contractor.lastName}`}</p>
-                    <p>{contractor.email}</p>
-                    <p>{contractor.phone}</p>
+                    <h3 className="text-lg font-semibold mb-2 text-amber-400">Contractor</h3>
+                    <p className="text-slate-200">{contractor.companyName || `${contractor.firstName} ${contractor.lastName}`}</p>
+                    <p className="text-slate-200">{contractor.email}</p>
+                    <p className="text-slate-200">{contractor.phone}</p>
                   </>
                 )}
                 <div className="mt-4">
                   {client && (
                     <>
-                      <h3 className="text-lg font-semibold mb-2">Client</h3>
-                      <p>{client.firstName} {client.lastName}</p>
-                      <p>{client.email}</p>
-                      <p>{client.phone}</p>
-                      <p>{client.address}</p>
+                      <h3 className="text-lg font-semibold mb-2 text-amber-400">Client</h3>
+                      <p className="text-slate-200">{client.firstName} {client.lastName}</p>
+                      <p className="text-slate-200">{client.email}</p>
+                      <p className="text-slate-200">{client.phone}</p>
+                      <p className="text-slate-200">{client.address}</p>
                     </>
                   )}
                 </div>
               </div>
             </div>
 
-            <Separator />
+            <Separator className="bg-slate-600" />
 
             <div>
-              <h3 className="text-lg font-semibold mb-4">Item Details</h3>
+              <h3 className="text-lg font-semibold mb-4 text-amber-400">Item Details</h3>
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Description</TableHead>
-                    <TableHead className="text-right">Quantity</TableHead>
-                    <TableHead className="text-right">Unit Price</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
+                  <TableRow className="border-slate-600">
+                    <TableHead className="text-slate-200">Description</TableHead>
+                    <TableHead className="text-right text-slate-200">Quantity</TableHead>
+                    <TableHead className="text-right text-slate-200">Unit Price</TableHead>
+                    <TableHead className="text-right text-slate-200">Amount</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {estimate.items?.map((item: any) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">{item.description}</TableCell>
-                      <TableCell className="text-right">{item.quantity}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(item.unitPrice)}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(item.amount)}</TableCell>
+                    <TableRow key={item.id} className="border-slate-600">
+                      <TableCell className="font-medium text-slate-200">{item.description}</TableCell>
+                      <TableCell className="text-right text-slate-200">{item.quantity}</TableCell>
+                      <TableCell className="text-right text-slate-200">{formatCurrency(item.unitPrice)}</TableCell>
+                      <TableCell className="text-right text-slate-200">{formatCurrency(item.amount)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -503,33 +503,33 @@ export default function PublicEstimateView() {
             <div className="flex justify-end">
               <div className="w-full max-w-xs">
                 <div className="flex justify-between py-1">
-                  <span>Subtotal:</span>
-                  <span>{formatCurrency(estimate.subtotal)}</span>
+                  <span className="text-slate-200">Subtotal:</span>
+                  <span className="text-slate-200">{formatCurrency(estimate.subtotal)}</span>
                 </div>
                 {Number(estimate.tax) > 0 && (
                   <div className="flex justify-between py-1">
-                    <span>Tax ({estimate.tax}%):</span>
-                    <span>{formatCurrency((Number(estimate.subtotal) * Number(estimate.tax) / 100))}</span>
+                    <span className="text-slate-200">Tax ({estimate.tax}%):</span>
+                    <span className="text-slate-200">{formatCurrency((Number(estimate.subtotal) * Number(estimate.tax) / 100))}</span>
                   </div>
                 )}
                 {Number(estimate.discount) > 0 && (
                   <div className="flex justify-between py-1">
-                    <span>Discount ({estimate.discount}%):</span>
-                    <span>-{formatCurrency((Number(estimate.subtotal) * Number(estimate.discount) / 100))}</span>
+                    <span className="text-slate-200">Discount ({estimate.discount}%):</span>
+                    <span className="text-slate-200">-{formatCurrency((Number(estimate.subtotal) * Number(estimate.discount) / 100))}</span>
                   </div>
                 )}
-                <Separator className="my-2" />
+                <Separator className="my-2 bg-slate-600" />
                 <div className="flex justify-between py-1 font-bold">
-                  <span>Total:</span>
-                  <span>{formatCurrency(estimate.total)}</span>
+                  <span className="text-amber-400">Total:</span>
+                  <span className="text-amber-400">{formatCurrency(estimate.total)}</span>
                 </div>
               </div>
             </div>
 
             {estimate.terms && (
               <div>
-                <h3 className="text-lg font-semibold mb-2">Términos</h3>
-                <div className="bg-gray-50 p-4 rounded-md whitespace-pre-wrap">
+                <h3 className="text-lg font-semibold mb-2 text-amber-400">Terms</h3>
+                <div className="bg-slate-800/50 p-4 rounded-md whitespace-pre-wrap text-slate-200 border border-slate-600">
                   {estimate.terms}
                 </div>
               </div>
@@ -537,8 +537,8 @@ export default function PublicEstimateView() {
 
             {estimate.notes && (
               <div>
-                <h3 className="text-lg font-semibold mb-2">Notes</h3>
-                <div className="bg-gray-50 p-4 rounded-md whitespace-pre-wrap">
+                <h3 className="text-lg font-semibold mb-2 text-amber-400">Notes</h3>
+                <div className="bg-slate-800/50 p-4 rounded-md whitespace-pre-wrap text-slate-200 border border-slate-600">
                   {estimate.notes}
                 </div>
               </div>
@@ -546,15 +546,15 @@ export default function PublicEstimateView() {
 
             {estimate.clientSignature && (
               <div>
-                <h3 className="text-lg font-semibold mb-2">Signed by client</h3>
-                <div className="bg-gray-50 p-4 rounded-md">
+                <h3 className="text-lg font-semibold mb-2 text-amber-400">Signed by client</h3>
+                <div className="bg-slate-800/50 p-4 rounded-md text-slate-200 border border-slate-600">
                   {estimate.clientSignature}
                 </div>
               </div>
             )}
           </CardContent>
-          <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-50 p-6">
-            <p className="text-sm text-gray-600">
+          <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-800/50 p-6 border-t border-slate-600">
+            <p className="text-sm text-slate-300">
               {estimate.status === "accepted" && "This estimate has been accepted."}
               {estimate.status === "rejected" && "This estimate has been rejected."}
             </p>
@@ -566,21 +566,21 @@ export default function PublicEstimateView() {
 
   // Si todavía no se ha tomado acción (estimate.status === 'sent')
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-blue-50 via-white to-blue-50">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <div className="w-full max-w-4xl relative">
         {/* Efecto de sombra decorativa */}
-        <div className="absolute -top-4 -left-4 w-full h-full bg-blue-200 rounded-lg opacity-30 hidden sm:block" style={{transform: 'rotate(1deg)'}}></div>
-        <div className="absolute -bottom-4 -right-4 w-full h-full bg-blue-300 rounded-lg opacity-30 hidden sm:block" style={{transform: 'rotate(-1deg)'}}></div>
+        <div className="absolute -top-4 -left-4 w-full h-full bg-slate-700 rounded-lg opacity-30 hidden sm:block" style={{transform: 'rotate(1deg)'}}></div>
+        <div className="absolute -bottom-4 -right-4 w-full h-full bg-slate-600 rounded-lg opacity-30 hidden sm:block" style={{transform: 'rotate(-1deg)'}}></div>
         
-        <Card className="w-full shadow-xl relative z-10 border border-blue-200 overflow-hidden">
-          <CardHeader className="bg-blue-50">
+        <Card className="w-full shadow-xl relative z-10 border border-slate-600 overflow-hidden remodra-card">
+          <CardHeader className="bg-slate-800/50 border-b border-slate-600">
             <div className="flex justify-between items-center">
               <div>
-                <CardTitle className="text-blue-600 flex items-center gap-2 text-2xl">
+                <CardTitle className="text-amber-400 flex items-center gap-2 text-2xl">
                   <Send className="h-6 w-6" />
                   Estimate for Your Approval
                 </CardTitle>
-                <CardDescription className="text-lg mt-2">
+                <CardDescription className="text-lg mt-2 text-slate-300">
                   <span className="font-medium">{contractor?.companyName || `${contractor?.firstName} ${contractor?.lastName}`}</span> has sent you an estimate for review.
                 </CardDescription>
               </div>
@@ -599,12 +599,12 @@ export default function PublicEstimateView() {
           <CardContent className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <h3 className="text-lg font-semibold mb-2">Estimate Details</h3>
-                <p><span className="font-medium">Number:</span> {estimate.estimateNumber}</p>
-                <p><span className="font-medium">Date:</span> {estimate.issueDate ? format(new Date(estimate.issueDate), 'dd/MM/yyyy') : 'Not available'}</p>
-                <p><span className="font-medium">Expiration:</span> {estimate.expiryDate ? format(new Date(estimate.expiryDate), 'dd/MM/yyyy') : 'Not available'}</p>
+                <h3 className="text-lg font-semibold mb-2 text-amber-400">Estimate Details</h3>
+                <p className="text-slate-200"><span className="font-medium text-slate-300">Number:</span> {estimate.estimateNumber}</p>
+                <p className="text-slate-200"><span className="font-medium text-slate-300">Date:</span> {estimate.issueDate ? format(new Date(estimate.issueDate), 'dd/MM/yyyy') : 'Not available'}</p>
+                <p className="text-slate-200"><span className="font-medium text-slate-300">Expiration:</span> {estimate.expiryDate ? format(new Date(estimate.expiryDate), 'dd/MM/yyyy') : 'Not available'}</p>
                 <p className="flex items-center gap-1">
-                  <span className="font-medium">Status:</span> 
+                  <span className="font-medium text-slate-300">Status:</span> 
                   <Badge className={`${statusColors[estimate.status]} text-white flex gap-1 items-center`}>
                     {statusIcons[estimate.status]} 
                     {estimate.status === 'draft' && 'Draft'}
@@ -618,46 +618,46 @@ export default function PublicEstimateView() {
               <div>
                 {contractor && (
                   <>
-                    <h3 className="text-lg font-semibold mb-2">Contractor</h3>
-                    <p>{contractor.companyName || `${contractor.firstName} ${contractor.lastName}`}</p>
-                    <p>{contractor.email}</p>
-                    <p>{contractor.phone}</p>
+                    <h3 className="text-lg font-semibold mb-2 text-amber-400">Contractor</h3>
+                    <p className="text-slate-200">{contractor.companyName || `${contractor.firstName} ${contractor.lastName}`}</p>
+                    <p className="text-slate-200">{contractor.email}</p>
+                    <p className="text-slate-200">{contractor.phone}</p>
                   </>
                 )}
                 <div className="mt-4">
                   {client && (
                     <>
-                      <h3 className="text-lg font-semibold mb-2">Client</h3>
-                      <p>{client.firstName} {client.lastName}</p>
-                      <p>{client.email}</p>
-                      <p>{client.phone}</p>
-                      <p>{client.address}</p>
+                      <h3 className="text-lg font-semibold mb-2 text-amber-400">Client</h3>
+                      <p className="text-slate-200">{client.firstName} {client.lastName}</p>
+                      <p className="text-slate-200">{client.email}</p>
+                      <p className="text-slate-200">{client.phone}</p>
+                      <p className="text-slate-200">{client.address}</p>
                     </>
                   )}
                 </div>
               </div>
             </div>
 
-            <Separator />
+            <Separator className="bg-slate-600" />
 
             <div>
-              <h3 className="text-lg font-semibold mb-4">Item Details</h3>
+              <h3 className="text-lg font-semibold mb-4 text-amber-400">Item Details</h3>
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Description</TableHead>
-                    <TableHead className="text-right">Quantity</TableHead>
-                    <TableHead className="text-right">Unit Price</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
+                  <TableRow className="border-slate-600">
+                    <TableHead className="text-slate-200">Description</TableHead>
+                    <TableHead className="text-right text-slate-200">Quantity</TableHead>
+                    <TableHead className="text-right text-slate-200">Unit Price</TableHead>
+                    <TableHead className="text-right text-slate-200">Amount</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {estimate.items?.map((item: any) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">{item.description}</TableCell>
-                      <TableCell className="text-right">{item.quantity}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(item.unitPrice)}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(item.amount)}</TableCell>
+                    <TableRow key={item.id} className="border-slate-600">
+                      <TableCell className="font-medium text-slate-200">{item.description}</TableCell>
+                      <TableCell className="text-right text-slate-200">{item.quantity}</TableCell>
+                      <TableCell className="text-right text-slate-200">{formatCurrency(item.unitPrice)}</TableCell>
+                      <TableCell className="text-right text-slate-200">{formatCurrency(item.amount)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -667,33 +667,33 @@ export default function PublicEstimateView() {
             <div className="flex justify-end">
               <div className="w-full max-w-xs">
                 <div className="flex justify-between py-1">
-                  <span>Subtotal:</span>
-                  <span>{formatCurrency(estimate.subtotal)}</span>
+                  <span className="text-slate-200">Subtotal:</span>
+                  <span className="text-slate-200">{formatCurrency(estimate.subtotal)}</span>
                 </div>
                 {Number(estimate.tax) > 0 && (
                   <div className="flex justify-between py-1">
-                    <span>Impuesto ({estimate.tax}%):</span>
-                    <span>{formatCurrency((Number(estimate.subtotal) * Number(estimate.tax) / 100))}</span>
+                    <span className="text-slate-200">Tax ({estimate.tax}%):</span>
+                    <span className="text-slate-200">{formatCurrency((Number(estimate.subtotal) * Number(estimate.tax) / 100))}</span>
                   </div>
                 )}
                 {Number(estimate.discount) > 0 && (
                   <div className="flex justify-between py-1">
-                    <span>Descuento ({estimate.discount}%):</span>
-                    <span>-{formatCurrency((Number(estimate.subtotal) * Number(estimate.discount) / 100))}</span>
+                    <span className="text-slate-200">Discount ({estimate.discount}%):</span>
+                    <span className="text-slate-200">-{formatCurrency((Number(estimate.subtotal) * Number(estimate.discount) / 100))}</span>
                   </div>
                 )}
-                <Separator className="my-2" />
+                <Separator className="my-2 bg-slate-600" />
                 <div className="flex justify-between py-1 font-bold">
-                  <span>Total:</span>
-                  <span>{formatCurrency(estimate.total)}</span>
+                  <span className="text-amber-400">Total:</span>
+                  <span className="text-amber-400">{formatCurrency(estimate.total)}</span>
                 </div>
               </div>
             </div>
 
             {estimate.terms && (
               <div>
-                <h3 className="text-lg font-semibold mb-2">Terms</h3>
-                <div className="bg-gray-50 p-4 rounded-md whitespace-pre-wrap">
+                <h3 className="text-lg font-semibold mb-2 text-amber-400">Terms</h3>
+                <div className="bg-slate-800/50 p-4 rounded-md whitespace-pre-wrap text-slate-200 border border-slate-600">
                   {estimate.terms}
                 </div>
               </div>
@@ -737,12 +737,16 @@ export default function PublicEstimateView() {
             
             <div className="flex flex-col sm:flex-row justify-center gap-4 w-full max-w-2xl mx-auto">
               <Button
-                variant="outline"
                 onClick={() => setRejectDialogOpen(true)}
-                className="w-full sm:w-1/3 py-6 text-lg h-auto border-2 border-gray-300 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-all"
+                className="w-full sm:w-1/3 bg-red-600 hover:bg-red-700 text-white py-8 text-xl h-auto rounded-lg shadow-lg transition-all hover:shadow-xl relative overflow-hidden border-2 border-red-500"
               >
-                <XCircle className="h-5 w-5 mr-2 text-red-600" />
-                Reject
+                <div className="absolute inset-0 bg-white/10 flex items-center justify-center">
+                  <div className="animate-pulse bg-white/5 w-full h-full"></div>
+                </div>
+                <div className="relative z-10 flex items-center justify-center gap-2">
+                  <XCircle className="h-6 w-6" />
+                  <span>REJECT ESTIMATE</span>
+                </div>
               </Button>
               
               <Button

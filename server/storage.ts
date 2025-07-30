@@ -339,8 +339,7 @@ class DatabaseStorage implements IStorage {
         .select()
         .from(table)
         .where(eq(isLocalDev ? table.contractor_id : table.contractorId, contractorId))
-        .orderBy(isLocalDev ? table.created_at : table.createdAt)
-        .limit(10);
+        .orderBy(isLocalDev ? table.created_at : table.createdAt);
       // Map database fields to frontend expected format
       return clients.map((client: any) => ({
         id: client.id,
@@ -546,31 +545,61 @@ class DatabaseStorage implements IStorage {
         .where(eq(sql.raw(isLocalDev ? 'contractor_id' : 'contractorId'), contractorId))
         .orderBy(desc(sql.raw(isLocalDev ? 'created_at' : 'createdAt')));
       
-      // Map database fields to frontend expected format
-      return projects.map((project: any) => ({
-        id: project.id,
-        contractorId: isLocalDev ? project.contractor_id : project.contractorId,
-        clientId: isLocalDev ? project.client_id : project.clientId,
-        title: project.title,
-        description: project.description,
-        status: project.status,
-        serviceType: isLocalDev ? project.service_type : project.serviceType,
-        startDate: isLocalDev ? project.start_date : project.startDate,
-        endDate: isLocalDev ? project.end_date : project.endDate,
-        budget: project.budget,
-        notes: project.notes,
-        workerInstructions: isLocalDev ? project.worker_instructions : project.workerInstructions,
-        workerNotes: isLocalDev ? project.worker_notes : project.workerNotes,
-        materialsNeeded: isLocalDev ? project.materials_needed : project.materialsNeeded,
-        safetyRequirements: isLocalDev ? project.safety_requirements : project.safetyRequirements,
-        aiProjectSummary: isLocalDev ? project.ai_project_summary : project.aiProjectSummary,
-        aiAnalysis: isLocalDev ? project.ai_analysis : project.aiAnalysis,
-        aiGeneratedDescription: isLocalDev ? project.ai_generated_description : project.aiGeneratedDescription,
-        aiSharingSettings: isLocalDev ? project.ai_sharing_settings : project.aiSharingSettings,
-        lastAiUpdate: isLocalDev ? project.last_ai_update : project.lastAiUpdate,
-        position: project.position,
-        createdAt: isLocalDev ? project.created_at : project.createdAt
-      }));
+      // Get all clients for this contractor to join with projects
+      const clients = await db
+        .select()
+        .from(clientsTable)
+        .where(eq(sql.raw('contractor_id'), contractorId));
+      
+      // Create a map of client IDs to client objects for quick lookup
+      const clientMap = new Map();
+      clients.forEach((client: any) => {
+        clientMap.set(client.id, {
+          id: client.id,
+          firstName: isLocalDev ? client.first_name : client.firstName,
+          lastName: isLocalDev ? client.last_name : client.lastName,
+          email: client.email,
+          phone: client.phone,
+          address: client.address,
+          city: client.city,
+          state: client.state,
+          zip: client.zip
+        });
+      });
+      
+      // Map database fields to frontend expected format and include client information
+      return projects.map((project: any) => {
+        const clientId = isLocalDev ? project.client_id : project.clientId;
+        const client = clientId ? clientMap.get(clientId) : null;
+        
+        console.log(`Project ${project.id}: clientId=${clientId}, client=`, client);
+        
+        return {
+          id: project.id,
+          contractorId: isLocalDev ? project.contractor_id : project.contractorId,
+          clientId: clientId,
+          title: project.title,
+          description: project.description,
+          status: project.status,
+          serviceType: isLocalDev ? project.service_type : project.serviceType, // Map service_type field
+          startDate: isLocalDev ? project.start_date : project.startDate,
+          endDate: isLocalDev ? project.end_date : project.endDate,
+          budget: project.budget,
+          notes: project.notes,
+          workerInstructions: isLocalDev ? project.worker_instructions : project.workerInstructions,
+          workerNotes: isLocalDev ? project.worker_notes : project.workerNotes,
+          materialsNeeded: isLocalDev ? project.materials_needed : project.materialsNeeded,
+          safetyRequirements: isLocalDev ? project.safety_requirements : project.safetyRequirements,
+          aiProjectSummary: isLocalDev ? project.ai_project_summary : project.aiProjectSummary,
+          aiAnalysis: isLocalDev ? project.ai_analysis : project.aiAnalysis,
+          aiGeneratedDescription: isLocalDev ? project.ai_generated_description : project.aiGeneratedDescription,
+          aiSharingSettings: isLocalDev ? project.ai_sharing_settings : project.aiSharingSettings,
+          lastAiUpdate: isLocalDev ? project.last_ai_update : project.lastAiUpdate,
+          position: project.position,
+          createdAt: isLocalDev ? project.created_at : project.createdAt,
+          client: client // Include client information
+        };
+      });
     } catch (error) {
       console.error("Error fetching projects:", error);
       throw error;
@@ -595,7 +624,6 @@ class DatabaseStorage implements IStorage {
         title: project.title,
         description: project.description,
         status: project.status,
-        serviceType: isLocalDev ? project.service_type : project.serviceType,
         startDate: isLocalDev ? project.start_date : project.startDate,
         endDate: isLocalDev ? project.end_date : project.endDate,
         budget: project.budget,
@@ -830,12 +858,12 @@ class DatabaseStorage implements IStorage {
           .where(eq(isLocalDev ? estimateItemsModel.estimate_id : estimateItemsModel.estimateId, id));
         for (const item of items) {
           const itemData = {
-            estimateId: id,
+            estimate_id: id,
             description: item.description,
             quantity: String(item.quantity),
-            unitPrice: String(item.unitPrice),
+            unit_price: String(item.unit_price || item.unitPrice),
             amount: String(item.amount),
-            notes: item.notes
+            notes: item.notes || ""
           };
           await db.insert(estimateItemsModel).values(itemData);
         }
@@ -863,12 +891,12 @@ class DatabaseStorage implements IStorage {
           .where(eq(isLocalDev ? estimateItemsModel.estimate_id : estimateItemsModel.estimateId, id));
         for (const item of items) {
           const itemData = {
-            estimateId: id,
+            estimate_id: id,
             description: item.description,
             quantity: String(item.quantity),
-            unitPrice: String(item.unitPrice),
+            unit_price: String(item.unit_price || item.unitPrice),
             amount: String(item.amount),
-            notes: item.notes
+            notes: item.notes || ""
           };
           await db.insert(estimateItemsModel).values(itemData);
         }
@@ -914,18 +942,21 @@ class DatabaseStorage implements IStorage {
   async getEstimateItems(estimateId: number, contractorId: number) {
     const estTable = isLocalDev ? (sqliteSchema.estimates as any) : (estimates as any);
     const estItemsTable = isLocalDev ? (sqliteSchema.estimate_items as any) : (estimateItems as any);
-    const estimateCheck = await db.query.estimates.findFirst({
-      where: and(
+    const estimateCheck = await db
+      .select()
+      .from(estTable)
+      .where(and(
         eq(estTable.id, estimateId),
         eq(isLocalDev ? estTable.contractor_id : estTable.contractorId, contractorId)
-      )
-    });
-    if (!estimateCheck) {
+      ))
+      .limit(1);
+    if (!estimateCheck || estimateCheck.length === 0) {
       return [];
     }
-    return await db.query.estimateItems.findMany({
-      where: eq(isLocalDev ? estItemsTable.estimate_id : estItemsTable.estimateId, estimateId)
-    });
+    return await db
+      .select()
+      .from(estItemsTable)
+      .where(eq(isLocalDev ? estItemsTable.estimate_id : estItemsTable.estimateId, estimateId));
   }
 
   async createEstimateItem(data: any) {
@@ -1401,28 +1432,28 @@ class DatabaseStorage implements IStorage {
     const events = await db
       .select()
       .from(eventsTable)
-      .where(eq(eventsTable.contractorId, contractorId))
-      .orderBy(desc(eventsTable.createdAt));
+      .where(eq(eventsTable.contractor_id, contractorId))
+      .orderBy(desc(eventsTable.created_at));
     
     // Map database fields to frontend expected format
     return events.map(event => ({
       id: event.id,
-      contractorId: event.contractorId,
+      contractorId: event.contractor_id,
       title: event.title,
       description: event.description,
-      startTime: event.startTime,
-      endTime: event.endTime,
+      startTime: event.start_time,
+      endTime: event.end_time,
       address: event.address,
       city: event.city,
       state: event.state,
       zip: event.zip,
       type: event.type,
       status: event.status,
-      clientId: event.clientId,
-      projectId: event.projectId,
-      agentId: event.agentId,
+      clientId: event.client_id,
+      projectId: event.project_id,
+      agentId: event.agent_id,
       notes: event.notes,
-      createdAt: event.createdAt
+      createdAt: event.created_at
     }));
   }
 
@@ -1430,7 +1461,7 @@ class DatabaseStorage implements IStorage {
     const results = await db
       .select()
       .from(eventsTable)
-      .where(and(eq(eventsTable.id, id), eq(eventsTable.contractorId, contractorId)));
+      .where(and(eq(eventsTable.id, id), eq(eventsTable.contractor_id, contractorId)));
     
     if (!results[0]) return null;
     
@@ -1438,22 +1469,22 @@ class DatabaseStorage implements IStorage {
     // Map database fields to frontend expected format
     return {
       id: event.id,
-      contractorId: event.contractorId,
+      contractorId: event.contractor_id,
       title: event.title,
       description: event.description,
-      startTime: event.startTime,
-      endTime: event.endTime,
+      startTime: event.start_time,
+      endTime: event.end_time,
       address: event.address,
       city: event.city,
       state: event.state,
       zip: event.zip,
       type: event.type,
       status: event.status,
-      clientId: event.clientId,
-      projectId: event.projectId,
-      agentId: event.agentId,
+      clientId: event.client_id,
+      projectId: event.project_id,
+      agentId: event.agent_id,
       notes: event.notes,
-      createdAt: event.createdAt
+      createdAt: event.created_at
     };
   }
 
@@ -1466,7 +1497,7 @@ class DatabaseStorage implements IStorage {
     const [event] = await db
       .update(eventsTable)
       .set(data)
-      .where(and(eq(eventsTable.id, id), eq(eventsTable.contractorId, contractorId)))
+      .where(and(eq(eventsTable.id, id), eq(eventsTable.contractor_id, contractorId)))
       .returning();
     return event;
   }
@@ -1474,14 +1505,14 @@ class DatabaseStorage implements IStorage {
   async deleteEvent(id: number, contractorId: number) {
     const result = await db
       .delete(eventsTable)
-      .where(and(eq(eventsTable.id, id), eq(eventsTable.contractorId, contractorId)));
+      .where(and(eq(eventsTable.id, id), eq(eventsTable.contractor_id, contractorId)));
     return result.rowCount > 0;
   }
 
   // Agents
   async getAgents(contractorId: number) {
     return await db.query.agents.findMany({
-      where: eq(agentsTable.contractorId, contractorId)
+      where: eq(agentsTable.contractor_id, contractorId)
     });
   }
 
@@ -1489,7 +1520,7 @@ class DatabaseStorage implements IStorage {
     return await db.query.agents.findFirst({
       where: and(
         eq(agentsTable.id, id),
-        eq(agentsTable.contractorId, contractorId)
+        eq(agentsTable.contractor_id, contractorId)
       )
     });
   }

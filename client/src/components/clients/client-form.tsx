@@ -136,16 +136,17 @@ export default function ClientForm({ client, onSubmit, isSubmitting, onCancel }:
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <div className="remodra-card p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="firstName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>First Name</FormLabel>
+                <FormLabel className="text-slate-300 font-medium">First Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="First Name" {...field} />
+                  <Input placeholder="First Name" {...field} className="remodra-input" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -157,9 +158,9 @@ export default function ClientForm({ client, onSubmit, isSubmitting, onCancel }:
             name="lastName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Last Name</FormLabel>
+                <FormLabel className="text-slate-300 font-medium">Last Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Last Name" {...field} />
+                  <Input placeholder="Last Name" {...field} className="remodra-input" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -173,16 +174,16 @@ export default function ClientForm({ client, onSubmit, isSubmitting, onCancel }:
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel className="text-slate-300 font-medium">Email</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Input 
                       type="email" 
                       placeholder="email@example.com" 
                       {...field}
-                      className={uniquenessStatus.email ? 
+                      className={`remodra-input ${uniquenessStatus.email ? 
                         (uniquenessStatus.email.isUnique ? 'border-green-500' : 'border-red-500') : ''
-                      }
+                      }`}
                     />
                     {isCheckingUniqueness && field.value && (
                       <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-gray-400" />
@@ -213,15 +214,15 @@ export default function ClientForm({ client, onSubmit, isSubmitting, onCancel }:
             name="phone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Phone</FormLabel>
+                <FormLabel className="text-slate-300 font-medium">Phone</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Input 
                       placeholder="(123) 456-7890" 
                       {...field}
-                      className={uniquenessStatus.phone ? 
+                      className={`remodra-input ${uniquenessStatus.phone ? 
                         (uniquenessStatus.phone.isUnique ? 'border-green-500' : 'border-red-500') : ''
-                      }
+                      }`}
                     />
                     {isCheckingUniqueness && field.value && (
                       <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-gray-400" />
@@ -253,15 +254,15 @@ export default function ClientForm({ client, onSubmit, isSubmitting, onCancel }:
           name="address"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Address</FormLabel>
+              <FormLabel className="text-slate-300 font-medium">Address</FormLabel>
               <FormControl>
                 <div className="relative">
                   <Input 
                     placeholder="Address" 
                     {...field}
-                    className={uniquenessStatus.address ? 
+                    className={`remodra-input ${uniquenessStatus.address ? 
                       (uniquenessStatus.address.isUnique ? 'border-green-500' : 'border-red-500') : ''
-                    }
+                    }`}
                   />
                   {isCheckingUniqueness && field.value && (
                     <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-gray-400" />
@@ -293,9 +294,9 @@ export default function ClientForm({ client, onSubmit, isSubmitting, onCancel }:
             name="city"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>City</FormLabel>
+                <FormLabel className="text-slate-300 font-medium">City</FormLabel>
                 <FormControl>
-                  <Input placeholder="City" {...field} />
+                  <Input placeholder="City" {...field} className="remodra-input" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -307,9 +308,9 @@ export default function ClientForm({ client, onSubmit, isSubmitting, onCancel }:
             name="state"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>State</FormLabel>
+                <FormLabel className="text-slate-300 font-medium">State</FormLabel>
                 <FormControl>
-                  <Input placeholder="State" {...field} />
+                  <Input placeholder="State" {...field} className="remodra-input" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -321,9 +322,9 @@ export default function ClientForm({ client, onSubmit, isSubmitting, onCancel }:
             name="zip"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>ZIP Code</FormLabel>
+                <FormLabel className="text-slate-300 font-medium">ZIP Code</FormLabel>
                 <FormControl>
-                  <Input placeholder="ZIP Code" {...field} />
+                  <Input placeholder="ZIP Code" {...field} className="remodra-input" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -336,11 +337,11 @@ export default function ClientForm({ client, onSubmit, isSubmitting, onCancel }:
           name="notes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Notes</FormLabel>
+              <FormLabel className="text-slate-300 font-medium">Notes</FormLabel>
               <FormControl>
                 <Textarea 
                   placeholder="Additional notes about this client..." 
-                  className="resize-none" 
+                  className="remodra-input resize-none" 
                   rows={4}
                   {...field} 
                 />
@@ -350,17 +351,21 @@ export default function ClientForm({ client, onSubmit, isSubmitting, onCancel }:
           )}
         />
         
+        </div>
+        
         <div className="flex justify-end space-x-3 pt-4">
           <Button 
             type="button" 
             variant="outline" 
             onClick={onCancel}
+            className="remodra-button-outline"
           >
             Cancel
           </Button>
           <Button 
             type="submit"
             disabled={isSubmitting}
+            className="remodra-button"
           >
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {client ? "Update Client" : "Create Client"}

@@ -39,6 +39,11 @@ import { Avatar, AvatarFallback } from '../components/ui/avatar';
 // Import form component for editing
 import EstimateForm from '../components/estimates/estimate-form';
 
+// Import layout components
+import Sidebar from '../components/layout/sidebar';
+import MobileSidebar from '../components/layout/mobile-sidebar';
+import TopNav from '../components/layout/top-nav';
+
 // Helper function to format currency
 const formatCurrency = (amount: number | string) => {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
@@ -134,67 +139,6 @@ export default function PremiumEstimatePage() {
     updateStatusMutation.mutate(status);
   };
 
-  // If no estimate ID, show creation form
-  if (!estimateId) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white mb-4">Create Premium Estimate</h1>
-            <p className="text-slate-300">This page is for viewing existing premium estimates. To create a new estimate, please use the standard estimate creation form.</p>
-          </div>
-          <div className="text-center">
-            <Button onClick={() => setLocation('/estimates/create')} className="bg-amber-500 hover:bg-amber-600">
-              Go to Estimate Creation
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show loading state
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-amber-500 mx-auto"></div>
-          <p className="text-white mt-4">Loading estimate...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show error state
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-3xl font-bold text-white mb-4">Error Loading Estimate</h1>
-          <p className="text-slate-300 mb-4">{(error as any)?.message || 'Unknown error occurred'}</p>
-          <Button onClick={() => setLocation('/estimates')} className="bg-amber-500 hover:bg-amber-600">
-            Back to Estimates
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Show error if no estimate data
-  if (!estimate) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-3xl font-bold text-white mb-4">Estimate Not Found</h1>
-          <p className="text-slate-300 mb-4">The estimate you're looking for doesn't exist.</p>
-          <Button onClick={() => setLocation('/estimates')} className="bg-amber-500 hover:bg-amber-600">
-            Back to Estimates
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   // Handle convert to invoice
   const handleConvertToInvoice = () => {
     if (estimate?.status !== 'accepted') {
@@ -209,12 +153,49 @@ export default function PremiumEstimatePage() {
     convertToInvoiceMutation.mutate();
   };
 
+  // If no estimate ID, show creation form
+  if (!estimateId) {
+    return (
+      <div className="remodra-layout">
+        <Sidebar />
+        <MobileSidebar />
+        <div className="remodra-main">
+          <TopNav />
+          <div className="remodra-content">
+            <main className="p-8">
+              <div className="max-w-4xl mx-auto">
+                <div className="text-center mb-8">
+                  <h1 className="text-3xl font-bold text-white mb-4">Create Premium Estimate</h1>
+                  <p className="text-slate-300">This page is for viewing existing premium estimates. To create a new estimate, please use the standard estimate creation form.</p>
+                </div>
+                <div className="text-center">
+                  <Button onClick={() => setLocation('/estimates')}>
+                    Back to Estimates
+                  </Button>
+                </div>
+              </div>
+            </main>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
-      <div className="container py-10">
-        <div className="flex flex-col items-center justify-center min-h-[60vh]">
-          <div className="loading-spinner"></div>
-          <p className="mt-4 text-muted-foreground">Cargando estimado...</p>
+      <div className="remodra-layout">
+        <Sidebar />
+        <MobileSidebar />
+        <div className="remodra-main">
+          <TopNav />
+          <div className="remodra-content">
+            <main className="p-8">
+              <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                <div className="loading-spinner"></div>
+                <p className="mt-4 text-muted-foreground">Cargando estimado...</p>
+              </div>
+            </main>
+          </div>
         </div>
       </div>
     );
@@ -222,20 +203,29 @@ export default function PremiumEstimatePage() {
 
   if (error || !estimate) {
     return (
-      <div className="container py-10">
-        <div className="flex flex-col items-center justify-center min-h-[60vh]">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold">Could not load the estimate</h2>
-            <p className="mt-2 text-muted-foreground">
-              {error instanceof Error ? error.message : "Ha ocurrido un error"}
-            </p>
-            <Button 
-              variant="default" 
-              onClick={() => refetch()} 
-              className="mt-4"
-            >
-              Reintentar
-            </Button>
+      <div className="remodra-layout">
+        <Sidebar />
+        <MobileSidebar />
+        <div className="remodra-main">
+          <TopNav />
+          <div className="remodra-content">
+            <main className="p-8">
+              <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold">Could not load the estimate</h2>
+                  <p className="mt-2 text-muted-foreground">
+                    {error instanceof Error ? error.message : "Ha ocurrido un error"}
+                  </p>
+                  <Button 
+                    variant="default" 
+                    onClick={() => refetch()} 
+                    className="mt-4"
+                  >
+                    Reintentar
+                  </Button>
+                </div>
+              </div>
+            </main>
           </div>
         </div>
       </div>
@@ -243,7 +233,15 @@ export default function PremiumEstimatePage() {
   }
 
   return (
-    <div className="container py-8">
+    <div className="remodra-layout">
+      <Sidebar />
+      <MobileSidebar />
+      <div className="remodra-main">
+        <TopNav />
+        <div className="remodra-content">
+          <main className="p-8">
+            <div className="container mx-auto">
+
       {/* Back button and actions */}
       <div className="flex justify-between items-center mb-6">
         <Button 
@@ -326,6 +324,7 @@ export default function PremiumEstimatePage() {
                     onClick={() => handleStatusChange('rejected')}
                     icon={<X className="h-4 w-4" />}
                     loading={updateStatusMutation.isPending && updateStatusMutation.variables === 'rejected'}
+                    className="bg-red-600 hover:bg-red-700 text-white font-medium shadow-md hover:shadow-lg transition-all"
                   >
                     Mark as Rejected
                   </PremiumButton>
@@ -554,6 +553,10 @@ export default function PremiumEstimatePage() {
           onClose={() => setIsEditModalOpen(false)}
         />
       )}
+            </div>
+          </main>
+        </div>
+      </div>
     </div>
   );
 }

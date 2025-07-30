@@ -34,20 +34,21 @@ export function usePricing() {
     data: servicePrices, 
     isLoading: servicesLoading,
     error: servicesError
-  } = useQuery({
+  } = useQuery<ServicePrice[]>({
     queryKey: ['/api/direct/services'],
     retry: 1,
   });
 
-  // Consulta para materiales con valores directamente de la API
+  // Consulta para materiales - Por ahora retornamos array vacío ya que no existe el endpoint
   const { 
-    data: materialPrices, 
+    data: materialPrices = [], 
     isLoading: materialsLoading,
     error: materialsError
-  } = useQuery({
+  } = useQuery<MaterialPrice[]>({
     queryKey: ['/api/pricing/materials'],
-    // Usar directamente los valores de la API
+    // Por ahora retornamos array vacío ya que el endpoint no existe
     retry: 1,
+    enabled: false, // Disable this query since the endpoint doesn't exist
   });
 
   // Funciones de utilidad para obtener precios por tipo o categoria

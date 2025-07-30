@@ -188,8 +188,12 @@ export default function TimeclockPage() {
         <main className="p-8 space-y-8">
           {/* Header with Remodra branding */}
           <div className="text-center mb-8">
-            <div className="remodra-logo mb-6">
-              <span className="remodra-logo-text">R</span>
+            <div className="flex justify-center mb-6">
+              <img 
+                src="/remodra-logo.png" 
+                alt="Remodra Logo" 
+                className="h-16 w-16 object-contain"
+              />
             </div>
             <h1 className="remodra-title mb-3">
               Time Clock

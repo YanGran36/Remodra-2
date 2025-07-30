@@ -38,7 +38,7 @@ import {
   Building,
   Activity
 } from "lucide-react";
-import { fetchWithBaseUrl } from '../lib/queryClient';
+
 
 // Error Boundary Component
 function ErrorBoundary({ children }: { children: React.ReactNode }) {
@@ -80,7 +80,7 @@ export default function ClientPortal() {
   useEffect(() => {
     const fetchClientData = async () => {
       try {
-        const response = await fetchWithBaseUrl(`/api/client-portal/${clientId}/data`);
+        const response = await fetch(`/api/client-portal/${clientId}/data`);
         if (response.ok) {
           const data = await response.json();
           console.log('[Client Portal] Fetched data:', data);
@@ -109,10 +109,16 @@ export default function ClientPortal() {
   }, [clientId]);
 
   if (loading) {
-    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-        <p className="mt-2 text-gray-600">Loading...</p>
+    return <div className="remodra-layout">
+      <div className="remodra-main-mobile">
+        <div className="remodra-content">
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-center">
+              <div className="remodra-spinner mx-auto"></div>
+              <p className="mt-4 text-slate-300">Loading client portal...</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>;
   }
@@ -120,19 +126,33 @@ export default function ClientPortal() {
   // Defensive: If any required data is missing, show a clear error message
   if (!loading && (!clientInfo || typeof clientInfo !== 'object')) {
     console.error('[Client Portal] clientInfo missing or invalid:', clientInfo);
-    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">
-        <p className="text-red-600 text-lg font-bold">Client not found or failed to load client data.</p>
-        <p className="text-gray-500 mt-2">Please check the client link or try again later.</p>
+    return <div className="remodra-layout">
+      <div className="remodra-main-mobile">
+        <div className="remodra-content">
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-center">
+              <div className="remodra-empty-icon mb-4">⚠️</div>
+              <p className="remodra-empty-title text-red-400">Client not found or failed to load client data.</p>
+              <p className="remodra-empty-description">Please check the client link or try again later.</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>;
   }
   if (!loading && (!Array.isArray(clientProjects) || !Array.isArray(clientEstimates) || !Array.isArray(clientInvoices) || !Array.isArray(clientAppointments))) {
     console.error('[Client Portal] One or more data arrays are missing or invalid:', { clientProjects, clientEstimates, clientInvoices, clientAppointments });
-    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">
-        <p className="text-red-600 text-lg font-bold">Client data is incomplete or corrupted.</p>
-        <p className="text-gray-500 mt-2">Please contact support.</p>
+    return <div className="remodra-layout">
+      <div className="remodra-main-mobile">
+        <div className="remodra-content">
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-center">
+              <div className="remodra-empty-icon mb-4">⚠️</div>
+              <p className="remodra-empty-title text-red-400">Client data is incomplete or corrupted.</p>
+              <p className="remodra-empty-description">Please contact support.</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>;
   }
@@ -168,125 +188,120 @@ export default function ClientPortal() {
       case 'approved':
       case 'paid':
       case 'completed':
-        return <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg border-0">{status}</Badge>;
+        return <Badge className="remodra-badge bg-green-500/20 text-green-400 border-green-500/30">{status}</Badge>;
       case 'pending':
       case 'scheduled':
-        return <Badge className="bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-lg border-0">{status}</Badge>;
+      case 'draft':
+        return <Badge className="remodra-badge bg-yellow-500/20 text-yellow-400 border-yellow-500/30">{status}</Badge>;
       case 'in progress':
-        return <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg border-0">{status}</Badge>;
+        return <Badge className="remodra-badge bg-blue-500/20 text-blue-400 border-blue-500/30">{status}</Badge>;
+      case 'sent':
+        return <Badge className="remodra-badge bg-purple-500/20 text-purple-400 border-purple-500/30">{status}</Badge>;
       default:
-        return <Badge className="bg-gradient-to-r from-gray-400 to-gray-500 text-white shadow-lg border-0">{status}</Badge>;
+        return <Badge className="remodra-badge bg-slate-500/20 text-slate-400 border-slate-500/30">{status}</Badge>;
     }
   };
 
   // Overview Tab Component
   const OverviewTab = () => (
-    <div className="space-y-6">
-      {/* Quick Stats */}
+    <div className="space-y-8">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-amber-400 flex items-center gap-2">
+          <Activity className="h-6 w-6" />
+          Overview
+        </h2>
+        <div className="text-sm text-slate-400">Summary of your account activity</div>
+      </div>
+      
+      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-lg hover:shadow-xl transition-all duration-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-blue-700 flex items-center gap-2">
-              <Building className="h-4 w-4" />
-              Active Projects
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-semibold text-blue-600">
-              {projects.filter(p => p.status === "In Progress").length}
+        <div className="remodra-stats-card">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="remodra-stats-label">Active Projects</div>
+              <div className="remodra-stats-number">{projects.filter(p => p.status === 'in_progress' || p.status === 'In Progress').length}</div>
             </div>
-            <p className="text-xs text-blue-500 mt-1">In progress</p>
-          </CardContent>
-        </Card>
+            <Building className="h-8 w-8 text-amber-400" />
+          </div>
+          <div className="remodra-stats-accent"></div>
+        </div>
         
-        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 shadow-lg hover:shadow-xl transition-all duration-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-orange-700 flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Pending Estimates
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-semibold text-orange-600">
-              {estimates.filter(e => e.status === "Pending").length}
+        <div className="remodra-stats-card">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="remodra-stats-label">Pending Estimates</div>
+              <div className="remodra-stats-number">{estimates.filter(e => e.status === 'draft' || e.status === 'pending').length}</div>
             </div>
-            <p className="text-xs text-orange-500 mt-1">Awaiting approval</p>
-          </CardContent>
-        </Card>
+            <FileText className="h-8 w-8 text-amber-400" />
+          </div>
+          <div className="remodra-stats-accent"></div>
+        </div>
         
-        <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200 shadow-lg hover:shadow-xl transition-all duration-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-red-700 flex items-center gap-2">
-              <Receipt className="h-4 w-4" />
-              Outstanding Invoices
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-semibold text-red-600">
-              {invoices.filter(i => i.status === "Pending").length}
+        <div className="remodra-stats-card">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="remodra-stats-label">Outstanding Invoices</div>
+              <div className="remodra-stats-number">{invoices.filter(i => i.status === 'pending' || i.status === 'sent').length}</div>
             </div>
-            <p className="text-xs text-red-500 mt-1">Requires payment</p>
-          </CardContent>
-        </Card>
+            <Receipt className="h-8 w-8 text-amber-400" />
+          </div>
+          <div className="remodra-stats-accent"></div>
+        </div>
         
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-lg hover:shadow-xl transition-all duration-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-purple-700 flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Upcoming Appointments
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-semibold text-purple-600">
-              {appointments.filter(a => new Date(a.startTime) > new Date()).length}
+        <div className="remodra-stats-card">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="remodra-stats-label">Upcoming Appointments</div>
+              <div className="remodra-stats-number">{appointments.filter(a => new Date(a.startTime) > new Date()).length}</div>
             </div>
-            <p className="text-xs text-purple-500 mt-1">Upcoming</p>
-          </CardContent>
-        </Card>
+            <Calendar className="h-8 w-8 text-amber-400" />
+          </div>
+          <div className="remodra-stats-accent"></div>
+        </div>
       </div>
 
       {/* Agent Contact Information */}
       {agentInfo && (
-        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-emerald-100 to-emerald-200 rounded-t-lg">
-            <CardTitle className="text-emerald-800 flex items-center gap-2">
-              <User className="h-5 w-5 text-emerald-600" />
-              Your Assigned Agent
-            </CardTitle>
-            <CardDescription className="text-emerald-600">Contact your project coordinator</CardDescription>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-center gap-3">
-                <div className="bg-emerald-500 p-2 rounded-full">
-                  <User className="h-4 w-4 text-white" />
-                </div>
-                <div>
-                  <p className="font-semibold text-emerald-900">{agentInfo.name}</p>
-                  <p className="text-sm text-emerald-600">{agentInfo.role}</p>
-                </div>
+        <div className="remodra-card p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-yellow-600 rounded-lg flex items-center justify-center">
+              <User className="h-6 w-6 text-slate-900" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-amber-400">Your Assigned Agent</h3>
+              <p className="text-slate-400">Contact your project coordinator</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-slate-800 to-slate-700 rounded-lg border border-slate-600">
+              <div className="w-10 h-10 bg-amber-400 rounded-full flex items-center justify-center">
+                <User className="h-5 w-5 text-slate-900" />
               </div>
-              <div className="flex items-center gap-3">
-                <div className="bg-emerald-500 p-2 rounded-full">
-                  <Mail className="h-4 w-4 text-white" />
-                </div>
-                <div>
-                  <p className="font-medium text-emerald-900">Email</p>
-                  <p className="text-sm text-emerald-600">{agentInfo.email}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="bg-emerald-500 p-2 rounded-full">
-                  <Phone className="h-4 w-4 text-white" />
-                </div>
-                <div>
-                  <p className="font-medium text-emerald-900">Phone</p>
-                  <p className="text-sm text-emerald-600">{agentInfo.phone}</p>
-                </div>
+              <div>
+                <p className="font-medium text-slate-200">{agentInfo.name}</p>
+                <p className="text-sm text-slate-400">{agentInfo.role}</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+            <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-slate-800 to-slate-700 rounded-lg border border-slate-600">
+              <div className="w-10 h-10 bg-amber-400 rounded-full flex items-center justify-center">
+                <Mail className="h-5 w-5 text-slate-900" />
+              </div>
+              <div>
+                <p className="font-medium text-slate-200">{agentInfo.email}</p>
+                <p className="text-sm text-slate-400">Email</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-slate-800 to-slate-700 rounded-lg border border-slate-600">
+              <div className="w-10 h-10 bg-amber-400 rounded-full flex items-center justify-center">
+                <Phone className="h-5 w-5 text-slate-900" />
+              </div>
+              <div>
+                <p className="font-medium text-slate-200">{agentInfo.phone}</p>
+                <p className="text-sm text-slate-400">Phone</p>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Recent Activity */}
@@ -440,8 +455,8 @@ export default function ClientPortal() {
   const EstimatesTab = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-          <FileText className="h-6 w-6 text-orange-600" />
+        <h2 className="text-2xl font-bold text-amber-400 flex items-center gap-2">
+          <FileText className="h-6 w-6 text-amber-400" />
           My Estimates
         </h2>
       </div>
@@ -449,21 +464,21 @@ export default function ClientPortal() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {estimates.length === 0 ? (
           <div className="col-span-full">
-            <Card className="bg-gradient-to-br from-white to-orange-50 border-orange-200">
+            <Card className="remodra-card">
               <CardContent className="p-12 text-center">
-                <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-600 mb-2">No Estimates Yet</h3>
-                <p className="text-gray-500">Your estimates will appear here when created.</p>
+                <FileText className="h-16 w-16 text-slate-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-slate-200 mb-2">No Estimates Yet</h3>
+                <p className="text-slate-400">Your estimates will appear here when created.</p>
               </CardContent>
             </Card>
           </div>
         ) : estimates.map((estimate) => (
-          <Card key={estimate.id} className="bg-gradient-to-br from-white to-orange-50 border-orange-200 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-t-lg">
+          <Card key={estimate.id} className="remodra-card hover:shadow-xl transition-all duration-300">
+            <CardHeader className="bg-gradient-to-r from-slate-800 to-slate-700 rounded-t-lg border-b border-slate-600">
               <div className="flex justify-between items-start">
                 <div>
-                  <CardTitle className="text-lg text-orange-800">#{estimate.estimateNumber}</CardTitle>
-                  <CardDescription className="text-orange-600">Issued: {format(new Date(estimate.createdAt), "MMM dd, yyyy")}</CardDescription>
+                  <CardTitle className="text-lg text-amber-400">#{estimate.estimateNumber}</CardTitle>
+                  <CardDescription className="text-slate-300">Issued: {format(new Date(estimate.createdAt), "MMM dd, yyyy")}</CardDescription>
                 </div>
                 {getStatusBadge(estimate.status)}
               </div>
@@ -471,24 +486,24 @@ export default function ClientPortal() {
             <CardContent className="p-6">
               <div className="space-y-4">
                 <div>
-                  <p className="font-semibold text-gray-800 mb-1">{estimate.title}</p>
-                  <p className="text-gray-600 text-sm mb-3">{estimate.description || 'No description provided'}</p>
+                  <p className="font-semibold text-slate-200 mb-1">{estimate.title}</p>
+                  <p className="text-slate-400 text-sm mb-3">{estimate.description || 'No description provided'}</p>
                 </div>
-                <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+                <div className="bg-gradient-to-r from-green-600/20 to-green-500/20 p-4 rounded-lg border border-green-500/30">
                   <div className="flex items-center gap-2">
-                    <DollarSign className="h-5 w-5 text-green-600" />
-                    <span className="text-2xl font-bold text-green-800">${Number(estimate.total || 0).toLocaleString()}</span>
+                    <DollarSign className="h-5 w-5 text-green-400" />
+                    <span className="text-2xl font-bold text-green-400">${Number(estimate.total || 0).toLocaleString()}</span>
                   </div>
-                  <p className="text-xs text-green-600 font-medium mt-1">Total Estimate</p>
+                  <p className="text-xs text-green-400 font-medium mt-1">Total Estimate</p>
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="flex justify-end gap-2 bg-gray-50 rounded-b-lg">
+            <CardFooter className="flex justify-end gap-2 bg-slate-800/50 rounded-b-lg border-t border-slate-600">
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={() => handleViewEstimate(estimate.id)}
-                className="shadow-sm hover:shadow-md transition-shadow"
+                className="remodra-button-outline shadow-sm hover:shadow-md transition-shadow"
               >
                 <Eye className="h-4 w-4 mr-2" />
                 View Details
@@ -497,7 +512,7 @@ export default function ClientPortal() {
                 <Button 
                   size="sm"
                   onClick={() => handleApproveEstimate(estimate.id)}
-                  className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-sm hover:shadow-md transition-all"
+                  className="remodra-button shadow-sm hover:shadow-md transition-all"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Approve
@@ -528,18 +543,18 @@ export default function ClientPortal() {
     const getPaymentStatusColor = (invoice: any) => {
       const progress = getPaymentProgress(invoice);
       if (progress >= 100) return 'bg-green-500';
-      if (progress > 0) return 'bg-yellow-500';
-      return 'bg-gray-300';
+      if (progress > 0) return 'bg-orange-500';
+      return 'bg-slate-400';
     };
 
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <Receipt className="h-6 w-6 text-red-600" />
+          <h2 className="text-2xl font-bold text-amber-400 flex items-center gap-2">
+            <Receipt className="h-6 w-6 text-amber-400" />
             My Invoices
           </h2>
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-slate-400">
             {invoices.length} invoice{invoices.length !== 1 ? 's' : ''} total
           </div>
         </div>
@@ -547,11 +562,11 @@ export default function ClientPortal() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {invoices.length === 0 ? (
             <div className="col-span-full">
-              <Card className="bg-gradient-to-br from-white to-red-50 border-red-200">
+              <Card className="remodra-card">
                 <CardContent className="p-12 text-center">
-                  <Receipt className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-600 mb-2">No Invoices Yet</h3>
-                  <p className="text-gray-500">Your invoices will appear here when generated.</p>
+                  <Receipt className="h-16 w-16 text-slate-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-slate-200 mb-2">No Invoices Yet</h3>
+                  <p className="text-slate-400">Your invoices will appear here when generated.</p>
                 </CardContent>
               </Card>
             </div>
@@ -563,14 +578,14 @@ export default function ClientPortal() {
             const isOverdue = invoice.dueDate && new Date(invoice.dueDate) < new Date() && invoice.status !== 'paid';
             
             return (
-              <Card key={invoice.id} className="bg-gradient-to-br from-white to-red-50 border-red-200 shadow-lg hover:shadow-xl transition-all duration-300">
-                <CardHeader className="bg-gradient-to-r from-red-50 to-red-100 rounded-t-lg">
+              <Card key={invoice.id} className="remodra-card hover:shadow-xl transition-all duration-300">
+                <CardHeader className="bg-gradient-to-r from-slate-800 to-slate-700 rounded-t-lg border-b border-slate-600">
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle className="text-lg text-red-800">#{invoice.invoiceNumber}</CardTitle>
-                      <CardDescription className="text-red-600">
+                      <CardTitle className="text-lg text-amber-400">#{invoice.invoiceNumber}</CardTitle>
+                      <CardDescription className="text-slate-300">
                         Due: {format(new Date(invoice.dueDate || invoice.createdAt), "MMM dd, yyyy")}
-                        {isOverdue && <span className="text-red-600 font-medium ml-2">• OVERDUE</span>}
+                        {isOverdue && <span className="text-red-400 font-medium ml-2">• OVERDUE</span>}
                       </CardDescription>
                     </div>
                     {getStatusBadge(invoice.status)}
@@ -578,15 +593,15 @@ export default function ClientPortal() {
                 </CardHeader>
                 <CardContent className="p-6">
                   <div className="space-y-4">
-                    <p className="font-semibold text-gray-800">{invoice.title}</p>
+                    <p className="font-semibold text-slate-200">{invoice.title}</p>
                     
                     {/* Payment Progress */}
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Payment Progress</span>
-                        <span className="font-medium">{progress.toFixed(1)}%</span>
+                        <span className="text-slate-400">Payment Progress</span>
+                        <span className="font-medium text-slate-200">{progress.toFixed(1)}%</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="w-full bg-slate-700 rounded-full h-2">
                         <div 
                           className={`h-2 rounded-full transition-all duration-300 ${getPaymentStatusColor(invoice)}`}
                           style={{ width: `${Math.min(progress, 100)}%` }}
@@ -596,37 +611,37 @@ export default function ClientPortal() {
 
                     {/* Amount Breakdown */}
                     <div className="grid grid-cols-3 gap-3">
-                      <div className="text-center p-3 bg-gray-50 rounded-lg">
-                        <p className="text-xs text-gray-600">Total</p>
-                        <p className="text-sm font-bold text-gray-900">{formatCurrency(total)}</p>
+                      <div className="text-center p-3 bg-slate-800/50 rounded-lg border border-slate-600">
+                        <p className="text-xs text-slate-400">Total</p>
+                        <p className="text-sm font-bold text-slate-200">{formatCurrency(total)}</p>
                       </div>
-                      <div className="text-center p-3 bg-green-50 rounded-lg">
-                        <p className="text-xs text-green-600">Paid</p>
-                        <p className="text-sm font-bold text-green-700">{formatCurrency(paid)}</p>
+                      <div className="text-center p-3 bg-green-600/20 rounded-lg border border-green-500/30">
+                        <p className="text-xs text-green-400">Paid</p>
+                        <p className="text-sm font-bold text-green-400">{formatCurrency(paid)}</p>
                       </div>
-                      <div className="text-center p-3 bg-red-50 rounded-lg">
-                        <p className="text-xs text-red-600">Due</p>
-                        <p className="text-sm font-bold text-red-700">{formatCurrency(pending)}</p>
+                      <div className="text-center p-3 bg-red-600/20 rounded-lg border border-red-500/30">
+                        <p className="text-xs text-red-400">Due</p>
+                        <p className="text-sm font-bold text-red-400">{formatCurrency(pending)}</p>
                       </div>
                     </div>
 
                     {/* Payment History Preview */}
                     {invoice.payments && invoice.payments.length > 0 && (
-                      <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                        <p className="text-xs text-blue-600 font-medium mb-1">Recent Payments</p>
+                      <div className="bg-blue-600/20 p-3 rounded-lg border border-blue-500/30">
+                        <p className="text-xs text-blue-400 font-medium mb-1">Recent Payments</p>
                         <div className="space-y-1">
                           {invoice.payments.slice(0, 2).map((payment: any, index: number) => (
                             <div key={index} className="flex justify-between text-xs">
-                              <span className="text-blue-700">
+                              <span className="text-blue-300">
                                 {payment.paymentMethod} • {format(new Date(payment.paymentDate), 'MMM dd')}
                               </span>
-                              <span className="font-medium text-blue-800">
+                              <span className="font-medium text-blue-300">
                                 {formatCurrency(Number(payment.amount))}
                               </span>
                             </div>
                           ))}
                           {invoice.payments.length > 2 && (
-                            <p className="text-xs text-blue-600">
+                            <p className="text-xs text-blue-400">
                               +{invoice.payments.length - 2} more payment{invoice.payments.length - 2 !== 1 ? 's' : ''}
                             </p>
                           )}
@@ -635,12 +650,12 @@ export default function ClientPortal() {
                     )}
                   </div>
                 </CardContent>
-                <CardFooter className="flex justify-end gap-2 bg-gray-50 rounded-b-lg">
+                <CardFooter className="flex justify-end gap-2 bg-slate-800/50 rounded-b-lg border-t border-slate-600">
                   <Button 
                     variant="outline" 
                     size="sm"
                     onClick={() => handleViewInvoice(invoice.id)}
-                    className="shadow-sm hover:shadow-md transition-shadow"
+                    className="remodra-button-outline shadow-sm hover:shadow-md transition-shadow"
                   >
                     <Eye className="h-4 w-4 mr-2" />
                     View Details
@@ -649,14 +664,14 @@ export default function ClientPortal() {
                     <Button 
                       size="sm"
                       onClick={() => handlePayInvoice(invoice.id)}
-                      className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm hover:shadow-md transition-all"
+                      className="remodra-button shadow-sm hover:shadow-md transition-all"
                     >
                       <DollarSign className="h-4 w-4 mr-2" />
                       Pay ${formatCurrency(pending)}
                     </Button>
                   )}
                   {invoice.status === "paid" && (
-                    <Button variant="outline" size="sm" className="shadow-sm hover:shadow-md transition-shadow">
+                    <Button variant="outline" size="sm" className="remodra-button-outline shadow-sm hover:shadow-md transition-shadow">
                       <Download className="h-4 w-4 mr-2" />
                       Download
                     </Button>
@@ -674,15 +689,15 @@ export default function ClientPortal() {
   const ScheduleTab = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-          <Calendar className="h-6 w-6 text-purple-600" />
+        <h2 className="text-2xl font-bold text-amber-400 flex items-center gap-2">
+          <Calendar className="h-6 w-6 text-amber-400" />
           My Schedule
         </h2>
       </div>
       
-      <Card className="bg-gradient-to-br from-white to-purple-50 border-purple-200 shadow-lg">
-        <CardHeader className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-t-lg">
-          <CardTitle className="text-purple-800 flex items-center gap-2">
+      <Card className="remodra-card">
+        <CardHeader className="bg-gradient-to-r from-slate-800 to-slate-700 rounded-t-lg border-b border-slate-600">
+          <CardTitle className="text-amber-400 flex items-center gap-2">
             <Calendar className="h-5 w-5" />
             Upcoming Appointments
           </CardTitle>
@@ -774,100 +789,141 @@ export default function ClientPortal() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <div className="bg-white border-b">
-          <div className="container mx-auto px-4 py-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
+      <div className="remodra-layout">
+        <div className="remodra-main-mobile">
+          <div className="remodra-content">
+            <main className="p-8 space-y-8 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen">
+              {/* Header with Remodra branding */}
+              <div className="text-center mb-8">
+                <div className="flex justify-center mb-6">
+                  <div className="remodra-logo">
+                    <User className="h-8 w-8 text-slate-900" />
+                  </div>
+                </div>
+                <h1 className="remodra-title mb-3">
+                  Client Portal
+                </h1>
+                <p className="remodra-subtitle">
+                  Welcome, {safeClientName}
+                </p>
+              </div>
+
+              {/* Back Button */}
+              <div className="flex justify-start mb-6">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setLocation("/")}
+                  className="remodra-button-outline"
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back
+                  Back to Dashboard
                 </Button>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Client Portal</h1>
-                  <p className="text-gray-600">Welcome, {safeClientName}</p>
+              </div>
+
+              {/* Client Info Card */}
+              <div className="remodra-card p-6 mb-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-yellow-600 rounded-lg flex items-center justify-center">
+                    <User className="h-6 w-6 text-slate-900" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-amber-400">Client Information</h2>
+                    <p className="text-slate-400">Contact details and account information</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-slate-800 to-slate-700 rounded-lg border border-slate-600">
+                    <Mail className="h-5 w-5 text-amber-400" />
+                    <div>
+                      <p className="text-sm text-slate-400">Email</p>
+                      <p className="font-medium text-slate-200">{safeClientEmail}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-slate-800 to-slate-700 rounded-lg border border-slate-600">
+                    <Phone className="h-5 w-5 text-amber-400" />
+                    <div>
+                      <p className="text-sm text-slate-400">Phone</p>
+                      <p className="font-medium text-slate-200">{safeClientPhone}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-slate-800 to-slate-700 rounded-lg border border-slate-600">
+                    <MapPin className="h-5 w-5 text-amber-400" />
+                    <div>
+                      <p className="text-sm text-slate-400">Address</p>
+                      <p className="font-medium text-slate-200">{safeClientAddress}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+
+              {/* Tabs */}
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-6 bg-gradient-to-r from-slate-800 to-slate-700 border border-slate-600 rounded-xl p-2 gap-2">
+                  <TabsTrigger 
+                    value="overview" 
+                    className="px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-400 data-[state=active]:to-yellow-500 data-[state=active]:text-slate-900 data-[state=active]:shadow-lg data-[state=active]:font-semibold data-[state=inactive]:text-slate-300 data-[state=inactive]:hover:text-amber-400 data-[state=inactive]:hover:bg-slate-700"
+                  >
+                    Overview
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="projects" 
+                    className="px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-400 data-[state=active]:to-yellow-500 data-[state=active]:text-slate-900 data-[state=active]:shadow-lg data-[state=active]:font-semibold data-[state=inactive]:text-slate-300 data-[state=inactive]:hover:text-amber-400 data-[state=inactive]:hover:bg-slate-700"
+                  >
+                    Projects
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="estimates" 
+                    className="px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-400 data-[state=active]:to-yellow-500 data-[state=active]:text-slate-900 data-[state=active]:shadow-lg data-[state=active]:font-semibold data-[state=inactive]:text-slate-300 data-[state=inactive]:hover:text-amber-400 data-[state=inactive]:hover:bg-slate-700"
+                  >
+                    Estimates
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="invoices" 
+                    className="px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-400 data-[state=active]:to-yellow-500 data-[state=active]:text-slate-900 data-[state=active]:shadow-lg data-[state=active]:font-semibold data-[state=inactive]:text-slate-300 data-[state=inactive]:hover:text-amber-400 data-[state=inactive]:hover:bg-slate-700"
+                  >
+                    Invoices
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="schedule" 
+                    className="px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-400 data-[state=active]:to-yellow-500 data-[state=active]:text-slate-900 data-[state=active]:shadow-lg data-[state=active]:font-semibold data-[state=inactive]:text-slate-300 data-[state=inactive]:hover:text-amber-400 data-[state=inactive]:hover:bg-slate-700"
+                  >
+                    Schedule
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="messages" 
+                    className="px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-400 data-[state=active]:to-yellow-500 data-[state=active]:text-slate-900 data-[state=active]:shadow-lg data-[state=active]:font-semibold data-[state=inactive]:text-slate-300 data-[state=inactive]:hover:text-amber-400 data-[state=inactive]:hover:bg-slate-700"
+                  >
+                    Messages
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="overview" className="mt-8 data-[state=active]:animate-in data-[state=active]:fade-in-0 data-[state=active]:slide-in-from-top-2 duration-300">
+                  <OverviewTab />
+                </TabsContent>
+                
+                <TabsContent value="projects" className="mt-8 data-[state=active]:animate-in data-[state=active]:fade-in-0 data-[state=active]:slide-in-from-top-2 duration-300">
+                  <ProjectsTab />
+                </TabsContent>
+                
+                <TabsContent value="estimates" className="mt-8 data-[state=active]:animate-in data-[state=active]:fade-in-0 data-[state=active]:slide-in-from-top-2 duration-300">
+                  <EstimatesTab />
+                </TabsContent>
+                
+                <TabsContent value="invoices" className="mt-8 data-[state=active]:animate-in data-[state=active]:fade-in-0 data-[state=active]:slide-in-from-top-2 duration-300">
+                  <InvoicesTab />
+                </TabsContent>
+                
+                <TabsContent value="schedule" className="mt-8 data-[state=active]:animate-in data-[state=active]:fade-in-0 data-[state=active]:slide-in-from-top-2 duration-300">
+                  <ScheduleTab />
+                </TabsContent>
+                
+                <TabsContent value="messages" className="mt-8 data-[state=active]:animate-in data-[state=active]:fade-in-0 data-[state=active]:slide-in-from-top-2 duration-300">
+                  <MessagesTab />
+                </TabsContent>
+              </Tabs>
+            </main>
           </div>
-        </div>
-
-        {/* Client Info Card */}
-        <div className="container mx-auto px-4 py-6">
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Client Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-gray-500" />
-                  <div>
-                    <p className="text-sm text-gray-500">Email</p>
-                    <p className="font-medium">{safeClientEmail}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-gray-500" />
-                  <div>
-                    <p className="text-sm text-gray-500">Phone</p>
-                    <p className="font-medium">{safeClientPhone}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-gray-500" />
-                  <div>
-                    <p className="text-sm text-gray-500">Address</p>
-                    <p className="font-medium">{safeClientAddress}</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-6">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="projects">Projects</TabsTrigger>
-              <TabsTrigger value="estimates">Estimates</TabsTrigger>
-              <TabsTrigger value="invoices">Invoices</TabsTrigger>
-              <TabsTrigger value="schedule">Schedule</TabsTrigger>
-              <TabsTrigger value="messages">Messages</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="overview" className="mt-6">
-              <OverviewTab />
-            </TabsContent>
-            
-            <TabsContent value="projects" className="mt-6">
-              <ProjectsTab />
-            </TabsContent>
-            
-            <TabsContent value="estimates" className="mt-6">
-              <EstimatesTab />
-            </TabsContent>
-            
-            <TabsContent value="invoices" className="mt-6">
-              <InvoicesTab />
-            </TabsContent>
-            
-            <TabsContent value="schedule" className="mt-6">
-              <ScheduleTab />
-            </TabsContent>
-            
-            <TabsContent value="messages" className="mt-6">
-              <MessagesTab />
-            </TabsContent>
-          </Tabs>
         </div>
       </div>
     </ErrorBoundary>

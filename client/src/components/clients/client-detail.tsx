@@ -193,37 +193,60 @@ export default function ClientDetail({
   };
 
   return (
-    <div>
+    <div className="space-y-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 rounded-xl">
       <div className="flex items-center mb-6">
         <Avatar className="h-16 w-16 mr-4">
-          <AvatarFallback className="text-lg bg-primary text-white">
+          <AvatarFallback className="text-lg bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900">
             {getInitials(client.firstName, client.lastName)}
           </AvatarFallback>
         </Avatar>
         <div>
-          <h4 className="text-lg font-semibold">{client.firstName} {client.lastName}</h4>
-          <p className="text-gray-600">{client.phone}</p>
-          <p className="text-gray-600">{client.email}</p>
+          <h4 className="text-lg font-semibold text-slate-200">{client.firstName} {client.lastName}</h4>
+          <p className="text-slate-400">{client.phone}</p>
+          <p className="text-slate-400">{client.email}</p>
         </div>
       </div>
       
       <Tabs defaultValue="info">
-        <TabsList className="mb-4">
-          <TabsTrigger value="info">Contact Information</TabsTrigger>
-          <TabsTrigger value="projects">Projects</TabsTrigger>
-          <TabsTrigger value="notes">Notes</TabsTrigger>
-          <TabsTrigger value="portal">Client Portal</TabsTrigger>
+        <TabsList className="mb-4 grid w-full grid-cols-4 bg-gradient-to-r from-slate-800 to-slate-700 border border-slate-600 rounded-xl p-2 gap-2">
+          <TabsTrigger 
+            value="info" 
+            className="px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-400 data-[state=active]:to-yellow-500 data-[state=active]:text-slate-900 data-[state=active]:shadow-lg data-[state=active]:font-semibold data-[state=inactive]:text-slate-300 data-[state=inactive]:hover:text-amber-400 data-[state=inactive]:hover:bg-slate-700"
+          >
+            Contact Information
+          </TabsTrigger>
+          <TabsTrigger 
+            value="projects" 
+            className="px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-400 data-[state=active]:to-yellow-500 data-[state=active]:text-slate-900 data-[state=active]:shadow-lg data-[state=active]:font-semibold data-[state=inactive]:text-slate-300 data-[state=inactive]:hover:text-amber-400 data-[state=inactive]:hover:bg-slate-700"
+          >
+            Projects
+          </TabsTrigger>
+          <TabsTrigger 
+            value="notes" 
+            className="px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-400 data-[state=active]:to-yellow-500 data-[state=active]:text-slate-900 data-[state=active]:shadow-lg data-[state=active]:font-semibold data-[state=inactive]:text-slate-300 data-[state=inactive]:hover:text-amber-400 data-[state=inactive]:hover:bg-slate-700"
+          >
+            Notes
+          </TabsTrigger>
+          <TabsTrigger 
+            value="portal" 
+            className="px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-400 data-[state=active]:to-yellow-500 data-[state=active]:text-slate-900 data-[state=active]:shadow-lg data-[state=active]:font-semibold data-[state=inactive]:text-slate-300 data-[state=inactive]:hover:text-amber-400 data-[state=inactive]:hover:bg-slate-700"
+          >
+            Client Portal
+          </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="info">
+        <TabsContent value="info" className="mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <h5 className="font-medium text-gray-900 mb-2">Contact Information</h5>
-              <div className="space-y-2 text-sm">
+            <div className="remodra-card p-6">
+              <h5 className="font-medium text-amber-400 mb-4 flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Contact Information
+              </h5>
+              <div className="space-y-3 text-sm">
                 {(client.address || client.city || client.state) && (
                   <p className="flex items-center">
-                    <MapPin className="text-gray-400 mr-2 h-4 w-4" />
-                    <span>
+                    <MapPin className="text-slate-400 mr-3 h-4 w-4" />
+                    <span className="text-slate-200">
                       {client.address && `${client.address}, `}
                       {client.city && `${client.city}, `}
                       {client.state && client.state} 
@@ -233,62 +256,68 @@ export default function ClientDetail({
                 )}
                 {client.phone && (
                   <p className="flex items-center">
-                    <Phone className="text-gray-400 mr-2 h-4 w-4" />
-                    <span>{client.phone}</span>
+                    <Phone className="text-slate-400 mr-3 h-4 w-4" />
+                    <span className="text-slate-200">{client.phone}</span>
                   </p>
                 )}
                 {client.email && (
                   <p className="flex items-center">
-                    <Mail className="text-gray-400 mr-2 h-4 w-4" />
-                    <span>{client.email}</span>
+                    <Mail className="text-slate-400 mr-3 h-4 w-4" />
+                    <span className="text-slate-200">{client.email}</span>
                   </p>
                 )}
                 <p className="flex items-center">
-                  <User className="text-gray-400 mr-2 h-4 w-4" />
-                  <span>Client since: {formatDate(client.createdAt)}</span>
+                  <User className="text-slate-400 mr-3 h-4 w-4" />
+                  <span className="text-slate-200">Client since: {formatDate(client.createdAt)}</span>
                 </p>
               </div>
             </div>
             
-            <div>
-              <h5 className="font-medium text-gray-900 mb-2">Summary</h5>
-              <div className="space-y-2 text-sm">
+            <div className="remodra-card p-6">
+              <h5 className="font-medium text-amber-400 mb-4 flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Summary
+              </h5>
+              <div className="space-y-3 text-sm">
                 <p className="flex items-center justify-between">
-                  <span className="text-gray-600">Projects</span>
-                  <span className="font-medium">{client.projects ? client.projects.length : 0}</span>
+                  <span className="text-slate-400">Projects</span>
+                  <span className="font-medium text-slate-200">{client.projects ? client.projects.length : 0}</span>
                 </p>
                 <p className="flex items-center justify-between">
-                  <span className="text-gray-600">Completed</span>
-                  <span className="font-medium">
+                  <span className="text-slate-400">Completed</span>
+                  <span className="font-medium text-slate-200">
                     {client.projects ? client.projects.filter(p => 
                       p.status === "completed" || p.status === "Completed"
                     ).length : 0}
                   </span>
                 </p>
                 <p className="flex items-center justify-between">
-                  <span className="text-gray-600">In Progress</span>
-                  <span className="font-medium">
+                  <span className="text-slate-400">In Progress</span>
+                  <span className="font-medium text-slate-200">
                     {client.projects ? client.projects.filter(p => 
                       p.status === "in_progress" || p.status === "In Progress"
                     ).length : 0}
                   </span>
                 </p>
                 <p className="flex items-center justify-between">
-                  <span className="text-gray-600">Total Revenue</span>
-                  <span className="font-medium">{formatCurrency(totalRevenue)}</span>
+                  <span className="text-slate-400">Total Revenue</span>
+                  <span className="font-medium text-slate-200">{formatCurrency(totalRevenue)}</span>
                 </p>
               </div>
             </div>
           </div>
         </TabsContent>
         
-        <TabsContent value="projects">
+        <TabsContent value="projects" className="mt-6">
           <div className="flex justify-between items-center mb-4">
-            <h5 className="font-medium text-gray-900">Projects</h5>
+            <h5 className="font-medium text-amber-400 flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Projects
+            </h5>
             <Button 
               size="sm" 
               variant="outline" 
-              className="flex items-center"
+              className="remodra-button-outline flex items-center"
               onClick={handleAddProject}
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -297,13 +326,13 @@ export default function ClientDetail({
           </div>
           
           {!client.projects || client.projects.length === 0 ? (
-            <div className="text-center py-6 border border-dashed rounded-md">
-              <p className="text-gray-500">No projects for this client.</p>
+            <div className="text-center py-6 border border-dashed border-slate-600 rounded-md bg-slate-800/50">
+              <p className="text-slate-400">No projects for this client.</p>
               <div className="flex justify-center space-x-3 mt-2">
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="flex items-center"
+                  className="remodra-button-outline flex items-center"
                   onClick={handleAddProject}
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -312,7 +341,7 @@ export default function ClientDetail({
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="flex items-center"
+                  className="remodra-button-outline flex items-center"
                   onClick={onNewEstimate}
                 >
                   <FileText className="h-4 w-4 mr-2" />
@@ -321,29 +350,29 @@ export default function ClientDetail({
               </div>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {client.projects.map((project) => (
                 <div 
                   key={project.id} 
-                  className="p-4 border border-gray-200 rounded-lg hover:shadow-sm transition-shadow cursor-pointer"
+                  className="remodra-card p-4 hover:shadow-lg transition-all duration-200 cursor-pointer border border-slate-600"
                   onClick={() => handleEditProject(project)}
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <h6 className="font-medium text-lg">{project.title}</h6>
+                      <h6 className="font-medium text-lg text-slate-200">{project.title}</h6>
                       {project.description && (
-                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">{project.description}</p>
+                        <p className="text-sm text-slate-400 mt-1 line-clamp-2">{project.description}</p>
                       )}
                     </div>
-                    <Badge className={getProjectStatusClass(project.status)}>
+                    <Badge className="remodra-badge">
                       {typeof project.budget === 'number' 
                         ? formatCurrency(project.budget)
                         : (project.budget ? formatCurrency(parseFloat(project.budget.toString())) : '-')}
                     </Badge>
                   </div>
-                  <div className="flex justify-between items-center mt-3 text-sm text-gray-500">
+                  <div className="flex justify-between items-center mt-3 text-sm text-slate-400">
                     <div className="flex items-center">
-                      <span className="capitalize">
+                      <span className="capitalize text-slate-300">
                         {project.status === "in_progress" && "In Progress"}
                         {project.status === "In Progress" && "In Progress"}
                         {project.status === "completed" && "Completed"}
@@ -371,44 +400,44 @@ export default function ClientDetail({
         </TabsContent>
         
 
-        <TabsContent value="notes">
+        <TabsContent value="notes" className="mt-6">
           <div className="space-y-6">
             {/* General Notes Section */}
-            <div>
-              <h5 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
-                <FileText className="h-4 w-4" />
+            <div className="remodra-card p-6">
+              <h5 className="font-medium text-amber-400 mb-4 flex items-center gap-2">
+                <FileText className="h-5 w-5" />
                 General Notes
               </h5>
-              <p className="text-sm text-gray-600 mb-3">
+              <p className="text-sm text-slate-400 mb-4">
                 General information about the client, preferences, special instructions, access details, etc.
               </p>
-              <div className="bg-gray-50 p-3 rounded-md text-sm">
+              <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-600 text-sm">
                 {client.notes ? (
-                  <p className="whitespace-pre-wrap">{client.notes}</p>
+                  <p className="whitespace-pre-wrap text-slate-200">{client.notes}</p>
                 ) : (
-                  <p className="text-gray-500 italic">No general notes for this client.</p>
+                  <p className="text-slate-400 italic">No general notes for this client.</p>
                 )}
               </div>
             </div>
 
             {/* Cancellation History Section */}
-            <div>
-              <h5 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-orange-500" />
+            <div className="remodra-card p-6">
+              <h5 className="font-medium text-amber-400 mb-4 flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-orange-400" />
                 Cancellation History
               </h5>
-              <p className="text-sm text-gray-600 mb-3">
+              <p className="text-sm text-slate-400 mb-4">
                 Record of cancelled appointments and events with reasons for cancellation.
               </p>
-              <div className="bg-orange-50 border border-orange-200 p-3 rounded-md text-sm">
+              <div className="bg-orange-600/20 border border-orange-500/30 p-4 rounded-lg text-sm">
                 {client.cancellationHistory ? (
                   <div className="space-y-1">
                     {client.cancellationHistory.split('\n').map((entry, index) => (
-                      <p key={index} className="text-orange-800">{entry}</p>
+                      <p key={index} className="text-orange-300">{entry}</p>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-orange-600 italic">No cancellation history for this client.</p>
+                  <p className="text-orange-400 italic">No cancellation history for this client.</p>
                 )}
               </div>
             </div>
@@ -419,50 +448,50 @@ export default function ClientDetail({
           <div className="space-y-6">
             <h5 className="font-medium text-gray-900 mb-4">Client Portal</h5>
             
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Share2 className="h-5 w-5 text-primary" />
+            <Card className="remodra-card">
+              <CardHeader className="bg-gradient-to-r from-slate-800 to-slate-700 rounded-t-lg border-b border-slate-600">
+                <CardTitle className="text-base flex items-center gap-2 text-amber-400">
+                  <Share2 className="h-5 w-5" />
                   Share access with client
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-slate-300">
                   Provide the client with the following link so they can access their personalized portal
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-6">
                 <div className="flex items-center gap-2">
                   <Input 
                     ref={portalLinkRef}
                     value={getClientPortalUrl()}
                     readOnly
-                    className="bg-gray-50 pr-20"
+                    className="remodra-input pr-20"
                   />
-                  <Button variant="outline" size="sm" onClick={copyPortalLink} className="absolute right-12">
+                  <Button variant="outline" size="sm" onClick={copyPortalLink} className="remodra-button-outline absolute right-12">
                     <Copy className="h-4 w-4 mr-1" />
                     Copy
                   </Button>
                 </div>
               </CardContent>
-              <CardFooter className="flex justify-between border-t pt-4">
-                <div className="text-sm text-gray-500">
+              <CardFooter className="flex justify-between border-t border-slate-600 pt-4 bg-slate-800/50">
+                <div className="text-sm text-slate-400">
                   <p className="flex items-center gap-1">
-                    <ClipboardCheck className="h-4 w-4 text-green-500" />
+                    <ClipboardCheck className="h-4 w-4 text-green-400" />
                     <span>Access to estimates and invoices</span>
                   </p>
                   <p className="flex items-center gap-1">
-                    <FileSignature className="h-4 w-4 text-green-500" />
+                    <FileSignature className="h-4 w-4 text-green-400" />
                     <span>Digital document signing</span>
                   </p>
                 </div>
-                <Button onClick={openClientPortal} className="flex items-center gap-2">
+                <Button onClick={openClientPortal} className="remodra-button flex items-center gap-2">
                   <ExternalLink className="h-4 w-4" />
                   Open Portal
                 </Button>
               </CardFooter>
             </Card>
             
-            <div className="text-sm text-gray-500 p-3 border border-blue-100 bg-blue-50 rounded-md">
-              <p className="font-medium text-blue-600 mb-1">Tip:</p>
+            <div className="text-sm text-slate-400 p-4 border border-blue-500/30 bg-blue-600/20 rounded-lg">
+              <p className="font-medium text-blue-400 mb-2">Tip:</p>
               <p>Share this link with your client so they can access their project information, view and approve estimates, sign invoices, and track their work in progress.</p>
             </div>
           </div>
@@ -470,17 +499,17 @@ export default function ClientDetail({
       </Tabs>
       
       <div className="flex space-x-3 mt-6">
-        <Button className="flex items-center" onClick={onEdit}>
+        <Button className="remodra-button flex items-center" onClick={onEdit}>
           <Edit className="h-4 w-4 mr-2" />
           Edit Client
         </Button>
-        <Button variant="outline" className="flex items-center" onClick={onNewEstimate}>
+        <Button variant="outline" className="remodra-button-outline flex items-center" onClick={onNewEstimate}>
           <FileText className="h-4 w-4 mr-2" />
           New Estimate
         </Button>
         <Button 
           variant="outline" 
-          className="flex items-center text-red-600 hover:text-red-600 hover:bg-red-50"
+          className="flex items-center text-red-400 hover:text-red-300 hover:bg-red-600/20 border-red-500/50"
           onClick={handleDeleteClick}
         >
           <Trash2 className="h-4 w-4 mr-2" />
